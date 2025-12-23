@@ -28,6 +28,7 @@ function RootLayoutNav() {
       <Stack.Screen name="community" options={{ title: 'Community' }} />
       <Stack.Screen name="edit-profile" options={{ title: 'Edit Profile' }} />
       <Stack.Screen name="settings" options={{ title: 'Settings' }} />
+      <Stack.Screen name="trending" options={{ title: 'Trending' }} />
     </Stack>
   );
 }

@@ -18,6 +18,8 @@ import {
   Play,
   Music,
   FileText,
+  Flame,
+  Users,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -76,9 +78,17 @@ export default function HomeScreen() {
           headerStyle: { backgroundColor: colors.background },
           headerTintColor: colors.text,
           headerRight: () => (
-            <TouchableOpacity onPress={() => router.push('/messages')}>
-              <MessageCircle size={24} color={colors.text} />
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+              <TouchableOpacity onPress={() => router.push('/trending')}>
+                <Flame size={24} color={colors.text} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push('/communities')}>
+                <Users size={24} color={colors.text} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push('/messages')}>
+                <MessageCircle size={24} color={colors.text} />
+              </TouchableOpacity>
+            </View>
           ),
         }}
       />
