@@ -13,6 +13,7 @@ const mockUsers: User[] = [
     experience: 15,
     location: 'Mumbai',
     isOnline: true,
+    isVerified: true,
   },
   {
     id: '2',

@@ -36,6 +36,8 @@ export interface User {
   experience: number;
   location: string;
   isOnline: boolean;
+  isPrivate?: boolean;
+  isVerified?: boolean;
 }
 
 export interface Post {

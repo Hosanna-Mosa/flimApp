@@ -20,6 +20,9 @@ import {
   FileText,
   Flame,
   Bell,
+  Plus,
+  Check,
+  BadgeCheck,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -53,10 +56,10 @@ export default function HomeScreen() {
       posts.map((post) =>
         post.id === postId
           ? {
-              ...post,
-              isLiked: !post.isLiked,
-              likes: post.isLiked ? post.likes - 1 : post.likes + 1,
-            }
+            ...post,
+            isLiked: !post.isLiked,
+            likes: post.isLiked ? post.likes - 1 : post.likes + 1,
+          }
           : post
       )
     );
@@ -119,44 +122,43 @@ export default function HomeScreen() {
             ]}
           >
             <View style={styles.postHeader}>
-              <Image
-                source={{ uri: post.user.avatar }}
-                style={styles.avatar}
-                contentFit="cover"
-              />
+              <View style={styles.avatarContainer}>
+                <Image
+                  source={{ uri: post.user.avatar }}
+                  style={styles.avatar}
+                  contentFit="cover"
+                />
+                <TouchableOpacity
+                  style={[
+                    styles.followBadge,
+                    {
+                      backgroundColor: following[post.user.id]
+                        ? colors.border
+                        : colors.primary,
+                    },
+                  ]}
+                  onPress={() => toggleFollow(post.user.id)}
+                >
+                  {following[post.user.id] ? (
+                    <Check size={10} color={colors.text} />
+                  ) : (
+                    <Plus size={10} color="#fff" />
+                  )}
+                </TouchableOpacity>
+              </View>
               <View style={styles.userInfo}>
-                <Text style={[styles.userName, { color: colors.text }]}>
-                  {post.user.name}
-                </Text>
+                <TouchableOpacity onPress={() => router.push({ pathname: '/user/[id]', params: { id: post.user.id } })} style={styles.nameContainer}>
+                  <Text style={[styles.userName, { color: colors.text }]}>
+                    {post.user.name}
+                  </Text>
+                  {post.user.isVerified && (
+                    <BadgeCheck size={16} color={colors.primary} fill="transparent" />
+                  )}
+                </TouchableOpacity>
                 <Text style={[styles.role, { color: colors.textSecondary }]}>
                   {post.user.roles.slice(0, 2).join(' • ')}
                 </Text>
               </View>
-              <TouchableOpacity
-                style={[
-                  styles.followButton,
-                  {
-                    backgroundColor: following[post.user.id]
-                      ? `${colors.primary}20`
-                      : colors.primary,
-                    borderColor: following[post.user.id]
-                      ? colors.primary
-                      : 'transparent',
-                  },
-                ]}
-                onPress={() => toggleFollow(post.user.id)}
-              >
-                <Text
-                  style={[
-                    styles.followButtonText,
-                    {
-                      color: following[post.user.id] ? colors.primary : '#fff',
-                    },
-                  ]}
-                >
-                  {following[post.user.id] ? 'Following' : 'Follow'}
-                </Text>
-              </TouchableOpacity>
               <View
                 style={[
                   styles.mediaBadge,
@@ -170,12 +172,12 @@ export default function HomeScreen() {
             {(post.type === 'image' ||
               post.type === 'video' ||
               post.type === 'script') && (
-              <Image
-                source={{ uri: post.thumbnailUrl || post.mediaUrl }}
-                style={styles.media}
-                contentFit="cover"
-              />
-            )}
+                <Image
+                  source={{ uri: post.thumbnailUrl || post.mediaUrl }}
+                  style={styles.media}
+                  contentFit="cover"
+                />
+              )}
 
             {post.type === 'audio' && (
               <View
@@ -255,14 +257,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
   },
+  avatarContainer: {
+    position: 'relative',
+  },
   avatar: {
     width: 48,
     height: 48,
     borderRadius: 24,
   },
+  followBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#fff', // Or dynamic background color for bezel effect
+  },
   userInfo: {
     flex: 1,
     marginLeft: 12,
+  },
+  nameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   userName: {
     fontSize: 16,
@@ -277,16 +299,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textTransform: 'capitalize',
   },
-  followButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 999,
-    borderWidth: 1,
-  },
-  followButtonText: {
-    fontSize: 12,
-    fontWeight: '700' as const,
-  },
+
   mediaBadge: {
     padding: 8,
     borderRadius: 8,

@@ -9,9 +9,15 @@ import {
 import { Stack } from 'expo-router';
 import { Moon, Sun, Bell, Shield } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function SettingsScreen() {
   const { colors, changeTheme, isDark } = useTheme();
+  const { user, updateProfile } = useAuth();
+
+  const togglePrivateAccount = () => {
+    updateProfile({ isPrivate: !user?.isPrivate });
+  };
 
   return (
     <>
@@ -121,7 +127,7 @@ export default function SettingsScreen() {
               <Shield size={24} color={colors.textSecondary} />
               <View style={styles.settingText}>
                 <Text style={[styles.settingLabel, { color: colors.text }]}>
-                  Privacy Settings
+                  Private Account
                 </Text>
                 <Text
                   style={[
@@ -129,10 +135,35 @@ export default function SettingsScreen() {
                     { color: colors.textSecondary },
                   ]}
                 >
-                  Control who can see your profile
+                  {user?.isPrivate
+                    ? 'Only followers can see your posts'
+                    : 'Anyone can see your posts'}
                 </Text>
               </View>
             </View>
+            <TouchableOpacity
+              style={[
+                styles.toggle,
+                {
+                  backgroundColor: user?.isPrivate
+                    ? colors.primary
+                    : colors.surface,
+                },
+              ]}
+              onPress={togglePrivateAccount}
+            >
+              <View
+                style={[
+                  styles.toggleThumb,
+                  {
+                    backgroundColor: user?.isPrivate
+                      ? '#000000'
+                      : colors.border,
+                  },
+                  user?.isPrivate && styles.toggleThumbActive,
+                ]}
+              />
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
