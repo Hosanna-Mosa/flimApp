@@ -40,3 +40,8 @@
 2025-12-24T09:09:47.890Z [info]: Server running on port 8000
 2025-12-24T09:15:47.394Z [info]: MongoDB connected
 2025-12-24T09:15:47.402Z [info]: Server running on port 8000
+2025-12-24T12:06:45.045Z [info]: MongoDB connected
+2025-12-24T12:06:45.056Z [info]: Server running on port 8000
+2025-12-24T12:06:56.828Z [info]: Incoming Request: POST /auth/login-password
+2025-12-24T12:06:56.829Z [info]: Request Body: {"phone":"9876543210","password":"***"}
+2025-12-24T12:06:57.086Z [info]: 10.212.182.239 POST /auth/login-password 200 257.230 ms - 1062
