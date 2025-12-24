@@ -3,6 +3,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import * as SystemUI from 'expo-system-ui';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 
@@ -12,8 +13,14 @@ const queryClient = new QueryClient();
 
 function RootLayoutNav() {
   return (
-    <Stack screenOptions={{ headerBackTitle: 'Back' }}>
+    <Stack 
+      screenOptions={{ 
+        headerBackTitle: 'Back',
+        contentStyle: { backgroundColor: '#000000' } 
+      }}
+    >
       <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="auth" options={{ headerShown: false }} />
       <Stack.Screen name="login" options={{ headerShown: false }} />
       <Stack.Screen name="otp" options={{ headerShown: false }} />
       <Stack.Screen name="role-selection" options={{ headerShown: false }} />
@@ -35,6 +42,18 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   useEffect(() => {
+    SystemUI.setBackgroundColorAsync('#000000');
+    // Import dynamically to avoid SSR issues if any, or just use expo-system-ui if simpler
+    const setNavBar = async () => {
+      try {
+        const NavigationBar = require('expo-navigation-bar');
+        await NavigationBar.setBackgroundColorAsync('#000000');
+        await NavigationBar.setButtonStyleAsync('light');
+      } catch (e) {
+        // Ignore if module not found or platform issue
+      }
+    };
+    setNavBar();
     SplashScreen.hideAsync();
   }, []);
 
@@ -42,7 +61,7 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
-          <GestureHandlerRootView style={{ flex: 1 }}>
+          <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#000000' }}>
             <RootLayoutNav />
           </GestureHandlerRootView>
         </AuthProvider>

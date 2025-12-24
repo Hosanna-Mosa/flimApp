@@ -44,6 +44,7 @@ export default function SelectableCard({
       ]}
       onPress={handlePress}
       activeOpacity={0.7}
+      hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
     >
       {icon && <Text style={styles.icon}>{icon}</Text>}
       <View style={styles.content}>

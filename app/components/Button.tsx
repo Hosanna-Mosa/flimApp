@@ -68,7 +68,8 @@ export default function Button({
       style={buttonStyles}
       onPress={handlePress}
       disabled={disabled || loading}
-      activeOpacity={0.7}
+      activeOpacity={0.6}
+      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
     >
       {loading ? (
         <ActivityIndicator

@@ -79,6 +79,7 @@ export default function CommunitiesScreen() {
                   styles.communityCard,
                   { backgroundColor: colors.card, borderColor: colors.border },
                 ]}
+                activeOpacity={0.8}
                 onPress={() =>
                   router.push(
                     `/community?id=${community.id}&name=${community.name}`
@@ -132,6 +133,7 @@ export default function CommunitiesScreen() {
                   styles.communityCard,
                   { backgroundColor: colors.card, borderColor: colors.border },
                 ]}
+                activeOpacity={0.8}
                 onPress={() =>
                   router.push(
                     `/community?id=${community.id}&name=${community.name}`

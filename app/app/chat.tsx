@@ -152,6 +152,7 @@ export default function ChatScreen() {
           <TouchableOpacity
             style={[styles.sendButton, { backgroundColor: colors.primary }]}
             onPress={handleSend}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <Send size={20} color="#000000" />
           </TouchableOpacity>

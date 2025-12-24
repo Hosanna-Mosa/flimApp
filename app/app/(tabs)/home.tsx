@@ -86,13 +86,24 @@ export default function HomeScreen() {
           headerTintColor: colors.text,
           headerRight: () => (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-              <TouchableOpacity onPress={() => router.push('/trending')}>
+              <TouchableOpacity 
+                onPress={() => router.push('/trending')}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
                 <Flame size={24} color={colors.text} />
               </TouchableOpacity>
+              <TouchableOpacity 
+                onPress={() => router.push('/communities')}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Users size={24} color={colors.text} />
               <TouchableOpacity onPress={() => router.push('/notifications')}>
                 <Bell size={24} color={colors.text} />
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => router.push('/messages')}>
+              <TouchableOpacity 
+                onPress={() => router.push('/messages')}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
                 <MessageCircle size={24} color={colors.text} />
               </TouchableOpacity>
             </View>
@@ -204,6 +215,7 @@ export default function HomeScreen() {
               <TouchableOpacity
                 style={styles.action}
                 onPress={() => handleLike(post.id)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <Heart
                   size={22}
@@ -217,7 +229,10 @@ export default function HomeScreen() {
                 </Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.action}>
+              <TouchableOpacity 
+                style={styles.action}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
                 <MessageSquare size={22} color={colors.textSecondary} />
                 <Text
                   style={[styles.actionText, { color: colors.textSecondary }]}
@@ -226,7 +241,10 @@ export default function HomeScreen() {
                 </Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.action}>
+              <TouchableOpacity 
+                style={styles.action}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
                 <Share2 size={22} color={colors.textSecondary} />
                 <Text
                   style={[styles.actionText, { color: colors.textSecondary }]}

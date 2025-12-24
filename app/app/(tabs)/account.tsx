@@ -30,7 +30,7 @@ export default function AccountScreen() {
         style: 'destructive',
         onPress: async () => {
           await logout();
-          router.replace('/login');
+          router.replace('/auth');
         },
       },
     ]);
@@ -85,6 +85,7 @@ export default function AccountScreen() {
                   styles.menuItem,
                   { backgroundColor: colors.card, borderColor: colors.border },
                 ]}
+                hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
                 onPress={item.onPress}
               >
                 <View
@@ -119,6 +120,7 @@ export default function AccountScreen() {
               styles.logoutButton,
               { backgroundColor: colors.card, borderColor: colors.error },
             ]}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             onPress={handleLogout}
           >
             <LogOut size={20} color={colors.error} />

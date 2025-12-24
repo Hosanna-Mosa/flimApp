@@ -32,7 +32,7 @@ export default function SplashScreen() {
     if (!isLoading) {
       setTimeout(() => {
         if (!isAuthenticated) {
-          router.replace('/login');
+          router.replace('/auth');
         } else if (!hasCompletedOnboarding) {
           router.replace('/role-selection');
         } else {

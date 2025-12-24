@@ -30,6 +30,35 @@ router.post(
 );
 
 router.post(
+  '/register',
+  validate(
+    Joi.object({
+      body: Joi.object({
+        name: Joi.string().required(),
+        phone: Joi.string().required(),
+        password: Joi.string().min(6).required(),
+        roles: Joi.array().items(Joi.string()).required(),
+        industries: Joi.array().items(Joi.string()).required(),
+      }).required(),
+    })
+  ),
+  authController.register
+);
+
+router.post(
+  '/login-password',
+  validate(
+    Joi.object({
+      body: Joi.object({
+        phone: Joi.string().required(),
+        password: Joi.string().required(),
+      }).required(),
+    })
+  ),
+  authController.loginWithPassword
+);
+
+router.post(
   '/refresh',
   validate(
     Joi.object({

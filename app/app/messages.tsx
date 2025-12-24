@@ -76,6 +76,7 @@ export default function MessagesScreen() {
               styles.chatItem,
               { backgroundColor: colors.card, borderColor: colors.border },
             ]}
+            activeOpacity={0.7}
             onPress={() =>
               router.push(`/chat?userId=${chat.user.id}&name=${chat.user.name}`)
             }
