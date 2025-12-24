@@ -81,6 +81,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       experience: 0,
       location: '',
       isOnline: true,
+      isPrivate: false,
     };
 
     await AsyncStorage.setItem('user', JSON.stringify(newUser));
