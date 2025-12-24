@@ -4,6 +4,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as SystemUI from 'expo-system-ui';
+import { StatusBar } from 'expo-status-bar';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 
@@ -62,6 +63,7 @@ export default function RootLayout() {
       <ThemeProvider>
         <AuthProvider>
           <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#000000' }}>
+            <StatusBar style="light" backgroundColor="#000000" />
             <RootLayoutNav />
           </GestureHandlerRootView>
         </AuthProvider>

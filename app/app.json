@@ -32,7 +32,7 @@
       "splash": {
         "backgroundColor": "#000000"
       },
-      "softwareKeyboardLayoutMode": "pan",
+      "softwareKeyboardLayoutMode": "resize",
       "package": "app.rork.filmy",
       "permissions": [
         "android.permission.VIBRATE",

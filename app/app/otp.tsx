@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -55,69 +55,74 @@ export default function OTPScreen() {
   };
 
   return (
-    <ScrollView
-      contentContainerStyle={[
-        styles.container,
-        { backgroundColor: colors.background },
-      ]}
-      showsVerticalScrollIndicator={false}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={{ flex: 1, backgroundColor: '#000000' }}
     >
-      <View style={styles.content}>
-        <Text style={[styles.title, { color: colors.text }]}>Verify OTP</Text>
-        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-          Enter the 6-digit code sent to{'\n'}
-          {phone}
-        </Text>
+      <ScrollView
+        contentContainerStyle={[
+          styles.container,
+          { backgroundColor: '#000000' },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.content}>
+          <Text style={[styles.title, { color: colors.text }]}>Verify OTP</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+            Enter the 6-digit code sent to{'\n'}
+            {phone}
+          </Text>
 
-        <View style={styles.otpContainer}>
-          {otp.map((digit, index) => (
-            <TextInput
-              key={index}
-              ref={(ref) => {
-                inputRefs.current[index] = ref;
-              }}
-              style={[
-                styles.otpInput,
-                {
-                  backgroundColor: colors.surface,
-                  color: colors.text,
-                  borderColor: digit ? colors.primary : colors.border,
-                },
-              ]}
-              value={digit}
-              onChangeText={(value) => handleOtpChange(value, index)}
-              onKeyPress={(e) => handleKeyPress(e, index)}
-              keyboardType="number-pad"
-              maxLength={1}
-              selectTextOnFocus
-            />
-          ))}
+          <View style={styles.otpContainer}>
+            {otp.map((digit, index) => (
+              <TextInput
+                key={index}
+                ref={(ref) => {
+                  inputRefs.current[index] = ref;
+                }}
+                style={[
+                  styles.otpInput,
+                  {
+                    backgroundColor: colors.surface,
+                    color: colors.text,
+                    borderColor: digit ? colors.primary : colors.border,
+                  },
+                ]}
+                value={digit}
+                onChangeText={(value) => handleOtpChange(value, index)}
+                onKeyPress={(e) => handleKeyPress(e, index)}
+                keyboardType="number-pad"
+                maxLength={1}
+                selectTextOnFocus
+              />
+            ))}
+          </View>
+
+          <Button
+            title="Verify"
+            onPress={handleVerify}
+            size="large"
+            disabled={otp.join('').length !== 6}
+            loading={loading}
+          />
+
+          <View style={styles.resendContainer}>
+            {timer > 0 ? (
+              <Text style={[styles.timer, { color: colors.textSecondary }]}>
+                Resend code in {timer}s
+              </Text>
+            ) : (
+              <Button
+                title="Resend OTP"
+                onPress={handleResend}
+                variant="outline"
+                size="small"
+              />
+            )}
+          </View>
         </View>
-
-        <Button
-          title="Verify"
-          onPress={handleVerify}
-          size="large"
-          disabled={otp.join('').length !== 6}
-          loading={loading}
-        />
-
-        <View style={styles.resendContainer}>
-          {timer > 0 ? (
-            <Text style={[styles.timer, { color: colors.textSecondary }]}>
-              Resend code in {timer}s
-            </Text>
-          ) : (
-            <Button
-              title="Resend OTP"
-              onPress={handleResend}
-              variant="outline"
-              size="small"
-            />
-          )}
-        </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
