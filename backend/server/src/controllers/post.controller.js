@@ -46,11 +46,26 @@ const getUserPosts = async (req, res, next) => {
   }
 };
 
+const getPost = async (req, res, next) => {
+  try {
+    const post = await postService.getPostById(req.params.id);
+    if (!post) {
+      const error = new Error('Post not found');
+      error.statusCode = 404;
+      throw error;
+    }
+    return success(res, post);
+  } catch (err) {
+    return next(err);
+  }
+};
+
 module.exports = {
   createPost,
   deletePost,
   getFeed,
   getTrending,
   getUserPosts,
+  getPost,
 };
 

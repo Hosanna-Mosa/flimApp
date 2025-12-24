@@ -28,6 +28,7 @@ router.post(
 router.get('/feed', auth, postController.getFeed);
 router.get('/trending', auth, postController.getTrending);
 router.get('/user/:id', auth, postController.getUserPosts);
+router.get('/:id', auth, postController.getPost);
 router.delete('/:id', auth, postController.deletePost);
 
 module.exports = router;

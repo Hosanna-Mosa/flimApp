@@ -38,6 +38,7 @@ export interface User {
   isOnline: boolean;
   isPrivate?: boolean;
   isVerified?: boolean;
+  isFollowing?: boolean;
 }
 
 export interface Post {

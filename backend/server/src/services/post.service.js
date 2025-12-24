@@ -43,5 +43,9 @@ const getTrending = async () => feedService.getTrending();
 
 const getFeed = async (user) => feedService.getPersonalizedFeed(user);
 
-module.exports = { createPost, deletePost, getUserPosts, getTrending, getFeed };
+const getPostById = async (postId) => {
+  return Post.findById(postId).populate('author', 'name avatar isVerified roles');
+};
+
+module.exports = { createPost, deletePost, getUserPosts, getTrending, getFeed, getPostById };
 

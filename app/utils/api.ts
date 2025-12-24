@@ -137,6 +137,9 @@ export const apiTrending = (token?: string) =>
 export const apiUserPosts = (userId: string, token?: string) =>
   request(`/posts/user/${userId}`, { token });
 
+export const apiGetPost = (postId: string, token?: string) =>
+  request(`/posts/${postId}`, { token });
+
 // Communities
 export const apiCreateCommunity = (
   payload: {
@@ -172,6 +175,266 @@ export const apiNotifications = (token?: string) =>
 export const apiMarkNotificationRead = (id: string, token?: string) =>
   request(`/notifications/${id}/read`, { method: 'POST', token });
 
+// ========== SOCIAL MEDIA FEATURES ==========
+
+// Likes
+export const apiLikePost = (postId: string, token?: string) =>
+  request<{ success: boolean; message: string; likesCount: number }>(
+    `/api/posts/${postId}/like`,
+    { method: 'POST', token }
+  );
+
+export const apiUnlikePost = (postId: string, token?: string) =>
+  request<{ success: boolean; message: string; likesCount: number }>(
+    `/api/posts/${postId}/like`,
+    { method: 'DELETE', token }
+  );
+
+export const apiGetPostLikes = (
+  postId: string,
+  page = 0,
+  limit = 20,
+  token?: string
+) =>
+  request<{
+    success: boolean;
+    data: Array<{ name: string; avatar: string; isVerified: boolean }>;
+    pagination: { page: number; limit: number; total: number; pages: number };
+  }>(`/api/posts/${postId}/likes?page=${page}&limit=${limit}`, { token });
+
+export const apiGetUserLikedPosts = (
+  userId: string,
+  page = 0,
+  limit = 20,
+  token?: string
+) =>
+  request(`/api/users/${userId}/liked?page=${page}&limit=${limit}`, { token });
+
+export const apiHasLiked = (postId: string, token?: string) =>
+  request<{ success: boolean; liked: boolean }>(
+    `/api/posts/${postId}/liked`,
+    { token }
+  );
+
+// Follows
+export const apiFollowUser = (userId: string, token?: string) =>
+  request<{
+    success: boolean;
+    message: string;
+    status: 'pending' | 'accepted';
+    followingCount?: number;
+    followersCount?: number;
+  }>(`/api/users/${userId}/follow`, { method: 'POST', token });
+
+export const apiUnfollowUser = (userId: string, token?: string) =>
+  request<{
+    success: boolean;
+    message: string;
+    followingCount: number;
+    followersCount: number;
+  }>(`/api/users/${userId}/follow`, { method: 'DELETE', token });
+
+export const apiGetFollowers = (
+  userId: string,
+  page = 0,
+  limit = 20,
+  token?: string
+) =>
+  request(
+    `/api/users/${userId}/followers?page=${page}&limit=${limit}`,
+    { token }
+  );
+
+export const apiGetFollowing = (
+  userId: string,
+  page = 0,
+  limit = 20,
+  token?: string
+) =>
+  request(
+    `/api/users/${userId}/following?page=${page}&limit=${limit}`,
+    { token }
+  );
+
+export const apiGetPendingRequests = (page = 0, limit = 20, token?: string) =>
+  request(`/api/follow-requests?page=${page}&limit=${limit}`, { token });
+
+export const apiAcceptFollowRequest = (userId: string, token?: string) =>
+  request(`/api/follow-requests/${userId}/accept`, {
+    method: 'POST',
+    token,
+  });
+
+export const apiRejectFollowRequest = (userId: string, token?: string) =>
+  request(`/api/follow-requests/${userId}/reject`, {
+    method: 'POST',
+    token,
+  });
+
+export const apiIsFollowing = (userId: string, token?: string) =>
+  request<{ success: boolean; following: boolean }>(
+    `/api/users/${userId}/following-status`,
+    { token }
+  );
+
+export const apiGetMutualFollowers = (userId: string, token?: string) =>
+  request<{ success: boolean; count: number }>(
+    `/api/users/${userId}/mutual-followers`,
+    { token }
+  );
+
+// Comments
+export const apiAddComment = (
+  postId: string,
+  content: string,
+  parentCommentId?: string,
+  token?: string
+) =>
+  request<{
+    success: boolean;
+    message: string;
+    data: {
+      _id: string;
+      content: string;
+      user: { name: string; avatar: string; isVerified: boolean };
+      createdAt: string;
+    };
+  }>(`/api/posts/${postId}/comments`, {
+    method: 'POST',
+    body: { content, parentCommentId },
+    token,
+  });
+
+export const apiGetComments = (
+  postId: string,
+  page = 0,
+  limit = 20,
+  sortBy: 'recent' | 'popular' = 'recent',
+  token?: string
+) =>
+  request(
+    `/api/posts/${postId}/comments?page=${page}&limit=${limit}&sortBy=${sortBy}`,
+    { token }
+  );
+
+export const apiGetCommentReplies = (
+  commentId: string,
+  page = 0,
+  limit = 10,
+  token?: string
+) =>
+  request(
+    `/api/comments/${commentId}/replies?page=${page}&limit=${limit}`,
+    { token }
+  );
+
+export const apiEditComment = (
+  commentId: string,
+  content: string,
+  token?: string
+) =>
+  request(`/api/comments/${commentId}`, {
+    method: 'PUT',
+    body: { content },
+    token,
+  });
+
+export const apiDeleteComment = (commentId: string, token?: string) =>
+  request(`/api/comments/${commentId}`, { method: 'DELETE', token });
+
+export const apiLikeComment = (commentId: string, token?: string) =>
+  request(`/api/comments/${commentId}/like`, { method: 'POST', token });
+
+export const apiGetUserComments = (
+  userId: string,
+  page = 0,
+  limit = 20,
+  token?: string
+) =>
+  request(`/api/users/${userId}/comments?page=${page}&limit=${limit}`, {
+    token,
+  });
+
+// Shares
+export const apiSharePost = (
+  postId: string,
+  payload: {
+    shareType?: 'repost' | 'quote' | 'external';
+    caption?: string;
+    platform?: 'whatsapp' | 'twitter' | 'facebook' | 'instagram' | 'other';
+  },
+  token?: string
+) =>
+  request<{ success: boolean; message: string; data: unknown }>(
+    `/api/posts/${postId}/share`,
+    { method: 'POST', body: payload, token }
+  );
+
+export const apiGetPostShares = (
+  postId: string,
+  page = 0,
+  limit = 20,
+  token?: string
+) =>
+  request(`/api/posts/${postId}/shares?page=${page}&limit=${limit}`, {
+    token,
+  });
+
+export const apiGetUserShares = (
+  userId: string,
+  page = 0,
+  limit = 20,
+  token?: string
+) =>
+  request(`/api/users/${userId}/shares?page=${page}&limit=${limit}`, {
+    token,
+  });
+
+export const apiDeleteShare = (shareId: string, token?: string) =>
+  request(`/api/shares/${shareId}`, { method: 'DELETE', token });
+
+export const apiGetShareStats = (postId: string, token?: string) =>
+  request(`/api/posts/${postId}/share-stats`, { token });
+
+// Feeds
+export const apiGetFeed = (
+  page = 0,
+  limit = 20,
+  algorithm: 'hybrid' | 'chronological' | 'engagement' = 'hybrid',
+  timeRange = 7,
+  token?: string
+) =>
+  request(
+    `/api/feed?page=${page}&limit=${limit}&algorithm=${algorithm}&timeRange=${timeRange}`,
+    { token }
+  );
+
+export const apiGetTrendingFeed = (page = 0, limit = 20, token?: string) =>
+  request(`/api/feed/trending?page=${page}&limit=${limit}`, { token });
+
+export const apiGetIndustryFeed = (
+  industry: string,
+  page = 0,
+  limit = 20,
+  token?: string
+) =>
+  request(`/api/feed/industry/${industry}?page=${page}&limit=${limit}`, {
+    token,
+  });
+
+export const apiGetUserFeed = (
+  userId: string,
+  page = 0,
+  limit = 20,
+  token?: string
+) =>
+  request(`/api/feed/users/${userId}/posts?page=${page}&limit=${limit}`, {
+    token,
+  });
+
+export const apiInvalidateFeed = (token?: string) =>
+  request('/api/feed/invalidate', { method: 'POST', token });
+
 export const api = {
   login: apiLogin,
   verifyOtp: apiVerifyOtp,
@@ -183,6 +446,7 @@ export const api = {
   searchUsers: apiSearchUsers,
   createPost: apiCreatePost,
   deletePost: apiDeletePost,
+  getPost: apiGetPost,
   feed: apiFeed,
   trending: apiTrending,
   userPosts: apiUserPosts,
@@ -196,6 +460,43 @@ export const api = {
   markNotificationRead: apiMarkNotificationRead,
   register: apiRegister,
   loginPassword: apiLoginPassword,
+  
+  // Social Media Features
+  likePost: apiLikePost,
+  unlikePost: apiUnlikePost,
+  getPostLikes: apiGetPostLikes,
+  getUserLikedPosts: apiGetUserLikedPosts,
+  hasLiked: apiHasLiked,
+  
+  followUser: apiFollowUser,
+  unfollowUser: apiUnfollowUser,
+  getFollowers: apiGetFollowers,
+  getFollowing: apiGetFollowing,
+  getPendingRequests: apiGetPendingRequests,
+  acceptFollowRequest: apiAcceptFollowRequest,
+  rejectFollowRequest: apiRejectFollowRequest,
+  isFollowing: apiIsFollowing,
+  getMutualFollowers: apiGetMutualFollowers,
+  
+  addComment: apiAddComment,
+  getComments: apiGetComments,
+  getCommentReplies: apiGetCommentReplies,
+  editComment: apiEditComment,
+  deleteComment: apiDeleteComment,
+  likeComment: apiLikeComment,
+  getUserComments: apiGetUserComments,
+  
+  sharePost: apiSharePost,
+  getPostShares: apiGetPostShares,
+  getUserShares: apiGetUserShares,
+  deleteShare: apiDeleteShare,
+  getShareStats: apiGetShareStats,
+  
+  getFeed: apiGetFeed,
+  getTrendingFeed: apiGetTrendingFeed,
+  getIndustryFeed: apiGetIndustryFeed,
+  getUserFeed: apiGetUserFeed,
+  invalidateFeed: apiInvalidateFeed,
 };
 
 export default api;
