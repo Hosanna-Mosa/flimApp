@@ -26,6 +26,9 @@ app.use(
   })
 );
 app.use(apiLogger);
+app.use(require('./middlewares/requestLogger.middleware'));
+
+app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
 
 app.use('/auth', authRoutes);
 app.use('/users', userRoutes);

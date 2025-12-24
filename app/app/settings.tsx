@@ -63,6 +63,7 @@ export default function SettingsScreen() {
                 styles.toggle,
                 { backgroundColor: isDark ? colors.primary : colors.surface },
               ]}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               onPress={() => changeTheme(isDark ? 'light' : 'dark')}
             >
               <View

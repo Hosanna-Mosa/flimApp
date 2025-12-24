@@ -105,6 +105,7 @@ export default function SearchScreen() {
           <TouchableOpacity
             style={[styles.filterButton, { backgroundColor: colors.primary }]}
             onPress={() => setShowFilters(true)}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <SlidersHorizontal size={20} color="#000000" />
           </TouchableOpacity>
@@ -177,7 +178,10 @@ export default function SearchScreen() {
                 <Text style={[styles.modalTitle, { color: colors.text }]}>
                   Filters
                 </Text>
-                <TouchableOpacity onPress={() => setShowFilters(false)}>
+                <TouchableOpacity 
+                  onPress={() => setShowFilters(false)}
+                  hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+                >
                   <X size={24} color={colors.text} />
                 </TouchableOpacity>
               </View>

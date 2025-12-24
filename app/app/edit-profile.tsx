@@ -98,6 +98,7 @@ export default function EditProfileScreen() {
                 styles.changeAvatarButton,
                 { backgroundColor: colors.primary },
               ]}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               onPress={handlePickImage}
             >
               <Camera size={20} color="#000000" />

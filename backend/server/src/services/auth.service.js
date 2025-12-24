@@ -8,6 +8,61 @@ const {
 
 const OTP_CODE = '123456';
 
+const register = async ({ name, phone, password, roles, industries }) => {
+  const existingUser = await User.findOne({ phone });
+  if (existingUser) {
+    const err = new Error('Phone number already registered');
+    err.status = 409;
+    throw err;
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+  // Auto-generate placeholder email since it is required by model but not asked in form
+  const email = `${phone}@placeholder.com`;
+
+  const user = await User.create({
+    name,
+    phone,
+    email,
+    password: hashedPassword,
+    roles,
+    industries,
+  });
+
+  const payload = { sub: user.id, roles: user.roles };
+  const accessToken = generateAccessToken(payload);
+  const refreshToken = generateRefreshToken(payload);
+  user.refreshTokens = [refreshToken];
+  await user.save();
+
+  return { user, accessToken, refreshToken };
+};
+
+const loginWithPassword = async ({ phone, password }) => {
+  const user = await User.findOne({ phone });
+  if (!user) {
+    const err = new Error('Invalid credentials');
+    err.status = 401;
+    throw err;
+  }
+
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    const err = new Error('Invalid credentials');
+    err.status = 401;
+    throw err;
+  }
+
+  user.lastLoginAt = new Date();
+  const payload = { sub: user.id, roles: user.roles };
+  const accessToken = generateAccessToken(payload);
+  const refreshToken = generateRefreshToken(payload);
+  user.refreshTokens = [refreshToken];
+  await user.save();
+
+  return { user, accessToken, refreshToken };
+};
+
 const login = async ({ identifier }) => {
   const user =
     (await User.findOne({ email: identifier })) ||
@@ -76,5 +131,5 @@ const logout = async (userId, token) => {
   await user.save();
 };
 
-module.exports = { login, verifyOtp, refresh, logout };
+module.exports = { login, verifyOtp, refresh, logout, register, loginWithPassword };
 

@@ -171,6 +171,7 @@ export default function UploadScreen() {
                   setMediaUri('');
                   setCaption('');
                 }}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <Text style={[styles.changeButton, { color: colors.primary }]}>
                   Change

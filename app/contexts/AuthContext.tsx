@@ -5,6 +5,8 @@ import { User, UserRole, Industry } from '@/types';
 
 interface AuthState {
   user: User | null;
+  token: string | null;
+  refreshToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   hasCompletedOnboarding: boolean;
@@ -13,6 +15,8 @@ interface AuthState {
 export const [AuthProvider, useAuth] = createContextHook(() => {
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
+    token: null,
+    refreshToken: null,
     isAuthenticated: false,
     isLoading: true,
     hasCompletedOnboarding: false,
@@ -25,14 +29,18 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   const loadAuthState = async () => {
     try {
       const userJson = await AsyncStorage.getItem('user');
+      const token = await AsyncStorage.getItem('token');
+      const refreshToken = await AsyncStorage.getItem('refreshToken');
       const onboardingComplete = await AsyncStorage.getItem(
         'onboarding_complete'
       );
 
-      if (userJson) {
+      if (userJson && token) {
         const user = JSON.parse(userJson);
         setAuthState({
           user,
+          token,
+          refreshToken,
           isAuthenticated: true,
           isLoading: false,
           hasCompletedOnboarding: onboardingComplete === 'true',
@@ -40,6 +48,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       } else {
         setAuthState({
           user: null,
+          token: null,
+          refreshToken: null,
           isAuthenticated: false,
           isLoading: false,
           hasCompletedOnboarding: false,
@@ -49,6 +59,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       console.error('Error loading auth state:', error);
       setAuthState({
         user: null,
+        token: null,
+        refreshToken: null,
         isAuthenticated: false,
         isLoading: false,
         hasCompletedOnboarding: false,
@@ -74,6 +86,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     await AsyncStorage.setItem('user', JSON.stringify(newUser));
     setAuthState({
       user: newUser,
+      token: 'mock-token',
+      refreshToken: 'mock-refresh-token',
       isAuthenticated: true,
       isLoading: false,
       hasCompletedOnboarding: false,
@@ -109,11 +123,38 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     setAuthState((prev) => ({ ...prev, user: updatedUser }));
   };
 
+  const setAuth = async (data: {
+    user: User;
+    token: string;
+    refreshToken: string;
+  }) => {
+    await AsyncStorage.setItem('user', JSON.stringify(data.user));
+    await AsyncStorage.setItem('token', data.token);
+    await AsyncStorage.setItem('refreshToken', data.refreshToken);
+    if (data.user.roles.length > 0 && data.user.industries.length > 0) {
+       await AsyncStorage.setItem('onboarding_complete', 'true');
+    }
+
+    setAuthState({
+      user: data.user,
+      token: data.token,
+      refreshToken: data.refreshToken,
+      isAuthenticated: true,
+      isLoading: false,
+      hasCompletedOnboarding:
+        data.user.roles.length > 0 && data.user.industries.length > 0,
+    });
+  };
+
   const logout = async () => {
     await AsyncStorage.removeItem('user');
+    await AsyncStorage.removeItem('token');
+    await AsyncStorage.removeItem('refreshToken');
     await AsyncStorage.removeItem('onboarding_complete');
     setAuthState({
       user: null,
+      token: null,
+      refreshToken: null,
       isAuthenticated: false,
       isLoading: false,
       hasCompletedOnboarding: false,
@@ -127,5 +168,6 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     updateUserRoles,
     updateUserIndustries,
     updateProfile,
+    setAuth,
   };
 });

@@ -59,7 +59,10 @@ export default function ProfileScreen() {
           headerStyle: { backgroundColor: colors.background },
           headerTintColor: colors.text,
           headerRight: () => (
-            <TouchableOpacity onPress={() => router.push('/edit-profile')}>
+            <TouchableOpacity 
+              onPress={() => router.push('/edit-profile')}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
               <Edit size={20} color={colors.text} />
             </TouchableOpacity>
           ),

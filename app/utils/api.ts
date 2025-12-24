@@ -2,7 +2,7 @@
 const API_BASE =
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ((globalThis as any)?.process?.env?.EXPO_PUBLIC_API_URL as string) ||
-  'http://localhost:8000';
+  'http://10.212.182.150:8000';
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
@@ -23,18 +23,29 @@ const request = async <T>(
   path: string,
   { method = 'GET', body, token, headers }: RequestOptions = {}
 ): Promise<T> => {
-  const res = await fetch(`${API_BASE}${path}`, {
-    method,
-    headers: buildHeaders(token, headers),
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  console.log(`[API Request] ${method} ${path}`, body ? JSON.stringify(body) : '');
+  
+  try {
+    const res = await fetch(`${API_BASE}${path}`, {
+      method,
+      headers: buildHeaders(token, headers),
+      body: body ? JSON.stringify(body) : undefined,
+    });
 
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    const message = (json && json.message) || res.statusText || 'Request failed';
-    throw new Error(message);
+    console.log(`[API Response Status] ${res.status} ${res.url}`);
+
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const message = (json && json.message) || res.statusText || 'Request failed';
+      console.error(`[API Error] ${res.status}: ${message}`);
+      throw new Error(message);
+    }
+    console.log(`[API Response Data]`, JSON.stringify(json.data ?? json, null, 2));
+    return json.data ?? json;
+  } catch (error) {
+    console.error(`[API Network Error] ${path}`, error);
+    throw error;
   }
-  return json.data ?? json;
 };
 
 // Auth
@@ -62,6 +73,24 @@ export const apiLogout = (refreshToken: string, token?: string) =>
     body: { refreshToken },
     token,
   });
+
+export const apiRegister = (payload: {
+  name: string;
+  phone: string;
+  password: string;
+  roles: string[];
+  industries: string[];
+}) =>
+  request<{ user: unknown; accessToken: string; refreshToken: string }>(
+    '/auth/register',
+    { method: 'POST', body: payload }
+  );
+
+export const apiLoginPassword = (payload: { phone: string; password: string }) =>
+  request<{ user: unknown; accessToken: string; refreshToken: string }>(
+    '/auth/login-password',
+    { method: 'POST', body: payload }
+  );
 
 // Users
 export const apiGetMe = (token?: string) => request('/users/me', { token });
@@ -165,6 +194,8 @@ export const api = {
   conversation: apiConversation,
   notifications: apiNotifications,
   markNotificationRead: apiMarkNotificationRead,
+  register: apiRegister,
+  loginPassword: apiLoginPassword,
 };
 
 export default api;
