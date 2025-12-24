@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "CinemaConnect: Film Network",
-    "slug": "cinemaconnect-film-network",
+    "name": "Filmy",
+    "slug": "filmy",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "app.rork.cinemaconnect-film-network",
+      "bundleIdentifier": "app.rork.filmy",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Allow $(PRODUCT_NAME) to access your photos",
         "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to access your camera",
@@ -27,7 +27,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "app.rork.cinemaconnect_film_network",
+      "package": "app.rork.filmy",
       "permissions": [
         "android.permission.VIBRATE",
         "CAMERA",
