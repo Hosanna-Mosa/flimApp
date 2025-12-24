@@ -7,7 +7,7 @@ const cloudinary = configureCloudinary();
 const uploadMedia = async (filePath) => {
   const upload = await cloudinary.uploader.upload(filePath, {
     resource_type: 'auto',
-    folder: 'film-network/posts',
+    folder: 'filmy/posts',
   });
   return { url: upload.secure_url, thumbnailUrl: upload.secure_url };
 };

@@ -19,7 +19,7 @@ import {
   Music,
   FileText,
   Flame,
-  Users,
+  Bell,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -31,6 +31,9 @@ export default function HomeScreen() {
   const { colors } = useTheme();
   const [posts, setPosts] = useState<Post[]>(mockPosts);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [following, setFollowing] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(mockPosts.map(({ user }) => [user.id, false]))
+  );
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -38,6 +41,10 @@ export default function HomeScreen() {
       setPosts([...mockPosts]);
       setRefreshing(false);
     }, 1000);
+  };
+
+  const toggleFollow = (userId: string) => {
+    setFollowing((prev) => ({ ...prev, [userId]: !prev[userId] }));
   };
 
   const handleLike = (postId: string) => {
@@ -74,7 +81,7 @@ export default function HomeScreen() {
       <Stack.Screen
         options={{
           headerShown: true,
-          headerTitle: 'FilmConnect',
+          headerTitle: 'Filmy',
           headerStyle: { backgroundColor: colors.background },
           headerTintColor: colors.text,
           headerRight: () => (
@@ -82,8 +89,8 @@ export default function HomeScreen() {
               <TouchableOpacity onPress={() => router.push('/trending')}>
                 <Flame size={24} color={colors.text} />
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => router.push('/communities')}>
-                <Users size={24} color={colors.text} />
+              <TouchableOpacity onPress={() => router.push('/notifications')}>
+                <Bell size={24} color={colors.text} />
               </TouchableOpacity>
               <TouchableOpacity onPress={() => router.push('/messages')}>
                 <MessageCircle size={24} color={colors.text} />
@@ -125,6 +132,31 @@ export default function HomeScreen() {
                   {post.user.roles.slice(0, 2).join(' • ')}
                 </Text>
               </View>
+              <TouchableOpacity
+                style={[
+                  styles.followButton,
+                  {
+                    backgroundColor: following[post.user.id]
+                      ? `${colors.primary}20`
+                      : colors.primary,
+                    borderColor: following[post.user.id]
+                      ? colors.primary
+                      : 'transparent',
+                  },
+                ]}
+                onPress={() => toggleFollow(post.user.id)}
+              >
+                <Text
+                  style={[
+                    styles.followButtonText,
+                    {
+                      color: following[post.user.id] ? colors.primary : '#fff',
+                    },
+                  ]}
+                >
+                  {following[post.user.id] ? 'Following' : 'Follow'}
+                </Text>
+              </TouchableOpacity>
               <View
                 style={[
                   styles.mediaBadge,
@@ -244,6 +276,16 @@ const styles = StyleSheet.create({
   role: {
     fontSize: 12,
     textTransform: 'capitalize',
+  },
+  followButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  followButtonText: {
+    fontSize: 12,
+    fontWeight: '700' as const,
   },
   mediaBadge: {
     padding: 8,

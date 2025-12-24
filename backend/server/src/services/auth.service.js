@@ -34,7 +34,7 @@ const verifyOtp = async ({ identifier, otp }) => {
     const hashed = await bcrypt.hash(identifier, 10);
     user = await User.create({
       name: 'New User',
-      email: identifier.includes('@') ? identifier : `${identifier}@film.app`,
+      email: identifier.includes('@') ? identifier : `${identifier}@filmy.app`,
       phone: identifier,
       password: hashed,
       roles: ['actor'],
