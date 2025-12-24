@@ -33,3 +33,10 @@
 2025-12-24T10:39:47.553Z [info]: Incoming Request: POST /auth/login-password
 2025-12-24T10:39:47.554Z [info]: Request Body: {"phone":"9876543210","password":"***"}
 2025-12-24T10:39:47.839Z [info]: 10.212.182.239 POST /auth/login-password 200 286.046 ms - 1062
+2025-12-24T08:59:56.162Z [error]: MongoDB connection error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
+2025-12-24T09:09:09.993Z [info]: MongoDB connected
+2025-12-24T09:09:10.029Z [info]: Server running on port 8000
+2025-12-24T09:09:47.879Z [info]: MongoDB connected
+2025-12-24T09:09:47.890Z [info]: Server running on port 8000
+2025-12-24T09:15:47.394Z [info]: MongoDB connected
+2025-12-24T09:15:47.402Z [info]: Server running on port 8000
