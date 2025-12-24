@@ -23,6 +23,7 @@ import {
   Plus,
   Check,
   BadgeCheck,
+  Users,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -100,6 +101,7 @@ export default function HomeScreen() {
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <Users size={24} color={colors.text} />
+              </TouchableOpacity>
               <TouchableOpacity onPress={() => router.push('/notifications')}>
                 <Bell size={24} color={colors.text} />
               </TouchableOpacity>
