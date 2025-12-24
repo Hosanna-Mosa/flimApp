@@ -3,8 +3,8 @@ const logger = require('./logger');
 
 const connectDB = async (uri) => {
   try {
-    await mongoose.connect(uri);
-    logger.info('MongoDB connected');
+    const dbcon = await mongoose.connect(uri);
+    logger.info(`MongoDB connected :${dbcon.connection.host}`);
   } catch (err) {
     logger.error(`MongoDB connection error: ${err.message}`);
     process.exit(1);

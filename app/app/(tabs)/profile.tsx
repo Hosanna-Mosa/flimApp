@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
@@ -17,26 +19,107 @@ import {
   Music,
   FileText,
   Image as ImageIcon,
+  BadgeCheck,
 } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { mockPosts } from '@/mocks/posts';
+import api from '@/utils/api';
 import { ContentType } from '@/types';
+
+interface UserPost {
+  _id: string;
+  type: ContentType;
+  mediaUrl: string;
+  thumbnailUrl?: string;
+  caption?: string;
+}
+
+interface UserStats {
+  followersCount: number;
+  followingCount: number;
+  postsCount: number;
+}
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { user } = useAuth();
-  const [selectedFilter, setSelectedFilter] = useState<ContentType | 'all'>(
-    'all'
-  );
+  const { user, token } = useAuth();
+  const [selectedFilter, setSelectedFilter] = useState<ContentType | 'all'>('all');
+  const [posts, setPosts] = useState<UserPost[]>([]);
+  const [stats, setStats] = useState<UserStats>({ followersCount: 0, followingCount: 0, postsCount: 0 });
+  const [loading, setLoading] = useState(true);
 
-  const userPosts = mockPosts.filter((post) => post.userId === user?.id);
+  useEffect(() => {
+    if (user && token) {
+      loadUserData();
+    }
+  }, [user, token]);
 
-  const filteredPosts =
-    selectedFilter === 'all'
-      ? userPosts
-      : userPosts.filter((post) => post.type === selectedFilter);
+  const loadUserData = async () => {
+    try {
+      setLoading(true);
+      
+      // Get user ID - try multiple sources
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const userId = (user as any)?._id || (user as any)?.id || user?.id;
+      
+      if (!userId) {
+        console.error('[Profile] No user ID found');
+        setLoading(false);
+        return;
+      }
+
+      console.log('[Profile] Loading data for user:', userId);
+      
+      // Fetch user data and posts
+      const [userData, postsData] = await Promise.all([
+        api.user(userId, token).catch(err => {
+          console.error('[Profile] Error fetching user:', err);
+          return null;
+        }),
+        api.getUserFeed(userId, 0, 100, token).catch(err => {
+          console.error('[Profile] Error fetching posts:', err);
+          return { data: [] };
+        }),
+      ]);
+      
+      console.log('[Profile] User data:', userData);
+      console.log('[Profile] Posts data:', postsData);
+      
+      // Update stats if available
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const userInfo = userData as any;
+      if (userInfo?.stats) {
+        console.log('[Profile] Setting stats:', userInfo.stats);
+        setStats(userInfo.stats);
+      } else {
+        console.log('[Profile] No stats in user data, using defaults');
+      }
+      
+      // Update posts
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const postsArray = (postsData as any)?.data || [];
+      console.log('[Profile] Setting posts:', postsArray.length);
+      setPosts(postsArray);
+      
+      // If no stats from API, use post count
+      if (!userInfo?.stats) {
+        setStats(prev => ({
+          ...prev,
+          postsCount: postsArray.length,
+        }));
+      }
+    } catch (error) {
+      console.error('[Profile] Error loading:', error);
+      Alert.alert('Error', 'Failed to load profile data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredPosts = selectedFilter === 'all'
+    ? posts
+    : posts.filter((post) => post.type === selectedFilter);
 
   const filters = [
     { id: 'all' as const, label: 'All', icon: Grid3x3 },
@@ -78,11 +161,16 @@ export default function ProfileScreen() {
             style={styles.avatar}
             contentFit="cover"
           />
-          <Text style={[styles.name, { color: colors.text }]}>
-            {user.name || 'Your Name'}
-          </Text>
+          <View style={styles.nameContainer}>
+            <Text style={[styles.name, { color: colors.text }]}>
+              {user.name || 'Your Name'}
+            </Text>
+            {user.isVerified && (
+              <BadgeCheck size={24} color={colors.primary} fill="transparent" />
+            )}
+          </View>
           <View style={styles.rolesContainer}>
-            {user.roles.map((role, idx) => (
+            {user.roles?.map((role, idx) => (
               <View
                 key={idx}
                 style={[styles.roleBadge, { backgroundColor: colors.surface }]}
@@ -108,7 +196,7 @@ export default function ProfileScreen() {
                 </Text>
               </View>
             )}
-            {user.experience > 0 && (
+            {user.experience && user.experience > 0 && (
               <View style={styles.infoRow}>
                 <Briefcase size={16} color={colors.textSecondary} />
                 <Text
@@ -123,7 +211,7 @@ export default function ProfileScreen() {
           <View style={styles.stats}>
             <View style={styles.stat}>
               <Text style={[styles.statValue, { color: colors.text }]}>
-                {userPosts.length}
+                {loading ? '-' : stats.postsCount || posts.length}
               </Text>
               <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
                 Posts
@@ -134,7 +222,7 @@ export default function ProfileScreen() {
             />
             <View style={styles.stat}>
               <Text style={[styles.statValue, { color: colors.text }]}>
-                1.2K
+                {loading ? '-' : stats.followersCount || 0}
               </Text>
               <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
                 Followers
@@ -145,7 +233,7 @@ export default function ProfileScreen() {
             />
             <View style={styles.stat}>
               <Text style={[styles.statValue, { color: colors.text }]}>
-                340
+                {loading ? '-' : stats.followingCount || 0}
               </Text>
               <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
                 Following
@@ -197,22 +285,32 @@ export default function ProfileScreen() {
           </ScrollView>
         </View>
 
-        <View style={styles.portfolio}>
-          {filteredPosts.map((post) => (
-            <View key={post.id} style={styles.portfolioItem}>
-              <Image
-                source={{ uri: post.thumbnailUrl || post.mediaUrl }}
-                style={styles.portfolioImage}
-                contentFit="cover"
-              />
-            </View>
-          ))}
-          {filteredPosts.length === 0 && (
-            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-              No {selectedFilter === 'all' ? 'posts' : selectedFilter} yet
-            </Text>
-          )}
-        </View>
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={colors.primary} />
+          </View>
+        ) : (
+          <View style={styles.portfolio}>
+            {filteredPosts.map((post) => (
+              <TouchableOpacity
+                key={post._id}
+                style={styles.portfolioItem}
+                onPress={() => router.push(`/post/${post._id}`)}
+              >
+                <Image
+                  source={{ uri: post.thumbnailUrl || post.mediaUrl }}
+                  style={styles.portfolioImage}
+                  contentFit="cover"
+                />
+              </TouchableOpacity>
+            ))}
+            {filteredPosts.length === 0 && (
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                No {selectedFilter === 'all' ? 'posts' : selectedFilter} yet
+              </Text>
+            )}
+          </View>
+        )}
       </ScrollView>
     </>
   );
@@ -221,6 +319,10 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  loadingContainer: {
+    padding: 40,
+    alignItems: 'center',
   },
   header: {
     padding: 20,
@@ -232,10 +334,15 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     marginBottom: 16,
   },
+  nameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
   name: {
     fontSize: 24,
-    fontWeight: '700' as const,
-    marginBottom: 8,
+    fontWeight: '700',
   },
   rolesContainer: {
     flexDirection: 'row',
@@ -251,7 +358,7 @@ const styles = StyleSheet.create({
   },
   roleText: {
     fontSize: 12,
-    fontWeight: '600' as const,
+    fontWeight: '600',
     textTransform: 'capitalize',
   },
   bio: {
@@ -284,7 +391,7 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 20,
-    fontWeight: '700' as const,
+    fontWeight: '700',
   },
   statLabel: {
     fontSize: 12,
@@ -308,7 +415,7 @@ const styles = StyleSheet.create({
   },
   filterText: {
     fontSize: 14,
-    fontWeight: '600' as const,
+    fontWeight: '600',
   },
   portfolio: {
     padding: 2,
@@ -329,5 +436,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     padding: 40,
     fontSize: 14,
+    width: '100%',
   },
 });

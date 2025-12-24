@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
     StyleSheet,
     ScrollView,
     TouchableOpacity,
+    ActivityIndicator,
+    Alert,
 } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
@@ -20,23 +22,149 @@ import {
     Plus,
     BadgeCheck,
 } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/contexts/ThemeContext';
-import { mockPosts, mockUsers } from '@/mocks/posts';
+import { useAuth } from '@/contexts/AuthContext';
+import api from '@/utils/api';
 import { ContentType } from '@/types';
 
+interface UserProfile {
+    _id: string;
+    name: string;
+    avatar: string;
+    bio?: string;
+    roles: string[];
+    industries?: string[];
+    location?: string;
+    experience?: number;
+    isVerified: boolean;
+    stats: {
+        followersCount: number;
+        followingCount: number;
+        postsCount: number;
+    };
+}
+
+interface UserPost {
+    _id: string;
+    type: ContentType;
+    mediaUrl: string;
+    thumbnailUrl?: string;
+    caption?: string;
+}
+
 export default function PublicProfileScreen() {
-    const { id } = useLocalSearchParams();
+    const { id } = useLocalSearchParams<{ id: string }>();
     const { colors } = useTheme();
+    const { token } = useAuth();
+    const router = useRouter();
+    
     const [selectedFilter, setSelectedFilter] = useState<ContentType | 'all'>('all');
     const [isFollowing, setIsFollowing] = useState(false);
+    const [user, setUser] = useState<UserProfile | null>(null);
+    const [posts, setPosts] = useState<UserPost[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const user = mockUsers.find((u) => u.id === id);
-    const userPosts = mockPosts.filter((post) => post.userId === id);
+    useEffect(() => {
+        if (id && token) {
+            loadUserProfile();
+        }
+    }, [id, token]);
 
-    const filteredPosts =
-        selectedFilter === 'all'
-            ? userPosts
-            : userPosts.filter((post) => post.type === selectedFilter);
+    const loadUserProfile = async () => {
+        try {
+            setLoading(true);
+            const [userData, postsData] = await Promise.all([
+                api.user(id, token),
+                api.getUserFeed(id, 0, 100, token),
+            ]);
+            
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            setUser(userData as any);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            setPosts((postsData as any).data || []);
+            
+            // Check if already following
+            try {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const followStatus: any = await api.isFollowing(id, token);
+                console.log('[UserProfile] Follow status response:', JSON.stringify(followStatus));
+                // Handle both {following: true} and {data: {following: true}} formats
+                const isFollowingValue = followStatus?.following ?? followStatus?.data?.following ?? false;
+                console.log('[UserProfile] Is following:', isFollowingValue);
+                setIsFollowing(isFollowingValue === true);
+            } catch (followError) {
+                console.error('[UserProfile] Error checking follow status:', followError);
+                setIsFollowing(false);
+            }
+        } catch (error) {
+            console.error('[UserProfile] Error loading:', error);
+            Alert.alert('Error', 'Failed to load user profile');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const toggleFollow = async () => {
+        if (!user) return;
+        
+        try {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            
+            const wasFollowing = isFollowing;
+            setIsFollowing(!wasFollowing);
+
+            // Optimistically update follower count
+            setUser({
+                ...user,
+                stats: {
+                    ...user.stats,
+                    followersCount: wasFollowing 
+                        ? user.stats.followersCount - 1 
+                        : user.stats.followersCount + 1,
+                },
+            });
+
+            if (wasFollowing) {
+                await api.unfollowUser(id, token);
+            } else {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const result: any = await api.followUser(id, token);
+                if (result.status === 'pending') {
+                    Alert.alert('Follow Request Sent', 'This account is private. Your request is pending.');
+                    // Revert if pending
+                    setIsFollowing(false);
+                    setUser({
+                        ...user,
+                        stats: {
+                            ...user.stats,
+                            followersCount: user.stats.followersCount - 1,
+                        },
+                    });
+                }
+            }
+        } catch (error) {
+            // Revert on error
+            setIsFollowing(!isFollowing);
+            if (user) {
+                setUser({
+                    ...user,
+                    stats: {
+                        ...user.stats,
+                        followersCount: isFollowing 
+                            ? user.stats.followersCount + 1 
+                            : user.stats.followersCount - 1,
+                    },
+                });
+            }
+            console.error('[UserProfile] Follow error:', error);
+            Alert.alert('Error', 'Failed to update follow status');
+        }
+    };
+
+    const filteredPosts = selectedFilter === 'all'
+        ? posts
+        : posts.filter((post) => post.type === selectedFilter);
 
     const filters = [
         { id: 'all' as const, label: 'All', icon: Grid3x3 },
@@ -46,17 +174,41 @@ export default function PublicProfileScreen() {
         { id: 'script' as ContentType, label: 'Scripts', icon: FileText },
     ];
 
-    if (!user) {
+    if (loading) {
         return (
-            <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
-                <Text style={{ color: colors.text }}>User not found</Text>
+            <View style={[styles.container, { backgroundColor: colors.background }]}>
+                <Stack.Screen
+                    options={{
+                        headerShown: true,
+                        headerTitle: 'Profile',
+                        headerStyle: { backgroundColor: colors.background },
+                        headerTintColor: colors.text,
+                    }}
+                />
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={colors.primary} />
+                </View>
             </View>
         );
     }
 
-    const toggleFollow = () => {
-        setIsFollowing((prev) => !prev);
-    };
+    if (!user) {
+        return (
+            <View style={[styles.container, { backgroundColor: colors.background }]}>
+                <Stack.Screen
+                    options={{
+                        headerShown: true,
+                        headerTitle: 'Profile',
+                        headerStyle: { backgroundColor: colors.background },
+                        headerTintColor: colors.text,
+                    }}
+                />
+                <View style={styles.loadingContainer}>
+                    <Text style={{ color: colors.text }}>User not found</Text>
+                </View>
+            </View>
+        );
+    }
 
     return (
         <>
@@ -114,7 +266,7 @@ export default function PublicProfileScreen() {
                                 </Text>
                             </View>
                         )}
-                        {user.experience > 0 && (
+                        {user.experience && user.experience > 0 && (
                             <View style={styles.infoRow}>
                                 <Briefcase size={16} color={colors.textSecondary} />
                                 <Text
@@ -149,7 +301,7 @@ export default function PublicProfileScreen() {
                     <View style={styles.stats}>
                         <View style={styles.stat}>
                             <Text style={[styles.statValue, { color: colors.text }]}>
-                                {userPosts.length}
+                                {user.stats.postsCount || posts.length}
                             </Text>
                             <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
                                 Posts
@@ -160,7 +312,7 @@ export default function PublicProfileScreen() {
                         />
                         <View style={styles.stat}>
                             <Text style={[styles.statValue, { color: colors.text }]}>
-                                1.2K
+                                {user.stats.followersCount || 0}
                             </Text>
                             <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
                                 Followers
@@ -171,7 +323,7 @@ export default function PublicProfileScreen() {
                         />
                         <View style={styles.stat}>
                             <Text style={[styles.statValue, { color: colors.text }]}>
-                                340
+                                {user.stats.followingCount || 0}
                             </Text>
                             <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
                                 Following
@@ -225,13 +377,17 @@ export default function PublicProfileScreen() {
 
                 <View style={styles.portfolio}>
                     {filteredPosts.map((post) => (
-                        <View key={post.id} style={styles.portfolioItem}>
+                        <TouchableOpacity
+                            key={post._id}
+                            style={styles.portfolioItem}
+                            onPress={() => router.push(`/post/${post._id}`)}
+                        >
                             <Image
                                 source={{ uri: post.thumbnailUrl || post.mediaUrl }}
                                 style={styles.portfolioImage}
                                 contentFit="cover"
                             />
-                        </View>
+                        </TouchableOpacity>
                     ))}
                     {filteredPosts.length === 0 && (
                         <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
@@ -247,6 +403,11 @@ export default function PublicProfileScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     header: {
         padding: 20,
@@ -266,7 +427,7 @@ const styles = StyleSheet.create({
     },
     name: {
         fontSize: 24,
-        fontWeight: '700' as const,
+        fontWeight: '700',
     },
     rolesContainer: {
         flexDirection: 'row',
@@ -282,7 +443,7 @@ const styles = StyleSheet.create({
     },
     roleText: {
         fontSize: 12,
-        fontWeight: '600' as const,
+        fontWeight: '600',
         textTransform: 'capitalize',
     },
     bio: {
@@ -315,7 +476,7 @@ const styles = StyleSheet.create({
     },
     followButtonText: {
         fontSize: 16,
-        fontWeight: '600' as const,
+        fontWeight: '600',
     },
     stats: {
         flexDirection: 'row',
@@ -329,7 +490,7 @@ const styles = StyleSheet.create({
     },
     statValue: {
         fontSize: 20,
-        fontWeight: '700' as const,
+        fontWeight: '700',
     },
     statLabel: {
         fontSize: 12,
@@ -353,7 +514,7 @@ const styles = StyleSheet.create({
     },
     filterText: {
         fontSize: 14,
-        fontWeight: '600' as const,
+        fontWeight: '600',
     },
     portfolio: {
         padding: 2,
@@ -374,5 +535,6 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         padding: 40,
         fontSize: 14,
+        width: '100%',
     },
 });

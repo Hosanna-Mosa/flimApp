@@ -39,14 +39,35 @@ const register = async ({ name, phone, password, roles, industries }) => {
 };
 
 const loginWithPassword = async ({ phone, password }) => {
+  console.log('[Auth Debug] Looking for user with phone:', phone);
+  
+  // Try to find all users to debug
+  const allUsers = await User.find({}).select('phone email name');
+  console.log('[Auth Debug] All users in DB:', allUsers.map(u => ({ 
+    phone: u.phone, 
+    email: u.email, 
+    name: u.name 
+  })));
+  
   const user = await User.findOne({ phone });
+  console.log('[Auth Debug] User found:', user ? { 
+    id: user._id, 
+    phone: user.phone, 
+    email: user.email,
+    name: user.name,
+    hasPassword: !!user.password 
+  } : 'NO USER FOUND');
+  
   if (!user) {
     const err = new Error('Invalid credentials');
     err.status = 401;
     throw err;
   }
 
+  console.log('[Auth Debug] Comparing passwords...');
   const isMatch = await bcrypt.compare(password, user.password);
+  console.log('[Auth Debug] Password match:', isMatch);
+  
   if (!isMatch) {
     const err = new Error('Invalid credentials');
     err.status = 401;

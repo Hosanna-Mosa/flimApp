@@ -11,6 +11,11 @@ const postRoutes = require('./routes/post.routes');
 const communityRoutes = require('./routes/community.routes');
 const messageRoutes = require('./routes/message.routes');
 const notificationRoutes = require('./routes/notification.routes');
+const likeRoutes = require('./routes/like.routes');
+const followRoutes = require('./routes/follow.routes');
+const commentRoutes = require('./routes/comment.routes');
+const shareRoutes = require('./routes/share.routes');
+const feedRoutes = require('./routes/feed.routes');
 
 const app = express();
 
@@ -36,6 +41,11 @@ app.use('/posts', postRoutes);
 app.use('/communities', communityRoutes);
 app.use('/messages', messageRoutes);
 app.use('/notifications', notificationRoutes);
+app.use('/api', likeRoutes);         // /api/posts/:id/like, etc.
+app.use('/api', followRoutes);       // /api/users/:id/follow, etc.
+app.use('/api', commentRoutes);      // /api/posts/:id/comments, etc.
+app.use('/api', shareRoutes);        // /api/posts/:id/share, etc.
+app.use('/api/feed', feedRoutes);    // /api/feed, /api/feed/trending, etc.
 
 app.use((req, res) => res.status(404).json({ success: false, message: 'Not found' }));
 app.use(errorHandler);
