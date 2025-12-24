@@ -100,6 +100,7 @@ export default function SearchScreen() {
             onChangeText={setSearchQuery}
             onSubmitEditing={handleSearch}
             style={styles.searchInput}
+            containerStyle={styles.searchInputContainer}
           />
           <TouchableOpacity
             style={[styles.filterButton, { backgroundColor: colors.primary }]}
@@ -245,9 +246,15 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     padding: 16,
-    gap: 12,
+    gap: 8,
+    alignItems: 'center',
   },
   searchInput: {
+    flex: 1,
+    marginBottom: 0,
+    height: 48,
+  },
+  searchInputContainer: {
     flex: 1,
     marginBottom: 0,
   },
