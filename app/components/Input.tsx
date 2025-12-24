@@ -11,13 +11,20 @@ import { useTheme } from '@/contexts/ThemeContext';
 interface InputProps extends TextInputProps {
   label?: string;
   error?: string;
+  containerStyle?: object;
 }
 
-export default function Input({ label, error, style, ...props }: InputProps) {
+export default function Input({
+  label,
+  error,
+  style,
+  containerStyle,
+  ...props
+}: InputProps) {
   const { colors } = useTheme();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, containerStyle]}>
       {label && (
         <Text style={[styles.label, { color: colors.text }]}>{label}</Text>
       )}
