@@ -27,6 +27,7 @@ const createNotification = async ({ user, title, body, type, metadata }) => {
 const markAllAsRead = async (userId) =>
   Notification.updateMany({ user: userId, isRead: false }, { isRead: true });
 
-module.exports = {registerPushToken , listNotifications, markRead, createNotification, markAllAsRead };
+module.exports = {registerPushToken , sendPushNotifications ,listNotifications, markRead, createNotification, markAllAsRead };
+
 
 
