@@ -3237,3 +3237,414 @@
 2025-12-25T10:41:38.167Z [info]: 192.168.1.2 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 200 301ms
 2025-12-25T10:41:38.255Z [info]: 192.168.1.2 GET /notifications 200 384.818 ms - 1115
 2025-12-25T10:41:38.255Z [info]: 192.168.1.2 GET /notifications 200 385ms
+2025-12-25T06:56:45.336Z [info]: Redis client connected
+2025-12-25T06:56:45.345Z [info]: Redis client ready
+2025-12-25T06:56:46.054Z [info]: MongoDB connected :ac-1ks08uk-shard-00-00.tv8wnu0.mongodb.net
+2025-12-25T06:56:46.058Z [info]: Redis connected successfully
+2025-12-25T06:56:46.060Z [info]: Queue processors initialized successfully
+2025-12-25T06:56:46.060Z [info]: Queue processors initialized
+2025-12-25T06:56:46.068Z [info]: Server running on port 8001
+2025-12-25T07:34:40.913Z [info]: Processing feed update: 694bf3370ba331dae78eb86b
+2025-12-25T07:34:41.155Z [info]: Feed regenerated for user 694bf3370ba331dae78eb86b (6 posts)
+2025-12-25T07:34:41.159Z [info]: Feed job 26 completed: {"success":true,"userId":"694bf3370ba331dae78eb86b"}
+2025-12-25T07:34:59.852Z [info]: Processing feed update: 694bf3370ba331dae78eb86b
+2025-12-25T07:35:00.054Z [info]: Feed regenerated for user 694bf3370ba331dae78eb86b (6 posts)
+2025-12-25T07:35:00.055Z [info]: Feed job 27 completed: {"success":true,"userId":"694bf3370ba331dae78eb86b"}
+2025-12-25T07:56:32.967Z [info]: Redis client connected
+2025-12-25T07:56:32.977Z [info]: Redis client ready
+2025-12-25T07:56:33.576Z [info]: MongoDB connected :ac-1ks08uk-shard-00-00.tv8wnu0.mongodb.net
+2025-12-25T07:56:33.577Z [info]: Redis connected successfully
+2025-12-25T07:56:33.578Z [info]: Queue processors initialized successfully
+2025-12-25T07:56:33.578Z [info]: Queue processors initialized
+2025-12-25T07:56:33.582Z [info]: Server running on port 8001
+2025-12-25T08:03:50.497Z [info]: Redis client connected
+2025-12-25T08:03:50.507Z [info]: Redis client ready
+2025-12-25T08:03:51.241Z [info]: MongoDB connected :ac-1ks08uk-shard-00-00.tv8wnu0.mongodb.net
+2025-12-25T08:03:51.243Z [info]: Redis connected successfully
+2025-12-25T08:03:51.244Z [info]: Queue processors initialized successfully
+2025-12-25T08:03:51.244Z [info]: Queue processors initialized
+2025-12-25T08:03:51.248Z [info]: Server running on port 8001
+2025-12-25T08:04:02.623Z [info]: Redis client connected
+2025-12-25T08:04:02.640Z [info]: Redis client ready
+2025-12-25T08:04:03.102Z [info]: MongoDB connected :ac-1ks08uk-shard-00-00.tv8wnu0.mongodb.net
+2025-12-25T08:04:03.105Z [info]: Redis connected successfully
+2025-12-25T08:04:03.106Z [info]: Queue processors initialized successfully
+2025-12-25T08:04:03.106Z [info]: Queue processors initialized
+2025-12-25T08:04:03.109Z [info]: Server running on port 8001
+2025-12-25T08:14:45.823Z [info]: Processing notification: comment for user 694bf3370ba331dae78eb86b
+2025-12-25T08:14:45.827Z [info]: Notification sent: {"userId":"694bf3370ba331dae78eb86b","type":"comment","actorId":"694bf3370ba331dae78eb86a","postId":"694bf339f50f67ad5c6329b9","commentId":"694cf2758b6af1820a01bcbe"}
+2025-12-25T08:14:45.841Z [info]: Notification job 5 completed: {"success":true,"userId":"694bf3370ba331dae78eb86b","type":"comment","actorId":"694bf3370ba331dae78eb86a","postId":"694bf339f50f67ad5c6329b9","commentId":"694cf2758b6af1820a01bcbe"}
+2025-12-25T08:19:01.650Z [info]: Redis client connected
+2025-12-25T08:19:01.699Z [info]: Redis client ready
+2025-12-25T08:19:02.317Z [info]: MongoDB connected :ac-1ks08uk-shard-00-00.tv8wnu0.mongodb.net
+2025-12-25T08:19:02.335Z [info]: Redis connected successfully
+2025-12-25T08:19:02.337Z [info]: Queue processors initialized successfully
+2025-12-25T08:19:02.338Z [info]: Queue processors initialized
+2025-12-25T08:19:02.345Z [info]: Server running on port 8001
+2025-12-25T08:33:55.150Z [info]: Redis client connected
+2025-12-25T08:33:55.157Z [info]: Redis client ready
+2025-12-25T08:33:55.835Z [info]: MongoDB connected :ac-1ks08uk-shard-00-00.tv8wnu0.mongodb.net
+2025-12-25T08:33:55.837Z [info]: Redis connected successfully
+2025-12-25T08:33:55.838Z [info]: Queue processors initialized successfully
+2025-12-25T08:33:55.838Z [info]: Queue processors initialized
+2025-12-25T08:33:55.843Z [info]: Server running on port 8001
+2025-12-25T08:46:23.010Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T08:46:23.014Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000
+2025-12-25T08:46:23.041Z [info]: Request Query: {"page":"0","limit":"20","algorithm":"hybrid","timeRange":"7"}
+2025-12-25T08:46:23.042Z [info]: Incoming Request: GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7
+2025-12-25T08:46:23.170Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 200 165.534 ms - 703
+2025-12-25T08:46:23.171Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 200 166ms
+2025-12-25T08:46:23.172Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T08:46:23.172Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000
+2025-12-25T08:46:23.216Z [info]: 192.168.1.3 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 200 174.490 ms - 4651
+2025-12-25T08:46:23.216Z [info]: 192.168.1.3 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 200 175ms
+2025-12-25T08:46:23.292Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 119.751 ms - -
+2025-12-25T08:46:23.292Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 120ms
+2025-12-25T08:48:03.211Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T08:48:03.212Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000
+2025-12-25T08:48:03.219Z [info]: Request Query: {"page":"0","limit":"20","algorithm":"hybrid","timeRange":"7"}
+2025-12-25T08:48:03.219Z [info]: Incoming Request: GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7
+2025-12-25T08:48:03.344Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 132.795 ms - -
+2025-12-25T08:48:03.344Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 133ms
+2025-12-25T08:48:03.346Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T08:48:03.347Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000
+2025-12-25T08:48:03.469Z [info]: 192.168.1.3 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 200 249.847 ms - 4893
+2025-12-25T08:48:03.470Z [info]: 192.168.1.3 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 200 250ms
+2025-12-25T08:48:03.471Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 124.546 ms - -
+2025-12-25T08:48:03.471Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 125ms
+2025-12-25T08:52:58.811Z [info]: Redis client connected
+2025-12-25T08:52:58.822Z [info]: Redis client ready
+2025-12-25T08:52:59.443Z [info]: MongoDB connected :ac-1ks08uk-shard-00-00.tv8wnu0.mongodb.net
+2025-12-25T08:52:59.446Z [info]: Redis connected successfully
+2025-12-25T08:52:59.448Z [info]: Queue processors initialized successfully
+2025-12-25T08:52:59.448Z [info]: Queue processors initialized
+2025-12-25T08:52:59.453Z [info]: Server running on port 8001
+2025-12-25T08:53:07.500Z [info]: Redis client connected
+2025-12-25T08:53:07.505Z [info]: Redis client ready
+2025-12-25T08:53:07.971Z [info]: MongoDB connected :ac-1ks08uk-shard-00-00.tv8wnu0.mongodb.net
+2025-12-25T08:53:07.973Z [info]: Redis connected successfully
+2025-12-25T08:53:07.974Z [info]: Queue processors initialized successfully
+2025-12-25T08:53:07.974Z [info]: Queue processors initialized
+2025-12-25T08:53:07.977Z [info]: Server running on port 8001
+2025-12-25T08:53:16.065Z [info]: Redis client connected
+2025-12-25T08:53:16.068Z [info]: Redis client ready
+2025-12-25T08:53:16.517Z [info]: MongoDB connected :ac-1ks08uk-shard-00-00.tv8wnu0.mongodb.net
+2025-12-25T08:53:16.521Z [info]: Redis connected successfully
+2025-12-25T08:53:16.523Z [info]: Queue processors initialized successfully
+2025-12-25T08:53:16.523Z [info]: Queue processors initialized
+2025-12-25T08:53:16.530Z [info]: Server running on port 8001
+2025-12-25T08:53:26.218Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T08:53:26.218Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000
+2025-12-25T08:53:26.223Z [info]: Request Query: {"page":"0","limit":"20","algorithm":"hybrid","timeRange":"7"}
+2025-12-25T08:53:26.223Z [info]: Incoming Request: GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7
+2025-12-25T08:53:26.342Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 125.493 ms - -
+2025-12-25T08:53:26.343Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 126ms
+2025-12-25T08:53:26.344Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T08:53:26.344Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000
+2025-12-25T08:53:26.452Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 108.097 ms - -
+2025-12-25T08:53:26.452Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 108ms
+2025-12-25T08:53:26.454Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T08:53:26.454Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000
+2025-12-25T08:53:26.495Z [info]: 192.168.1.3 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 200 271.498 ms - 4892
+2025-12-25T08:53:26.495Z [info]: 192.168.1.3 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 200 272ms
+2025-12-25T08:53:26.496Z [info]: Request Query: {"page":"0","limit":"20","algorithm":"hybrid","timeRange":"7"}
+2025-12-25T08:53:26.496Z [info]: Incoming Request: GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7
+2025-12-25T08:53:26.563Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 109.037 ms - -
+2025-12-25T08:53:26.563Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 110ms
+2025-12-25T08:53:26.564Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T08:53:26.564Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000
+2025-12-25T08:53:26.671Z [info]: 192.168.1.3 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 200 174.907 ms - 4651
+2025-12-25T08:53:26.672Z [info]: 192.168.1.3 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 200 176ms
+2025-12-25T08:53:26.673Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 108.822 ms - -
+2025-12-25T08:53:26.673Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 109ms
+2025-12-25T08:53:36.176Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T08:53:36.176Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000
+2025-12-25T08:53:36.180Z [info]: Request Query: {"page":"0","limit":"20","algorithm":"hybrid","timeRange":"7"}
+2025-12-25T08:53:36.180Z [info]: Incoming Request: GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7
+2025-12-25T08:53:36.284Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 108.592 ms - -
+2025-12-25T08:53:36.285Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 109ms
+2025-12-25T08:53:36.285Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T08:53:36.286Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000
+2025-12-25T08:53:36.354Z [info]: 192.168.1.3 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 304 173.912 ms - -
+2025-12-25T08:53:36.354Z [info]: 192.168.1.3 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 304 174ms
+2025-12-25T08:53:36.356Z [info]: Request Query: {"page":"0","limit":"20","algorithm":"hybrid","timeRange":"7"}
+2025-12-25T08:53:36.356Z [info]: Incoming Request: GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7
+2025-12-25T08:53:36.402Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 116.800 ms - -
+2025-12-25T08:53:36.403Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 117ms
+2025-12-25T08:53:36.404Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T08:53:36.404Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000
+2025-12-25T08:53:36.525Z [info]: 192.168.1.3 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 304 169.089 ms - -
+2025-12-25T08:53:36.526Z [info]: 192.168.1.3 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 304 170ms
+2025-12-25T08:53:36.528Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 123.694 ms - -
+2025-12-25T08:53:36.528Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 124ms
+2025-12-25T08:53:36.529Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T08:53:36.529Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000
+2025-12-25T08:53:36.656Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 127.096 ms - -
+2025-12-25T08:53:36.656Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 127ms
+2025-12-25T08:53:52.402Z [info]: Incoming Request: GET /users/694bf3370ba331dae78eb86b
+2025-12-25T08:53:52.405Z [info]: Request Query: {"page":"0","limit":"100"}
+2025-12-25T08:53:52.405Z [info]: Incoming Request: GET /api/feed/users/694bf3370ba331dae78eb86b/posts?page=0&limit=100
+2025-12-25T08:53:52.505Z [info]: 192.168.1.3 GET /users/694bf3370ba331dae78eb86b 200 102.879 ms - 798
+2025-12-25T08:53:52.505Z [info]: 192.168.1.3 GET /users/694bf3370ba331dae78eb86b 200 103ms
+2025-12-25T08:53:52.507Z [info]: Incoming Request: GET /users/694bf3370ba331dae78eb86b
+2025-12-25T08:53:52.540Z [info]: 192.168.1.3 GET /api/feed/users/694bf3370ba331dae78eb86b/posts?page=0&limit=100 200 134.808 ms - 1595
+2025-12-25T08:53:52.541Z [info]: 192.168.1.3 GET /api/feed/users/694bf3370ba331dae78eb86b/posts?page=0&limit=100 200 136ms
+2025-12-25T08:53:52.542Z [info]: Request Query: {"page":"0","limit":"100"}
+2025-12-25T08:53:52.542Z [info]: Incoming Request: GET /api/feed/users/694bf3370ba331dae78eb86b/posts?page=0&limit=100
+2025-12-25T08:53:52.596Z [info]: 192.168.1.3 GET /users/694bf3370ba331dae78eb86b 304 89.825 ms - -
+2025-12-25T08:53:52.597Z [info]: 192.168.1.3 GET /users/694bf3370ba331dae78eb86b 304 91ms
+2025-12-25T08:53:52.665Z [info]: 192.168.1.3 GET /api/feed/users/694bf3370ba331dae78eb86b/posts?page=0&limit=100 304 122.910 ms - -
+2025-12-25T08:53:52.665Z [info]: 192.168.1.3 GET /api/feed/users/694bf3370ba331dae78eb86b/posts?page=0&limit=100 304 124ms
+2025-12-25T08:53:57.549Z [info]: Incoming Request: GET /users/694bf3370ba331dae78eb86b
+2025-12-25T08:53:57.551Z [info]: Request Query: {"page":"0","limit":"100"}
+2025-12-25T08:53:57.551Z [info]: Incoming Request: GET /api/feed/users/694bf3370ba331dae78eb86b/posts?page=0&limit=100
+2025-12-25T08:53:57.637Z [info]: 192.168.1.3 GET /users/694bf3370ba331dae78eb86b 304 87.953 ms - -
+2025-12-25T08:53:57.638Z [info]: 192.168.1.3 GET /users/694bf3370ba331dae78eb86b 304 89ms
+2025-12-25T08:53:57.682Z [info]: 192.168.1.3 GET /api/feed/users/694bf3370ba331dae78eb86b/posts?page=0&limit=100 304 130.659 ms - -
+2025-12-25T08:53:57.682Z [info]: 192.168.1.3 GET /api/feed/users/694bf3370ba331dae78eb86b/posts?page=0&limit=100 304 131ms
+2025-12-25T08:54:00.461Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T08:54:00.462Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000
+2025-12-25T08:54:00.609Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 147.291 ms - -
+2025-12-25T08:54:00.609Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 148ms
+2025-12-25T08:54:02.248Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T08:54:02.249Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000
+2025-12-25T08:54:02.253Z [info]: Request Query: {"page":"0","limit":"20","algorithm":"hybrid","timeRange":"7"}
+2025-12-25T08:54:02.253Z [info]: Incoming Request: GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7
+2025-12-25T08:54:02.375Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 128.589 ms - -
+2025-12-25T08:54:02.375Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 128ms
+2025-12-25T08:54:02.377Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T08:54:02.377Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000
+2025-12-25T08:54:02.423Z [info]: 192.168.1.3 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 304 170.211 ms - -
+2025-12-25T08:54:02.423Z [info]: 192.168.1.3 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 304 170ms
+2025-12-25T08:54:02.501Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 123.930 ms - -
+2025-12-25T08:54:02.501Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 124ms
+2025-12-25T08:57:17.932Z [info]: Request Body: {"password":"***"}
+2025-12-25T08:57:17.933Z [info]: Incoming Request: POST /auth/verify-password
+2025-12-25T08:57:18.133Z [info]: 192.168.1.3 POST /auth/verify-password 200 201.655 ms - 40
+2025-12-25T08:57:18.133Z [info]: 192.168.1.3 POST /auth/verify-password 200 202ms
+2025-12-25T08:57:27.038Z [info]: Request Body: {"currentPassword":"password123","newPassword":"password1234"}
+2025-12-25T08:57:27.039Z [info]: Incoming Request: POST /auth/change-password
+2025-12-25T08:57:27.363Z [info]: 192.168.1.3 POST /auth/change-password 200 324.668 ms - 82
+2025-12-25T08:57:27.363Z [info]: 192.168.1.3 POST /auth/change-password 200 325ms
+2025-12-25T08:57:39.273Z [info]: Incoming Request: GET /users/694bf3370ba331dae78eb86b
+2025-12-25T08:57:39.275Z [info]: Request Query: {"page":"0","limit":"100"}
+2025-12-25T08:57:39.275Z [info]: Incoming Request: GET /api/feed/users/694bf3370ba331dae78eb86b/posts?page=0&limit=100
+2025-12-25T08:57:39.364Z [info]: 192.168.1.3 GET /users/694bf3370ba331dae78eb86b 200 90.382 ms - 798
+2025-12-25T08:57:39.364Z [info]: 192.168.1.3 GET /users/694bf3370ba331dae78eb86b 200 91ms
+2025-12-25T08:57:39.365Z [info]: Incoming Request: GET /users/694bf3370ba331dae78eb86b
+2025-12-25T08:57:39.401Z [info]: 192.168.1.3 GET /api/feed/users/694bf3370ba331dae78eb86b/posts?page=0&limit=100 304 125.568 ms - -
+2025-12-25T08:57:39.401Z [info]: 192.168.1.3 GET /api/feed/users/694bf3370ba331dae78eb86b/posts?page=0&limit=100 304 126ms
+2025-12-25T08:57:39.402Z [info]: Request Query: {"page":"0","limit":"100"}
+2025-12-25T08:57:39.402Z [info]: Incoming Request: GET /api/feed/users/694bf3370ba331dae78eb86b/posts?page=0&limit=100
+2025-12-25T08:57:39.449Z [info]: 192.168.1.3 GET /users/694bf3370ba331dae78eb86b 304 83.674 ms - -
+2025-12-25T08:57:39.449Z [info]: 192.168.1.3 GET /users/694bf3370ba331dae78eb86b 304 84ms
+2025-12-25T08:57:39.524Z [info]: 192.168.1.3 GET /api/feed/users/694bf3370ba331dae78eb86b/posts?page=0&limit=100 304 122.277 ms - -
+2025-12-25T08:57:39.525Z [info]: 192.168.1.3 GET /api/feed/users/694bf3370ba331dae78eb86b/posts?page=0&limit=100 304 123ms
+2025-12-25T08:57:50.689Z [info]: Request Body: {"phone":"9876543211","password":"***"}
+2025-12-25T08:57:50.689Z [info]: Incoming Request: POST /auth/login-password
+2025-12-25T08:57:50.886Z [error]: Invalid credentials {"stack":"Error: Invalid credentials\n    at Object.loginWithPassword (/Users/hosanna/BYV-WORKS/Flim app/cpy-6/flimApp/backend/server/src/services/auth.service.js:72:17)\n    at async loginWithPassword (/Users/hosanna/BYV-WORKS/Flim app/cpy-6/flimApp/backend/server/src/controllers/auth.controller.js:55:20)"}
+2025-12-25T08:57:50.886Z [info]: 192.168.1.3 POST /auth/login-password 401 197.871 ms - 49
+2025-12-25T08:57:50.886Z [info]: 192.168.1.3 POST /auth/login-password 401 198ms
+2025-12-25T08:57:54.572Z [info]: Request Body: {"phone":"9876543211","password":"***"}
+2025-12-25T08:57:54.572Z [info]: Incoming Request: POST /auth/login-password
+2025-12-25T08:57:54.813Z [info]: 192.168.1.3 POST /auth/login-password 200 240.810 ms - 1552
+2025-12-25T08:57:54.813Z [info]: 192.168.1.3 POST /auth/login-password 200 241ms
+2025-12-25T08:57:54.912Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T08:57:54.912Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000
+2025-12-25T08:57:54.913Z [info]: Request Query: {"page":"0","limit":"20","algorithm":"hybrid","timeRange":"7"}
+2025-12-25T08:57:54.913Z [info]: Incoming Request: GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7
+2025-12-25T08:57:55.034Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 122.293 ms - -
+2025-12-25T08:57:55.035Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 124ms
+2025-12-25T08:57:55.036Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T08:57:55.036Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000
+2025-12-25T08:57:55.079Z [info]: 192.168.1.3 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 304 165.917 ms - -
+2025-12-25T08:57:55.080Z [info]: 192.168.1.3 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 304 166ms
+2025-12-25T08:57:55.158Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 121.755 ms - -
+2025-12-25T08:57:55.158Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 122ms
+2025-12-25T08:58:04.556Z [info]: Request Body: {"password":"***"}
+2025-12-25T08:58:04.557Z [info]: Incoming Request: POST /auth/verify-password
+2025-12-25T08:58:04.758Z [info]: 192.168.1.3 POST /auth/verify-password 200 201.652 ms - 40
+2025-12-25T08:58:04.758Z [info]: 192.168.1.3 POST /auth/verify-password 200 202ms
+2025-12-25T08:58:08.420Z [info]: Request Body: {"currentPassword":"password1234","newPassword":"password123"}
+2025-12-25T08:58:08.420Z [info]: Incoming Request: POST /auth/change-password
+2025-12-25T08:58:08.707Z [info]: 192.168.1.3 POST /auth/change-password 200 286.741 ms - 82
+2025-12-25T08:58:08.707Z [info]: 192.168.1.3 POST /auth/change-password 200 287ms
+2025-12-25T09:00:08.241Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T09:00:08.244Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000
+2025-12-25T09:00:08.261Z [info]: Request Query: {"page":"0","limit":"20","algorithm":"hybrid","timeRange":"7"}
+2025-12-25T09:00:08.261Z [info]: Incoming Request: GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7
+2025-12-25T09:00:08.410Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 174.660 ms - -
+2025-12-25T09:00:08.410Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 174ms
+2025-12-25T09:00:08.417Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T09:00:08.417Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000
+2025-12-25T09:00:08.535Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 118.509 ms - -
+2025-12-25T09:00:08.535Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 119ms
+2025-12-25T09:00:08.556Z [info]: 192.168.1.3 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 200 295.317 ms - 4891
+2025-12-25T09:00:08.557Z [info]: 192.168.1.3 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 200 296ms
+2025-12-25T09:01:37.952Z [info]: Request Body: {"password":"***"}
+2025-12-25T09:01:37.953Z [info]: Incoming Request: POST /auth/verify-password
+2025-12-25T09:01:38.164Z [error]: Incorrect password {"stack":"Error: Incorrect password\n    at Object.verifyPassword (/Users/hosanna/BYV-WORKS/Flim app/cpy-6/flimApp/backend/server/src/services/auth.service.js:172:17)\n    at async verifyPassword (/Users/hosanna/BYV-WORKS/Flim app/cpy-6/flimApp/backend/server/src/controllers/auth.controller.js:64:20)"}
+2025-12-25T09:01:38.165Z [info]: 192.168.1.3 POST /auth/verify-password 401 214.941 ms - 48
+2025-12-25T09:01:38.165Z [info]: 192.168.1.3 POST /auth/verify-password 401 215ms
+2025-12-25T09:01:59.727Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T09:01:59.729Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000
+2025-12-25T09:01:59.863Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 136.190 ms - -
+2025-12-25T09:01:59.863Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 137ms
+2025-12-25T09:04:49.751Z [info]: Redis client connected
+2025-12-25T09:04:49.759Z [info]: Redis client ready
+2025-12-25T09:04:50.496Z [info]: MongoDB connected :ac-1ks08uk-shard-00-00.tv8wnu0.mongodb.net
+2025-12-25T09:04:50.498Z [info]: Redis connected successfully
+2025-12-25T09:04:50.499Z [info]: Queue processors initialized successfully
+2025-12-25T09:04:50.499Z [info]: Queue processors initialized
+2025-12-25T09:04:50.503Z [info]: Server running on port 8001
+2025-12-25T09:05:14.766Z [info]: Redis client connected
+2025-12-25T09:05:14.893Z [info]: Redis client ready
+2025-12-25T09:05:15.343Z [info]: MongoDB connected :ac-1ks08uk-shard-00-00.tv8wnu0.mongodb.net
+2025-12-25T09:05:15.373Z [info]: Redis connected successfully
+2025-12-25T09:05:15.376Z [info]: Queue processors initialized successfully
+2025-12-25T09:05:15.376Z [info]: Queue processors initialized
+2025-12-25T09:05:15.390Z [info]: Server running on port 8001
+2025-12-25T09:05:38.519Z [info]: Redis client connected
+2025-12-25T09:05:38.533Z [info]: Redis client ready
+2025-12-25T09:05:39.004Z [info]: MongoDB connected :ac-1ks08uk-shard-00-00.tv8wnu0.mongodb.net
+2025-12-25T09:05:39.007Z [info]: Redis connected successfully
+2025-12-25T09:05:39.009Z [info]: Queue processors initialized successfully
+2025-12-25T09:05:39.009Z [info]: Queue processors initialized
+2025-12-25T09:05:39.013Z [info]: Server running on port 8001
+2025-12-25T09:05:47.948Z [info]: Redis client connected
+2025-12-25T09:05:47.956Z [info]: Redis client ready
+2025-12-25T09:05:48.410Z [info]: MongoDB connected :ac-1ks08uk-shard-00-00.tv8wnu0.mongodb.net
+2025-12-25T09:05:48.414Z [info]: Redis connected successfully
+2025-12-25T09:05:48.415Z [info]: Queue processors initialized successfully
+2025-12-25T09:05:48.415Z [info]: Queue processors initialized
+2025-12-25T09:05:48.420Z [info]: Server running on port 8001
+2025-12-25T09:05:58.662Z [info]: Redis client connected
+2025-12-25T09:05:58.672Z [info]: Redis client ready
+2025-12-25T09:05:59.147Z [info]: MongoDB connected :ac-1ks08uk-shard-00-00.tv8wnu0.mongodb.net
+2025-12-25T09:05:59.149Z [info]: Redis connected successfully
+2025-12-25T09:05:59.151Z [info]: Queue processors initialized successfully
+2025-12-25T09:05:59.151Z [info]: Queue processors initialized
+2025-12-25T09:05:59.154Z [info]: Server running on port 8001
+2025-12-25T09:06:09.231Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T09:06:09.231Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000
+2025-12-25T09:06:09.237Z [info]: Request Query: {"page":"0","limit":"20","algorithm":"hybrid","timeRange":"7"}
+2025-12-25T09:06:09.237Z [info]: Incoming Request: GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7
+2025-12-25T09:06:09.380Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 149.689 ms - -
+2025-12-25T09:06:09.381Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 150ms
+2025-12-25T09:06:09.382Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T09:06:09.382Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000
+2025-12-25T09:06:09.500Z [info]: 192.168.1.3 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 200 263.016 ms - 4892
+2025-12-25T09:06:09.500Z [info]: 192.168.1.3 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 200 264ms
+2025-12-25T09:06:09.502Z [info]: Request Query: {"page":"0","limit":"20","algorithm":"hybrid","timeRange":"7"}
+2025-12-25T09:06:09.502Z [info]: Incoming Request: GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7
+2025-12-25T09:06:09.505Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 123.457 ms - -
+2025-12-25T09:06:09.506Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 124ms
+2025-12-25T09:06:09.507Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T09:06:09.508Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000
+2025-12-25T09:06:09.632Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 124.662 ms - -
+2025-12-25T09:06:09.632Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 125ms
+2025-12-25T09:06:09.634Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T09:06:09.634Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000
+2025-12-25T09:06:09.665Z [info]: 192.168.1.3 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 200 162.499 ms - 4651
+2025-12-25T09:06:09.665Z [info]: 192.168.1.3 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 200 163ms
+2025-12-25T09:06:09.757Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 123.456 ms - -
+2025-12-25T09:06:09.758Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 124ms
+2025-12-25T09:06:19.183Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T09:06:19.184Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000
+2025-12-25T09:06:19.188Z [info]: Request Query: {"page":"0","limit":"20","algorithm":"hybrid","timeRange":"7"}
+2025-12-25T09:06:19.189Z [info]: Incoming Request: GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7
+2025-12-25T09:06:19.315Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 131.790 ms - -
+2025-12-25T09:06:19.315Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 132ms
+2025-12-25T09:06:19.316Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T09:06:19.316Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000
+2025-12-25T09:06:19.359Z [info]: 192.168.1.3 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 304 170.673 ms - -
+2025-12-25T09:06:19.359Z [info]: 192.168.1.3 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 304 171ms
+2025-12-25T09:06:19.361Z [info]: Request Query: {"page":"0","limit":"20","algorithm":"hybrid","timeRange":"7"}
+2025-12-25T09:06:19.361Z [info]: Incoming Request: GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7
+2025-12-25T09:06:19.446Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 129.748 ms - -
+2025-12-25T09:06:19.446Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 130ms
+2025-12-25T09:06:19.447Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T09:06:19.447Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000
+2025-12-25T09:06:19.526Z [info]: 192.168.1.3 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 304 164.446 ms - -
+2025-12-25T09:06:19.526Z [info]: 192.168.1.3 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 304 165ms
+2025-12-25T09:06:19.570Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 122.742 ms - -
+2025-12-25T09:06:19.570Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 123ms
+2025-12-25T09:06:19.571Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T09:06:19.571Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000
+2025-12-25T09:06:19.696Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 124.953 ms - -
+2025-12-25T09:06:19.697Z [info]: 192.168.1.3 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 304 126ms
+2025-12-25T09:09:54.326Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T09:09:54.327Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000
+2025-12-25T09:09:54.330Z [info]: Request Query: {"page":"0","limit":"20","algorithm":"hybrid","timeRange":"7"}
+2025-12-25T09:09:54.330Z [info]: Incoming Request: GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7
+2025-12-25T09:09:54.423Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T09:09:54.423Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000
+2025-12-25T09:09:54.458Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000 200 132.261 ms - 994
+2025-12-25T09:09:54.459Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000 200 132ms
+2025-12-25T09:09:54.522Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000 200 99.540 ms - 994
+2025-12-25T09:09:54.522Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000 200 99ms
+2025-12-25T09:09:54.531Z [info]: 192.168.1.2 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 200 200.550 ms - 4574
+2025-12-25T09:09:54.531Z [info]: 192.168.1.2 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 200 201ms
+2025-12-25T09:13:40.239Z [info]: Request Query: {"page":"0","limit":"20","algorithm":"hybrid","timeRange":"7"}
+2025-12-25T09:13:40.240Z [info]: Incoming Request: GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7
+2025-12-25T09:13:40.245Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T09:13:40.245Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000
+2025-12-25T09:13:40.377Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000 304 132.243 ms - -
+2025-12-25T09:13:40.377Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000 304 132ms
+2025-12-25T09:13:40.431Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T09:13:40.431Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000
+2025-12-25T09:13:40.502Z [info]: 192.168.1.2 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 200 267.550 ms - 4817
+2025-12-25T09:13:40.502Z [info]: 192.168.1.2 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 200 268ms
+2025-12-25T09:13:40.558Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000 304 126.466 ms - -
+2025-12-25T09:13:40.558Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000 304 127ms
+2025-12-25T09:13:40.600Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T09:13:40.600Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000
+2025-12-25T09:13:40.605Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T09:13:40.606Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000
+2025-12-25T09:13:40.617Z [info]: Request Query: {"page":"0","limit":"20","algorithm":"hybrid","timeRange":"7"}
+2025-12-25T09:13:40.617Z [info]: Incoming Request: GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7
+2025-12-25T09:13:40.729Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000 304 128.983 ms - -
+2025-12-25T09:13:40.729Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000 304 129ms
+2025-12-25T09:13:40.748Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000 304 142.085 ms - -
+2025-12-25T09:13:40.748Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000 304 143ms
+2025-12-25T09:13:40.757Z [info]: 192.168.1.2 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 200 139.442 ms - 4574
+2025-12-25T09:13:40.757Z [info]: 192.168.1.2 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 200 140ms
+2025-12-25T09:13:49.555Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T09:13:49.555Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000
+2025-12-25T09:13:49.557Z [info]: Request Query: {"page":"0","limit":"20","algorithm":"hybrid","timeRange":"7"}
+2025-12-25T09:13:49.558Z [info]: Incoming Request: GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7
+2025-12-25T09:13:49.609Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T09:13:49.609Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000
+2025-12-25T09:13:49.687Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000 304 132.327 ms - -
+2025-12-25T09:13:49.687Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000 304 133ms
+2025-12-25T09:13:49.704Z [info]: 192.168.1.2 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 304 146.700 ms - -
+2025-12-25T09:13:49.704Z [info]: 192.168.1.2 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 304 147ms
+2025-12-25T09:13:49.732Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000 304 123.020 ms - -
+2025-12-25T09:13:49.732Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000 304 123ms
+2025-12-25T09:19:13.087Z [info]: Processing notification: like for user 694bf3370ba331dae78eb86a
+2025-12-25T09:19:13.087Z [info]: Notification sent: {"userId":"694bf3370ba331dae78eb86a","type":"like","actorId":"694bf3370ba331dae78eb86b","postId":"694d013cadecb651f6643a46"}
+2025-12-25T09:19:13.098Z [info]: Notification job 6 completed: {"success":true,"userId":"694bf3370ba331dae78eb86a","type":"like","actorId":"694bf3370ba331dae78eb86b","postId":"694d013cadecb651f6643a46"}
+2025-12-25T09:36:00.603Z [info]: Processing notification: follow for user 694bf3370ba331dae78eb86a
+2025-12-25T09:36:00.604Z [info]: Notification sent: {"userId":"694bf3370ba331dae78eb86a","type":"follow","followerId":"694bf3370ba331dae78eb86b"}
+2025-12-25T09:36:00.605Z [info]: Notification job 7 completed: {"success":true,"userId":"694bf3370ba331dae78eb86a","type":"follow","followerId":"694bf3370ba331dae78eb86b"}
+2025-12-25T09:36:05.593Z [info]: Processing feed update: 694bf3370ba331dae78eb86b
+2025-12-25T09:36:05.778Z [info]: Feed regenerated for user 694bf3370ba331dae78eb86b (10 posts)
+2025-12-25T09:36:05.780Z [info]: Feed job 28 completed: {"success":true,"userId":"694bf3370ba331dae78eb86b"}
+2025-12-25T09:36:19.005Z [info]: Processing notification: follow for user 694bf3370ba331dae78eb86a
+2025-12-25T09:36:19.005Z [info]: Notification sent: {"userId":"694bf3370ba331dae78eb86a","type":"follow","followerId":"694bf3370ba331dae78eb86b"}
+2025-12-25T09:36:19.006Z [info]: Notification job 8 completed: {"success":true,"userId":"694bf3370ba331dae78eb86a","type":"follow","followerId":"694bf3370ba331dae78eb86b"}
+2025-12-25T09:36:24.005Z [info]: Processing feed update: 694bf3370ba331dae78eb86b
+2025-12-25T09:36:24.185Z [info]: Feed regenerated for user 694bf3370ba331dae78eb86b (10 posts)
+2025-12-25T09:36:24.187Z [info]: Feed job 29 completed: {"success":true,"userId":"694bf3370ba331dae78eb86b"}
+2025-12-25T09:42:15.467Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T09:42:15.468Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000
+2025-12-25T09:42:15.473Z [info]: Request Query: {"page":"0","limit":"20","algorithm":"hybrid","timeRange":"7"}
+2025-12-25T09:42:15.474Z [info]: Incoming Request: GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7
+2025-12-25T09:42:15.554Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-25T09:42:15.554Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000
+2025-12-25T09:42:15.600Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 200 133.772 ms - 703
+2025-12-25T09:42:15.601Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 200 134ms
+2025-12-25T09:42:15.662Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 200 108.261 ms - 703
+2025-12-25T09:42:15.662Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86b/following?page=0&limit=1000 200 109ms
+2025-12-25T09:42:15.754Z [info]: 192.168.1.2 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 200 279.905 ms - 9058
+2025-12-25T09:42:15.754Z [info]: 192.168.1.2 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 200 281ms

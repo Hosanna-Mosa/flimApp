@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -54,6 +54,16 @@ export default function ProfileScreen() {
     useCallback(() => {
       if (user && token) {
         console.log('[Profile] Screen focused, reloading data...');
+  useEffect(() => {
+    if (user && token) {
+      loadUserData();
+    }
+  }, [user, token]);
+  
+  // Reload data when screen comes into focus (e.g., after editing profile)
+  useFocusEffect(
+    useCallback(() => {
+      if (user && token) {
         loadUserData();
       }
     }, [user, token])

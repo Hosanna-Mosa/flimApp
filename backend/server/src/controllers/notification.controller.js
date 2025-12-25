@@ -23,10 +23,19 @@ const markAllAsRead = async (req, res, next) => {
   try {
     await notificationService.markAllAsRead(req.user.id);
     return success(res, { message: 'All notifications marked as read' });
+const registerToken = async (req, res, next) => {
+  try {
+    const { token } = req.body;
+    if (!token) {
+      throw new Error('Token is required');
+    }
+    const result = await notificationService.registerPushToken(req.user.id, token);
+    return success(res, result);
   } catch (err) {
     return next(err);
   }
 };
 
-module.exports = { list, markRead, markAllAsRead };
+module.exports = { list, markRead, registerToken ,markAllAsRead};
+
 

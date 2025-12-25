@@ -66,8 +66,8 @@ export default function PostDetailScreen() {
     try {
       setLoading(true);
       const [postData, commentsData] = await Promise.all([
-        api.getPost(id, token),
-        api.getComments(id, 0, 50, 'recent', token),
+        api.getPost(id, token || undefined) as any,
+        api.getComments(id, 0, 50, 'recent', token || undefined) as any,
       ]);
       
       setPost(postData);
@@ -91,9 +91,9 @@ export default function PostDetailScreen() {
       setLikesCount(prev => wasLiked ? prev - 1 : prev + 1);
 
       if (wasLiked) {
-        await api.unlikePost(id, token);
+        await api.unlikePost(id, token || undefined);
       } else {
-        await api.likePost(id, token);
+        await api.likePost(id, token || undefined);
       }
     } catch (error) {
       // Revert on error
@@ -108,7 +108,7 @@ export default function PostDetailScreen() {
     
     try {
       setSubmitting(true);
-      const result = await api.addComment(id, commentText.trim(), undefined, token);
+      const result = await api.addComment(id, commentText.trim(), undefined, token || undefined) as any;
       
       // Add new comment to the list
       setComments(prev => [result.data, ...prev]);
@@ -208,13 +208,19 @@ export default function PostDetailScreen() {
       
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Post Header */}
+        {/* Post Header */}
         <View style={styles.postHeader}>
-          <Image
-            source={{ uri: post.author.avatar }}
-            style={styles.avatar}
-            contentFit="cover"
-          />
-          <View style={styles.userInfo}>
+          <TouchableOpacity onPress={() => router.push(`/user/${post.author._id}`)}>
+            <Image
+              source={{ uri: post.author.avatar }}
+              style={styles.avatar}
+              contentFit="cover"
+            />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.userInfo} 
+            onPress={() => router.push(`/user/${post.author._id}`)}
+          >
             <View style={styles.nameContainer}>
               <Text style={[styles.userName, { color: colors.text }]}>
                 {post.author.name}
@@ -226,7 +232,7 @@ export default function PostDetailScreen() {
             <Text style={[styles.role, { color: colors.textSecondary }]}>
               {post.author.roles?.slice(0, 2).join(' • ')}
             </Text>
-          </View>
+          </TouchableOpacity>
         </View>
 
         {/* Post Media */}
@@ -268,12 +274,7 @@ export default function PostDetailScreen() {
             </Text>
           </TouchableOpacity>
 
-          <View style={styles.action}>
-            <MessageCircle size={22} color={colors.textSecondary} />
-            <Text style={[styles.actionText, { color: colors.textSecondary }]}>
-              {post.engagement?.commentsCount || 0}
-            </Text>
-          </View>
+
 
           <TouchableOpacity style={styles.action} onPress={handleShare}>
             <Share2 size={22} color={colors.textSecondary} />

@@ -79,5 +79,30 @@ router.post(
   authController.logout
 );
 
+router.post(
+  '/verify-password',
+  auth,
+  validate(
+    Joi.object({
+      body: Joi.object({ password: Joi.string().required() }).required(),
+    })
+  ),
+  authController.verifyPassword
+);
+
+router.post(
+  '/change-password',
+  auth,
+  validate(
+    Joi.object({
+      body: Joi.object({
+        currentPassword: Joi.string().required(),
+        newPassword: Joi.string().min(6).required(),
+      }).required(),
+    })
+  ),
+  authController.changePassword
+);
+
 module.exports = router;
 
