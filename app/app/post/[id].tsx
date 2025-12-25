@@ -27,6 +27,7 @@ import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/utils/api';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface Comment {
   _id: string;
@@ -47,6 +48,7 @@ export default function PostDetailScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { token } = useAuth();
+  const insets = useSafeAreaInsets();
   
   const [post, setPost] = useState<any>(null);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -316,7 +318,14 @@ export default function PostDetailScreen() {
       </ScrollView>
 
       {/* Comment Input */}
-      <View style={[styles.commentInputContainer, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
+      <View style={[
+        styles.commentInputContainer, 
+        { 
+          backgroundColor: colors.card, 
+          borderTopColor: colors.border,
+          paddingBottom: Math.max(insets.bottom, 12)
+        }
+      ]}>
         <TextInput
           style={[styles.commentInput, { color: colors.text, backgroundColor: colors.surface }]}
           placeholder="Add a comment..."

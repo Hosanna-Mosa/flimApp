@@ -50,24 +50,9 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(true);
 
   // Reload data every time the screen comes into focus
-  useFocusEffect(
-    useCallback(() => {
-      if (user && token) {
-        console.log('[Profile] Screen focused, reloading data...');
-  useEffect(() => {
-    if (user && token) {
-      loadUserData();
-    }
-  }, [user, token]);
+
   
-  // Reload data when screen comes into focus (e.g., after editing profile)
-  useFocusEffect(
-    useCallback(() => {
-      if (user && token) {
-        loadUserData();
-      }
-    }, [user, token])
-  );
+
 
   const loadUserData = useCallback(async () => {
     try {
@@ -130,6 +115,15 @@ export default function ProfileScreen() {
       setLoading(false);
     }
   }, [user, token]);
+
+  // Reload data when screen comes into focus (e.g., after editing profile)
+  useFocusEffect(
+    useCallback(() => {
+      if (user && token) {
+        loadUserData();
+      }
+    }, [user, token])
+  );
 
   const filteredPosts = selectedFilter === 'all'
     ? posts

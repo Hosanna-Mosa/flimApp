@@ -64,41 +64,6 @@ const sendPushNotifications = async (userId, title, body, data = {}) => {
   }
 };
 
-const createNotification = async (recipientId, type, data, actorId = null) => {
-  // Create DB entry
-  const notification = await Notification.create({
-    user: recipientId,
-    type,
-    data, // e.g., { postId: '...', message: '...' }
-    actor: actorId,
-    isRead: false
-  });
-
-  // Send Push Notification
-  let title = 'New Notification';
-  let body = 'You have a new update';
-
-  // Customize message based on type
-  if (type === 'like_post') {
-    title = 'New Like';
-    body = 'Someone liked your post';
-  } else if (type === 'comment_post') {
-    title = 'New Comment';
-    body = 'Someone commented on your post';
-  } else if (type === 'follow') {
-    title = 'New Follower';
-    body = 'Someone started following you';
-  } else if (type === 'message') {
-    title = 'New Message';
-    body = 'You have a new message';
-  }
-
-  // Send async (don't await to block response)
-  sendPushNotifications(recipientId, title, body, { type, ...data });
-
-  return notification;
-};
-
 const listNotifications = async (userId) =>
   Notification.find({ user: userId })
     .populate('actor', 'name avatar') // Populate actor info if you have reference
@@ -107,9 +72,10 @@ const listNotifications = async (userId) =>
 const markRead = async (userId, id) =>
   Notification.findOneAndUpdate({ _id: id, user: userId }, { isRead: true }, { new: true });
 
-const createNotification = async ({ user, title, body, type, metadata }) => {
+const createNotification = async ({ user, actor, title, body, type, metadata }) => {
   const notification = await Notification.create({
     user,
+    actor,
     title,
     body,
     type,
@@ -120,6 +86,10 @@ const createNotification = async ({ user, title, body, type, metadata }) => {
   if (io) {
     io.to(user.toString()).emit('new_notification', notification);
   }
+
+  // Send Push Notification
+  // Trigger async push notification without awaiting to prevent blocking response
+  sendPushNotifications(user, title, body, { type, ...metadata });
 
   return notification;
 };

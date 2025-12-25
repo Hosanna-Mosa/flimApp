@@ -9,7 +9,7 @@ const updateMe = async (userId, payload) =>
 
 const getById = async (id) => User.findById(id).select('-password -refreshTokens');
 
-const search = async ({ q, roles, industries }) => {
+const search = async ({ q, roles, industries }, currentUserId) => {
   console.log('[User Service] Search params - q:', q, 'roles:', roles, 'industries:', industries);
   
   // If no search query and no filters, return empty
@@ -17,7 +17,9 @@ const search = async ({ q, roles, industries }) => {
     return [];
   }
 
-  let query = {};
+  let query = {
+    _id: { $ne: currentUserId } // Exclude current user
+  };
   let hasFilters = false;
   
   // Build filter query for roles and industries (these are AND conditions)

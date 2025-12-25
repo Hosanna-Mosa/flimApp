@@ -70,6 +70,15 @@ PostSchema.virtual('thumbnailUrlCompat').get(function() {
   return this.media?.thumbnail || this.thumbnailUrl;
 });
 
+// Method to populate compatible media fields for legacy posts
+PostSchema.pre('validate', function(next) {
+  if ((!this.media || !this.media.url) && this.mediaUrl) {
+    if (!this.media) this.media = {};
+    this.media.url = this.mediaUrl;
+  }
+  next();
+});
+
 // Method to calculate engagement score
 PostSchema.methods.calculateScore = function() {
   const ageInHours = (Date.now() - this.createdAt) / (1000 * 60 * 60);

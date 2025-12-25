@@ -31,7 +31,7 @@ const getById = async (req, res, next) => {
 const search = async (req, res, next) => {
   try {
     console.log('[User Search] Query params:', req.query);
-    const results = await userService.search(req.query);
+    const results = await userService.search(req.query, req.user.id);
     console.log('[User Search] Results count:', results.length);
     return success(res, results);
   } catch (err) {
