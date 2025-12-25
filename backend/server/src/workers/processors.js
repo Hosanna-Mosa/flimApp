@@ -138,6 +138,7 @@ queues.notification.process('send-notification', async (job) => {
 
     await notificationService.createNotification({
       user: userId,
+      actor: actionUserId,
       title,
       body,
       type,
