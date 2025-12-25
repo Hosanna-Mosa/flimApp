@@ -49,6 +49,7 @@ const UserSchema = new Schema(
     },
     
     refreshTokens: [{ type: String }],
+    pushTokens: [{ type: String }],
     lastLoginAt: { type: Date },
   },
   { timestamps: true }

@@ -55,17 +55,39 @@ export default function EditProfileScreen() {
   };
 
   const handleSave = async () => {
-    setSaving(true);
-    await updateProfile({
-      name,
-      bio,
-      location,
-      experience: parseInt(experience) || 0,
-      avatar,
-    });
-    setSaving(false);
-    Alert.alert('Success', 'Profile updated successfully!');
-    router.back();
+    try {
+      setSaving(true);
+      
+      // Prepare update payload
+      const updates = {
+        name,
+        bio,
+        location,
+        experience: parseInt(experience) || 0,
+        avatar,
+      };
+      
+      console.log('[EditProfile] Saving updates:', updates);
+      
+      // Call updateProfile which now calls the backend
+      await updateProfile(updates);
+      
+      Alert.alert('Success', 'Profile updated successfully!', [
+        {
+          text: 'OK',
+          onPress: () => router.back(),
+        },
+      ]);
+    } catch (error) {
+      console.error('[EditProfile] Error saving:', error);
+      Alert.alert(
+        'Error',
+        'Failed to update profile. Please try again.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (

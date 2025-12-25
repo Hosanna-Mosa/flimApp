@@ -92,6 +92,24 @@ export const apiLoginPassword = (payload: { phone: string; password: string }) =
     { method: 'POST', body: payload }
   );
 
+export const apiVerifyPassword = (password: string, token?: string) =>
+  request<{ success: boolean }>('/auth/verify-password', {
+    method: 'POST',
+    body: { password },
+    token,
+  });
+
+export const apiChangePassword = (
+  currentPassword: string,
+  newPassword: string,
+  token?: string
+) =>
+  request<{ success: boolean; message: string }>('/auth/change-password', {
+    method: 'POST',
+    body: { currentPassword, newPassword },
+    token,
+  });
+
 // Users
 export const apiGetMe = (token?: string) => request('/users/me', { token });
 
@@ -174,6 +192,13 @@ export const apiNotifications = (token?: string) =>
 
 export const apiMarkNotificationRead = (id: string, token?: string) =>
   request(`/notifications/${id}/read`, { method: 'POST', token });
+
+export const apiRegisterPushToken = (pushToken: string, token?: string) =>
+  request('/notifications/register-token', {
+    method: 'POST',
+    body: { token: pushToken },
+    token,
+  });
 
 // ========== SOCIAL MEDIA FEATURES ==========
 
@@ -458,8 +483,11 @@ export const api = {
   conversation: apiConversation,
   notifications: apiNotifications,
   markNotificationRead: apiMarkNotificationRead,
+  registerPushToken: apiRegisterPushToken,
   register: apiRegister,
   loginPassword: apiLoginPassword,
+  verifyPassword: apiVerifyPassword,
+  changePassword: apiChangePassword,
   
   // Social Media Features
   likePost: apiLikePost,

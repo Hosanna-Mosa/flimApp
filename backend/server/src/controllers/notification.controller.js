@@ -19,5 +19,18 @@ const markRead = async (req, res, next) => {
   }
 };
 
-module.exports = { list, markRead };
+const registerToken = async (req, res, next) => {
+  try {
+    const { token } = req.body;
+    if (!token) {
+      throw new Error('Token is required');
+    }
+    const result = await notificationService.registerPushToken(req.user.id, token);
+    return success(res, result);
+  } catch (err) {
+    return next(err);
+  }
+};
+
+module.exports = { list, markRead, registerToken };
 

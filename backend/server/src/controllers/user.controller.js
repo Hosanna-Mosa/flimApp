@@ -30,9 +30,12 @@ const getById = async (req, res, next) => {
 
 const search = async (req, res, next) => {
   try {
+    console.log('[User Search] Query params:', req.query);
     const results = await userService.search(req.query);
+    console.log('[User Search] Results count:', results.length);
     return success(res, results);
   } catch (err) {
+    console.error('[User Search] Error:', err);
     return next(err);
   }
 };
