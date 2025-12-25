@@ -13,12 +13,16 @@ router.post(
     Joi.object({
       body: Joi.object({
         type: Joi.string().valid('video', 'audio', 'image', 'script').required(),
-        mediaUrl: Joi.string().uri().optional(),
-        filePath: Joi.string().optional(),
-        thumbnailUrl: Joi.string().uri().optional(),
-        caption: Joi.string().max(1000),
-        industries: Joi.array().items(Joi.string()),
-        roles: Joi.array().items(Joi.string()),
+        mediaUrl: Joi.string().uri().required(),
+        thumbnail: Joi.string().uri().optional(),
+        duration: Joi.number().optional(),
+        format: Joi.string().optional(),
+        size: Joi.number().optional(),
+        width: Joi.number().optional(),
+        height: Joi.number().optional(),
+        caption: Joi.string().max(1000).allow('').optional(),
+        industries: Joi.array().items(Joi.string()).optional(),
+        roles: Joi.array().items(Joi.string()).optional(),
       }).required(),
     })
   ),

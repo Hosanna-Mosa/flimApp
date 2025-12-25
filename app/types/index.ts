@@ -54,6 +54,17 @@ export interface Post {
   shares: number;
   isLiked: boolean;
   createdAt: string;
+  media?: {
+    url: string;
+    thumbnail?: string;
+    duration?: number;
+    format?: string;
+    size?: number;
+    width?: number;
+    height?: number;
+    pages?: number;
+    publicId?: string;
+  };
 }
 
 export interface Community {

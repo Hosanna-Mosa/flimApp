@@ -46,6 +46,16 @@ class LikeService {
 
       logger.info(`[Like] Updated post ${postId} likes count to ${post.engagement.likesCount}`);
 
+      // Send notification
+      if (post.author.toString() !== userId) {
+        queueService.addNotificationJob({
+            userId: post.author,
+            type: 'like',
+            actorId: userId,
+            postId: postId,
+        }).catch(err => logger.error('Notification job failed', err));
+      }
+
       // Update user stats in DATABASE
       await User.findByIdAndUpdate(post.author, {
         $inc: { 'stats.likesReceived': 1 },

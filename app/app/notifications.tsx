@@ -1,14 +1,19 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  RefreshControl,
 } from 'react-native';
-import { Stack } from 'expo-router';
+import { Stack, useFocusEffect, useRouter } from 'expo-router';
 import { Bell, CheckCircle2, Clock } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useSocket } from '@/contexts/SocketContext';
+import { useNotifications } from '@/contexts/NotificationContext';
+import { apiNotifications, apiMarkAllNotificationsRead } from '@/utils/api';
 
 type NotificationItem = {
   id: string;
@@ -16,46 +21,135 @@ type NotificationItem = {
   description: string;
   time: string;
   isRead: boolean;
+  type: string;
+  metadata: any;
 };
 
-const mockNotifications: NotificationItem[] = [
-  {
-    id: '1',
-    title: 'New follower',
-    description: 'Priya Verma started following you.',
-    time: '2h ago',
-    isRead: false,
-  },
-  {
-    id: '2',
-    title: 'Collaboration invite',
-    description: 'Rohan invited you to join “Indie Short Film”.',
-    time: '5h ago',
-    isRead: false,
-  },
-  {
-    id: '3',
-    title: 'Comment on your post',
-    description: 'Aditi commented: “Love this shot!”',
-    time: '1d ago',
-    isRead: true,
-  },
-];
-
 export default function NotificationsScreen() {
+  const router = useRouter();
   const { colors } = useTheme();
-  const [notifications, setNotifications] =
-    useState<NotificationItem[]>(mockNotifications);
+  const { token } = useAuth();
+  const { socket } = useSocket();
+  const { unreadCount, refreshUnreadCount } = useNotifications();
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const unreadCount = useMemo(
-    () => notifications.filter((n) => !n.isRead).length,
-    [notifications]
+  const loadNotifications = async () => {
+    if (!token) return;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const data: any = await apiNotifications(token);
+      if (Array.isArray(data)) {
+        const items = data.map((n: any) => ({
+          id: n._id,
+          title: n.title,
+          description: n.body,
+          time: new Date(n.createdAt).toLocaleString(),
+          isRead: n.isRead,
+          type: n.type,
+          metadata: n.metadata || {},
+        }));
+        setNotifications(items);
+      }
+    } catch (error) {
+      console.error('Failed to load notifications:', error);
+    }
+  };
+
+  useEffect(() => {
+    loadNotifications();
+  }, [token]);
+
+  // Mark all as read when screen is focused
+  useFocusEffect(
+    React.useCallback(() => {
+      const markAllRead = async () => {
+        if (!token) return;
+        try {
+          // Mark all notifications as read on backend
+          await apiMarkAllNotificationsRead(token);
+          // Reset the badge count to 0
+          refreshUnreadCount();
+          // Update local state to show all as read
+          setNotifications((prev) =>
+            prev.map((n) => ({ ...n, isRead: true }))
+          );
+        } catch (error) {
+          console.error('Failed to mark all as read:', error);
+        }
+      };
+      markAllRead();
+    }, [token, refreshUnreadCount])
   );
 
-  const markRead = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
-    );
+  useEffect(() => {
+    if (!socket) return;
+    const handleNewNotification = (n: any) => {
+      setNotifications((prev) => [
+        {
+          id: n._id,
+          title: n.title,
+          description: n.body,
+          time: 'Just now',
+          isRead: false,
+          type: n.type,
+          metadata: n.metadata || {},
+        },
+        ...prev,
+      ]);
+    };
+    socket.on('new_notification', handleNewNotification);
+    return () => {
+      socket.off('new_notification', handleNewNotification);
+    };
+  }, [socket]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadNotifications();
+    await refreshUnreadCount();
+    setRefreshing(false);
+  };
+
+  const handleNotificationPress = (notification: NotificationItem) => {
+    const { type, metadata } = notification;
+
+    // Navigate based on notification type
+    switch (type) {
+      case 'like':
+      case 'comment':
+      case 'reply':
+        // Navigate to post detail page
+        if (metadata?.postId) {
+          router.push(`/post/${metadata.postId}`);
+        }
+        break;
+      
+      case 'follow':
+        // Navigate to the follower's profile
+        if (metadata?.followerId || metadata?.actorId) {
+          const userId = metadata.followerId || metadata.actorId;
+          router.push({
+            pathname: '/user/[id]',
+            params: { id: userId }
+          });
+        }
+        break;
+      
+      case 'message':
+        // Navigate to chat with the sender
+        if (metadata?.actorId) {
+          router.push({
+            pathname: '/chat',
+            params: { userId: metadata.actorId }
+          });
+        }
+        break;
+      
+      default:
+        // For other types, just mark as read
+        break;
+    }
   };
 
   return (
@@ -74,6 +168,9 @@ export default function NotificationsScreen() {
         style={[styles.container, { backgroundColor: colors.background }]}
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
+        }
       >
         {notifications.length === 0 ? (
           <View style={styles.emptyState}>
@@ -89,7 +186,7 @@ export default function NotificationsScreen() {
           notifications.map((notification) => (
             <TouchableOpacity
               key={notification.id}
-              onPress={() => markRead(notification.id)}
+              onPress={() => handleNotificationPress(notification)}
               activeOpacity={0.85}
               style={[
                 styles.card,
@@ -199,4 +296,3 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
 });
-

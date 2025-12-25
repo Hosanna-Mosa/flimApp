@@ -21,6 +21,7 @@ import {
     Check,
     Plus,
     BadgeCheck,
+    MessageCircle,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -75,8 +76,8 @@ export default function PublicProfileScreen() {
         try {
             setLoading(true);
             const [userData, postsData] = await Promise.all([
-                api.user(id, token),
-                api.getUserFeed(id, 0, 100, token),
+                api.user(id, token || undefined),
+                api.getUserFeed(id, 0, 100, token || undefined),
             ]);
             
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -87,7 +88,7 @@ export default function PublicProfileScreen() {
             // Check if already following
             try {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const followStatus: any = await api.isFollowing(id, token);
+                const followStatus: any = await api.isFollowing(id, token || undefined);
                 console.log('[UserProfile] Follow status response:', JSON.stringify(followStatus));
                 // Handle both {following: true} and {data: {following: true}} formats
                 const isFollowingValue = followStatus?.following ?? followStatus?.data?.following ?? false;
@@ -125,11 +126,16 @@ export default function PublicProfileScreen() {
                 },
             });
 
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            let result: any;
+            
             if (wasFollowing) {
-                await api.unfollowUser(id, token);
+                result = await api.unfollowUser(id, token || undefined);
+                console.log('[UserProfile] Unfollow result:', JSON.stringify(result));
             } else {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const result: any = await api.followUser(id, token);
+                result = await api.followUser(id, token || undefined);
+                console.log('[UserProfile] Follow result:', JSON.stringify(result));
+                
                 if (result.status === 'pending') {
                     Alert.alert('Follow Request Sent', 'This account is private. Your request is pending.');
                     // Revert if pending
@@ -141,9 +147,41 @@ export default function PublicProfileScreen() {
                             followersCount: user.stats.followersCount - 1,
                         },
                     });
+                    return;
                 }
             }
-        } catch (error) {
+
+            // Update with actual data from backend
+            if (result && result.followersCount !== undefined) {
+                console.log('[UserProfile] Updating follower count from backend:', result.followersCount);
+                setUser({
+                    ...user,
+                    stats: {
+                        ...user.stats,
+                        followersCount: result.followersCount,
+                    },
+                });
+            }
+        } catch (error: any) {
+            console.error('[UserProfile] Follow error:', error);
+            
+            // If "already following" error, refresh the follow status
+            if (error?.message?.toLowerCase().includes('already following')) {
+                console.log('[UserProfile] Detected "already following" error, refreshing status...');
+                try {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const followStatus: any = await api.isFollowing(id, token || undefined);
+                    const isFollowingValue = followStatus?.following ?? followStatus?.data?.following ?? false;
+                    setIsFollowing(isFollowingValue === true);
+                    console.log('[UserProfile] Refreshed follow status:', isFollowingValue);
+                    
+                    // Don't show error alert for this case
+                    return;
+                } catch (refreshError) {
+                    console.error('[UserProfile] Error refreshing follow status:', refreshError);
+                }
+            }
+            
             // Revert on error
             setIsFollowing(!isFollowing);
             if (user) {
@@ -157,9 +195,20 @@ export default function PublicProfileScreen() {
                     },
                 });
             }
-            console.error('[UserProfile] Follow error:', error);
             Alert.alert('Error', 'Failed to update follow status');
         }
+    };
+
+    const handleMessage = () => {
+        if (!user) return;
+        
+        router.push({
+            pathname: '/chat',
+            params: { 
+                userId: id, 
+                name: user.name || 'User' 
+            }
+        });
     };
 
     const filteredPosts = selectedFilter === 'all'
@@ -278,25 +327,43 @@ export default function PublicProfileScreen() {
                         )}
                     </View>
 
-                    <TouchableOpacity
-                        style={[
-                            styles.followButton,
-                            {
-                                backgroundColor: isFollowing ? colors.surface : colors.primary,
-                                borderColor: isFollowing ? colors.border : colors.primary,
-                            },
-                        ]}
-                        onPress={toggleFollow}
-                    >
-                        {isFollowing ? (
-                            <Check size={20} color={colors.text} />
-                        ) : (
-                            <Plus size={20} color="#fff" />
-                        )}
-                        <Text style={[styles.followButtonText, { color: isFollowing ? colors.text : '#fff' }]}>
-                            {isFollowing ? 'Following' : 'Follow'}
-                        </Text>
-                    </TouchableOpacity>
+                    <View style={styles.actionsContainer}>
+                        <TouchableOpacity
+                            style={[
+                                styles.followButton,
+                                {
+                                    backgroundColor: isFollowing ? colors.surface : colors.primary,
+                                    borderColor: isFollowing ? colors.border : colors.primary,
+                                },
+                            ]}
+                            onPress={toggleFollow}
+                        >
+                            {isFollowing ? (
+                                <Check size={20} color={colors.text} />
+                            ) : (
+                                <Plus size={20} color="#fff" />
+                            )}
+                            <Text style={[styles.followButtonText, { color: isFollowing ? colors.text : '#fff' }]}>
+                                {isFollowing ? 'Following' : 'Follow'}
+                            </Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[
+                                styles.messageButton,
+                                {
+                                    backgroundColor: colors.surface,
+                                    borderColor: colors.border,
+                                },
+                            ]}
+                            onPress={handleMessage}
+                        >
+                            <MessageCircle size={20} color={colors.text} />
+                            <Text style={[styles.messageButtonText, { color: colors.text }]}>
+                                Message
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
 
                     <View style={styles.stats}>
                         <View style={styles.stat}>
@@ -464,17 +531,37 @@ const styles = StyleSheet.create({
     infoText: {
         fontSize: 14,
     },
+    actionsContainer: {
+        flexDirection: 'row',
+        gap: 12,
+        width: '100%',
+        marginBottom: 24,
+    },
     followButton: {
+        flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'center',
         gap: 8,
-        paddingHorizontal: 24,
         paddingVertical: 10,
         borderRadius: 24,
         borderWidth: 1,
-        marginBottom: 24,
+    },
+    messageButton: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        paddingVertical: 10,
+        borderRadius: 24,
+        borderWidth: 1,
     },
     followButtonText: {
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    messageButtonText: {
         fontSize: 16,
         fontWeight: '600',
     },

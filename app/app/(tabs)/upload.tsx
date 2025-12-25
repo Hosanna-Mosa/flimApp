@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,104 +6,188 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
+  TextInput,
+  Platform,
 } from 'react-native';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import * as DocumentPicker from 'expo-document-picker';
+import { Video, ResizeMode } from 'expo-av';
 import { Image } from 'expo-image';
 import {
   Upload,
-  Video,
+  Video as VideoIcon,
   Music,
   FileText,
   Image as ImageIcon,
+  X,
+  PlayCircle,
+  PauseCircle,
 } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { ContentType } from '@/types';
 import Input from '@/components/Input';
 import Button from '@/components/Button';
+import { uploadMediaToCloudinary } from '@/utils/media';
+import { apiCreatePost } from '@/utils/api';
+
+type MediaFile = {
+  uri: string;
+  name: string;
+  type?: string;
+  size?: number;
+};
 
 export default function UploadScreen() {
+  const router = useRouter();
   const { colors } = useTheme();
+  const { token } = useAuth();
+  
+  // State
   const [selectedType, setSelectedType] = useState<ContentType | null>(null);
-  const [mediaUri, setMediaUri] = useState<string>('');
+  const [mediaFile, setMediaFile] = useState<MediaFile | null>(null);
   const [caption, setCaption] = useState<string>('');
+  const [roles, setRoles] = useState<string>('');
+  const [industries, setIndustries] = useState<string>('');
   const [uploading, setUploading] = useState<boolean>(false);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+
+  // Video Preview State
+  const videoRef = useRef<Video>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  const resetForm = () => {
+    setSelectedType(null);
+    setMediaFile(null);
+    setCaption('');
+    setRoles('');
+    setIndustries('');
+    setUploading(false);
+    setUploadProgress(0);
+  };
 
   const handlePickMedia = async () => {
-    const permissionResult =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    try {
+      if (selectedType === 'image' || selectedType === 'video') {
+        const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (!permissionResult.granted) {
+          Alert.alert('Permission Required', 'Please allow access to your media library');
+          return;
+        }
 
-    if (permissionResult.granted === false) {
-      Alert.alert(
-        'Permission Required',
-        'Please allow access to your media library'
-      );
-      return;
-    }
+        const result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes:
+            selectedType === 'video'
+              ? ImagePicker.MediaTypeOptions.Videos
+              : ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          quality: 0.8,
+          aspect: selectedType === 'image' ? [4, 5] : undefined, // Social media aspect ratio
+        });
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes:
-        selectedType === 'video'
-          ? ImagePicker.MediaTypeOptions.Videos
-          : ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 0.8,
-    });
+        if (!result.canceled && result.assets[0]) {
+          const asset = result.assets[0];
+          setMediaFile({
+            uri: asset.uri,
+            name: asset.fileName || `upload.${selectedType === 'video' ? 'mp4' : 'jpg'}`,
+            type: asset.mimeType || (selectedType === 'video' ? 'video/mp4' : 'image/jpeg'),
+            size: asset.fileSize,
+          });
+        }
+      } else if (selectedType === 'audio' || selectedType === 'script') {
+        const type = selectedType === 'audio' ? 'audio/*' : '*/*';
+        const result = await DocumentPicker.getDocumentAsync({
+          type,
+          copyToCacheDirectory: true,
+        });
 
-    if (!result.canceled) {
-      setMediaUri(result.assets[0].uri);
+        if (!result.canceled && result.assets[0]) {
+          const asset = result.assets[0];
+          setMediaFile({
+            uri: asset.uri,
+            name: asset.name,
+            type: asset.mimeType || (selectedType === 'audio' ? 'audio/mpeg' : 'application/pdf'),
+            size: asset.size,
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error picking media:', error);
+      Alert.alert('Error', 'Failed to select media');
     }
   };
 
-  const handleUpload = () => {
-    if (!selectedType || !caption) {
-      Alert.alert(
-        'Missing Information',
-        'Please select media type and add a caption'
+  const handleUpload = async () => {
+    if (!selectedType || !mediaFile || !token) return;
+    if (!caption.trim()) {
+      Alert.alert('Required', 'Please add a caption');
+      return;
+    }
+
+    try {
+      setUploading(true);
+      setUploadProgress(0);
+
+      // 1. Upload to Cloudinary
+      const uploadResult = await uploadMediaToCloudinary(
+        mediaFile,
+        selectedType,
+        token,
+        (percent) => setUploadProgress(percent)
       );
-      return;
-    }
 
-    if ((selectedType === 'image' || selectedType === 'video') && !mediaUri) {
-      Alert.alert('Missing Media', 'Please select a media file');
-      return;
-    }
+      // 2. Create Post in Backend
+      const rolesArray = roles.split(',').map(r => r.trim()).filter(Boolean);
+      const industriesArray = industries.split(',').map(i => i.trim()).filter(Boolean);
 
-    setUploading(true);
-    setTimeout(() => {
+      await apiCreatePost({
+        type: selectedType,
+        mediaUrl: uploadResult.url, // Legacy
+        thumbnailUrl: uploadResult.thumbnail_url || uploadResult.url, // Legacy
+        caption,
+        roles: rolesArray,
+        industries: industriesArray,
+        // New Metadata structure
+        media: {
+          url: uploadResult.url,
+          thumbnail: uploadResult.thumbnail_url,
+          duration: uploadResult.duration,
+          format: uploadResult.format,
+          size: uploadResult.bytes,
+          width: uploadResult.width,
+          height: uploadResult.height,
+          pages: uploadResult.pages,
+          publicId: uploadResult.publicId,
+        },
+        duration: uploadResult.duration,
+        size: uploadResult.bytes,
+        format: uploadResult.format,
+      }, token);
+
+      Alert.alert('Success', 'Post created successfully!', [
+        {
+          text: 'OK',
+          onPress: () => {
+            resetForm();
+            router.push('/(tabs)/home');
+          },
+        },
+      ]);
+    } catch (error: any) {
+      console.error('Upload failed:', error);
+      Alert.alert('Upload Failed', error.message || 'Something went wrong');
+    } finally {
       setUploading(false);
-      Alert.alert('Success', 'Your content has been uploaded!');
-      setSelectedType(null);
-      setMediaUri('');
-      setCaption('');
-    }, 2000);
+    }
   };
 
   const uploadOptions = [
-    {
-      type: 'video' as ContentType,
-      icon: Video,
-      label: 'Upload Video',
-      color: '#FF6B6B',
-    },
-    {
-      type: 'audio' as ContentType,
-      icon: Music,
-      label: 'Upload Audio',
-      color: '#4ECDC4',
-    },
-    {
-      type: 'script' as ContentType,
-      icon: FileText,
-      label: 'Upload Script',
-      color: '#FFD93D',
-    },
-    {
-      type: 'image' as ContentType,
-      icon: ImageIcon,
-      label: 'Upload Image',
-      color: '#A8E6CF',
-    },
+    { type: 'image' as ContentType, icon: ImageIcon, label: 'Image', color: '#4CAF50' },
+    { type: 'video' as ContentType, icon: VideoIcon, label: 'Video', color: '#E91E63' },
+    { type: 'audio' as ContentType, icon: Music, label: 'Audio', color: '#2196F3' },
+    { type: 'script' as ContentType, icon: FileText, label: 'Script', color: '#FF9800' },
   ];
 
   return (
@@ -111,7 +195,7 @@ export default function UploadScreen() {
       <Stack.Screen
         options={{
           headerShown: true,
-          headerTitle: 'Upload',
+          headerTitle: 'Create Post',
           headerStyle: { backgroundColor: colors.background },
           headerTintColor: colors.text,
         }}
@@ -122,166 +206,134 @@ export default function UploadScreen() {
         showsVerticalScrollIndicator={false}
       >
         {!selectedType ? (
-          <>
-            <Text style={[styles.title, { color: colors.text }]}>
-              What do you want to share?
-            </Text>
-            <View style={styles.optionsGrid}>
+          <View style={styles.selectionContainer}>
+            <Text style={[styles.heading, { color: colors.text }]}>What are you creating?</Text>
+            <View style={styles.grid}>
               {uploadOptions.map((option) => {
                 const Icon = option.icon;
                 return (
                   <TouchableOpacity
                     key={option.type}
-                    style={[
-                      styles.option,
-                      {
-                        backgroundColor: colors.card,
-                        borderColor: colors.border,
-                      },
-                    ]}
+                    style={[styles.optionCard, { backgroundColor: colors.card, borderColor: colors.border }]}
                     onPress={() => setSelectedType(option.type)}
+                    activeOpacity={0.7}
                   >
-                    <View
-                      style={[
-                        styles.iconContainer,
-                        { backgroundColor: `${option.color}20` },
-                      ]}
-                    >
+                    <View style={[styles.iconCircle, { backgroundColor: `${option.color}15` }]}>
                       <Icon size={32} color={option.color} />
                     </View>
-                    <Text style={[styles.optionLabel, { color: colors.text }]}>
-                      {option.label}
-                    </Text>
+                    <Text style={[styles.optionLabel, { color: colors.text }]}>{option.label}</Text>
                   </TouchableOpacity>
                 );
               })}
             </View>
-          </>
+          </View>
         ) : (
-          <View style={styles.uploadForm}>
-            <View
-              style={[styles.typeHeader, { borderBottomColor: colors.border }]}
-            >
-              <Text style={[styles.typeTitle, { color: colors.text }]}>
-                Uploading {selectedType}
-              </Text>
-              <TouchableOpacity
-                onPress={() => {
-                  setSelectedType(null);
-                  setMediaUri('');
-                  setCaption('');
-                }}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <Text style={[styles.changeButton, { color: colors.primary }]}>
-                  Change
+          <View style={styles.formContainer}>
+             {/* Header */}
+             <View style={styles.formHeader}>
+                <Text style={[styles.formTitle, { color: colors.text }]}>
+                  New {selectedType.charAt(0).toUpperCase() + selectedType.slice(1)}
                 </Text>
-              </TouchableOpacity>
+                <TouchableOpacity onPress={resetForm} disabled={uploading}>
+                  <X size={24} color={colors.textSecondary} />
+                </TouchableOpacity>
+             </View>
+
+            {/* Media Preview/Picker */}
+            <View style={styles.mediaContainer}>
+              {mediaFile ? (
+                <View style={styles.previewWrapper}>
+                  {selectedType === 'image' && (
+                    <Image source={{ uri: mediaFile.uri }} style={styles.imagePreview} contentFit="cover" />
+                  )}
+                  {selectedType === 'video' && (
+                    <Video
+                      ref={videoRef}
+                      source={{ uri: mediaFile.uri }}
+                      style={styles.videoPreview}
+                      resizeMode={ResizeMode.COVER}
+                      isLooping
+                      useNativeControls
+                    />
+                  )}
+                  {(selectedType === 'audio' || selectedType === 'script') && (
+                    <View style={[styles.filePreview, { backgroundColor: colors.surface }]}>
+                      {selectedType === 'audio' ? <Music size={40} color={colors.primary} /> : <FileText size={40} color={colors.primary} />}
+                      <Text style={[styles.fileName, { color: colors.text }]} numberOfLines={1}>
+                        {mediaFile.name}
+                      </Text>
+                      <Text style={[styles.fileSize, { color: colors.textSecondary }]}>
+                        {(mediaFile.size ? (mediaFile.size / 1024 / 1024).toFixed(2) : '0')} MB
+                      </Text>
+                    </View>
+                  )}
+                  
+                  {!uploading && (
+                    <TouchableOpacity 
+                      style={[styles.changeMediaBtn, { backgroundColor: 'rgba(0,0,0,0.6)' }]} 
+                      onPress={handlePickMedia}
+                    >
+                      <Text style={styles.changeMediaText}>Change</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              ) : (
+                <TouchableOpacity
+                  style={[styles.placeholder, { borderColor: colors.border, backgroundColor: colors.surface }]}
+                  onPress={handlePickMedia}
+                >
+                  <Upload size={40} color={colors.primary} />
+                  <Text style={[styles.placeholderText, { color: colors.textSecondary }]}>
+                    Tap to upload {selectedType}
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
 
-            {(selectedType === 'image' || selectedType === 'video') && (
-              <View style={styles.mediaSection}>
-                {mediaUri ? (
-                  <Image
-                    source={{ uri: mediaUri }}
-                    style={[
-                      styles.preview,
-                      { backgroundColor: colors.surface },
-                    ]}
-                    contentFit="cover"
-                  />
-                ) : (
-                  <TouchableOpacity
-                    style={[
-                      styles.mediaPicker,
-                      {
-                        backgroundColor: colors.surface,
-                        borderColor: colors.border,
-                      },
-                    ]}
-                    onPress={handlePickMedia}
-                  >
-                    <Upload size={48} color={colors.textSecondary} />
-                    <Text
-                      style={[
-                        styles.pickerText,
-                        { color: colors.textSecondary },
-                      ]}
-                    >
-                      Tap to select {selectedType}
-                    </Text>
-                  </TouchableOpacity>
-                )}
-                {mediaUri && (
-                  <Button
-                    title="Change Media"
-                    onPress={handlePickMedia}
-                    variant="outline"
-                  />
-                )}
-              </View>
-            )}
+            {/* Fields */}
+            <View style={styles.inputs}>
+              <Input
+                label="Caption"
+                placeholder="Write a caption..."
+                value={caption}
+                onChangeText={setCaption}
+                multiline
+                numberOfLines={4}
+                style={{ height: 100, textAlignVertical: 'top' }}
+                editable={!uploading}
+              />
+              
+              <Input
+                label="Roles (comma separated)"
+                placeholder="e.g. Actor, Director"
+                value={roles}
+                onChangeText={setRoles}
+                editable={!uploading}
+              />
 
-            {selectedType === 'audio' && (
-              <View
-                style={[
-                  styles.audioPlaceholder,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                  },
-                ]}
-              >
-                <Music size={48} color={colors.textSecondary} />
-                <Text
-                  style={[
-                    styles.placeholderText,
-                    { color: colors.textSecondary },
-                  ]}
-                >
-                  Audio file selection (demo)
-                </Text>
-              </View>
-            )}
+              <Input
+                label="Industries (comma separated)"
+                placeholder="e.g. Bollywood, Tollywood"
+                value={industries}
+                onChangeText={setIndustries}
+                editable={!uploading}
+              />
+            </View>
 
-            {selectedType === 'script' && (
-              <View
-                style={[
-                  styles.scriptPlaceholder,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                  },
-                ]}
-              >
-                <FileText size={48} color={colors.textSecondary} />
-                <Text
-                  style={[
-                    styles.placeholderText,
-                    { color: colors.textSecondary },
-                  ]}
-                >
-                  Script file selection (demo)
-                </Text>
-              </View>
-            )}
-
-            <Input
-              label="Caption"
-              placeholder="Write something about your work..."
-              value={caption}
-              onChangeText={setCaption}
-              multiline
-              numberOfLines={4}
-              style={styles.captionInput}
-            />
-
+            {/* Verify Button */}
             <Button
-              title={uploading ? 'Uploading...' : 'Publish'}
+              title={uploading ? `Uploading ${uploadProgress}%` : 'Post'}
               onPress={handleUpload}
-              size="large"
               loading={uploading}
+              disabled={!mediaFile || !caption || uploading}
+              size="large"
             />
+            
+            {uploading && (
+                <View style={[styles.progressBar, { backgroundColor: colors.border }]}>
+                    <View style={[styles.progressFill, { width: `${uploadProgress}%`, backgroundColor: colors.primary }]} />
+                </View>
+            )}
           </View>
         )}
       </ScrollView>
@@ -290,101 +342,70 @@ export default function UploadScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    padding: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700' as const,
-    marginBottom: 24,
-  },
-  optionsGrid: {
-    gap: 16,
-  },
-  option: {
+  container: { flex: 1 },
+  content: { padding: 20 },
+  heading: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
+  selectionContainer: { marginTop: 20 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
+  optionCard: {
+    width: '47%',
     padding: 20,
     borderRadius: 16,
     borderWidth: 1,
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: 12,
   },
-  iconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+  iconCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  optionLabel: {
-    fontSize: 18,
-    fontWeight: '600' as const,
+  optionLabel: { fontSize: 16, fontWeight: '600' },
+  
+  formContainer: { gap: 24 },
+  formHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  formTitle: { fontSize: 22, fontWeight: 'bold' },
+  
+  mediaContainer: { width: '100%', aspectRatio: 16/9, borderRadius: 12, overflow: 'hidden' },
+  previewWrapper: { width: '100%', height: '100%', position: 'relative' },
+  imagePreview: { width: '100%', height: '100%' },
+  videoPreview: { width: '100%', height: '100%' },
+  placeholder: { 
+    width: '100%', 
+    height: '100%', 
+    borderWidth: 2, 
+    borderStyle: 'dashed', 
+    borderRadius: 12, 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    gap: 12 
   },
-  uploadForm: {
-    gap: 20,
-  },
-  typeHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-  },
-  typeTitle: {
-    fontSize: 20,
-    fontWeight: '600' as const,
-    textTransform: 'capitalize',
-  },
-  changeButton: {
-    fontSize: 16,
-    fontWeight: '600' as const,
-  },
-  mediaSection: {
-    gap: 12,
-  },
-  mediaPicker: {
-    height: 200,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderStyle: 'dashed',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-  },
-  pickerText: {
-    fontSize: 16,
-  },
-  preview: {
+  placeholderText: { fontSize: 16 },
+  
+  inputs: { gap: 16 },
+  
+  filePreview: {
     width: '100%',
-    height: 300,
-    borderRadius: 16,
-  },
-  audioPlaceholder: {
-    height: 150,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderStyle: 'dashed',
+    height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
   },
-  scriptPlaceholder: {
-    height: 150,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderStyle: 'dashed',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
+  fileName: { fontSize: 16, fontWeight: '600', paddingHorizontal: 20 },
+  fileSize: { fontSize: 14 },
+  
+  changeMediaBtn: {
+    position: 'absolute',
+    bottom: 12,
+    right: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
   },
-  placeholderText: {
-    fontSize: 14,
-  },
-  captionInput: {
-    height: 100,
-    textAlignVertical: 'top',
-  },
+  changeMediaText: { color: 'white', fontSize: 12, fontWeight: '600' },
+  
+  progressBar: { height: 4, borderRadius: 2, width: '100%', marginTop: -10, overflow: 'hidden' },
+  progressFill: { height: '100%' },
 });

@@ -19,6 +19,10 @@ const markRead = async (req, res, next) => {
   }
 };
 
+const markAllAsRead = async (req, res, next) => {
+  try {
+    await notificationService.markAllAsRead(req.user.id);
+    return success(res, { message: 'All notifications marked as read' });
 const registerToken = async (req, res, next) => {
   try {
     const { token } = req.body;

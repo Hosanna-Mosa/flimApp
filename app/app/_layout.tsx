@@ -7,6 +7,8 @@ import * as SystemUI from 'expo-system-ui';
 import { StatusBar } from 'expo-status-bar';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { SocketProvider } from '@/contexts/SocketContext';
+import { NotificationProvider } from '@/contexts/NotificationContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -32,11 +34,14 @@ function RootLayoutNav() {
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="messages" options={{ title: 'Messages' }} />
       <Stack.Screen name="chat" options={{ title: 'Chat' }} />
+      <Stack.Screen name="post" options={{ title: 'Post' }} />
+      <Stack.Screen name="user" options={{ title: 'Profile' }} />
       <Stack.Screen name="communities" options={{ title: 'Communities' }} />
       <Stack.Screen name="community" options={{ title: 'Community' }} />
       <Stack.Screen name="edit-profile" options={{ title: 'Edit Profile' }} />
       <Stack.Screen name="settings" options={{ title: 'Settings' }} />
       <Stack.Screen name="trending" options={{ title: 'Trending' }} />
+      <Stack.Screen name="notifications" options={{ title: 'Notifications' }} />
     </Stack>
   );
 }
@@ -44,7 +49,6 @@ function RootLayoutNav() {
 export default function RootLayout() {
   useEffect(() => {
     SystemUI.setBackgroundColorAsync('#000000');
-    // Import dynamically to avoid SSR issues if any, or just use expo-system-ui if simpler
     const setNavBar = async () => {
       try {
         const NavigationBar = require('expo-navigation-bar');
@@ -62,10 +66,14 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
-          <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#000000' }}>
-            <StatusBar style="light" backgroundColor="#000000" />
-            <RootLayoutNav />
-          </GestureHandlerRootView>
+          <SocketProvider>
+            <NotificationProvider>
+              <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#000000' }}>
+                <StatusBar style="light" backgroundColor="#000000" />
+                <RootLayoutNav />
+              </GestureHandlerRootView>
+            </NotificationProvider>
+          </SocketProvider>
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>

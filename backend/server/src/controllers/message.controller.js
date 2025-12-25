@@ -10,5 +10,23 @@ const getConversation = async (req, res, next) => {
   }
 };
 
-module.exports = { getConversation };
+const deleteMessage = async (req, res, next) => {
+  try {
+    await messageService.deleteMessage(req.params.id, req.user.id);
+    return success(res, { message: 'Message deleted' });
+  } catch (err) {
+    return next(err);
+  }
+};
+
+const getConversations = async (req, res, next) => {
+  try {
+    const conversations = await messageService.getConversations(req.user.id);
+    return success(res, conversations);
+  } catch (err) {
+    return next(err);
+  }
+};
+
+module.exports = { getConversation, deleteMessage, getConversations };
 

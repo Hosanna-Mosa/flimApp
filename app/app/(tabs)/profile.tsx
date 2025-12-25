@@ -49,6 +49,11 @@ export default function ProfileScreen() {
   const [stats, setStats] = useState<UserStats>({ followersCount: 0, followingCount: 0, postsCount: 0 });
   const [loading, setLoading] = useState(true);
 
+  // Reload data every time the screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      if (user && token) {
+        console.log('[Profile] Screen focused, reloading data...');
   useEffect(() => {
     if (user && token) {
       loadUserData();
@@ -64,7 +69,7 @@ export default function ProfileScreen() {
     }, [user, token])
   );
 
-  const loadUserData = async () => {
+  const loadUserData = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -124,7 +129,7 @@ export default function ProfileScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, token]);
 
   const filteredPosts = selectedFilter === 'all'
     ? posts
