@@ -152,5 +152,55 @@ const logout = async (userId, token) => {
   await user.save();
 };
 
-module.exports = { login, verifyOtp, refresh, logout, register, loginWithPassword };
+const verifyPassword = async ({ userId, password }) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    const err = new Error('User not found');
+    err.status = 404;
+    throw err;
+  }
+  
+  // If user has no password (e.g. OTP login only), we can't verify
+  if (!user.password) {
+    const err = new Error('User has no password set');
+    err.status = 400;
+    throw err;
+  }
+
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    const err = new Error('Incorrect password');
+    err.status = 401;
+    throw err;
+  }
+  return { success: true };
+};
+
+const changePassword = async ({ userId, currentPassword, newPassword }) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    const err = new Error('User not found');
+    err.status = 404;
+    throw err;
+  }
+  
+  // Verify current password again for security
+  if (user.password) {
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      const err = new Error('Incorrect current password');
+      err.status = 401;
+      throw err;
+    }
+  }
+
+  // Hash new password
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  user.password = hashedPassword;
+  await user.save();
+  
+  return { success: true, message: 'Password updated successfully' };
+};
+
+module.exports = { login, verifyOtp, refresh, logout, register, loginWithPassword, verifyPassword, changePassword };
 

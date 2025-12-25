@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
   Animated,
   Share,
 } from 'react-native';
-import { useRouter, Stack } from 'expo-router';
+import { useRouter, Stack, useFocusEffect } from 'expo-router';
 import { Image } from 'expo-image';
 import {
   MessageCircle,
@@ -124,7 +124,40 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Load feed and following list when token changes
+  // Fetch following list - Memoized for useFocusEffect
+  const fetchFollowingList = useCallback(async () => {
+    if (!user || !token) return;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const userId = user.id || (user as any)._id;
+      if (!userId) {
+        console.error('[Home] User ID missing', user);
+        return;
+      }
+
+      // Fetch a large number of following users to build the local source of truth
+      const result = await api.getFollowing(userId, 0, 1000, token);
+      
+      if ((result as any).data && Array.isArray((result as any).data)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const rawIds = (result as any).data.map((u: any) => u._id || u.id);
+        const ids = new Set<string>(rawIds);
+        setFollowingIds(ids);
+        console.log('[Home] Following IDs refreshed:', Array.from(ids).length);
+      }
+    } catch (error) {
+      console.error('[Home] Error fetching following list:', error);
+    }
+  }, [user, token]);
+
+  // Refresh following list when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      fetchFollowingList();
+    }, [fetchFollowingList])
+  );
+
+  // Load feed and following list when token changes (Initial load)
   useEffect(() => {
     if (!authLoading && token && user) {
       loadData();
@@ -137,38 +170,12 @@ export default function HomeScreen() {
     setLoading(false);
   };
 
-  const fetchFollowingList = async () => {
-    if (!user || !token) return;
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const userId = user.id || (user as any)._id;
-      if (!userId) {
-        console.error('[Home] User ID missing', user);
-        return;
-      }
-
-      // Fetch a large number of following users to build the local source of truth
-      // In a real app with thousands of follows, we might need a dedicated endpoint for just IDs
-      const result = await api.getFollowing(userId, 0, 1000, token);
-      
-      if (result && Array.isArray(result.data)) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const rawIds = result.data.map((u: any) => u._id || u.id);
-        const ids = new Set(rawIds);
-        setFollowingIds(ids);
-        console.log('[Home] Following IDs:', Array.from(ids));
-      }
-    } catch (error) {
-      console.error('[Home] Error fetching following list:', error);
-    }
-  };
-
   const loadFeed = async () => {
     if (!token) return;
     
     try {
       console.log('[Home] Loading feed...');
-      const result = await api.getFeed(0, 20, 'hybrid', 7, token);
+      const result = await api.getFeed(0, 20, 'hybrid', 7, token) as any;
       
       if (result.data) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -226,10 +233,10 @@ export default function HomeScreen() {
       });
 
       if (isCurrentlyFollowing) {
-        const result = await api.unfollowUser(userId, token);
+        const result = await api.unfollowUser(userId, token || undefined) as any;
         console.log('[Home] Unfollowed user:', result);
       } else {
-        const result = await api.followUser(userId, token);
+        const result = await api.followUser(userId, token || undefined) as any;
         console.log('[Home] Followed user:', result);
         
         if (result.status === 'pending') {
@@ -280,7 +287,7 @@ export default function HomeScreen() {
 
       // API call
       if (wasLiked) {
-        const result = await api.unlikePost(postId, token);
+        const result = await api.unlikePost(postId, token || undefined) as any;
         console.log('[Home] Unliked post:', result);
         
         // Update with real count from server
@@ -288,7 +295,7 @@ export default function HomeScreen() {
           p.id === postId ? { ...p, likes: result.likesCount, isLiked: false } : p
         ));
       } else {
-        const result = await api.likePost(postId, token);
+        const result = await api.likePost(postId, token || undefined) as any;
         console.log('[Home] Liked post:', result);
         
         // Update with real count from server

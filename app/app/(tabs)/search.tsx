@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,54 +6,74 @@ import {
   ScrollView,
   TouchableOpacity,
   Modal,
+  TextInput,
+  ActivityIndicator,
 } from 'react-native';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
-import { SlidersHorizontal, X } from 'lucide-react-native';
+import { SlidersHorizontal, X, Search as SearchIcon, BadgeCheck } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
-import { mockUsers } from '@/mocks/posts';
+import { useAuth } from '@/contexts/AuthContext';
+import api from '@/utils/api';
 import { User, UserRole, Industry } from '@/types';
 import { ROLES } from '@/constants/roles';
 import { INDUSTRIES } from '@/constants/industries';
-import Input from '@/components/Input';
 import Button from '@/components/Button';
 import SelectableCard from '@/components/SelectableCard';
 
 export default function SearchScreen() {
+  const router = useRouter();
   const { colors } = useTheme();
+  const { token } = useAuth();
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [selectedRoles, setSelectedRoles] = useState<UserRole[]>([]);
   const [selectedIndustries, setSelectedIndustries] = useState<Industry[]>([]);
-  const [results, setResults] = useState<User[]>(mockUsers);
+  const [results, setResults] = useState<User[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
-  const handleSearch = () => {
-    let filtered = mockUsers;
+  // Debounced search effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery.trim() || selectedRoles.length > 0 || selectedIndustries.length > 0) {
+        performSearch();
+      } else {
+        setResults([]);
+      }
+    }, 500);
 
-    if (searchQuery) {
-      filtered = filtered.filter(
-        (user) =>
-          user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          user.bio.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+    return () => clearTimeout(timer);
+  }, [searchQuery, selectedRoles, selectedIndustries]);
+
+  const performSearch = async () => {
+    setIsSearching(true);
+    try {
+      const params = {
+        q: searchQuery,
+        roles: selectedRoles,
+        industries: selectedIndustries,
+      };
+      
+      console.log('[Search] Performing search with params:', params);
+      const response = await api.searchUsers(params, token || undefined) as any;
+      console.log('[Search] Response:', response);
+      
+      if (response && response.data) {
+        console.log('[Search] Results count:', response.data.length);
+        setResults(response.data);
+      } else if (response && Array.isArray(response)) {
+        console.log('[Search] Response is array, count:', response.length);
+        setResults(response);
+      } else {
+        console.log('[Search] No data in response');
+        setResults([]);
+      }
+    } catch (error) {
+      console.error('[Search] Error:', error);
+    } finally {
+      setIsSearching(false);
+      setShowFilters(false); // Close modal after search
     }
-
-    if (selectedRoles.length > 0) {
-      filtered = filtered.filter((user) =>
-        user.roles.some((role) => selectedRoles.includes(role))
-      );
-    }
-
-    if (selectedIndustries.length > 0) {
-      filtered = filtered.filter((user) =>
-        user.industries.some((industry) =>
-          selectedIndustries.includes(industry)
-        )
-      );
-    }
-
-    setResults(filtered);
-    setShowFilters(false);
   };
 
   const handleToggleRole = (roleId: string) => {
@@ -78,7 +98,7 @@ export default function SearchScreen() {
     setSelectedRoles([]);
     setSelectedIndustries([]);
     setSearchQuery('');
-    setResults(mockUsers);
+    setResults([]);
     setShowFilters(false);
   };
 
@@ -94,31 +114,47 @@ export default function SearchScreen() {
       />
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.searchContainer}>
-          <Input
-            placeholder="Search professionals..."
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            onSubmitEditing={handleSearch}
-            style={styles.searchInput}
-            containerStyle={styles.searchInputContainer}
-          />
+          <View style={[styles.searchInputWrapper, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <SearchIcon size={20} color={colors.textSecondary} style={styles.searchIcon} />
+            <TextInput
+              style={[styles.input, { color: colors.text }]}
+              placeholder="Search professionals..."
+              placeholderTextColor={colors.textSecondary}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              returnKeyType="search"
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                 <X size={16} color={colors.textSecondary} />
+              </TouchableOpacity>
+            )}
+          </View>
+          
           <TouchableOpacity
             style={[styles.filterButton, { backgroundColor: colors.primary }]}
             onPress={() => setShowFilters(true)}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <SlidersHorizontal size={20} color="#000000" />
+            {(selectedRoles.length > 0 || selectedIndustries.length > 0) && (
+              <View style={styles.filterBadge} />
+            )}
           </TouchableOpacity>
         </View>
 
         <ScrollView style={styles.results} showsVerticalScrollIndicator={false}>
-          {results.map((user) => (
-            <View
-              key={user.id}
+          {isSearching ? (
+             <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
+          ) : results.length > 0 ? (
+            results.map((user) => (
+            <TouchableOpacity
+              key={user.id || (user as any)._id}
               style={[
                 styles.userCard,
                 { backgroundColor: colors.card, borderColor: colors.border },
               ]}
+              onPress={() => router.push(`/user/${user.id || (user as any)._id}`)}
             >
               <Image
                 source={{ uri: user.avatar }}
@@ -130,6 +166,9 @@ export default function SearchScreen() {
                   <Text style={[styles.userName, { color: colors.text }]}>
                     {user.name}
                   </Text>
+                  {user.isVerified && (
+                    <BadgeCheck size={14} color={colors.primary} fill={colors.primary} style={{ marginLeft: 4 }} />
+                  )}
                   {user.isOnline && (
                     <View
                       style={[
@@ -139,21 +178,47 @@ export default function SearchScreen() {
                     />
                   )}
                 </View>
-                <Text style={[styles.role, { color: colors.textSecondary }]}>
-                  {user.roles.slice(0, 3).join(' • ')}
-                </Text>
-                <Text
-                  style={[styles.bio, { color: colors.textSecondary }]}
-                  numberOfLines={2}
-                >
-                  {user.bio}
-                </Text>
-                <Text style={[styles.location, { color: colors.primary }]}>
-                  {user.location}
-                </Text>
+                
+                {/* Roles */}
+                {user.roles && user.roles.length > 0 && (
+                  <Text style={[styles.rolesText, { color: colors.text }]} numberOfLines={1}>
+                    <Text style={{ fontWeight: '600' }}>Roles: </Text>
+                    {user.roles.slice(0, 3).join(', ')}
+                  </Text>
+                )}
+                
+                {/* Industries */}
+                {user.industries && user.industries.length > 0 && (
+                  <Text style={[styles.industriesText, { color: colors.textSecondary }]} numberOfLines={1}>
+                    <Text style={{ fontWeight: '600' }}>Industries: </Text>
+                    {user.industries.slice(0, 3).join(', ')}
+                  </Text>
+                )}
+                
+                {/* Bio */}
+                {user.bio && (
+                  <Text
+                    style={[styles.bio, { color: colors.textSecondary }]}
+                    numberOfLines={2}
+                  >
+                    {user.bio}
+                  </Text>
+                )}
+                
+                {/* Location */}
+                {user.location && (
+                  <Text style={[styles.location, { color: colors.primary }]}>
+                    📍 {user.location}
+                  </Text>
+                )}
               </View>
-            </View>
-          ))}
+            </TouchableOpacity>
+          )) 
+          ) : searchQuery.trim() || selectedRoles.length > 0 || selectedIndustries.length > 0 ? (
+             <Text style={[styles.emptyState, { color: colors.textSecondary }]}>No results found</Text>
+          ) : (
+             <Text style={[styles.emptyState, { color: colors.textSecondary }]}>Start typing to search...</Text>
+          )}
         </ScrollView>
 
         <Modal
@@ -231,7 +296,7 @@ export default function SearchScreen() {
                 />
                 <Button
                   title="Apply"
-                  onPress={handleSearch}
+                  onPress={performSearch}
                   style={styles.footerButton}
                 />
               </View>
@@ -253,14 +318,22 @@ const styles = StyleSheet.create({
     gap: 8,
     alignItems: 'center',
   },
-  searchInput: {
+  searchInputWrapper: {
     flex: 1,
-    marginBottom: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
     height: 48,
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 12,
   },
-  searchInputContainer: {
+  searchIcon: {
+    marginRight: 8,
+  },
+  input: {
     flex: 1,
-    marginBottom: 0,
+    height: '100%',
+    fontSize: 16,
   },
   filterButton: {
     width: 48,
@@ -268,6 +341,23 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    position: 'relative',
+  },
+  filterBadge: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'red',
+    borderWidth: 1,
+    borderColor: 'white',
+  },
+  emptyState: {
+    textAlign: 'center',
+    marginTop: 40,
+    fontSize: 16,
   },
   results: {
     flex: 1,
@@ -297,6 +387,16 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 16,
     fontWeight: '600' as const,
+  },
+  rolesText: {
+    fontSize: 13,
+    marginTop: 4,
+    textTransform: 'capitalize' as const,
+  },
+  industriesText: {
+    fontSize: 12,
+    marginTop: 2,
+    textTransform: 'capitalize' as const,
   },
   onlineBadge: {
     width: 8,

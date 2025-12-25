@@ -12,6 +12,83 @@ interface AuthState {
   hasCompletedOnboarding: boolean;
 }
 
+
+// Push Notification Logic
+import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
+import { Platform } from 'react-native';
+import api from '@/utils/api';
+
+const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+
+// Only set handler if NOT in Expo Go on Android (or just not in Expo Go generally to be safe)
+if (!isExpoGo) {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    }),
+  });
+}
+
+async function registerForPushNotificationsAsync() {
+  // If we are in Expo Go, return null immediately to avoid errors
+  if (isExpoGo) {
+    console.log('[Notification] Push notifications are not supported in Expo Go. skipping.');
+    return null;
+  }
+
+  let token;
+
+  if (Platform.OS === 'android') {
+    try {
+      await Notifications.setNotificationChannelAsync('default', {
+        name: 'default',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#FF231F7C',
+      });
+    } catch (e) {
+      // Ignore error if channel creation fails
+    }
+  }
+
+  if (Device.isDevice) {
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+    if (existingStatus !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+    if (finalStatus !== 'granted') {
+      console.log('Failed to get push token for push notification!');
+      return;
+    }
+    
+    // Project ID is sometimes required in newer Expo versions
+    const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
+    
+    try {
+        const pushTokenString = (await Notifications.getExpoPushTokenAsync({
+            projectId, 
+        })).data;
+        console.log('Expo Push Token:', pushTokenString);
+        return pushTokenString;
+    } catch (e) {
+        console.error('Error getting push token', e);
+    }
+    
+  } else {
+    console.log('Must use physical device for Push Notifications');
+  }
+
+  return token;
+}
+
 export const [AuthProvider, useAuth] = createContextHook(() => {
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
@@ -25,6 +102,18 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   useEffect(() => {
     loadAuthState();
   }, []);
+
+  const registerPushToken = async (authToken: string) => {
+      try {
+          const pushToken = await registerForPushNotificationsAsync();
+          if (pushToken && authToken) {
+              await api.registerPushToken(pushToken, authToken);
+              console.log('[Auth] Push token registered with backend');
+          }
+      } catch (error) {
+          console.error('[Auth] Failed to register push token:', error);
+      }
+  };
 
   const loadAuthState = async () => {
     try {
@@ -45,6 +134,10 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           isLoading: false,
           hasCompletedOnboarding: onboardingComplete === 'true',
         });
+        
+        // Register push token silently on load
+        registerPushToken(token);
+        
       } else {
         setAuthState({
           user: null,
@@ -117,11 +210,29 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   };
 
   const updateProfile = async (updates: Partial<User>) => {
-    if (!authState.user) return;
+    if (!authState.user || !authState.token) return;
 
-    const updatedUser = { ...authState.user, ...updates };
-    await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
-    setAuthState((prev) => ({ ...prev, user: updatedUser }));
+    try {
+      // Import api at the top if not already imported
+      const api = require('@/utils/api').default;
+      
+      // Call backend API to update profile
+      const updatedUserData = await api.updateMe(updates, authState.token);
+      
+      // Merge the response with current user data
+      const updatedUser = { ...authState.user, ...updatedUserData };
+      
+      // Save to AsyncStorage
+      await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      // Update state
+      setAuthState((prev) => ({ ...prev, user: updatedUser }));
+      
+      return { success: true, user: updatedUser };
+    } catch (error) {
+      console.error('[AuthContext] Error updating profile:', error);
+      throw error;
+    }
   };
 
   const setAuth = async (data: {
@@ -145,6 +256,9 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       hasCompletedOnboarding:
         data.user.roles.length > 0 && data.user.industries.length > 0,
     });
+    
+    // Register push token on login
+    registerPushToken(data.token);
   };
 
   const logout = async () => {

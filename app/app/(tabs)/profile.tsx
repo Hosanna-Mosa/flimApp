@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useRouter, useFocusEffect } from 'expo-router';
 import { Image } from 'expo-image';
 import {
   MapPin,
@@ -54,6 +54,15 @@ export default function ProfileScreen() {
       loadUserData();
     }
   }, [user, token]);
+  
+  // Reload data when screen comes into focus (e.g., after editing profile)
+  useFocusEffect(
+    useCallback(() => {
+      if (user && token) {
+        loadUserData();
+      }
+    }, [user, token])
+  );
 
   const loadUserData = async () => {
     try {
@@ -73,11 +82,11 @@ export default function ProfileScreen() {
       
       // Fetch user data and posts
       const [userData, postsData] = await Promise.all([
-        api.user(userId, token).catch(err => {
+        api.user(userId, token || undefined).catch(err => {
           console.error('[Profile] Error fetching user:', err);
           return null;
         }),
-        api.getUserFeed(userId, 0, 100, token).catch(err => {
+        api.getUserFeed(userId, 0, 100, token || undefined).catch(err => {
           console.error('[Profile] Error fetching posts:', err);
           return { data: [] };
         }),

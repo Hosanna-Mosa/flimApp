@@ -6,12 +6,13 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
-import { Stack } from 'expo-router';
-import { Moon, Sun, Bell, Shield } from 'lucide-react-native';
+import { Stack, useRouter } from 'expo-router';
+import { Moon, Sun, Bell, Shield, Lock, ChevronRight } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function SettingsScreen() {
+  const router = useRouter();
   const { colors, changeTheme, isDark } = useTheme();
   const { user, updateProfile } = useAuth();
 
@@ -166,6 +167,32 @@ export default function SettingsScreen() {
               />
             </TouchableOpacity>
           </View>
+
+          <TouchableOpacity
+            style={[
+              styles.settingItem,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
+            onPress={() => router.push('/change-password')}
+          >
+            <View style={styles.settingInfo}>
+              <Lock size={24} color={colors.textSecondary} />
+              <View style={styles.settingText}>
+                <Text style={[styles.settingLabel, { color: colors.text }]}>
+                  Change Password
+                </Text>
+                <Text
+                  style={[
+                    styles.settingDescription,
+                    { color: colors.textSecondary },
+                  ]}
+                >
+                  Update your account password
+                </Text>
+              </View>
+            </View>
+            <ChevronRight size={20} color={colors.textSecondary} />
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </>
