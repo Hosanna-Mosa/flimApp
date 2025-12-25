@@ -32,5 +32,6 @@ const registerToken = async (req, res, next) => {
   }
 };
 
-module.exports = { list, markRead, registerToken };
+module.exports = { list, markRead, registerToken ,markAllAsRead};
+
 
