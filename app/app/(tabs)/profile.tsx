@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useRouter, useFocusEffect } from 'expo-router';
 import { Image } from 'expo-image';
 import {
   MapPin,
@@ -49,13 +49,17 @@ export default function ProfileScreen() {
   const [stats, setStats] = useState<UserStats>({ followersCount: 0, followingCount: 0, postsCount: 0 });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user && token) {
-      loadUserData();
-    }
-  }, [user, token]);
+  // Reload data every time the screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      if (user && token) {
+        console.log('[Profile] Screen focused, reloading data...');
+        loadUserData();
+      }
+    }, [user, token])
+  );
 
-  const loadUserData = async () => {
+  const loadUserData = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -73,11 +77,11 @@ export default function ProfileScreen() {
       
       // Fetch user data and posts
       const [userData, postsData] = await Promise.all([
-        api.user(userId, token).catch(err => {
+        api.user(userId, token || undefined).catch(err => {
           console.error('[Profile] Error fetching user:', err);
           return null;
         }),
-        api.getUserFeed(userId, 0, 100, token).catch(err => {
+        api.getUserFeed(userId, 0, 100, token || undefined).catch(err => {
           console.error('[Profile] Error fetching posts:', err);
           return { data: [] };
         }),
@@ -115,7 +119,7 @@ export default function ProfileScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, token]);
 
   const filteredPosts = selectedFilter === 'all'
     ? posts

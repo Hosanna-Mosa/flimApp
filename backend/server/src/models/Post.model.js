@@ -8,11 +8,27 @@ const PostSchema = new Schema(
       enum: ['video', 'audio', 'image', 'script'],
       required: true,
     },
-    mediaUrl: { type: String, required: true },
+    
+    // Legacy fields (kept for backward compatibility)
+    mediaUrl: { type: String },
     thumbnailUrl: { type: String },
+    
+    // Enhanced media metadata (NEW - Production ready)
+    media: {
+      url: { type: String, required: true }, // Main media URL from Cloudinary
+      thumbnail: { type: String }, // Thumbnail URL (for videos)
+      duration: { type: Number }, // Duration in seconds (for video/audio)
+      format: { type: String }, // File format (mp4, jpg, pdf, etc.)
+      size: { type: Number }, // File size in bytes
+      width: { type: Number }, // Image/video width
+      height: { type: Number }, // Image/video height
+      pages: { type: Number }, // Number of pages for scripts/PDFs
+      publicId: { type: String }, // Cloudinary public ID for management
+    },
+    
     caption: { type: String, maxlength: 1000 },
     industries: [{ type: String }],
-    roles: [{ type: String }],
+    roles: { type: [String], default: [] },
     
     // Denormalized Engagement Counts (for performance)
     engagement: {
@@ -45,6 +61,15 @@ PostSchema.index({ industries: 1, createdAt: -1 }); // Industry-specific feed
 PostSchema.index({ score: -1, createdAt: -1 }); // Algorithmic feed
 PostSchema.index({ isActive: 1, visibility: 1, createdAt: -1 }); // Active public posts
 
+// Virtual for backward compatibility
+PostSchema.virtual('mediaUrlCompat').get(function() {
+  return this.media?.url || this.mediaUrl;
+});
+
+PostSchema.virtual('thumbnailUrlCompat').get(function() {
+  return this.media?.thumbnail || this.thumbnailUrl;
+});
+
 // Method to calculate engagement score
 PostSchema.methods.calculateScore = function() {
   const ageInHours = (Date.now() - this.createdAt) / (1000 * 60 * 60);
@@ -61,4 +86,3 @@ PostSchema.methods.calculateScore = function() {
 };
 
 module.exports = model('Post', PostSchema);
-

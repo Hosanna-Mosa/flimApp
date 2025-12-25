@@ -16,6 +16,7 @@ const followRoutes = require('./routes/follow.routes');
 const commentRoutes = require('./routes/comment.routes');
 const shareRoutes = require('./routes/share.routes');
 const feedRoutes = require('./routes/feed.routes');
+const mediaRoutes = require('./routes/media.routes');
 
 const app = express();
 
@@ -38,6 +39,7 @@ app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
 app.use('/auth', authRoutes);
 app.use('/users', userRoutes);
 app.use('/posts', postRoutes);
+app.use('/media', mediaRoutes);
 app.use('/communities', communityRoutes);
 app.use('/messages', messageRoutes);
 app.use('/notifications', notificationRoutes);

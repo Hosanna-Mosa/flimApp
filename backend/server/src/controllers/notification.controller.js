@@ -19,5 +19,14 @@ const markRead = async (req, res, next) => {
   }
 };
 
-module.exports = { list, markRead };
+const markAllAsRead = async (req, res, next) => {
+  try {
+    await notificationService.markAllAsRead(req.user.id);
+    return success(res, { message: 'All notifications marked as read' });
+  } catch (err) {
+    return next(err);
+  }
+};
+
+module.exports = { list, markRead, markAllAsRead };
 

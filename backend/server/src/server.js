@@ -31,6 +31,11 @@ const start = async () => {
   const io = new Server(server, {
     cors: { origin: '*', methods: ['GET', 'POST'] },
   });
+  
+  // Set IO instance for global usage
+  const { setIo } = require('./utils/socketStore');
+  setIo(io);
+  
   registerChatHandlers(io);
 
   server.listen(PORT, '0.0.0.0', () => {

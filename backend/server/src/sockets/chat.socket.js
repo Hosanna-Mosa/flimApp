@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const messageService = require('../services/message.service');
+const queueService = require('../services/queue.service');
 const logger = require('../config/logger');
 
 const registerChatHandlers = (io) => {
@@ -26,6 +27,15 @@ const registerChatHandlers = (io) => {
         recipientId: to,
         content,
       });
+
+      // Queue notification
+      queueService.addNotificationJob({
+         userId: to,
+         type: 'message',
+         actorId: socket.userId,
+         messageId: message._id,
+      }).catch(err => logger.error('Notification job failed', err));
+
       io.to(to).emit('receive_message', message);
       socket.emit('message_sent', message);
     });
@@ -37,4 +47,3 @@ const registerChatHandlers = (io) => {
 };
 
 module.exports = registerChatHandlers;
-

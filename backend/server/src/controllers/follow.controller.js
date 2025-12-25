@@ -148,6 +148,11 @@ const isFollowing = async (req, res, next) => {
   try {
     const following = await followService.isFollowing(req.user.id, req.params.id);
     
+    // Disable caching to ensure fresh data
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    
     return success(res, { following });
   } catch (err) {
     return next(err);

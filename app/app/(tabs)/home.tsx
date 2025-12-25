@@ -3,7 +3,7 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
+  FlatList,
   TouchableOpacity,
   RefreshControl,
   Alert,
@@ -31,98 +31,28 @@ import {
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNotifications } from '@/contexts/NotificationContext';
 import api from '@/utils/api';
 import { Post } from '@/types';
 
+import FeedPost from '@/components/FeedPost';
+
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
-
-// Separate component to handle follow animation logic
-const FollowButton = ({ 
-  userId, 
-  isFollowing, 
-  onPress, 
-  primaryColor, 
-  borderColor 
-}: { 
-  userId: string; 
-  isFollowing: boolean; 
-  onPress: () => void; 
-  primaryColor: string; 
-  borderColor: string;
-}) => {
-  // Use a ref to track if it's the initial render
-  const isInitialMount = React.useRef(true);
-  const [visible, setVisible] = useState(!isFollowing);
-  const [showTick, setShowTick] = useState(false);
-  
-  // Animation value for opacity
-  const fadeAnim = React.useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      // If already following on mount, don't show anything
-      if (isFollowing) {
-        setVisible(false);
-      }
-      return;
-    }
-
-    if (isFollowing) {
-      // User just followed: Show tick, then hide
-      setShowTick(true);
-      
-      // Animate out after delay
-      Animated.sequence([
-        Animated.delay(1000), // Show tick for 1 second
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        setVisible(false);
-        setShowTick(false);
-      });
-    } else {
-      // User unfollowed: Show plus again
-      setVisible(true);
-      setShowTick(false);
-      fadeAnim.setValue(1);
-    }
-  }, [isFollowing]);
-
-  if (!visible) return null;
-
-  return (
-    <AnimatedTouchableOpacity
-      style={[
-        styles.followBadge,
-        {
-          backgroundColor: showTick ? borderColor : primaryColor,
-          opacity: fadeAnim,
-        },
-      ]}
-      onPress={onPress}
-      disabled={showTick} // Disable press while showing success tick
-    >
-      {showTick ? (
-        <Check size={10} color="#000" />
-      ) : (
-        <Plus size={10} color="#fff" />
-      )}
-    </AnimatedTouchableOpacity>
-  );
-};
 
 export default function HomeScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { user, token, isLoading: authLoading } = useAuth(); // token is directly available
+  const { user, token, isLoading: authLoading } = useAuth();
+  const { unreadCount } = useNotifications(); 
   const [posts, setPosts] = useState<Post[]>([]);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
+  
+  // Pagination State
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   // Load feed and following list when token changes
   useEffect(() => {
@@ -133,7 +63,7 @@ export default function HomeScreen() {
 
   const loadData = async () => {
     setLoading(true);
-    await Promise.all([fetchFollowingList(), loadFeed()]);
+    await Promise.all([fetchFollowingList(), loadFeed(0, false)]);
     setLoading(false);
   };
 
@@ -146,9 +76,6 @@ export default function HomeScreen() {
         console.error('[Home] User ID missing', user);
         return;
       }
-
-      // Fetch a large number of following users to build the local source of truth
-      // In a real app with thousands of follows, we might need a dedicated endpoint for just IDs
       const result = await api.getFollowing(userId, 0, 1000, token);
       
       if (result && Array.isArray(result.data)) {
@@ -163,12 +90,12 @@ export default function HomeScreen() {
     }
   };
 
-  const loadFeed = async () => {
+  const loadFeed = async (pageNumber = 0, append = false) => {
     if (!token) return;
     
     try {
-      console.log('[Home] Loading feed...');
-      const result = await api.getFeed(0, 20, 'hybrid', 7, token);
+      console.log(`[Home] Loading feed page ${pageNumber}...`);
+      const result = await api.getFeed(pageNumber, 20, 'hybrid', 7, token);
       
       if (result.data) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -181,11 +108,12 @@ export default function HomeScreen() {
             avatar: p.author.avatar,
             isVerified: p.author.isVerified,
             roles: p.author.roles || [],
-            isFollowing: p.author.isFollowing || false, // Will be overridden by Set check in render
+            isFollowing: p.author.isFollowing || false, 
           },
           type: p.type,
           mediaUrl: p.mediaUrl,
           thumbnailUrl: p.thumbnailUrl,
+          media: p.media,
           caption: p.caption,
           likes: p.engagement?.likesCount || 0,
           comments: p.engagement?.commentsCount || 0,
@@ -194,7 +122,17 @@ export default function HomeScreen() {
           createdAt: new Date(p.createdAt).toLocaleDateString(),
         }));
         
-        setPosts(mappedPosts);
+        if (mappedPosts.length < 20) {
+            setHasMore(false);
+        } else {
+            setHasMore(true);
+        }
+
+        if (append) {
+            setPosts(prev => [...prev, ...mappedPosts]);
+        } else {
+            setPosts(mappedPosts);
+        }
       }
     } catch (error) {
       console.error('[Home] Error loading feed:', error);
@@ -204,8 +142,21 @@ export default function HomeScreen() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([fetchFollowingList(), loadFeed()]);
+    setPage(0);
+    setHasMore(true);
+    // Reload everything
+    await Promise.all([fetchFollowingList(), loadFeed(0, false)]);
     setRefreshing(false);
+  };
+
+  const loadMore = async () => {
+      if (!loadingMore && hasMore && !loading) {
+          setLoadingMore(true);
+          const nextPage = page + 1;
+          setPage(nextPage);
+          await loadFeed(nextPage, true);
+          setLoadingMore(false);
+      }
   };
 
   const toggleFollow = async (userId: string) => {
@@ -234,7 +185,6 @@ export default function HomeScreen() {
         
         if (result.status === 'pending') {
           Alert.alert('Follow Request Sent', 'This account is private. Your request is pending.');
-          // Revert optimistic update if pending (since we are not technically "following" yet in the accepted sense)
           setFollowingIds(prev => {
              const next = new Set(prev);
              next.delete(userId);
@@ -243,10 +193,9 @@ export default function HomeScreen() {
         }
       }
     } catch (error) {
-      // Revert on error
       setFollowingIds(prev => {
         const next = new Set(prev);
-        if (followingIds.has(userId)) { // If it was originally following
+        if (followingIds.has(userId)) { 
            next.add(userId);
         } else {
            next.delete(userId);
@@ -281,40 +230,31 @@ export default function HomeScreen() {
       // API call
       if (wasLiked) {
         const result = await api.unlikePost(postId, token);
-        console.log('[Home] Unliked post:', result);
-        
-        // Update with real count from server
         setPosts(prevPosts => prevPosts.map((p) =>
           p.id === postId ? { ...p, likes: result.likesCount, isLiked: false } : p
         ));
       } else {
         const result = await api.likePost(postId, token);
-        console.log('[Home] Liked post:', result);
-        
-        // Update with real count from server
         setPosts(prevPosts => prevPosts.map((p) =>
           p.id === postId ? { ...p, likes: result.likesCount, isLiked: true } : p
         ));
       }
     } catch (error) {
-      // Revert on error - use the original state
       setPosts(prevPosts => prevPosts.map((p) => {
         if (p.id === postId) {
           return {
             ...p,
-            isLiked: !p.isLiked, // Toggle back
-            likes: p.isLiked ? p.likes + 1 : p.likes - 1, // Revert count
+            isLiked: !p.isLiked, 
+            likes: p.isLiked ? p.likes + 1 : p.likes - 1, 
           };
         }
         return p;
       }));
       console.error('[Home] Like error:', error);
-      Alert.alert('Error', 'Failed to like post');
     }
   };
 
   const handleComment = (postId: string) => {
-    // Navigate to post detail with comments
     router.push(`/post/${postId}`);
   };
 
@@ -337,20 +277,6 @@ export default function HomeScreen() {
     }
   };
 
-  const renderMediaIcon = (type: Post['type']) => {
-    const iconProps = { size: 20, color: colors.primary };
-    switch (type) {
-      case 'video':
-        return <Play {...iconProps} />;
-      case 'audio':
-        return <Music {...iconProps} />;
-      case 'script':
-        return <FileText {...iconProps} />;
-      default:
-        return <Film {...iconProps} />;
-    }
-  };
-
   return (
     <>
       <Stack.Screen
@@ -367,8 +293,32 @@ export default function HomeScreen() {
               >
                 <Flame size={24} color={colors.text} />
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => router.push('/notifications')}>
+              <TouchableOpacity 
+                onPress={() => router.push('/notifications')}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                style={{ position: 'relative' }}
+              >
                 <Bell size={24} color={colors.text} />
+                {unreadCount > 0 && (
+                  <View
+                    style={{
+                      position: 'absolute',
+                      top: -4,
+                      right: -6,
+                      backgroundColor: colors.error,
+                      borderRadius: 10,
+                      minWidth: 18,
+                      height: 18,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      paddingHorizontal: 4,
+                    }}
+                  >
+                    <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '700' }}>
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </Text>
+                  </View>
+                )}
               </TouchableOpacity>
               <TouchableOpacity 
                 onPress={() => router.push('/messages')}
@@ -380,7 +330,7 @@ export default function HomeScreen() {
           ),
         }}
       />
-      {loading ? (
+      {loading && page === 0 ? (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 100 }}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={{ color: colors.textSecondary, marginTop: 16 }}>
@@ -394,8 +344,22 @@ export default function HomeScreen() {
           </Text>
         </View>
       ) : (
-      <ScrollView
+      <FlatList
         style={[styles.container, { backgroundColor: colors.background }]}
+        data={posts}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <FeedPost
+            post={item}
+            isFollowing={followingIds.has(item.user.id)}
+            onFollow={toggleFollow}
+            onLike={handleLike}
+            onComment={handleComment}
+            onShare={handleShare}
+            primaryColor={colors.primary}
+            borderColor={colors.border}
+          />
+        )}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -404,128 +368,16 @@ export default function HomeScreen() {
             tintColor={colors.primary}
           />
         }
-      >
-        {posts.map((post) => (
-          <View
-            key={post.id}
-            style={[
-              styles.postCard,
-              { backgroundColor: colors.card, borderColor: colors.border },
-            ]}
-          >
-            <View style={styles.postHeader}>
-              <View style={styles.avatarContainer}>
-                <Image
-                  source={{ uri: post.user.avatar }}
-                  style={styles.avatar}
-                  contentFit="cover"
-                />
-                <FollowButton
-                  userId={post.user.id}
-                  isFollowing={followingIds.has(post.user.id)}
-                  onPress={() => toggleFollow(post.user.id)}
-                  primaryColor={colors.primary}
-                  borderColor={colors.border}
-                />
-              </View>
-              <View style={styles.userInfo}>
-                <TouchableOpacity onPress={() => router.push({ pathname: '/user/[id]', params: { id: post.user.id } })} style={styles.nameContainer}>
-                  <Text style={[styles.userName, { color: colors.text }]}>
-                    {post.user.name}
-                  </Text>
-                  {post.user.isVerified && (
-                    <BadgeCheck size={16} color={colors.primary} fill="transparent" />
-                  )}
-                </TouchableOpacity>
-                <Text style={[styles.role, { color: colors.textSecondary }]}>
-                  {post.user.roles.slice(0, 2).join(' • ')}
-                </Text>
-              </View>
-              <View
-                style={[
-                  styles.mediaBadge,
-                  { backgroundColor: `${colors.primary}20` },
-                ]}
-              >
-                {renderMediaIcon(post.type)}
-              </View>
-            </View>
-
-            {(post.type === 'image' ||
-              post.type === 'video' ||
-              post.type === 'script') && (
-                <Image
-                  source={{ uri: post.thumbnailUrl || post.mediaUrl }}
-                  style={styles.media}
-                  contentFit="cover"
-                />
-              )}
-
-            {post.type === 'audio' && (
-              <View
-                style={[
-                  styles.audioContainer,
-                  { backgroundColor: colors.surface },
-                ]}
-              >
-                <Music size={48} color={colors.primary} />
-                <Text style={[styles.audioText, { color: colors.text }]}>
-                  Audio Track
-                </Text>
-              </View>
-            )}
-
-            <View style={styles.postContent}>
-              <Text style={[styles.caption, { color: colors.text }]}>
-                {post.caption}
-              </Text>
-              <Text style={[styles.timestamp, { color: colors.textSecondary }]}>
-                {post.createdAt}
-              </Text>
-            </View>
-
-            <View style={[styles.actions, { borderTopColor: colors.border }]}>
-              <TouchableOpacity
-                style={styles.action}
-                onPress={() => handleLike(post.id)}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <Heart
-                  size={22}
-                  color={post.isLiked ? colors.error : colors.textSecondary}
-                  fill={post.isLiked ? colors.error : 'transparent'}
-                />
-                <Text
-                  style={[styles.actionText, { color: colors.textSecondary }]}
-                >
-                  {post.likes}
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={styles.action}
-                onPress={() => handleComment(post.id)}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <MessageSquare size={22} color={colors.textSecondary} />
-                <Text
-                  style={[styles.actionText, { color: colors.textSecondary }]}
-                >
-                  {post.comments}
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={styles.action}
-                onPress={() => handleShare(post.id)}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <Share2 size={22} color={colors.textSecondary} />
-              </TouchableOpacity>
-            </View>
-          </View>
-        ))}
-      </ScrollView>
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={
+            loadingMore ? (
+                <View style={{ padding: 20, alignItems: 'center' }}>
+                    <ActivityIndicator color={colors.primary} />
+                </View>
+            ) : null
+        }
+      />
       )}
     </>
   );
@@ -535,101 +387,25 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  postCard: {
-    marginBottom: 16,
-    borderBottomWidth: 1,
-  },
-  postHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-  },
-  avatarContainer: {
-    position: 'relative',
-  },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-  },
-  followBadge: {
-    position: 'absolute',
-    top: -4,
-    right: -4,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#fff', // Or dynamic background color for bezel effect
-  },
-  userInfo: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  nameContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  userName: {
-    fontSize: 16,
-    fontWeight: '600' as const,
-  },
-  roleContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 2,
-  },
-  role: {
-    fontSize: 12,
-    textTransform: 'capitalize',
-  },
-
-  mediaBadge: {
-    padding: 8,
-    borderRadius: 8,
-  },
-  media: {
-    width: '100%',
-    height: 300,
-  },
-  audioContainer: {
-    height: 200,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-  },
-  audioText: {
-    fontSize: 16,
-    fontWeight: '600' as const,
-  },
-  postContent: {
-    padding: 16,
-  },
-  caption: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  timestamp: {
-    fontSize: 12,
-    marginTop: 8,
-  },
-  actions: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderTopWidth: 1,
-  },
-  action: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 24,
-    gap: 6,
-  },
-  actionText: {
-    fontSize: 14,
-    fontWeight: '500' as const,
-  },
+  // ... Keep existing styles ...
+  postCard: { marginBottom: 16, borderBottomWidth: 1 },
+  postHeader: { flexDirection: 'row', alignItems: 'center', padding: 16 },
+  avatarContainer: { position: 'relative' },
+  avatar: { width: 48, height: 48, borderRadius: 24 },
+  followBadge: { position: 'absolute', top: -4, right: -4, width: 20, height: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff' },
+  userInfo: { flex: 1, marginLeft: 12 },
+  nameContainer: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  userName: { fontSize: 16, fontWeight: '600' },
+  roleContainer: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 2 },
+  role: { fontSize: 12, textTransform: 'capitalize' },
+  mediaBadge: { padding: 8, borderRadius: 8 },
+  media: { width: '100%', height: 300 },
+  audioContainer: { height: 200, alignItems: 'center', justifyContent: 'center', gap: 12 },
+  audioText: { fontSize: 16, fontWeight: '600' },
+  postContent: { padding: 16 },
+  caption: { fontSize: 14, lineHeight: 20 },
+  timestamp: { fontSize: 12, marginTop: 8 },
+  actions: { flexDirection: 'row', paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 1 },
+  action: { flexDirection: 'row', alignItems: 'center', marginRight: 24, gap: 6 },
+  actionText: { fontSize: 14, fontWeight: '500' },
 });

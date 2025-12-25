@@ -112,16 +112,52 @@ export const apiSearchUsers = (
   return request(`/users?${query.toString()}`, { token });
 };
 
+// Media
+export const apiGetMediaSignature = (
+  type: 'image' | 'video' | 'audio' | 'script',
+  token?: string
+) =>
+  request<{
+    signature: string;
+    timestamp: number;
+    apiKey: string;
+    cloudName: string;
+    folder: string;
+    params: Record<string, any>;
+    uploadPreset?: string;
+  }>('/media/signature', { method: 'POST', body: { type }, token });
+
+export const apiValidateMedia = (
+  type: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  metadata: any,
+  token?: string
+) =>
+  request('/media/validate', {
+    method: 'POST',
+    body: { type, metadata },
+    token,
+  });
+
 // Posts
 export const apiCreatePost = (
   payload: {
     type: 'video' | 'audio' | 'image' | 'script';
-    mediaUrl?: string;
-    filePath?: string;
-    thumbnailUrl?: string;
+    mediaUrl?: string; // Legacy
+    thumbnailUrl?: string; // Legacy
     caption?: string;
     industries?: string[];
     roles?: string[];
+    // New fields
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    media?: any; 
+    format?: string;
+    duration?: number;
+    size?: number;
+    width?: number;
+    height?: number;
+    pages?: number;
+    thumbnail?: string;
   },
   token?: string
 ) => request('/posts', { method: 'POST', body: payload, token });
@@ -168,9 +204,18 @@ export const apiLeaveCommunity = (id: string, token?: string) =>
 export const apiConversation = (userId: string, token?: string) =>
   request(`/messages/${userId}`, { token });
 
+export const apiDeleteMessage = (messageId: string, token?: string) =>
+  request(`/messages/${messageId}`, { method: 'DELETE', token });
+
+export const apiGetConversations = (token?: string) =>
+  request('/messages', { token });
+
 // Notifications
 export const apiNotifications = (token?: string) =>
   request('/notifications', { token });
+
+export const apiMarkAllNotificationsRead = (token?: string) =>
+  request('/notifications/read-all', { method: 'POST', token });
 
 export const apiMarkNotificationRead = (id: string, token?: string) =>
   request(`/notifications/${id}/read`, { method: 'POST', token });
@@ -444,6 +489,8 @@ export const api = {
   updateMe: apiUpdateMe,
   user: apiGetUser,
   searchUsers: apiSearchUsers,
+  getMediaSignature: apiGetMediaSignature,
+  validateMedia: apiValidateMedia,
   createPost: apiCreatePost,
   deletePost: apiDeletePost,
   getPost: apiGetPost,

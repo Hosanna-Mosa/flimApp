@@ -31,8 +31,23 @@ class FollowService {
       });
 
       if (existingFollow) {
-        logger.warn(`[Follow] Already following/requested: ${followerId} -> ${followingId}`);
-        return { success: false, message: 'Already following this user' };
+        logger.warn(`[Follow] Already following/requested: ${followerId} -> ${followingId} (status: ${existingFollow.status})`);
+        
+        // Ensure cache is in sync with database
+        if (existingFollow.status === 'accepted') {
+          await cacheService.addFollow(followerId, followingId).catch(err => 
+            logger.warn('[Follow] Cache sync failed:', err.message)
+          );
+        }
+        
+        return { 
+          success: false, 
+          message: existingFollow.status === 'pending' 
+            ? 'Follow request already sent' 
+            : 'Already following this user',
+          status: existingFollow.status,
+          alreadyFollowing: true,
+        };
       }
 
       // Get the user being followed to check account type
@@ -75,6 +90,13 @@ class FollowService {
 
         // Queue feed update (no immediate need for feed update, can still use queue)
         queueService.addFeedUpdateJob(followerId).catch(err => logger.error('Feed update job failed', err));
+        
+        // Send notification
+        queueService.addNotificationJob({
+           userId: followingId,
+           type: 'follow',
+           followerId: followerId,
+        }).catch(err => logger.error('Notification job failed', err));
       }
 
       // Update cache (optional, for performance)
@@ -376,20 +398,31 @@ class FollowService {
    */
   async isFollowing(followerId, followingId) {
     try {
-      // Try cache first
-      const cachedResult = await cacheService.isFollowing(followerId, followingId);
-      if (cachedResult !== null) {
-        return cachedResult;
-      }
-
-      // Fallback to database
+      // Always check database for accurate status
       const follow = await Follow.findOne({
         follower: followerId,
         following: followingId,
         status: 'accepted',
       });
 
-      return !!follow;
+      const isFollowing = !!follow;
+
+      // Update cache with current status
+      try {
+        if (isFollowing) {
+          // Ensure cache reflects the follow
+          // cacheService.addFollow handles checking if it's already in cache and adding if not
+          await cacheService.addFollow(followerId, followingId);
+        } else {
+          // Ensure cache doesn't have a stale follow
+          // cacheService.removeFollow handles checking if it's in cache and removing if so
+          await cacheService.removeFollow(followerId, followingId);
+        }
+      } catch (cacheError) {
+        logger.warn('[isFollowing] Cache update failed (non-critical):', cacheError.message);
+      }
+
+      return isFollowing;
     } catch (error) {
       logger.error('Error checking follow status:', error);
       return false;

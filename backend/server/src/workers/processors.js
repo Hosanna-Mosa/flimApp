@@ -89,15 +89,61 @@ queues.feed.process('update-feed', async (job) => {
 /**
  * Notification Queue Processor (placeholder)
  */
+const notificationService = require('../services/notification.service');
+const User = require('../models/User.model');
+
+// ... existing code ...
+
 queues.notification.process('send-notification', async (job) => {
   const data = job.data;
   logger.info(`Processing notification: ${data.type} for user ${data.userId}`);
   
   try {
-    // TODO: Implement notification sending logic
-    // This could send push notifications, emails, or in-app notifications
+    const { userId, type, actorId, followerId } = data;
     
-    // For now, just log it
+    // Determine who performed the action
+    const actionUserId = actorId || followerId;
+    
+    // Don't notify if user triggered action on themselves
+    if (actionUserId === userId) return { success: true, skipped: true };
+
+    const actor = await User.findById(actionUserId).select('name');
+    const actorName = actor ? actor.name : 'Someone';
+
+    let title = 'New Notification';
+    let body = 'You have a new notification';
+
+    switch (type) {
+      case 'follow':
+        title = 'New Follower';
+        body = `${actorName} started following you`;
+        break;
+      case 'like':
+        title = 'New Like';
+        body = `${actorName} liked your post`;
+        break;
+      case 'comment':
+        title = 'New Comment';
+        body = `${actorName} commented on your post`;
+        break;
+      case 'reply':
+        title = 'New Reply';
+        body = `${actorName} replied to your comment`;
+        break;
+      case 'message':
+        title = 'New Message';
+        body = `${actorName} sent you a message`;
+        break;
+    }
+
+    await notificationService.createNotification({
+      user: userId,
+      title,
+      body,
+      type,
+      metadata: data,
+    });
+    
     logger.info('Notification sent:', data);
     return { success: true, ...data };
   } catch (error) {
