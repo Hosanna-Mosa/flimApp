@@ -40,15 +40,18 @@ export default function NotificationsScreen() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const data: any = await apiNotifications(token);
       if (Array.isArray(data)) {
-        const items = data.map((n: any) => ({
-          id: n._id,
-          title: n.title,
-          description: n.body,
-          time: new Date(n.createdAt).toLocaleString(),
-          isRead: n.isRead,
-          type: n.type,
-          metadata: n.metadata || {},
-        }));
+        // Filter out 'message' type notifications as requested
+        const items = data
+          .filter((n: any) => n.type !== 'message')
+          .map((n: any) => ({
+            id: n._id,
+            title: n.title,
+            description: n.body,
+            time: new Date(n.createdAt).toLocaleString(),
+            isRead: n.isRead,
+            type: n.type,
+            metadata: n.metadata || {},
+          }));
         setNotifications(items);
       }
     } catch (error) {
@@ -85,6 +88,9 @@ export default function NotificationsScreen() {
   useEffect(() => {
     if (!socket) return;
     const handleNewNotification = (n: any) => {
+      // Ignore message notifications in real-time
+      if (n.type === 'message') return;
+
       setNotifications((prev) => [
         {
           id: n._id,
@@ -124,7 +130,7 @@ export default function NotificationsScreen() {
           router.push(`/post/${metadata.postId}`);
         }
         break;
-      
+
       case 'follow':
         // Navigate to the follower's profile
         if (metadata?.followerId || metadata?.actorId) {
@@ -135,7 +141,7 @@ export default function NotificationsScreen() {
           });
         }
         break;
-      
+
       case 'message':
         // Navigate to chat with the sender
         if (metadata?.actorId) {
@@ -145,7 +151,7 @@ export default function NotificationsScreen() {
           });
         }
         break;
-      
+
       default:
         // For other types, just mark as read
         break;
@@ -169,7 +175,7 @@ export default function NotificationsScreen() {
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
         refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }
       >
         {notifications.length === 0 ? (

@@ -51,17 +51,17 @@ export default function ProfileScreen() {
 
   // Reload data every time the screen comes into focus
 
-  
+
 
 
   const loadUserData = useCallback(async () => {
     try {
       setLoading(true);
-      
+
       // Get user ID - try multiple sources
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const userId = (user as any)?._id || (user as any)?.id || user?.id;
-      
+
       if (!userId) {
         console.error('[Profile] No user ID found');
         setLoading(false);
@@ -69,7 +69,7 @@ export default function ProfileScreen() {
       }
 
       console.log('[Profile] Loading data for user:', userId);
-      
+
       // Fetch user data and posts
       const [userData, postsData] = await Promise.all([
         api.user(userId, token || undefined).catch(err => {
@@ -81,10 +81,10 @@ export default function ProfileScreen() {
           return { data: [] };
         }),
       ]);
-      
+
       console.log('[Profile] User data:', userData);
       console.log('[Profile] Posts data:', postsData);
-      
+
       // Update stats if available
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const userInfo = userData as any;
@@ -94,13 +94,13 @@ export default function ProfileScreen() {
       } else {
         console.log('[Profile] No stats in user data, using defaults');
       }
-      
+
       // Update posts
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const postsArray = (postsData as any)?.data || [];
       console.log('[Profile] Setting posts:', postsArray.length);
       setPosts(postsArray);
-      
+
       // If no stats from API, use post count
       if (!userInfo?.stats) {
         setStats(prev => ({
@@ -150,7 +150,7 @@ export default function ProfileScreen() {
           headerStyle: { backgroundColor: colors.background },
           headerTintColor: colors.text,
           headerRight: () => (
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => router.push('/edit-profile')}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
@@ -228,25 +228,31 @@ export default function ProfileScreen() {
             <View
               style={[styles.statDivider, { backgroundColor: colors.border }]}
             />
-            <View style={styles.stat}>
+            <TouchableOpacity
+              style={styles.stat}
+              onPress={() => router.push({ pathname: '/user/network', params: { userId: (user as any)._id || (user as any).id, type: 'followers' } })}
+            >
               <Text style={[styles.statValue, { color: colors.text }]}>
                 {loading ? '-' : stats.followersCount || 0}
               </Text>
               <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
                 Followers
               </Text>
-            </View>
+            </TouchableOpacity>
             <View
               style={[styles.statDivider, { backgroundColor: colors.border }]}
             />
-            <View style={styles.stat}>
+            <TouchableOpacity
+              style={styles.stat}
+              onPress={() => router.push({ pathname: '/user/network', params: { userId: (user as any)._id || (user as any).id, type: 'following' } })}
+            >
               <Text style={[styles.statValue, { color: colors.text }]}>
                 {loading ? '-' : stats.followingCount || 0}
               </Text>
               <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
                 Following
               </Text>
-            </View>
+            </TouchableOpacity>
           </View>
         </View>
 

@@ -15,7 +15,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const { token, user } = useAuth();
-  
+
   // Use same API URL logic as utils/api.ts
   const API_URL =
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -23,49 +23,65 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     'http://10.212.182.150:8000';
 
   useEffect(() => {
-    if (!token || !user) {
-        if (socket) {
-            console.log('[Socket] Disconnecting socket as user logged out');
-            socket.disconnect();
-            setSocket(null);
-            setIsConnected(false);
-        }
-        return;
+    // If no token, disconnect if connected
+    if (!token) {
+      if (socket) {
+        console.log('[Socket] Disconnecting socket as token is missing');
+        socket.disconnect();
+        setSocket(null);
+        setIsConnected(false);
+      }
+      return;
     }
 
-    if (socket?.connected) {
-        return; 
+    // If already connected/connecting with same token, skip
+    if (socket?.connected && (socket as any).auth?.token === token) {
+      return;
     }
 
     console.log('[Socket] Initialize connection', API_URL);
 
     const newSocket = io(API_URL, {
-        auth: { token },
-        transports: ['websocket'],
-        autoConnect: true,
+      auth: { token },
+      transports: ['websocket'],
+      autoConnect: true,
+      reconnection: true,             // Enable reconnection
+      reconnectionAttempts: 5,        // Max retries
+      reconnectionDelay: 1000,        // Start with 1s delay
     });
 
     newSocket.on('connect', () => {
-        console.log('[Socket] Connected:', newSocket.id);
-        setIsConnected(true);
+      console.log('[Socket] Connected:', newSocket.id);
+      setIsConnected(true);
     });
 
-    newSocket.on('disconnect', () => {
-        console.log('[Socket] Disconnected');
-        setIsConnected(false);
+    newSocket.on('disconnect', (reason) => {
+      console.log('[Socket] Disconnected:', reason);
+      setIsConnected(false);
     });
-    
+
     newSocket.on('connect_error', (err) => {
-        console.log('[Socket] Connection error:', err.message);
+      console.log('[Socket] Connection error:', err.message);
+    });
+
+    // Global listener to acknowledge delivery
+    newSocket.on('receive_message', (message) => {
+      // If I received it, tell the server I got it (Delivered)
+      // We only ack if it wasn't sent by me (though typically receive_message is only for incoming)
+      console.log('[Socket] Global receive_message, acknowledging delivery...', message._id);
+      newSocket.emit('mark_delivered', {
+        messageId: message._id,
+        senderId: message.senderId || (typeof message.sender === 'object' ? message.sender._id : message.sender),
+      });
     });
 
     setSocket(newSocket);
 
     return () => {
-        console.log('[Socket] Cleanup');
-        newSocket.disconnect();
+      console.log('[Socket] Cleanup - Disconnecting');
+      newSocket.disconnect();
     };
-  }, [token, user]);
+  }, [token]); // Only depend on token changes
 
   return (
     <SocketContext.Provider value={{ socket, isConnected }}>

@@ -24,7 +24,7 @@ const request = async <T>(
   { method = 'GET', body, token, headers }: RequestOptions = {}
 ): Promise<T> => {
   console.log(`[API Request] ${method} ${path}`, body ? JSON.stringify(body) : '');
-  
+
   try {
     const res = await fetch(`${API_BASE}${path}`, {
       method,
@@ -168,7 +168,7 @@ export const apiCreatePost = (
     roles?: string[];
     // New fields
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    media?: any; 
+    media?: any;
     format?: string;
     duration?: number;
     size?: number;
@@ -398,8 +398,14 @@ export const apiConversation = (userId: string, token?: string) =>
 export const apiDeleteMessage = (messageId: string, token?: string) =>
   request(`/messages/${messageId}`, { method: 'DELETE', token });
 
-export const apiGetConversations = (token?: string) =>
-  request('/messages', { token });
+export const apiGetConversations = (token?: string, q?: string) =>
+  request(`/messages${q ? `?q=${encodeURIComponent(q)}` : ''}`, { token });
+
+export const apiMarkConversationRead = (senderId: string, token?: string) =>
+  request(`/messages/${senderId}/read`, { method: 'POST', token });
+
+export const apiGetUnreadMessageCount = (token?: string) =>
+  request<{ count: number }>('/messages/unread-count', { token });
 
 // Notifications
 export const apiNotifications = (token?: string) =>
@@ -481,10 +487,11 @@ export const apiGetFollowers = (
   userId: string,
   page = 0,
   limit = 20,
-  token?: string
+  token?: string,
+  q?: string
 ) =>
   request(
-    `/api/users/${userId}/followers?page=${page}&limit=${limit}`,
+    `/api/users/${userId}/followers?page=${page}&limit=${limit}${q ? `&q=${encodeURIComponent(q)}` : ''}`,
     { token }
   );
 
@@ -492,10 +499,11 @@ export const apiGetFollowing = (
   userId: string,
   page = 0,
   limit = 20,
-  token?: string
+  token?: string,
+  q?: string
 ) =>
   request(
-    `/api/users/${userId}/following?page=${page}&limit=${limit}`,
+    `/api/users/${userId}/following?page=${page}&limit=${limit}${q ? `&q=${encodeURIComponent(q)}` : ''}`,
     { token }
   );
 
@@ -730,6 +738,7 @@ export const api = {
   pinPost: apiPinPost,
   
   conversation: apiConversation,
+  markConversationRead: apiMarkConversationRead,
   notifications: apiNotifications,
   markNotificationRead: apiMarkNotificationRead,
   registerPushToken: apiRegisterPushToken,
@@ -737,14 +746,14 @@ export const api = {
   loginPassword: apiLoginPassword,
   verifyPassword: apiVerifyPassword,
   changePassword: apiChangePassword,
-  
+
   // Social Media Features
   likePost: apiLikePost,
   unlikePost: apiUnlikePost,
   getPostLikes: apiGetPostLikes,
   getUserLikedPosts: apiGetUserLikedPosts,
   hasLiked: apiHasLiked,
-  
+
   followUser: apiFollowUser,
   unfollowUser: apiUnfollowUser,
   getFollowers: apiGetFollowers,
@@ -754,7 +763,7 @@ export const api = {
   rejectFollowRequest: apiRejectFollowRequest,
   isFollowing: apiIsFollowing,
   getMutualFollowers: apiGetMutualFollowers,
-  
+
   addComment: apiAddComment,
   getComments: apiGetComments,
   getCommentReplies: apiGetCommentReplies,
@@ -762,13 +771,13 @@ export const api = {
   deleteComment: apiDeleteComment,
   likeComment: apiLikeComment,
   getUserComments: apiGetUserComments,
-  
+
   sharePost: apiSharePost,
   getPostShares: apiGetPostShares,
   getUserShares: apiGetUserShares,
   deleteShare: apiDeleteShare,
   getShareStats: apiGetShareStats,
-  
+
   getFeed: apiGetFeed,
   getTrendingFeed: apiGetTrendingFeed,
   getIndustryFeed: apiGetIndustryFeed,

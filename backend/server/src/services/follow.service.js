@@ -32,18 +32,18 @@ class FollowService {
 
       if (existingFollow) {
         logger.warn(`[Follow] Already following/requested: ${followerId} -> ${followingId} (status: ${existingFollow.status})`);
-        
+
         // Ensure cache is in sync with database
         if (existingFollow.status === 'accepted') {
-          await cacheService.addFollow(followerId, followingId).catch(err => 
+          await cacheService.addFollow(followerId, followingId).catch(err =>
             logger.warn('[Follow] Cache sync failed:', err.message)
           );
         }
-        
-        return { 
-          success: false, 
-          message: existingFollow.status === 'pending' 
-            ? 'Follow request already sent' 
+
+        return {
+          success: false,
+          message: existingFollow.status === 'pending'
+            ? 'Follow request already sent'
             : 'Already following this user',
           status: existingFollow.status,
           alreadyFollowing: true,
@@ -90,12 +90,12 @@ class FollowService {
 
         // Queue feed update (no immediate need for feed update, can still use queue)
         queueService.addFeedUpdateJob(followerId).catch(err => logger.error('Feed update job failed', err));
-        
+
         // Send notification
         queueService.addNotificationJob({
-           userId: followingId,
-           type: 'follow',
-           followerId: followerId,
+          userId: followingId,
+          type: 'follow',
+          followerId: followerId,
         }).catch(err => logger.error('Notification job failed', err));
       }
 
@@ -110,8 +110,8 @@ class FollowService {
 
       return {
         success: true,
-        message: requiresApproval 
-          ? 'Follow request sent' 
+        message: requiresApproval
+          ? 'Follow request sent'
           : 'User followed successfully',
         status,
         followingCount,
@@ -269,26 +269,35 @@ class FollowService {
    * @param {string} userId - User ID
    * @param {number} page - Page number
    * @param {number} limit - Items per page
+   * @param {string} query - Search query
    * @returns {Promise<Object>} Paginated followers
    */
-  async getFollowers(userId, page = 0, limit = 20) {
+  async getFollowers(userId, page = 0, limit = 20, query = '') {
     try {
       const skip = page * limit;
-
-      const follows = await Follow.find({
+      const matchCriteria = {
         following: userId,
         status: 'accepted',
-      })
+      };
+
+      // If search query is provided, we need to filter by follower's name
+      if (query && query.trim()) {
+        const matchingUsers = await User.find({
+          name: { $regex: query, $options: 'i' }
+        }).select('_id');
+
+        const matchingUserIds = matchingUsers.map(u => u._id);
+        matchCriteria.follower = { $in: matchingUserIds };
+      }
+
+      const follows = await Follow.find(matchCriteria)
         .populate('follower', 'name avatar isVerified roles bio stats')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .lean();
 
-      const total = await Follow.countDocuments({
-        following: userId,
-        status: 'accepted',
-      });
+      const total = await Follow.countDocuments(matchCriteria);
 
       return {
         success: true,
@@ -311,26 +320,35 @@ class FollowService {
    * @param {string} userId - User ID
    * @param {number} page - Page number
    * @param {number} limit - Items per page
+   * @param {string} query - Search query
    * @returns {Promise<Object>} Paginated following
    */
-  async getFollowing(userId, page = 0, limit = 20) {
+  async getFollowing(userId, page = 0, limit = 20, query = '') {
     try {
       const skip = page * limit;
-
-      const follows = await Follow.find({
+      const matchCriteria = {
         follower: userId,
         status: 'accepted',
-      })
+      };
+
+      // If search query is provided, we need to filter by following user's name
+      if (query && query.trim()) {
+        const matchingUsers = await User.find({
+          name: { $regex: query, $options: 'i' }
+        }).select('_id');
+
+        const matchingUserIds = matchingUsers.map(u => u._id);
+        matchCriteria.following = { $in: matchingUserIds };
+      }
+
+      const follows = await Follow.find(matchCriteria)
         .populate('following', 'name avatar isVerified roles bio stats')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .lean();
 
-      const total = await Follow.countDocuments({
-        follower: userId,
-        status: 'accepted',
-      });
+      const total = await Follow.countDocuments(matchCriteria);
 
       return {
         success: true,

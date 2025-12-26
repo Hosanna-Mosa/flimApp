@@ -6,10 +6,11 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
+  TextInput,
 } from 'react-native';
 import { Stack, useRouter, useFocusEffect } from 'expo-router';
 import { Image } from 'expo-image';
-import { MessageCircle } from 'lucide-react-native';
+import { MessageCircle, Search } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiGetConversations } from '@/utils/api';
@@ -34,12 +35,13 @@ export default function MessagesScreen() {
   const { token } = useAuth();
   const [chats, setChats] = useState<ChatItem[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const loadChats = useCallback(async () => {
+  const loadChats = useCallback(async (query: string = '') => {
     if (!token) return;
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const data: any = await apiGetConversations(token);
+      const data: any = await apiGetConversations(token, query);
       if (Array.isArray(data)) {
         const formattedChats: ChatItem[] = data.map((item: any) => ({
           id: item.peer._id,
@@ -55,7 +57,7 @@ export default function MessagesScreen() {
             'en-US',
             { hour: '2-digit', minute: '2-digit', month: 'short', day: 'numeric' }
           ),
-          unreadCount: 0, // Need readout status or count logic
+          unreadCount: item.unreadCount || 0,
         }));
         setChats(formattedChats);
       }
@@ -66,13 +68,21 @@ export default function MessagesScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      loadChats();
-    }, [loadChats])
+      loadChats(searchQuery);
+    }, [loadChats, searchQuery])
   );
+
+  // Re-fetch when search query changes
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      loadChats(searchQuery);
+    }, 300); // 300ms debounce
+    return () => clearTimeout(timer);
+  }, [searchQuery, loadChats]);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await loadChats();
+    await loadChats(searchQuery);
     setRefreshing(false);
   };
 
@@ -93,6 +103,19 @@ export default function MessagesScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }
       >
+        <View style={styles.searchContainer}>
+          <View style={[styles.searchBar, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Search size={20} color={colors.textSecondary} style={{ marginRight: 8 }} />
+            <TextInput
+              style={[styles.searchInput, { color: colors.text }]}
+              placeholder="Search conversations..."
+              placeholderTextColor={colors.textSecondary}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+          </View>
+        </View>
+
         {chats.map((chat) => (
           <TouchableOpacity
             key={chat.id}
@@ -121,7 +144,7 @@ export default function MessagesScreen() {
                 <Text style={[styles.userName, { color: colors.text }]}>
                   {chat.user.name}
                   {chat.user.isVerified && (
-                      <Text style={{ color: colors.primary }}> ✓</Text>
+                    <Text style={{ color: colors.primary }}> ✓</Text>
                   )}
                 </Text>
                 <Text style={[styles.time, { color: colors.textSecondary }]}>
@@ -137,12 +160,16 @@ export default function MessagesScreen() {
                         chat.unreadCount > 0
                           ? colors.text
                           : colors.textSecondary,
+                      fontWeight: chat.unreadCount > 0 ? '700' : '400',
                     },
                   ]}
                   numberOfLines={1}
                 >
                   {chat.lastMessage}
                 </Text>
+                {chat.unreadCount > 0 && (
+                  <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} />
+                )}
               </View>
             </View>
           </TouchableOpacity>
@@ -215,5 +242,28 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
+  },
+  searchContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    height: 48,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    height: '100%',
+  },
+  unreadDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginLeft: 8,
   },
 });

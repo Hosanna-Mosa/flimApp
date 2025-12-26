@@ -9,6 +9,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { SocketProvider } from '@/contexts/SocketContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
+import { MessageProvider } from '@/contexts/MessageContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -16,10 +17,10 @@ const queryClient = new QueryClient();
 
 function RootLayoutNav() {
   return (
-    <Stack 
-      screenOptions={{ 
+    <Stack
+      screenOptions={{
         headerBackTitle: 'Back',
-        contentStyle: { backgroundColor: '#000000' } 
+        contentStyle: { backgroundColor: '#000000' }
       }}
     >
       <Stack.Screen name="index" options={{ headerShown: false }} />
@@ -68,10 +69,12 @@ export default function RootLayout() {
         <AuthProvider>
           <SocketProvider>
             <NotificationProvider>
-              <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#000000' }}>
-                <StatusBar style="light" backgroundColor="#000000" />
-                <RootLayoutNav />
-              </GestureHandlerRootView>
+              <MessageProvider>
+                <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#000000' }}>
+                  <StatusBar style="light" backgroundColor="#000000" />
+                  <RootLayoutNav />
+                </GestureHandlerRootView>
+              </MessageProvider>
             </NotificationProvider>
           </SocketProvider>
         </AuthProvider>

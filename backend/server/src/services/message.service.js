@@ -1,8 +1,14 @@
 const mongoose = require('mongoose');
 const Message = require('../models/Message.model');
 
-const createMessage = async ({ senderId, recipientId, content }) =>
-  Message.create({ sender: senderId, recipient: recipientId, content });
+const createMessage = async ({ senderId, recipientId, content }) => {
+  return Message.create({
+    sender: senderId,
+    recipient: recipientId,
+    content,
+    isRead: false
+  });
+};
 
 const getConversation = async (userId, peerId) =>
   Message.find({
@@ -15,7 +21,7 @@ const getConversation = async (userId, peerId) =>
 const deleteMessage = async (messageId, userId) =>
   Message.findOneAndDelete({ _id: messageId, sender: userId });
 
-const getConversations = async (userId) => {
+const getConversations = async (userId, searchQuery = '') => {
   const userObjectId = new mongoose.Types.ObjectId(userId);
   return Message.aggregate([
     {
@@ -46,14 +52,100 @@ const getConversations = async (userId) => {
     },
     { $unwind: '$peer' },
     {
+      $lookup: {
+        from: 'messages',
+        let: { peerId: '$_id' },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ['$sender', '$$peerId'] },
+                  { $eq: ['$recipient', userObjectId] },
+                  { $ne: ['$isRead', true] },
+                ],
+              },
+            },
+          },
+          { $count: 'count' },
+        ],
+        as: 'unreadInfo',
+      },
+    },
+    {
       $project: {
         peer: { name: 1, avatar: 1, _id: 1, isVerified: 1 },
         lastMessage: { content: 1, createdAt: 1, sender: 1, recipient: 1 },
+        unreadCount: { $ifNull: [{ $arrayElemAt: ['$unreadInfo.count', 0] }, 0] },
       },
+    },
+    {
+      $match: searchQuery
+        ? { 'peer.name': { $regex: searchQuery, $options: 'i' } }
+        : {},
     },
     { $sort: { 'lastMessage.createdAt': -1 } },
   ]);
 };
 
-module.exports = { createMessage, getConversation, deleteMessage, getConversations };
+const getUnreadCount = async (userId) => {
+  try {
+    const uid = new mongoose.Types.ObjectId(userId);
+
+    // Use $ne: true to count documents where isRead is false, null, or missing
+    return await Message.countDocuments({ recipient: uid, isRead: { $ne: true } });
+  } catch (e) {
+    console.error('getUnreadCount Error:', e);
+    return 0;
+  }
+};
+
+const markConversationAsRead = async (userId, senderId) => {
+  console.log(`[MessageService] Marking Read: Recipient(Me)=${userId}, Sender(Them)=${senderId}`);
+  const result = await Message.updateMany(
+    { recipient: userId, sender: senderId, isRead: { $ne: true } },
+    { isRead: true, readAt: new Date(), status: 'read' }
+  );
+  console.log(`[MessageService] Mark Read Result: matched=${result.matchedCount}, modified=${result.modifiedCount}`);
+  return result;
+};
+
+const markMessageAsDelivered = async (messageId) => {
+  return Message.findByIdAndUpdate(
+    messageId,
+    { status: 'delivered' },
+    { new: true }
+  );
+};
+
+const countMessagesBetween = async (user1, user2) => {
+  try {
+    console.log(`[MessageService] Counting messages between: '${user1}' and '${user2}'`);
+    const u1 = new mongoose.Types.ObjectId(user1);
+    const u2 = new mongoose.Types.ObjectId(user2);
+
+    const count = await Message.countDocuments({
+      $or: [
+        { sender: u1, recipient: u2 },
+        { sender: u2, recipient: u1 },
+      ],
+    });
+    console.log(`[MessageService] Count Result: ${count}`);
+    return count;
+  } catch (e) {
+    console.error('[MessageService] countMessagesBetween Error:', e);
+    return 0; // This fallback to 0 is DANGEROUS if it's an error, as it triggers notification!
+  }
+};
+
+module.exports = {
+  createMessage,
+  getConversation,
+  deleteMessage,
+  getConversations,
+  getUnreadCount,
+  markConversationAsRead,
+  countMessagesBetween,
+  markMessageAsDelivered
+};
 

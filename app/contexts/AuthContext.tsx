@@ -23,22 +23,32 @@ import api from '@/utils/api';
 const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 
 // Only set handler if NOT in Expo Go on Android (or just not in Expo Go generally to be safe)
+// Only set handler if NOT in Expo Go
 if (!isExpoGo) {
-  Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowAlert: true,
-      shouldPlaySound: true,
-      shouldSetBadge: true,
-      shouldShowBanner: true,
-      shouldShowList: true,
-    }),
-  });
+  try {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+        shouldShowBanner: true,
+        shouldShowList: true,
+      }),
+    });
+  } catch (e) {
+    console.warn('Failed to set notification handler:', e);
+  }
 }
 
 async function registerForPushNotificationsAsync() {
-  // If we are in Expo Go, return null immediately to avoid errors
   if (isExpoGo) {
-    console.log('[Notification] Push notifications are not supported in Expo Go. skipping.');
+    console.log('[Notification] Push notifications are not supported in Expo Go. Skipping.');
+    return null;
+  }
+
+  // Double check strict check for physical device
+  if (!Device.isDevice) {
+    console.log('[Notification] Must use physical device for Push Notifications');
     return null;
   }
 
@@ -53,11 +63,11 @@ async function registerForPushNotificationsAsync() {
         lightColor: '#FF231F7C',
       });
     } catch (e) {
-      // Ignore error if channel creation fails
+      console.log('[Notification] Failed to set notification channel', e);
     }
   }
 
-  if (Device.isDevice) {
+  try {
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
     if (existingStatus !== 'granted') {
@@ -68,25 +78,19 @@ async function registerForPushNotificationsAsync() {
       console.log('Failed to get push token for push notification!');
       return;
     }
-    
+
     // Project ID is sometimes required in newer Expo versions
     const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
-    
-    try {
-        const pushTokenString = (await Notifications.getExpoPushTokenAsync({
-            projectId, 
-        })).data;
-        console.log('Expo Push Token:', pushTokenString);
-        return pushTokenString;
-    } catch (e) {
-        console.error('Error getting push token', e);
-    }
-    
-  } else {
-    console.log('Must use physical device for Push Notifications');
-  }
 
-  return token;
+    const pushTokenString = (await Notifications.getExpoPushTokenAsync({
+      projectId,
+    })).data;
+    console.log('Expo Push Token:', pushTokenString);
+    return pushTokenString;
+  } catch (e) {
+    console.error('Error getting push token:', e);
+    return null;
+  }
 }
 
 export const [AuthProvider, useAuth] = createContextHook(() => {
@@ -104,15 +108,15 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   }, []);
 
   const registerPushToken = async (authToken: string) => {
-      try {
-          const pushToken = await registerForPushNotificationsAsync();
-          if (pushToken && authToken) {
-              await api.registerPushToken(pushToken, authToken);
-              console.log('[Auth] Push token registered with backend');
-          }
-      } catch (error) {
-          console.error('[Auth] Failed to register push token:', error);
+    try {
+      const pushToken = await registerForPushNotificationsAsync();
+      if (pushToken && authToken) {
+        await api.registerPushToken(pushToken, authToken);
+        console.log('[Auth] Push token registered with backend');
       }
+    } catch (error) {
+      console.error('[Auth] Failed to register push token:', error);
+    }
   };
 
   const loadAuthState = async () => {
@@ -134,10 +138,10 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           isLoading: false,
           hasCompletedOnboarding: onboardingComplete === 'true',
         });
-        
+
         // Register push token silently on load
         registerPushToken(token);
-        
+
       } else {
         setAuthState({
           user: null,
@@ -215,19 +219,19 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     try {
       // Import api at the top if not already imported
       const api = require('@/utils/api').default;
-      
+
       // Call backend API to update profile
       const updatedUserData = await api.updateMe(updates, authState.token);
-      
+
       // Merge the response with current user data
       const updatedUser = { ...authState.user, ...updatedUserData };
-      
+
       // Save to AsyncStorage
       await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
-      
+
       // Update state
       setAuthState((prev) => ({ ...prev, user: updatedUser }));
-      
+
       return { success: true, user: updatedUser };
     } catch (error) {
       console.error('[AuthContext] Error updating profile:', error);
@@ -244,7 +248,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     await AsyncStorage.setItem('token', data.token);
     await AsyncStorage.setItem('refreshToken', data.refreshToken);
     if (data.user.roles.length > 0 && data.user.industries.length > 0) {
-       await AsyncStorage.setItem('onboarding_complete', 'true');
+      await AsyncStorage.setItem('onboarding_complete', 'true');
     }
 
     setAuthState({
@@ -256,7 +260,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       hasCompletedOnboarding:
         data.user.roles.length > 0 && data.user.industries.length > 0,
     });
-    
+
     // Register push token on login
     registerPushToken(data.token);
   };
