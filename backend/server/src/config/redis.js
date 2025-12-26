@@ -3,15 +3,17 @@ const logger = require('./logger');
 
 // Redis configuration
 const redisConfig = {
-  host: process.env.REDIS_HOST || 'localhost',
-  port: process.env.REDIS_PORT || 6379,
-  password: process.env.REDIS_PASSWORD || undefined,
-  db: process.env.REDIS_DB || 0,
-  retryStrategy: (times) => {
-    const delay = Math.min(times * 50, 2000);
-    return delay;
-  },
+ host: process.env.REDIS_HOST,
+  port: Number(process.env.REDIS_PORT),
+  password: process.env.REDIS_PASSWORD,
+  db: Number(process.env.REDIS_DB || 0),
+
+  // ✅ REQUIRED FOR UPSTASH
+  tls: {},
+
+  // Optional but recommended
   maxRetriesPerRequest: 3,
+  retryStrategy: (times) => Math.min(times * 50, 2000),
 };
 
 // Create Redis client
