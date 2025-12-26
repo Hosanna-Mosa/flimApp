@@ -27,6 +27,7 @@ import {
   Plus,
   Check,
   BadgeCheck,
+  Users,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -85,6 +86,17 @@ export default function HomeScreen() {
     useCallback(() => {
       fetchFollowingList();
     }, [fetchFollowingList])
+  );
+
+  // Refresh feed when screen comes into focus (to update comment counts, etc.)
+  useFocusEffect(
+    useCallback(() => {
+      // Only reload if we already have posts (not initial load)
+      if (posts.length > 0 && token) {
+        console.log('[Home] Screen focused - refreshing feed data');
+        loadFeed(0, false);
+      }
+    }, [posts.length, token])
   );
 
   // Load feed and following list when token changes (Initial load)
@@ -219,6 +231,8 @@ export default function HomeScreen() {
 
   const handleLike = async (postId: string) => {
     try {
+      console.log('[Home] handleLike - Current user:', user ? `${user.name} (${(user as any)._id || user.id})` : 'Not logged in');
+      
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       
       const post = posts.find(p => p.id === postId);
