@@ -4,6 +4,7 @@ const { Server } = require('socket.io');
 const app = require('./app');
 const connectDB = require('./config/db');
 const registerChatHandlers = require('./sockets/chat.socket');
+const registerCommunityHandlers = require('./sockets/community.socket');
 const configureCloudinary = require('./config/cloudinary');
 const logger = require('./config/logger');
 
@@ -37,6 +38,7 @@ const start = async () => {
   setIo(io);
   
   registerChatHandlers(io);
+  registerCommunityHandlers(io);
 
   server.listen(PORT, '0.0.0.0', () => {
     logger.info(`Server running on port ${PORT}`);

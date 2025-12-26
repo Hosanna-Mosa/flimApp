@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import {
   Platform,
   Share,
 } from 'react-native';
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { useLocalSearchParams, useRouter, Stack, useFocusEffect } from 'expo-router';
 import { Image } from 'expo-image';
 import {
   Heart,
@@ -47,8 +47,10 @@ export default function PostDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { colors } = useTheme();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const insets = useSafeAreaInsets();
+  
+  console.log('[PostDetail] Current user:', user ? `${user.name} (${(user as any)._id || user.id})` : 'Not logged in');
   
   const [post, setPost] = useState<any>(null);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -57,12 +59,32 @@ export default function PostDetailScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
+  
+  // Track if this is the initial mount
+  const isInitialMount = useRef(true);
 
   useEffect(() => {
     if (id && token) {
       loadPostAndComments();
     }
   }, [id, token]);
+
+  // Refresh post data when screen comes into focus (skip initial mount)
+  useFocusEffect(
+    useCallback(() => {
+      // Skip the first focus (initial mount)
+      if (isInitialMount.current) {
+        isInitialMount.current = false;
+        return;
+      }
+      
+      // Refresh on subsequent focuses
+      if (id && token) {
+        console.log('[PostDetail] Screen focused - refreshing post data');
+        loadPostAndComments();
+      }
+    }, [id, token])
+  );
 
   const loadPostAndComments = async () => {
     try {
@@ -71,6 +93,12 @@ export default function PostDetailScreen() {
         api.getPost(id, token || undefined) as any,
         api.getComments(id, 0, 50, 'recent', token || undefined) as any,
       ]);
+      
+      console.log('[PostDetail] Post data received:', {
+        isLiked: postData.isLiked,
+        likesCount: postData.engagement?.likesCount,
+        postId: postData._id
+      });
       
       setPost(postData);
       setIsLiked(postData.isLiked || false);
