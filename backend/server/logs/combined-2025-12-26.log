@@ -8585,3 +8585,254 @@
 2025-12-26T15:58:49.716Z [info]: 192.168.1.3 GET /communities? 200 115.408 ms - 90
 2025-12-26T15:58:49.718Z [info]: 192.168.1.3 GET /communities? 200 116ms
 2025-12-26T15:58:53.927Z [info]: Socket disconnected: 694e997a05147dbf1abde334
+2025-12-26T16:00:48.761Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-26T16:00:48.762Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000
+2025-12-26T16:00:48.767Z [info]: Request Query: {"page":"0","limit":"20","algorithm":"hybrid","timeRange":"7"}
+2025-12-26T16:00:48.767Z [info]: Incoming Request: GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7
+2025-12-26T16:00:48.878Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000 304 117.416 ms - -
+2025-12-26T16:00:48.879Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000 304 118ms
+2025-12-26T16:00:49.009Z [info]: 192.168.1.2 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 200 242.425 ms - 9082
+2025-12-26T16:00:49.010Z [info]: 192.168.1.2 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 200 244ms
+2025-12-26T16:00:49.617Z [info]: Request Query: {"page":"0","limit":"20","algorithm":"hybrid","timeRange":"7"}
+2025-12-26T16:00:49.617Z [info]: Incoming Request: GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7
+2025-12-26T16:00:49.770Z [info]: 192.168.1.2 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 200 153.871 ms - 8708
+2025-12-26T16:00:49.771Z [info]: 192.168.1.2 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 200 155ms
+2025-12-26T16:00:51.906Z [info]: Socket disconnected: 694bf3370ba331dae78eb86a
+2025-12-26T17:19:41.843Z [info]: Redis client connected
+2025-12-26T17:19:41.858Z [info]: Redis client ready
+2025-12-26T17:19:42.480Z [info]: MongoDB connected :ac-1ks08uk-shard-00-00.tv8wnu0.mongodb.net
+2025-12-26T17:19:42.484Z [info]: Redis connected successfully
+2025-12-26T17:19:42.487Z [info]: Queue processors initialized successfully
+2025-12-26T17:19:42.487Z [info]: Queue processors initialized
+2025-12-26T17:19:42.496Z [info]: Server running on port 8000
+2025-12-26T17:19:42.629Z [info]: Socket connected: 694bf3370ba331dae78eb86d
+2025-12-26T17:21:09.246Z [info]: Incoming Request: GET /notifications
+2025-12-26T17:21:09.269Z [info]: Socket connected: 694bf3370ba331dae78eb86a
+2025-12-26T17:21:09.389Z [info]: 192.168.1.2 GET /notifications 200 142.347 ms - 10986
+2025-12-26T17:21:09.389Z [info]: 192.168.1.2 GET /notifications 200 144ms
+2025-12-26T17:21:11.530Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-26T17:21:11.531Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000
+2025-12-26T17:21:11.534Z [info]: Request Query: {"page":"0","limit":"20","algorithm":"hybrid","timeRange":"7"}
+2025-12-26T17:21:11.534Z [info]: Incoming Request: GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7
+2025-12-26T17:21:11.568Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-26T17:21:11.569Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000
+2025-12-26T17:21:11.638Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000 200 108.093 ms - 886
+2025-12-26T17:21:11.638Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000 200 109ms
+2025-12-26T17:21:11.678Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000 200 109.436 ms - 886
+2025-12-26T17:21:11.678Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000 200 110ms
+2025-12-26T17:21:11.731Z [error]: Error getting personalized feed: Cannot read properties of null (reading '_id') {"stack":"TypeError: Cannot read properties of null (reading '_id')\n    at /Users/hosanna/BYV-WORKS/Flim app/cpy-8/flimApp/backend/server/src/services/feed.service.js:102:59\n    at Array.map (<anonymous>)\n    at FeedService.enrichPosts (/Users/hosanna/BYV-WORKS/Flim app/cpy-8/flimApp/backend/server/src/services/feed.service.js:102:41)\n    at FeedService.getPersonalizedFeed (/Users/hosanna/BYV-WORKS/Flim app/cpy-8/flimApp/backend/server/src/services/feed.service.js:68:40)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async getPersonalizedFeed (/Users/hosanna/BYV-WORKS/Flim app/cpy-8/flimApp/backend/server/src/controllers/feed.controller.js:16:20)"}
+2025-12-26T17:21:11.732Z [error]: Failed to get feed {"stack":"Error: Failed to get feed\n    at FeedService.getPersonalizedFeed (/Users/hosanna/BYV-WORKS/Flim app/cpy-8/flimApp/backend/server/src/services/feed.service.js:89:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async getPersonalizedFeed (/Users/hosanna/BYV-WORKS/Flim app/cpy-8/flimApp/backend/server/src/controllers/feed.controller.js:16:20)"}
+2025-12-26T17:21:11.732Z [info]: 192.168.1.2 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 500 198.149 ms - 48
+2025-12-26T17:21:11.733Z [info]: 192.168.1.2 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 500 198ms
+2025-12-26T17:38:55.251Z [info]: Shutting down gracefully...
+2025-12-26T17:38:55.260Z [info]: Redis connection closed
+2025-12-26T17:38:55.775Z [info]: Queue connections closed
+2025-12-26T17:41:19.267Z [info]: Redis client connected
+2025-12-26T17:41:19.276Z [info]: Redis client ready
+2025-12-26T17:41:19.953Z [info]: MongoDB connected :ac-1ks08uk-shard-00-00.tv8wnu0.mongodb.net
+2025-12-26T17:41:19.957Z [info]: Redis connected successfully
+2025-12-26T17:41:19.960Z [info]: Queue processors initialized successfully
+2025-12-26T17:41:19.960Z [info]: Queue processors initialized
+2025-12-26T17:41:19.968Z [info]: Server running on port 8000
+2025-12-26T17:41:22.717Z [info]: Socket connected: 694bf3370ba331dae78eb86d
+2025-12-26T17:41:34.689Z [info]: Incoming Request: GET /notifications
+2025-12-26T17:41:34.709Z [info]: Socket connected: 694bf3370ba331dae78eb86a
+2025-12-26T17:41:34.840Z [info]: 192.168.1.2 GET /notifications 304 148.881 ms - -
+2025-12-26T17:41:34.840Z [info]: 192.168.1.2 GET /notifications 304 151ms
+2025-12-26T17:41:36.907Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-26T17:41:36.907Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000
+2025-12-26T17:41:36.912Z [info]: Request Query: {"page":"0","limit":"20","algorithm":"hybrid","timeRange":"7"}
+2025-12-26T17:41:36.913Z [info]: Incoming Request: GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7
+2025-12-26T17:41:37.008Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-26T17:41:37.008Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000
+2025-12-26T17:41:37.032Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000 304 125.559 ms - -
+2025-12-26T17:41:37.032Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000 304 126ms
+2025-12-26T17:41:37.116Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000 304 108.513 ms - -
+2025-12-26T17:41:37.117Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000 304 109ms
+2025-12-26T17:41:37.121Z [error]: Error getting personalized feed: Cannot read properties of null (reading '_id') {"stack":"TypeError: Cannot read properties of null (reading '_id')\n    at /Users/hosanna/BYV-WORKS/Flim app/cpy-8/flimApp/backend/server/src/services/feed.service.js:102:59\n    at Array.map (<anonymous>)\n    at FeedService.enrichPosts (/Users/hosanna/BYV-WORKS/Flim app/cpy-8/flimApp/backend/server/src/services/feed.service.js:102:41)\n    at FeedService.getPersonalizedFeed (/Users/hosanna/BYV-WORKS/Flim app/cpy-8/flimApp/backend/server/src/services/feed.service.js:68:40)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async getPersonalizedFeed (/Users/hosanna/BYV-WORKS/Flim app/cpy-8/flimApp/backend/server/src/controllers/feed.controller.js:16:20)"}
+2025-12-26T17:41:37.122Z [error]: Failed to get feed {"stack":"Error: Failed to get feed\n    at FeedService.getPersonalizedFeed (/Users/hosanna/BYV-WORKS/Flim app/cpy-8/flimApp/backend/server/src/services/feed.service.js:89:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async getPersonalizedFeed (/Users/hosanna/BYV-WORKS/Flim app/cpy-8/flimApp/backend/server/src/controllers/feed.controller.js:16:20)"}
+2025-12-26T17:41:37.125Z [info]: 192.168.1.2 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 500 211.900 ms - 48
+2025-12-26T17:41:37.125Z [info]: 192.168.1.2 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 500 213ms
+2025-12-26T17:43:34.149Z [info]: Redis client connected
+2025-12-26T17:43:34.159Z [info]: Redis client ready
+2025-12-26T17:43:34.758Z [info]: MongoDB connected :ac-1ks08uk-shard-00-00.tv8wnu0.mongodb.net
+2025-12-26T17:43:34.760Z [info]: Redis connected successfully
+2025-12-26T17:43:34.762Z [info]: Queue processors initialized successfully
+2025-12-26T17:43:34.762Z [info]: Queue processors initialized
+2025-12-26T17:43:34.765Z [info]: Server running on port 8000
+2025-12-26T17:43:35.288Z [info]: Redis client connected
+2025-12-26T17:43:35.299Z [info]: Redis client ready
+2025-12-26T17:43:35.796Z [info]: MongoDB connected :ac-1ks08uk-shard-00-00.tv8wnu0.mongodb.net
+2025-12-26T17:43:35.798Z [info]: Redis connected successfully
+2025-12-26T17:43:35.799Z [info]: Queue processors initialized successfully
+2025-12-26T17:43:35.799Z [info]: Queue processors initialized
+2025-12-26T17:43:35.802Z [info]: Server running on port 8000
+2025-12-26T17:43:37.710Z [info]: Socket connected: 694bf3370ba331dae78eb86d
+2025-12-26T17:44:26.578Z [info]: Incoming Request: GET /notifications
+2025-12-26T17:44:26.599Z [info]: Socket connected: 694bf3370ba331dae78eb86a
+2025-12-26T17:44:26.707Z [info]: 192.168.1.2 GET /notifications 304 129.068 ms - -
+2025-12-26T17:44:26.707Z [info]: 192.168.1.2 GET /notifications 304 130ms
+2025-12-26T17:44:28.981Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-26T17:44:28.981Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000
+2025-12-26T17:44:28.994Z [info]: Request Query: {"page":"0","limit":"20","algorithm":"hybrid","timeRange":"7"}
+2025-12-26T17:44:28.994Z [info]: Incoming Request: GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7
+2025-12-26T17:44:29.107Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000 304 126.730 ms - -
+2025-12-26T17:44:29.108Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000 304 127ms
+2025-12-26T17:44:29.178Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-26T17:44:29.178Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000
+2025-12-26T17:44:29.183Z [error]: Error getting personalized feed: Cannot read properties of null (reading '_id') {"stack":"TypeError: Cannot read properties of null (reading '_id')\n    at /Users/hosanna/BYV-WORKS/Flim app/cpy-8/flimApp/backend/server/src/services/feed.service.js:102:59\n    at Array.map (<anonymous>)\n    at FeedService.enrichPosts (/Users/hosanna/BYV-WORKS/Flim app/cpy-8/flimApp/backend/server/src/services/feed.service.js:102:41)\n    at FeedService.getPersonalizedFeed (/Users/hosanna/BYV-WORKS/Flim app/cpy-8/flimApp/backend/server/src/services/feed.service.js:68:40)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async getPersonalizedFeed (/Users/hosanna/BYV-WORKS/Flim app/cpy-8/flimApp/backend/server/src/controllers/feed.controller.js:16:20)"}
+2025-12-26T17:44:29.184Z [error]: Cannot read properties of null (reading '_id') {"stack":"Error: Cannot read properties of null (reading '_id')\n    at FeedService.getPersonalizedFeed (/Users/hosanna/BYV-WORKS/Flim app/cpy-8/flimApp/backend/server/src/services/feed.service.js:89:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async getPersonalizedFeed (/Users/hosanna/BYV-WORKS/Flim app/cpy-8/flimApp/backend/server/src/controllers/feed.controller.js:16:20)"}
+2025-12-26T17:44:29.184Z [info]: 192.168.1.2 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 500 190.175 ms - 76
+2025-12-26T17:44:29.185Z [info]: 192.168.1.2 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 500 190ms
+2025-12-26T17:44:29.287Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000 304 108.675 ms - -
+2025-12-26T17:44:29.287Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000 304 109ms
+2025-12-26T17:44:36.195Z [info]: Socket disconnected: 694bf3370ba331dae78eb86a
+2025-12-26T17:44:42.227Z [info]: Incoming Request: GET /notifications
+2025-12-26T17:44:42.253Z [info]: Socket connected: 694bf3370ba331dae78eb86a
+2025-12-26T17:44:42.345Z [info]: 192.168.1.2 GET /notifications 304 117.967 ms - -
+2025-12-26T17:44:42.346Z [info]: 192.168.1.2 GET /notifications 304 119ms
+2025-12-26T17:44:44.554Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-26T17:44:44.554Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000
+2025-12-26T17:44:44.560Z [info]: Request Query: {"page":"0","limit":"20","algorithm":"hybrid","timeRange":"7"}
+2025-12-26T17:44:44.561Z [info]: Incoming Request: GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7
+2025-12-26T17:44:44.630Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-26T17:44:44.630Z [info]: Incoming Request: GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000
+2025-12-26T17:44:44.667Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000 304 112.491 ms - -
+2025-12-26T17:44:44.667Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000 304 113ms
+2025-12-26T17:44:44.741Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000 304 111.223 ms - -
+2025-12-26T17:44:44.742Z [info]: 192.168.1.2 GET /api/users/694bf3370ba331dae78eb86a/following?page=0&limit=1000 304 112ms
+2025-12-26T17:44:44.743Z [error]: Error getting personalized feed: Cannot read properties of null (reading '_id') {"stack":"TypeError: Cannot read properties of null (reading '_id')\n    at /Users/hosanna/BYV-WORKS/Flim app/cpy-8/flimApp/backend/server/src/services/feed.service.js:102:59\n    at Array.map (<anonymous>)\n    at FeedService.enrichPosts (/Users/hosanna/BYV-WORKS/Flim app/cpy-8/flimApp/backend/server/src/services/feed.service.js:102:41)\n    at FeedService.getPersonalizedFeed (/Users/hosanna/BYV-WORKS/Flim app/cpy-8/flimApp/backend/server/src/services/feed.service.js:68:40)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async getPersonalizedFeed (/Users/hosanna/BYV-WORKS/Flim app/cpy-8/flimApp/backend/server/src/controllers/feed.controller.js:16:20)"}
+2025-12-26T17:44:44.743Z [error]: Cannot read properties of null (reading '_id') {"stack":"Error: Cannot read properties of null (reading '_id')\n    at FeedService.getPersonalizedFeed (/Users/hosanna/BYV-WORKS/Flim app/cpy-8/flimApp/backend/server/src/services/feed.service.js:89:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async getPersonalizedFeed (/Users/hosanna/BYV-WORKS/Flim app/cpy-8/flimApp/backend/server/src/controllers/feed.controller.js:16:20)"}
+2025-12-26T17:44:44.743Z [info]: 192.168.1.2 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 500 183.323 ms - 76
+2025-12-26T17:44:44.744Z [info]: 192.168.1.2 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 500 184ms
+2025-12-26T17:45:29.343Z [info]: Socket disconnected: 694bf3370ba331dae78eb86a
+2025-12-26T17:45:54.358Z [info]: Request Body: {"phone":"9398999587","password":"***"}
+2025-12-26T17:45:54.359Z [info]: Incoming Request: POST /auth/login-password
+2025-12-26T17:45:54.597Z [info]: 192.168.1.2 POST /auth/login-password 200 238.826 ms - 1375
+2025-12-26T17:45:54.597Z [info]: 192.168.1.2 POST /auth/login-password 200 239ms
+2025-12-26T17:45:55.211Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-26T17:45:55.211Z [info]: Incoming Request: GET /api/users/694e87d8d0ead20b5986e18d/following?page=0&limit=1000
+2025-12-26T17:45:55.221Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-26T17:45:55.222Z [info]: Incoming Request: GET /api/users/694e87d8d0ead20b5986e18d/following?page=0&limit=1000
+2025-12-26T17:45:55.223Z [info]: Request Query: {"page":"0","limit":"20","algorithm":"hybrid","timeRange":"7"}
+2025-12-26T17:45:55.223Z [info]: Incoming Request: GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7
+2025-12-26T17:45:55.229Z [info]: Incoming Request: GET /notifications
+2025-12-26T17:45:55.285Z [info]: 192.168.1.2 GET /api/users/694e87d8d0ead20b5986e18d/following?page=0&limit=1000 200 73.813 ms - 107
+2025-12-26T17:45:55.285Z [info]: 192.168.1.2 GET /api/users/694e87d8d0ead20b5986e18d/following?page=0&limit=1000 200 74ms
+2025-12-26T17:45:55.295Z [info]: 192.168.1.2 GET /api/users/694e87d8d0ead20b5986e18d/following?page=0&limit=1000 200 73.959 ms - 107
+2025-12-26T17:45:55.296Z [info]: 192.168.1.2 GET /api/users/694e87d8d0ead20b5986e18d/following?page=0&limit=1000 200 75ms
+2025-12-26T17:45:55.328Z [info]: Socket connected: 694e87d8d0ead20b5986e18d
+2025-12-26T17:45:55.387Z [info]: 192.168.1.2 GET /notifications 200 157.686 ms - 27507
+2025-12-26T17:45:55.387Z [info]: 192.168.1.2 GET /notifications 200 158ms
+2025-12-26T17:45:55.443Z [error]: Error getting personalized feed: Cannot read properties of null (reading '_id') {"stack":"TypeError: Cannot read properties of null (reading '_id')\n    at /Users/hosanna/BYV-WORKS/Flim app/cpy-8/flimApp/backend/server/src/services/feed.service.js:102:59\n    at Array.map (<anonymous>)\n    at FeedService.enrichPosts (/Users/hosanna/BYV-WORKS/Flim app/cpy-8/flimApp/backend/server/src/services/feed.service.js:102:41)\n    at FeedService.getPersonalizedFeed (/Users/hosanna/BYV-WORKS/Flim app/cpy-8/flimApp/backend/server/src/services/feed.service.js:68:40)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async getPersonalizedFeed (/Users/hosanna/BYV-WORKS/Flim app/cpy-8/flimApp/backend/server/src/controllers/feed.controller.js:16:20)"}
+2025-12-26T17:45:55.443Z [error]: Cannot read properties of null (reading '_id') {"stack":"Error: Cannot read properties of null (reading '_id')\n    at FeedService.getPersonalizedFeed (/Users/hosanna/BYV-WORKS/Flim app/cpy-8/flimApp/backend/server/src/services/feed.service.js:89:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async getPersonalizedFeed (/Users/hosanna/BYV-WORKS/Flim app/cpy-8/flimApp/backend/server/src/controllers/feed.controller.js:16:20)"}
+2025-12-26T17:45:55.443Z [info]: 192.168.1.2 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 500 219.957 ms - 76
+2025-12-26T17:45:55.443Z [info]: 192.168.1.2 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 500 220ms
+2025-12-26T17:45:59.820Z [info]: Redis client connected
+2025-12-26T17:45:59.829Z [info]: Redis client ready
+2025-12-26T17:46:00.365Z [info]: MongoDB connected :ac-1ks08uk-shard-00-00.tv8wnu0.mongodb.net
+2025-12-26T17:46:00.367Z [info]: Redis connected successfully
+2025-12-26T17:46:00.368Z [info]: Queue processors initialized successfully
+2025-12-26T17:46:00.368Z [info]: Queue processors initialized
+2025-12-26T17:46:00.373Z [info]: Server running on port 8000
+2025-12-26T17:46:00.705Z [info]: Socket connected: 694bf3370ba331dae78eb86d
+2025-12-26T17:46:03.174Z [info]: Socket connected: 694e87d8d0ead20b5986e18d
+2025-12-26T17:46:07.750Z [info]: Incoming Request: GET /users/694e87d8d0ead20b5986e18d
+2025-12-26T17:46:07.760Z [info]: Request Query: {"page":"0","limit":"100"}
+2025-12-26T17:46:07.760Z [info]: Incoming Request: GET /api/feed/users/694e87d8d0ead20b5986e18d/posts?page=0&limit=100
+2025-12-26T17:46:07.843Z [info]: 192.168.1.2 GET /users/694e87d8d0ead20b5986e18d 200 92.687 ms - 615
+2025-12-26T17:46:07.843Z [info]: 192.168.1.2 GET /users/694e87d8d0ead20b5986e18d 200 94ms
+2025-12-26T17:46:07.875Z [info]: 192.168.1.2 GET /api/feed/users/694e87d8d0ead20b5986e18d/posts?page=0&limit=100 200 114.948 ms - 930
+2025-12-26T17:46:07.875Z [info]: 192.168.1.2 GET /api/feed/users/694e87d8d0ead20b5986e18d/posts?page=0&limit=100 200 116ms
+2025-12-26T17:46:15.840Z [info]: Request Query: {"q":"S"}
+2025-12-26T17:46:15.840Z [info]: Incoming Request: GET /users?q=S
+2025-12-26T17:46:15.922Z [info]: 192.168.1.2 GET /users?q=S 200 82.399 ms - 1796
+2025-12-26T17:46:15.923Z [info]: 192.168.1.2 GET /users?q=S 200 83ms
+2025-12-26T17:46:21.315Z [info]: Incoming Request: GET /users/694ec1104079d53cc73e3ac8
+2025-12-26T17:46:21.326Z [info]: Request Query: {"page":"0","limit":"100"}
+2025-12-26T17:46:21.327Z [info]: Incoming Request: GET /api/feed/users/694ec1104079d53cc73e3ac8/posts?page=0&limit=100
+2025-12-26T17:46:21.388Z [info]: 192.168.1.2 GET /users/694ec1104079d53cc73e3ac8 200 73.149 ms - 600
+2025-12-26T17:46:21.388Z [info]: 192.168.1.2 GET /users/694ec1104079d53cc73e3ac8 200 74ms
+2025-12-26T17:46:21.444Z [info]: 192.168.1.2 GET /api/feed/users/694ec1104079d53cc73e3ac8/posts?page=0&limit=100 200 117.715 ms - 923
+2025-12-26T17:46:21.444Z [info]: 192.168.1.2 GET /api/feed/users/694ec1104079d53cc73e3ac8/posts?page=0&limit=100 200 118ms
+2025-12-26T17:46:21.469Z [info]: Incoming Request: GET /api/users/694ec1104079d53cc73e3ac8/following-status
+2025-12-26T17:46:21.561Z [info]: 192.168.1.2 GET /api/users/694ec1104079d53cc73e3ac8/following-status 200 91.985 ms - 43
+2025-12-26T17:46:21.561Z [info]: 192.168.1.2 GET /api/users/694ec1104079d53cc73e3ac8/following-status 200 93ms
+2025-12-26T17:46:24.603Z [info]: Incoming Request: GET /posts/694ec1424079d53cc73e3add
+2025-12-26T17:46:24.607Z [info]: Request Query: {"page":"0","limit":"50","sortBy":"recent"}
+2025-12-26T17:46:24.607Z [info]: Incoming Request: GET /api/posts/694ec1424079d53cc73e3add/comments?page=0&limit=50&sortBy=recent
+2025-12-26T17:46:24.680Z [info]: 192.168.1.2 GET /api/posts/694ec1424079d53cc73e3add/comments?page=0&limit=50&sortBy=recent 200 72.949 ms - 105
+2025-12-26T17:46:24.680Z [info]: 192.168.1.2 GET /api/posts/694ec1424079d53cc73e3add/comments?page=0&limit=50&sortBy=recent 200 73ms
+2025-12-26T17:46:24.761Z [info]: 192.168.1.2 GET /posts/694ec1424079d53cc73e3add 200 158.046 ms - 938
+2025-12-26T17:46:24.762Z [info]: 192.168.1.2 GET /posts/694ec1424079d53cc73e3add 200 159ms
+2025-12-26T17:46:33.488Z [info]: Request Query: {"page":"0","limit":"20"}
+2025-12-26T17:46:33.488Z [info]: Incoming Request: GET /communities/my?page=0&limit=20
+2025-12-26T17:46:33.614Z [info]: 192.168.1.2 GET /communities/my?page=0&limit=20 304 123.134 ms - -
+2025-12-26T17:46:33.615Z [info]: 192.168.1.2 GET /communities/my?page=0&limit=20 304 126ms
+2025-12-26T17:46:35.319Z [info]: Incoming Request: GET /communities?
+2025-12-26T17:46:35.441Z [info]: 192.168.1.2 GET /communities? 304 122.696 ms - -
+2025-12-26T17:46:35.442Z [info]: 192.168.1.2 GET /communities? 304 124ms
+2025-12-26T17:46:37.726Z [info]: Request Query: {"page":"0","limit":"20"}
+2025-12-26T17:46:37.726Z [info]: Incoming Request: GET /communities/my?page=0&limit=20
+2025-12-26T17:46:37.845Z [info]: 192.168.1.2 GET /communities/my?page=0&limit=20 304 119.508 ms - -
+2025-12-26T17:46:37.846Z [info]: 192.168.1.2 GET /communities/my?page=0&limit=20 304 120ms
+2025-12-26T17:46:48.782Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-26T17:46:48.782Z [info]: Incoming Request: GET /api/users/694e87d8d0ead20b5986e18d/following?page=0&limit=1000
+2025-12-26T17:46:48.859Z [info]: 192.168.1.2 GET /api/users/694e87d8d0ead20b5986e18d/following?page=0&limit=1000 304 76.700 ms - -
+2025-12-26T17:46:48.859Z [info]: 192.168.1.2 GET /api/users/694e87d8d0ead20b5986e18d/following?page=0&limit=1000 304 77ms
+2025-12-26T17:46:53.086Z [info]: Socket disconnected: 694e87d8d0ead20b5986e18d
+2025-12-26T17:46:58.638Z [info]: Incoming Request: GET /notifications
+2025-12-26T17:46:58.658Z [info]: Socket connected: 694e87d8d0ead20b5986e18d
+2025-12-26T17:46:58.810Z [info]: 192.168.1.2 GET /notifications 304 172.112 ms - -
+2025-12-26T17:46:58.810Z [info]: 192.168.1.2 GET /notifications 304 172ms
+2025-12-26T17:47:00.868Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-26T17:47:00.868Z [info]: Incoming Request: GET /api/users/694e87d8d0ead20b5986e18d/following?page=0&limit=1000
+2025-12-26T17:47:00.880Z [info]: Request Query: {"page":"0","limit":"20","algorithm":"hybrid","timeRange":"7"}
+2025-12-26T17:47:00.880Z [info]: Incoming Request: GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7
+2025-12-26T17:47:00.948Z [info]: 192.168.1.2 GET /api/users/694e87d8d0ead20b5986e18d/following?page=0&limit=1000 304 79.699 ms - -
+2025-12-26T17:47:00.948Z [info]: 192.168.1.2 GET /api/users/694e87d8d0ead20b5986e18d/following?page=0&limit=1000 304 80ms
+2025-12-26T17:47:00.968Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-26T17:47:00.969Z [info]: Incoming Request: GET /api/users/694e87d8d0ead20b5986e18d/following?page=0&limit=1000
+2025-12-26T17:47:01.046Z [info]: 192.168.1.2 GET /api/users/694e87d8d0ead20b5986e18d/following?page=0&limit=1000 304 77.220 ms - -
+2025-12-26T17:47:01.046Z [info]: 192.168.1.2 GET /api/users/694e87d8d0ead20b5986e18d/following?page=0&limit=1000 304 78ms
+2025-12-26T17:47:01.138Z [info]: 192.168.1.2 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 200 258.198 ms - 17098
+2025-12-26T17:47:01.138Z [info]: 192.168.1.2 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 200 259ms
+2025-12-26T17:47:01.951Z [info]: Request Query: {"page":"0","limit":"20","algorithm":"hybrid","timeRange":"7"}
+2025-12-26T17:47:01.951Z [info]: Incoming Request: GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7
+2025-12-26T17:47:02.153Z [info]: 192.168.1.2 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 200 201.445 ms - 16463
+2025-12-26T17:47:02.153Z [info]: 192.168.1.2 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 200 202ms
+2025-12-26T17:47:24.110Z [info]: Socket disconnected: 694e87d8d0ead20b5986e18d
+2025-12-26T17:47:51.467Z [info]: Incoming Request: GET /notifications
+2025-12-26T17:47:51.487Z [info]: Socket connected: 694e87d8d0ead20b5986e18d
+2025-12-26T17:47:51.639Z [info]: 192.168.1.2 GET /notifications 304 172.294 ms - -
+2025-12-26T17:47:51.639Z [info]: 192.168.1.2 GET /notifications 304 172ms
+2025-12-26T17:47:53.681Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-26T17:47:53.681Z [info]: Incoming Request: GET /api/users/694e87d8d0ead20b5986e18d/following?page=0&limit=1000
+2025-12-26T17:47:53.694Z [info]: Request Query: {"page":"0","limit":"20","algorithm":"hybrid","timeRange":"7"}
+2025-12-26T17:47:53.694Z [info]: Incoming Request: GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7
+2025-12-26T17:47:53.763Z [info]: 192.168.1.2 GET /api/users/694e87d8d0ead20b5986e18d/following?page=0&limit=1000 304 81.713 ms - -
+2025-12-26T17:47:53.763Z [info]: 192.168.1.2 GET /api/users/694e87d8d0ead20b5986e18d/following?page=0&limit=1000 304 82ms
+2025-12-26T17:47:53.788Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-26T17:47:53.788Z [info]: Incoming Request: GET /api/users/694e87d8d0ead20b5986e18d/following?page=0&limit=1000
+2025-12-26T17:47:53.865Z [info]: 192.168.1.2 GET /api/users/694e87d8d0ead20b5986e18d/following?page=0&limit=1000 304 76.802 ms - -
+2025-12-26T17:47:53.865Z [info]: 192.168.1.2 GET /api/users/694e87d8d0ead20b5986e18d/following?page=0&limit=1000 304 77ms
+2025-12-26T17:47:53.873Z [info]: 192.168.1.2 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 304 179.495 ms - -
+2025-12-26T17:47:53.873Z [info]: 192.168.1.2 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 304 180ms
+2025-12-26T17:47:54.796Z [info]: Request Query: {"page":"0","limit":"20","algorithm":"hybrid","timeRange":"7"}
+2025-12-26T17:47:54.797Z [info]: Incoming Request: GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7
+2025-12-26T17:47:54.984Z [info]: 192.168.1.2 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 304 187.563 ms - -
+2025-12-26T17:47:54.985Z [info]: 192.168.1.2 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 304 188ms
+2025-12-26T17:48:00.499Z [info]: Incoming Request: GET /users/694e87d8d0ead20b5986e18d
+2025-12-26T17:48:00.514Z [info]: Request Query: {"page":"0","limit":"100"}
+2025-12-26T17:48:00.514Z [info]: Incoming Request: GET /api/feed/users/694e87d8d0ead20b5986e18d/posts?page=0&limit=100
+2025-12-26T17:48:00.812Z [info]: 192.168.1.2 GET /users/694e87d8d0ead20b5986e18d 304 313.172 ms - -
+2025-12-26T17:48:00.812Z [info]: 192.168.1.2 GET /users/694e87d8d0ead20b5986e18d 304 314ms
+2025-12-26T17:48:00.867Z [info]: 192.168.1.2 GET /api/feed/users/694e87d8d0ead20b5986e18d/posts?page=0&limit=100 304 353.091 ms - -
+2025-12-26T17:48:00.867Z [info]: 192.168.1.2 GET /api/feed/users/694e87d8d0ead20b5986e18d/posts?page=0&limit=100 304 353ms
+2025-12-26T17:48:02.732Z [info]: Incoming Request: GET /users/694e87d8d0ead20b5986e18d
+2025-12-26T17:48:02.735Z [info]: Request Query: {"page":"0","limit":"100"}
+2025-12-26T17:48:02.735Z [info]: Incoming Request: GET /api/feed/users/694e87d8d0ead20b5986e18d/posts?page=0&limit=100
+2025-12-26T17:48:02.799Z [info]: 192.168.1.2 GET /users/694e87d8d0ead20b5986e18d 304 67.903 ms - -
+2025-12-26T17:48:02.800Z [info]: 192.168.1.2 GET /users/694e87d8d0ead20b5986e18d 304 69ms
+2025-12-26T17:48:02.843Z [info]: 192.168.1.2 GET /api/feed/users/694e87d8d0ead20b5986e18d/posts?page=0&limit=100 304 108.482 ms - -
+2025-12-26T17:48:02.844Z [info]: 192.168.1.2 GET /api/feed/users/694e87d8d0ead20b5986e18d/posts?page=0&limit=100 304 109ms

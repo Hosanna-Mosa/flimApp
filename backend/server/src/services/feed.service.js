@@ -86,7 +86,7 @@ class FeedService {
       };
     } catch (error) {
       logger.error('Error getting personalized feed:', error);
-      throw new Error('Failed to get feed');
+      throw new Error(error.message || 'Failed to get feed');
     }
   }
 
@@ -98,8 +98,13 @@ class FeedService {
   async enrichPosts(posts, userId) {
     if (!posts || posts.length === 0) return [];
     
-    const postIds = posts.map(p => p._id);
-    const authorIds = [...new Set(posts.map(p => p.author._id))];
+    // Filter out posts with missing authors (deleted users) to prevent crashes
+    const validPosts = posts.filter(p => p && p.author && p.author._id);
+    
+    if (validPosts.length === 0) return [];
+    
+    const postIds = validPosts.map(p => p._id);
+    const authorIds = [...new Set(validPosts.map(p => p.author._id))];
 
     const [userLikes, userFollows] = await Promise.all([
       Like.find({
@@ -116,7 +121,7 @@ class FeedService {
     const likedPostIds = new Set(userLikes.map(like => like.post.toString()));
     const followedUserIds = new Set(userFollows.map(follow => follow.following.toString()));
     
-    return posts.map(post => ({
+    return validPosts.map(post => ({
       ...post,
       isLiked: likedPostIds.has(post._id.toString()),
       author: {
@@ -231,6 +236,13 @@ class FeedService {
     try {
       // Get user data for relevance scoring
       const user = await User.findById(userId).select('industries roles').lean();
+      
+      if (!user) {
+        // Fallback for when user record is missing but auth passed (should trigger logout ideally)
+        logger.warn(`User ${userId} not found during feed generation`);
+        return this.getTrendingFeed(userId, page, limit); 
+        // Or throw error: throw new Error('User not found');
+      }
 
       // Get users that the current user follows
       const following = await Follow.find({
