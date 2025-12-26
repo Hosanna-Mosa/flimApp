@@ -1,0 +1,393 @@
+2025-12-26T23:12:49.704Z [info]: Redis client connected
+2025-12-26T23:12:49.743Z [info]: Redis client ready
+2025-12-26T23:12:52.157Z [info]: MongoDB connected :ac-1ks08uk-shard-00-00.tv8wnu0.mongodb.net
+2025-12-26T23:12:52.165Z [info]: Redis connected successfully
+2025-12-26T23:12:52.171Z [info]: Queue processors initialized successfully
+2025-12-26T23:12:52.172Z [info]: Queue processors initialized
+2025-12-26T23:12:52.203Z [info]: Server running on port 8000
+2025-12-26T23:27:52.131Z [info]: Redis client connected
+2025-12-26T23:27:52.163Z [info]: Redis client ready
+2025-12-26T23:27:54.091Z [info]: MongoDB connected :ac-1ks08uk-shard-00-00.tv8wnu0.mongodb.net
+2025-12-26T23:27:54.099Z [info]: Redis connected successfully
+2025-12-26T23:27:54.106Z [info]: Queue processors initialized successfully
+2025-12-26T23:27:54.107Z [info]: Queue processors initialized
+2025-12-26T23:27:54.125Z [info]: Server running on port 8000
+2025-12-26T23:30:06.309Z [info]: Incoming Request: GET /health
+2025-12-26T23:30:06.319Z [info]: 10.18.107.42 GET /health 200 6.698 ms - 15
+2025-12-26T23:30:06.321Z [info]: 10.18.107.42 GET /health 200 12ms
+2025-12-26T23:33:45.543Z [info]: Shutting down gracefully...
+2025-12-26T23:33:50.494Z [info]: Redis client connected
+2025-12-26T23:33:50.518Z [info]: Redis client ready
+2025-12-26T23:33:52.281Z [info]: MongoDB connected :ac-1ks08uk-shard-00-00.tv8wnu0.mongodb.net
+2025-12-26T23:33:52.322Z [info]: Redis connected successfully
+2025-12-26T23:33:52.330Z [info]: Queue processors initialized successfully
+2025-12-26T23:33:52.331Z [info]: Queue processors initialized
+2025-12-26T23:33:52.350Z [info]: Server running on port 8000
+2025-12-26T23:47:44.759Z [info]: Shutting down gracefully...
+2025-12-26T23:47:44.765Z [info]: HTTP server closed
+2025-12-26T23:47:44.776Z [info]: Redis connection closed
+2025-12-26T23:48:08.254Z [info]: Redis client connected
+2025-12-26T23:48:08.279Z [info]: Redis client ready
+2025-12-26T23:48:10.265Z [info]: MongoDB connected :ac-1ks08uk-shard-00-00.tv8wnu0.mongodb.net
+2025-12-26T23:48:10.274Z [info]: Redis connected successfully
+2025-12-26T23:48:10.293Z [info]: Queue processors initialized successfully
+2025-12-26T23:48:10.295Z [info]: Queue processors initialized
+2025-12-26T23:48:10.311Z [info]: Server running on port 8000
+2025-12-26T23:50:28.679Z [info]: Request Body: {"phone":"9704726252","password":"***"}
+2025-12-26T23:50:28.680Z [info]: Incoming Request: POST /auth/login-password
+2025-12-26T23:50:29.216Z [error]: Invalid credentials {"stack":"Error: Invalid credentials\n    at Object.loginWithPassword (D:\\BYV works\\film\\2\\flimApp\\backend\\server\\src\\services\\auth.service.js:72:17)\n    at async loginWithPassword (D:\\BYV works\\film\\2\\flimApp\\backend\\server\\src\\controllers\\auth.controller.js:55:20)"}
+2025-12-26T23:50:29.224Z [info]: 10.18.107.63 POST /auth/login-password 401 544.682 ms - 49
+2025-12-26T23:50:29.226Z [info]: 10.18.107.63 POST /auth/login-password 401 548ms
+2025-12-26T23:50:33.344Z [info]: Request Body: {"phone":"9704726252","password":"***"}
+2025-12-26T23:50:33.345Z [info]: Incoming Request: POST /auth/login-password
+2025-12-26T23:50:34.044Z [info]: 10.18.107.63 POST /auth/login-password 200 700.332 ms - 1339
+2025-12-26T23:50:34.046Z [info]: 10.18.107.63 POST /auth/login-password 200 703ms
+2025-12-26T23:50:34.601Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-26T23:50:34.602Z [info]: Incoming Request: GET /api/users/694ec1104079d53cc73e3ac8/following?page=0&limit=1000
+2025-12-26T23:50:34.610Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:50:34.617Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:50:34.623Z [info]: Request Query: {"page":"0","limit":"20","algorithm":"hybrid","timeRange":"7"}
+2025-12-26T23:50:34.624Z [info]: Incoming Request: GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7
+2025-12-26T23:50:34.630Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-26T23:50:34.630Z [info]: Incoming Request: GET /api/users/694ec1104079d53cc73e3ac8/following?page=0&limit=1000
+2025-12-26T23:50:34.661Z [info]: [Socket Debug] Socket connected: 694ec1104079d53cc73e3ac8, SocketID: xcWeIhVQ-LDGwNAEAAAB
+2025-12-26T23:50:35.009Z [info]: 10.18.107.63 GET /notifications 200 398.525 ms - 26
+2025-12-26T23:50:35.010Z [info]: 10.18.107.63 GET /notifications 200 400ms
+2025-12-26T23:50:35.011Z [info]: 10.18.107.63 GET /messages/unread-count 200 395.039 ms - 35
+2025-12-26T23:50:35.012Z [info]: 10.18.107.63 GET /messages/unread-count 200 396ms
+2025-12-26T23:50:35.014Z [info]: 10.18.107.63 GET /api/users/694ec1104079d53cc73e3ac8/following?page=0&limit=1000 200 413.289 ms - 107
+2025-12-26T23:50:35.015Z [info]: 10.18.107.63 GET /api/users/694ec1104079d53cc73e3ac8/following?page=0&limit=1000 200 414ms
+2025-12-26T23:50:35.019Z [info]: 10.18.107.63 GET /api/users/694ec1104079d53cc73e3ac8/following?page=0&limit=1000 200 389.644 ms - 107
+2025-12-26T23:50:35.020Z [info]: 10.18.107.63 GET /api/users/694ec1104079d53cc73e3ac8/following?page=0&limit=1000 200 391ms
+2025-12-26T23:50:35.723Z [info]: 10.18.107.63 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 200 1101.360 ms - 17105
+2025-12-26T23:50:35.725Z [info]: 10.18.107.63 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 200 1103ms
+2025-12-26T23:50:36.429Z [info]: Request Query: {"page":"0","limit":"20","algorithm":"hybrid","timeRange":"7"}
+2025-12-26T23:50:36.430Z [info]: Incoming Request: GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7
+2025-12-26T23:50:37.337Z [info]: 10.18.107.63 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 200 908.547 ms - 16470
+2025-12-26T23:50:37.338Z [info]: 10.18.107.63 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 200 910ms
+2025-12-26T23:50:39.707Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:50:39.712Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:50:40.120Z [info]: 10.18.107.63 GET /messages/unread-count 304 413.851 ms - -
+2025-12-26T23:50:40.121Z [info]: 10.18.107.63 GET /messages/unread-count 304 415ms
+2025-12-26T23:50:40.124Z [info]: 10.18.107.63 GET /notifications 304 411.953 ms - -
+2025-12-26T23:50:40.124Z [info]: 10.18.107.63 GET /notifications 304 413ms
+2025-12-26T23:50:44.726Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:50:44.730Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:50:45.369Z [info]: 10.18.107.63 GET /messages/unread-count 304 644.529 ms - -
+2025-12-26T23:50:45.370Z [info]: 10.18.107.63 GET /messages/unread-count 304 645ms
+2025-12-26T23:50:45.372Z [info]: 10.18.107.63 GET /notifications 304 641.836 ms - -
+2025-12-26T23:50:45.373Z [info]: 10.18.107.63 GET /notifications 304 643ms
+2025-12-26T23:50:49.742Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:50:49.748Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:50:50.034Z [info]: 10.18.107.63 GET /notifications 304 292.489 ms - -
+2025-12-26T23:50:50.035Z [info]: 10.18.107.63 GET /notifications 304 293ms
+2025-12-26T23:50:50.036Z [info]: 10.18.107.63 GET /messages/unread-count 304 289.450 ms - -
+2025-12-26T23:50:50.037Z [info]: 10.18.107.63 GET /messages/unread-count 304 290ms
+2025-12-26T23:51:01.827Z [info]: Socket disconnected: 694ec1104079d53cc73e3ac8
+2025-12-26T23:51:03.840Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:51:03.844Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:51:03.852Z [info]: [Socket Debug] Socket connected: 694ec1104079d53cc73e3ac8, SocketID: 8qxwdEYmIPt3-ioCAAAD
+2025-12-26T23:51:04.268Z [info]: 10.18.107.63 GET /notifications 304 424.590 ms - -
+2025-12-26T23:51:04.270Z [info]: 10.18.107.63 GET /notifications 304 426ms
+2025-12-26T23:51:04.271Z [info]: 10.18.107.63 GET /messages/unread-count 304 431.001 ms - -
+2025-12-26T23:51:04.272Z [info]: 10.18.107.63 GET /messages/unread-count 304 431ms
+2025-12-26T23:51:09.075Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:51:09.078Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:51:09.201Z [info]: 10.18.107.63 GET /notifications 304 122.974 ms - -
+2025-12-26T23:51:09.202Z [info]: 10.18.107.63 GET /notifications 304 124ms
+2025-12-26T23:51:09.217Z [info]: 10.18.107.63 GET /messages/unread-count 304 143.034 ms - -
+2025-12-26T23:51:09.219Z [info]: 10.18.107.63 GET /messages/unread-count 304 144ms
+2025-12-26T23:51:13.791Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:51:13.795Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:51:13.972Z [info]: 10.18.107.63 GET /notifications 304 177.109 ms - -
+2025-12-26T23:51:13.973Z [info]: 10.18.107.63 GET /notifications 304 178ms
+2025-12-26T23:51:13.975Z [info]: 10.18.107.63 GET /messages/unread-count 304 184.414 ms - -
+2025-12-26T23:51:13.976Z [info]: 10.18.107.63 GET /messages/unread-count 304 185ms
+2025-12-26T23:51:18.728Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:51:18.734Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:51:19.005Z [info]: 10.18.107.63 GET /notifications 304 271.914 ms - -
+2025-12-26T23:51:19.006Z [info]: 10.18.107.63 GET /notifications 304 273ms
+2025-12-26T23:51:19.008Z [info]: 10.18.107.63 GET /messages/unread-count 304 280.859 ms - -
+2025-12-26T23:51:19.009Z [info]: 10.18.107.63 GET /messages/unread-count 304 281ms
+2025-12-26T23:51:23.929Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:51:23.933Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:51:24.232Z [info]: 10.18.107.63 GET /notifications 304 298.662 ms - -
+2025-12-26T23:51:24.233Z [info]: 10.18.107.63 GET /notifications 304 300ms
+2025-12-26T23:51:24.234Z [info]: 10.18.107.63 GET /messages/unread-count 304 305.495 ms - -
+2025-12-26T23:51:24.235Z [info]: 10.18.107.63 GET /messages/unread-count 304 306ms
+2025-12-26T23:51:33.785Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:51:33.793Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:51:33.954Z [info]: 10.18.107.63 GET /messages/unread-count 304 162.447 ms - -
+2025-12-26T23:51:33.955Z [info]: 10.18.107.63 GET /messages/unread-count 304 164ms
+2025-12-26T23:51:33.963Z [info]: 10.18.107.63 GET /notifications 304 182.135 ms - -
+2025-12-26T23:51:33.965Z [info]: 10.18.107.63 GET /notifications 304 183ms
+2025-12-26T23:51:38.792Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:51:38.795Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:51:39.085Z [info]: 10.18.107.63 GET /notifications 304 290.041 ms - -
+2025-12-26T23:51:39.086Z [info]: 10.18.107.63 GET /notifications 304 291ms
+2025-12-26T23:51:39.088Z [info]: 10.18.107.63 GET /messages/unread-count 304 296.704 ms - -
+2025-12-26T23:51:39.089Z [info]: 10.18.107.63 GET /messages/unread-count 304 297ms
+2025-12-26T23:51:43.885Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:51:43.889Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:51:44.106Z [info]: 10.18.107.63 GET /notifications 304 217.690 ms - -
+2025-12-26T23:51:44.107Z [info]: 10.18.107.63 GET /notifications 304 219ms
+2025-12-26T23:51:44.109Z [info]: 10.18.107.63 GET /messages/unread-count 304 224.890 ms - -
+2025-12-26T23:51:44.110Z [info]: 10.18.107.63 GET /messages/unread-count 304 225ms
+2025-12-26T23:51:48.827Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:51:48.830Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:51:49.288Z [info]: 10.18.107.63 GET /notifications 304 458.089 ms - -
+2025-12-26T23:51:49.289Z [info]: 10.18.107.63 GET /notifications 304 460ms
+2025-12-26T23:51:49.290Z [info]: 10.18.107.63 GET /messages/unread-count 304 464.364 ms - -
+2025-12-26T23:51:49.291Z [info]: 10.18.107.63 GET /messages/unread-count 304 465ms
+2025-12-26T23:51:54.058Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:51:54.062Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:51:54.307Z [info]: 10.18.107.63 GET /notifications 304 245.444 ms - -
+2025-12-26T23:51:54.309Z [info]: 10.18.107.63 GET /notifications 304 247ms
+2025-12-26T23:51:54.327Z [info]: 10.18.107.63 GET /messages/unread-count 304 269.419 ms - -
+2025-12-26T23:51:54.328Z [info]: 10.18.107.63 GET /messages/unread-count 304 270ms
+2025-12-26T23:51:59.300Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:51:59.304Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:51:59.773Z [info]: 10.18.107.63 GET /notifications 304 469.876 ms - -
+2025-12-26T23:51:59.775Z [info]: 10.18.107.63 GET /notifications 304 472ms
+2025-12-26T23:51:59.777Z [info]: 10.18.107.63 GET /messages/unread-count 304 476.942 ms - -
+2025-12-26T23:51:59.777Z [info]: 10.18.107.63 GET /messages/unread-count 304 477ms
+2025-12-26T23:52:03.968Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:52:03.973Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:52:04.174Z [info]: 10.18.107.63 GET /notifications 304 201.610 ms - -
+2025-12-26T23:52:04.176Z [info]: 10.18.107.63 GET /notifications 304 203ms
+2025-12-26T23:52:04.178Z [info]: 10.18.107.63 GET /messages/unread-count 304 210.294 ms - -
+2025-12-26T23:52:04.179Z [info]: 10.18.107.63 GET /messages/unread-count 304 212ms
+2025-12-26T23:52:08.918Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:52:08.922Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:52:09.194Z [info]: 10.18.107.63 GET /notifications 304 272.923 ms - -
+2025-12-26T23:52:09.196Z [info]: 10.18.107.63 GET /notifications 304 274ms
+2025-12-26T23:52:09.197Z [info]: 10.18.107.63 GET /messages/unread-count 304 279.425 ms - -
+2025-12-26T23:52:09.198Z [info]: 10.18.107.63 GET /messages/unread-count 304 280ms
+2025-12-26T23:52:14.006Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:52:14.009Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:52:14.368Z [info]: 10.18.107.63 GET /notifications 304 359.355 ms - -
+2025-12-26T23:52:14.369Z [info]: 10.18.107.63 GET /notifications 304 360ms
+2025-12-26T23:52:14.375Z [info]: 10.18.107.63 GET /messages/unread-count 304 369.784 ms - -
+2025-12-26T23:52:14.377Z [info]: 10.18.107.63 GET /messages/unread-count 304 371ms
+2025-12-26T23:52:18.926Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:52:18.932Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:52:19.098Z [info]: 10.18.107.63 GET /notifications 304 167.350 ms - -
+2025-12-26T23:52:19.099Z [info]: 10.18.107.63 GET /notifications 304 168ms
+2025-12-26T23:52:19.101Z [info]: 10.18.107.63 GET /messages/unread-count 304 176.445 ms - -
+2025-12-26T23:52:19.102Z [info]: 10.18.107.63 GET /messages/unread-count 304 177ms
+2025-12-26T23:52:23.954Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:52:23.957Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:52:24.568Z [info]: 10.18.107.63 GET /messages/unread-count 304 611.380 ms - -
+2025-12-26T23:52:24.569Z [info]: 10.18.107.63 GET /messages/unread-count 304 612ms
+2025-12-26T23:52:24.597Z [info]: 10.18.107.63 GET /notifications 304 643.752 ms - -
+2025-12-26T23:52:24.598Z [info]: 10.18.107.63 GET /notifications 304 644ms
+2025-12-26T23:52:28.947Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:52:28.950Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:52:29.182Z [info]: 10.18.107.63 GET /notifications 304 232.490 ms - -
+2025-12-26T23:52:29.183Z [info]: 10.18.107.63 GET /notifications 304 234ms
+2025-12-26T23:52:29.194Z [info]: 10.18.107.63 GET /messages/unread-count 304 247.723 ms - -
+2025-12-26T23:52:29.195Z [info]: 10.18.107.63 GET /messages/unread-count 304 249ms
+2025-12-26T23:52:33.974Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:52:33.978Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:52:34.119Z [info]: 10.18.107.63 GET /messages/unread-count 304 146.436 ms - -
+2025-12-26T23:52:34.120Z [info]: 10.18.107.63 GET /messages/unread-count 304 148ms
+2025-12-26T23:52:34.178Z [info]: 10.18.107.63 GET /notifications 304 199.569 ms - -
+2025-12-26T23:52:34.179Z [info]: 10.18.107.63 GET /notifications 304 200ms
+2025-12-26T23:52:38.976Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:52:38.981Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:52:39.417Z [info]: 10.18.107.63 GET /messages/unread-count 304 442.254 ms - -
+2025-12-26T23:52:39.418Z [info]: 10.18.107.63 GET /messages/unread-count 304 443ms
+2025-12-26T23:52:39.420Z [info]: 10.18.107.63 GET /notifications 304 440.364 ms - -
+2025-12-26T23:52:39.421Z [info]: 10.18.107.63 GET /notifications 304 441ms
+2025-12-26T23:52:44.010Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:52:44.014Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:52:44.521Z [info]: 10.18.107.63 GET /notifications 304 507.892 ms - -
+2025-12-26T23:52:44.522Z [info]: 10.18.107.63 GET /notifications 304 508ms
+2025-12-26T23:52:44.524Z [info]: 10.18.107.63 GET /messages/unread-count 304 514.734 ms - -
+2025-12-26T23:52:44.524Z [info]: 10.18.107.63 GET /messages/unread-count 304 515ms
+2025-12-26T23:52:49.008Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:52:49.013Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:52:49.146Z [info]: 10.18.107.63 GET /notifications 304 133.643 ms - -
+2025-12-26T23:52:49.147Z [info]: 10.18.107.63 GET /notifications 304 134ms
+2025-12-26T23:52:49.174Z [info]: 10.18.107.63 GET /messages/unread-count 304 166.923 ms - -
+2025-12-26T23:52:49.175Z [info]: 10.18.107.63 GET /messages/unread-count 304 168ms
+2025-12-26T23:52:54.147Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:52:54.151Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:52:54.316Z [info]: 10.18.107.63 GET /notifications 304 165.754 ms - -
+2025-12-26T23:52:54.317Z [info]: 10.18.107.63 GET /notifications 304 167ms
+2025-12-26T23:52:54.318Z [info]: 10.18.107.63 GET /messages/unread-count 304 171.780 ms - -
+2025-12-26T23:52:54.319Z [info]: 10.18.107.63 GET /messages/unread-count 304 173ms
+2025-12-26T23:52:56.093Z [info]: Socket disconnected: 694ec1104079d53cc73e3ac8
+2025-12-26T23:53:05.768Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:53:05.771Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:53:05.804Z [info]: [Socket Debug] Socket connected: 694ec1104079d53cc73e3ac8, SocketID: N4fUcdKm1nUrPzbUAAAF
+2025-12-26T23:53:05.928Z [info]: 10.18.107.63 GET /notifications 304 157.167 ms - -
+2025-12-26T23:53:05.930Z [info]: 10.18.107.63 GET /notifications 304 159ms
+2025-12-26T23:53:05.939Z [info]: 10.18.107.63 GET /messages/unread-count 304 171.808 ms - -
+2025-12-26T23:53:05.940Z [info]: 10.18.107.63 GET /messages/unread-count 304 172ms
+2025-12-26T23:53:08.088Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-26T23:53:08.089Z [info]: Incoming Request: GET /api/users/694ec1104079d53cc73e3ac8/following?page=0&limit=1000
+2025-12-26T23:53:08.093Z [info]: Request Query: {"page":"0","limit":"20","algorithm":"hybrid","timeRange":"7"}
+2025-12-26T23:53:08.093Z [info]: Incoming Request: GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7
+2025-12-26T23:53:08.098Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-26T23:53:08.099Z [info]: Incoming Request: GET /api/users/694ec1104079d53cc73e3ac8/following?page=0&limit=1000
+2025-12-26T23:53:08.279Z [info]: 10.18.107.63 GET /api/users/694ec1104079d53cc73e3ac8/following?page=0&limit=1000 304 191.843 ms - -
+2025-12-26T23:53:08.281Z [info]: 10.18.107.63 GET /api/users/694ec1104079d53cc73e3ac8/following?page=0&limit=1000 304 193ms
+2025-12-26T23:53:08.282Z [info]: 10.18.107.63 GET /api/users/694ec1104079d53cc73e3ac8/following?page=0&limit=1000 304 184.803 ms - -
+2025-12-26T23:53:08.283Z [info]: 10.18.107.63 GET /api/users/694ec1104079d53cc73e3ac8/following?page=0&limit=1000 304 186ms
+2025-12-26T23:53:08.564Z [info]: 10.18.107.63 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 304 471.990 ms - -
+2025-12-26T23:53:08.565Z [info]: 10.18.107.63 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 304 473ms
+2025-12-26T23:53:09.096Z [info]: Request Query: {"page":"0","limit":"20","algorithm":"hybrid","timeRange":"7"}
+2025-12-26T23:53:09.097Z [info]: Incoming Request: GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7
+2025-12-26T23:53:09.579Z [info]: 10.18.107.63 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 304 483.332 ms - -
+2025-12-26T23:53:09.580Z [info]: 10.18.107.63 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 304 484ms
+2025-12-26T23:53:10.837Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:53:10.841Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:53:11.204Z [info]: 10.18.107.63 GET /notifications 304 363.482 ms - -
+2025-12-26T23:53:11.206Z [info]: 10.18.107.63 GET /notifications 304 365ms
+2025-12-26T23:53:11.207Z [info]: 10.18.107.63 GET /messages/unread-count 304 370.468 ms - -
+2025-12-26T23:53:11.208Z [info]: 10.18.107.63 GET /messages/unread-count 304 371ms
+2025-12-26T23:53:15.752Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:53:15.755Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:53:16.171Z [info]: 10.18.107.63 GET /notifications 304 415.978 ms - -
+2025-12-26T23:53:16.172Z [info]: 10.18.107.63 GET /notifications 304 417ms
+2025-12-26T23:53:16.182Z [info]: 10.18.107.63 GET /messages/unread-count 304 430.717 ms - -
+2025-12-26T23:53:16.183Z [info]: 10.18.107.63 GET /messages/unread-count 304 432ms
+2025-12-26T23:53:20.771Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:53:20.775Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:53:21.402Z [info]: 10.18.107.63 GET /messages/unread-count 304 627.199 ms - -
+2025-12-26T23:53:21.403Z [info]: 10.18.107.63 GET /messages/unread-count 304 628ms
+2025-12-26T23:53:21.404Z [info]: 10.18.107.63 GET /notifications 304 634.070 ms - -
+2025-12-26T23:53:21.405Z [info]: 10.18.107.63 GET /notifications 304 634ms
+2025-12-26T23:53:25.837Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:53:25.842Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:53:26.484Z [info]: 10.18.107.63 GET /messages/unread-count 304 642.444 ms - -
+2025-12-26T23:53:26.485Z [info]: 10.18.107.63 GET /messages/unread-count 304 644ms
+2025-12-26T23:53:26.486Z [info]: 10.18.107.63 GET /notifications 304 649.823 ms - -
+2025-12-26T23:53:26.487Z [info]: 10.18.107.63 GET /notifications 304 651ms
+2025-12-26T23:53:30.806Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:53:30.811Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:53:31.302Z [info]: 10.18.107.63 GET /messages/unread-count 304 491.286 ms - -
+2025-12-26T23:53:31.303Z [info]: 10.18.107.63 GET /messages/unread-count 304 493ms
+2025-12-26T23:53:31.305Z [info]: 10.18.107.63 GET /notifications 304 499.159 ms - -
+2025-12-26T23:53:31.306Z [info]: 10.18.107.63 GET /notifications 304 500ms
+2025-12-26T23:53:35.824Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:53:35.829Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:53:36.148Z [info]: 10.18.107.63 GET /messages/unread-count 304 318.887 ms - -
+2025-12-26T23:53:36.150Z [info]: 10.18.107.63 GET /messages/unread-count 304 320ms
+2025-12-26T23:53:36.152Z [info]: 10.18.107.63 GET /notifications 304 328.534 ms - -
+2025-12-26T23:53:36.154Z [info]: 10.18.107.63 GET /notifications 304 330ms
+2025-12-26T23:53:40.840Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:53:40.843Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:53:41.013Z [info]: 10.18.107.63 GET /messages/unread-count 304 170.538 ms - -
+2025-12-26T23:53:41.015Z [info]: 10.18.107.63 GET /messages/unread-count 304 172ms
+2025-12-26T23:53:41.017Z [info]: 10.18.107.63 GET /notifications 304 177.680 ms - -
+2025-12-26T23:53:41.018Z [info]: 10.18.107.63 GET /notifications 304 178ms
+2025-12-26T23:53:46.063Z [info]: Socket disconnected: 694ec1104079d53cc73e3ac8
+2025-12-26T23:53:52.632Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:53:52.731Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:53:52.745Z [info]: [Socket Debug] Socket connected: 694ec1104079d53cc73e3ac8, SocketID: ciTHEU2nkAqFvee-AAAH
+2025-12-26T23:53:52.845Z [info]: 10.18.107.63 GET /messages/unread-count 304 217.163 ms - -
+2025-12-26T23:53:52.847Z [info]: 10.18.107.63 GET /messages/unread-count 304 218ms
+2025-12-26T23:53:52.886Z [info]: 10.18.107.63 GET /notifications 304 185.665 ms - -
+2025-12-26T23:53:52.887Z [info]: 10.18.107.63 GET /notifications 304 187ms
+2025-12-26T23:53:54.892Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-26T23:53:54.893Z [info]: Incoming Request: GET /api/users/694ec1104079d53cc73e3ac8/following?page=0&limit=1000
+2025-12-26T23:53:54.896Z [info]: Request Query: {"page":"0","limit":"20","algorithm":"hybrid","timeRange":"7"}
+2025-12-26T23:53:54.897Z [info]: Incoming Request: GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7
+2025-12-26T23:53:54.999Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-26T23:53:55.000Z [info]: Incoming Request: GET /api/users/694ec1104079d53cc73e3ac8/following?page=0&limit=1000
+2025-12-26T23:53:55.050Z [info]: 10.18.107.63 GET /api/users/694ec1104079d53cc73e3ac8/following?page=0&limit=1000 304 158.735 ms - -
+2025-12-26T23:53:55.051Z [info]: 10.18.107.63 GET /api/users/694ec1104079d53cc73e3ac8/following?page=0&limit=1000 304 160ms
+2025-12-26T23:53:55.135Z [info]: 10.18.107.63 GET /api/users/694ec1104079d53cc73e3ac8/following?page=0&limit=1000 304 136.570 ms - -
+2025-12-26T23:53:55.136Z [info]: 10.18.107.63 GET /api/users/694ec1104079d53cc73e3ac8/following?page=0&limit=1000 304 137ms
+2025-12-26T23:53:55.272Z [info]: 10.18.107.63 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 304 376.615 ms - -
+2025-12-26T23:53:55.273Z [info]: 10.18.107.63 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 304 378ms
+2025-12-26T23:53:55.766Z [info]: Request Query: {"page":"0","limit":"20","algorithm":"hybrid","timeRange":"7"}
+2025-12-26T23:53:55.766Z [info]: Incoming Request: GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7
+2025-12-26T23:53:56.190Z [info]: 10.18.107.63 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 304 424.874 ms - -
+2025-12-26T23:53:56.191Z [info]: 10.18.107.63 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 304 426ms
+2025-12-26T23:53:57.737Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:53:57.741Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:53:57.926Z [info]: 10.18.107.63 GET /notifications 304 185.643 ms - -
+2025-12-26T23:53:57.927Z [info]: 10.18.107.63 GET /notifications 304 187ms
+2025-12-26T23:53:57.980Z [info]: 10.18.107.63 GET /messages/unread-count 304 243.393 ms - -
+2025-12-26T23:53:57.981Z [info]: 10.18.107.63 GET /messages/unread-count 304 244ms
+2025-12-26T23:54:02.620Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:54:02.626Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:54:02.816Z [info]: 10.18.107.63 GET /messages/unread-count 304 197.297 ms - -
+2025-12-26T23:54:02.817Z [info]: 10.18.107.63 GET /messages/unread-count 304 198ms
+2025-12-26T23:54:02.832Z [info]: 10.18.107.63 GET /notifications 304 206.092 ms - -
+2025-12-26T23:54:02.833Z [info]: 10.18.107.63 GET /notifications 304 207ms
+2025-12-26T23:54:07.669Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:54:07.673Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:54:07.921Z [info]: 10.18.107.63 GET /notifications 304 252.645 ms - -
+2025-12-26T23:54:07.922Z [info]: 10.18.107.63 GET /notifications 304 254ms
+2025-12-26T23:54:07.924Z [info]: 10.18.107.63 GET /messages/unread-count 304 251.572 ms - -
+2025-12-26T23:54:07.925Z [info]: 10.18.107.63 GET /messages/unread-count 304 252ms
+2025-12-26T23:54:12.909Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:54:12.912Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:54:13.207Z [info]: 10.18.107.63 GET /notifications 304 298.950 ms - -
+2025-12-26T23:54:13.209Z [info]: 10.18.107.63 GET /notifications 304 300ms
+2025-12-26T23:54:13.213Z [info]: 10.18.107.63 GET /messages/unread-count 304 300.666 ms - -
+2025-12-26T23:54:13.214Z [info]: 10.18.107.63 GET /messages/unread-count 304 301ms
+2025-12-26T23:54:17.764Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:54:17.769Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:54:18.226Z [info]: 10.18.107.63 GET /messages/unread-count 304 462.627 ms - -
+2025-12-26T23:54:18.227Z [info]: 10.18.107.63 GET /messages/unread-count 304 464ms
+2025-12-26T23:54:18.301Z [info]: 10.18.107.63 GET /notifications 304 532.698 ms - -
+2025-12-26T23:54:18.302Z [info]: 10.18.107.63 GET /notifications 304 534ms
+2025-12-26T23:54:22.498Z [info]: Socket disconnected: 694ec1104079d53cc73e3ac8
+2025-12-26T23:54:28.772Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:54:28.777Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:54:28.831Z [info]: [Socket Debug] Socket connected: 694ec1104079d53cc73e3ac8, SocketID: V5WIHlEJ8KKphJOUAAAJ
+2025-12-26T23:54:28.941Z [info]: 10.18.107.63 GET /notifications 304 164.404 ms - -
+2025-12-26T23:54:28.942Z [info]: 10.18.107.63 GET /notifications 304 165ms
+2025-12-26T23:54:28.945Z [info]: 10.18.107.63 GET /messages/unread-count 304 172.930 ms - -
+2025-12-26T23:54:28.946Z [info]: 10.18.107.63 GET /messages/unread-count 304 173ms
+2025-12-26T23:54:31.002Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-26T23:54:31.002Z [info]: Incoming Request: GET /api/users/694ec1104079d53cc73e3ac8/following?page=0&limit=1000
+2025-12-26T23:54:31.011Z [info]: Request Query: {"page":"0","limit":"20","algorithm":"hybrid","timeRange":"7"}
+2025-12-26T23:54:31.012Z [info]: Incoming Request: GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7
+2025-12-26T23:54:31.126Z [info]: Request Query: {"page":"0","limit":"1000"}
+2025-12-26T23:54:31.126Z [info]: Incoming Request: GET /api/users/694ec1104079d53cc73e3ac8/following?page=0&limit=1000
+2025-12-26T23:54:31.186Z [info]: 10.18.107.63 GET /api/users/694ec1104079d53cc73e3ac8/following?page=0&limit=1000 304 184.774 ms - -
+2025-12-26T23:54:31.187Z [info]: 10.18.107.63 GET /api/users/694ec1104079d53cc73e3ac8/following?page=0&limit=1000 304 185ms
+2025-12-26T23:54:31.304Z [info]: 10.18.107.63 GET /api/users/694ec1104079d53cc73e3ac8/following?page=0&limit=1000 304 178.294 ms - -
+2025-12-26T23:54:31.305Z [info]: 10.18.107.63 GET /api/users/694ec1104079d53cc73e3ac8/following?page=0&limit=1000 304 179ms
+2025-12-26T23:54:31.469Z [info]: 10.18.107.63 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 304 461.530 ms - -
+2025-12-26T23:54:31.471Z [info]: 10.18.107.63 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 304 463ms
+2025-12-26T23:54:31.965Z [info]: Request Query: {"page":"0","limit":"20","algorithm":"hybrid","timeRange":"7"}
+2025-12-26T23:54:31.965Z [info]: Incoming Request: GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7
+2025-12-26T23:54:32.478Z [info]: 10.18.107.63 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 304 514.327 ms - -
+2025-12-26T23:54:32.479Z [info]: 10.18.107.63 GET /api/feed?page=0&limit=20&algorithm=hybrid&timeRange=7 304 516ms
+2025-12-26T23:54:33.822Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:54:33.825Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:54:34.099Z [info]: 10.18.107.63 GET /notifications 304 274.720 ms - -
+2025-12-26T23:54:34.100Z [info]: 10.18.107.63 GET /notifications 304 276ms
+2025-12-26T23:54:34.107Z [info]: 10.18.107.63 GET /messages/unread-count 304 285.898 ms - -
+2025-12-26T23:54:34.108Z [info]: 10.18.107.63 GET /messages/unread-count 304 286ms
+2025-12-26T23:54:38.886Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:54:38.889Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:54:39.196Z [info]: 10.18.107.63 GET /messages/unread-count 304 311.609 ms - -
+2025-12-26T23:54:39.197Z [info]: 10.18.107.63 GET /messages/unread-count 304 312ms
+2025-12-26T23:54:39.198Z [info]: 10.18.107.63 GET /notifications 304 310.015 ms - -
+2025-12-26T23:54:39.199Z [info]: 10.18.107.63 GET /notifications 304 310ms
+2025-12-26T23:54:43.885Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:54:43.888Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:54:44.273Z [info]: 10.18.107.63 GET /notifications 304 385.013 ms - -
+2025-12-26T23:54:44.274Z [info]: 10.18.107.63 GET /notifications 304 385ms
+2025-12-26T23:54:44.303Z [info]: 10.18.107.63 GET /messages/unread-count 304 419.141 ms - -
+2025-12-26T23:54:44.304Z [info]: 10.18.107.63 GET /messages/unread-count 304 420ms
+2025-12-26T23:54:48.955Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:54:48.957Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:54:49.142Z [info]: 10.18.107.63 GET /notifications 304 185.024 ms - -
+2025-12-26T23:54:49.143Z [info]: 10.18.107.63 GET /notifications 304 186ms
+2025-12-26T23:54:49.147Z [info]: 10.18.107.63 GET /messages/unread-count 304 192.674 ms - -
+2025-12-26T23:54:49.147Z [info]: 10.18.107.63 GET /messages/unread-count 304 193ms
+2025-12-26T23:54:53.827Z [info]: Incoming Request: GET /messages/unread-count
+2025-12-26T23:54:53.832Z [info]: Incoming Request: GET /notifications
+2025-12-26T23:54:54.022Z [info]: 10.18.107.63 GET /messages/unread-count 304 195.459 ms - -
+2025-12-26T23:54:54.023Z [info]: 10.18.107.63 GET /messages/unread-count 304 197ms
+2025-12-26T23:54:54.025Z [info]: 10.18.107.63 GET /notifications 304 193.324 ms - -
+2025-12-26T23:54:54.025Z [info]: 10.18.107.63 GET /notifications 304 194ms

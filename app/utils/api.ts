@@ -2,7 +2,8 @@
 const API_BASE =
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ((globalThis as any)?.process?.env?.EXPO_PUBLIC_API_URL as string) ||
-  'http://10.212.182.150:8000';
+  'http://10.18.107.42:8000';
+
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
@@ -274,7 +275,7 @@ export const apiUpdateMemberRole = (
   userId: string,
   role: 'admin' | 'moderator' | 'member',
   token?: string
-) => 
+) =>
   request(`/communities/${communityId}/members/${userId}/role`, {
     method: 'PUT',
     body: { role },
@@ -713,12 +714,12 @@ export const api = {
   leaveCommunity: apiLeaveCommunity,
   approveJoinRequest: apiApproveJoinRequest,
   rejectJoinRequest: apiRejectJoinRequest,
-  
+
   // Community Members
   communityMembers: apiCommunityMembers,
   updateMemberRole: apiUpdateMemberRole,
   removeMember: apiRemoveMember,
-  
+
   // Community Groups
   createGroup: apiCreateGroup,
   communityGroups: apiCommunityGroups,
@@ -726,7 +727,7 @@ export const api = {
   leaveGroup: apiLeaveGroup,
   updateGroup: apiUpdateGroup,
   deleteGroup: apiDeleteGroup,
-  
+
   // Community Posts
   createCommunityPost: apiCreateCommunityPost,
   deleteCommunityPost: apiDeleteCommunityPost,
@@ -736,7 +737,7 @@ export const api = {
   unlikeCommunityPost: apiUnlikeCommunityPost,
   votePoll: apiVotePoll,
   pinPost: apiPinPost,
-  
+
   conversation: apiConversation,
   markConversationRead: apiMarkConversationRead,
   notifications: apiNotifications,

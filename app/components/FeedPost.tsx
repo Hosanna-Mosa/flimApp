@@ -305,7 +305,7 @@ export default function FeedPost({
       </View>
 
       {/* Content */}
-      <View style={{ width: '100%', minHeight: 200, backgroundColor: '#000' }}>
+      <View style={{ width: '100%' }}>
           {renderMedia()}
       </View>
 
@@ -365,17 +365,15 @@ const styles = StyleSheet.create({
   },
   mediaContainer: {
     width: '100%',
-    maxHeight: 600, // Prevent ultra-tall images
-    backgroundColor: '#000',
     justifyContent: 'center',
     position: 'relative',
   },
   media: {
     width: '100%',
-    height: '100%',
   },
   content: {
     padding: 12,
+    paddingTop: 8,
   },
   caption: {
     fontSize: 14,
@@ -405,7 +403,7 @@ const styles = StyleSheet.create({
   audioCard: {
       padding: 16,
       width: '100%',
-      minHeight: 120,
+      minHeight: 100,
       justifyContent: 'center',
   },
   audioRow: {
