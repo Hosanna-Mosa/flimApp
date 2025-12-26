@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "E:\\App\\Filmy8\\flimApp\\backend\\server\\logs\\.c880a484ef4cecb453813a9f817f781b1162efce-audit.json",
+    "files": [
+        {
+            "date": 1766753319003,
+            "name": "E:\\App\\Filmy8\\flimApp\\backend\\server\\logs\\error-2025-12-26.log",
+            "hash": "054635a120c587d72a68fad2fdccf3cd144f69b872e688908928e7e05423c674"
+        }
+    ],
+    "hashType": "sha256"
+}

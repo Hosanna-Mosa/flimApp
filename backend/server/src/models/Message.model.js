@@ -6,6 +6,8 @@ const MessageSchema = new Schema(
     recipient: { type: Types.ObjectId, ref: 'User', required: true },
     content: { type: String, required: true, maxlength: 2000 },
     status: { type: String, enum: ['sent', 'delivered', 'read'], default: 'sent' },
+    isRead: { type: Boolean, default: false },
+    readAt: { type: Date },
   },
   { timestamps: true }
 );

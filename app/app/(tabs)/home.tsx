@@ -32,6 +32,7 @@ import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotifications } from '@/contexts/NotificationContext';
+import { useMessages } from '@/contexts/MessageContext';
 import api from '@/utils/api';
 import { Post } from '@/types';
 
@@ -43,12 +44,18 @@ export default function HomeScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { user, token, isLoading: authLoading } = useAuth();
-  const { unreadCount } = useNotifications(); 
+  const { unreadCount: notificationCount } = useNotifications();
+  const { unreadCount: messageCount } = useMessages();
+
+  useEffect(() => {
+    console.log('[Home] Render messageCount:', messageCount);
+  }, [messageCount]);
+
   const [posts, setPosts] = useState<Post[]>([]);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
-  
+
   // Pagination State
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -67,7 +74,7 @@ export default function HomeScreen() {
 
       // Fetch a large number of following users to build the local source of truth
       const result = await api.getFollowing(userId, 0, 1000, token);
-      
+
       if ((result as any).data && Array.isArray((result as any).data)) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const rawIds = (result as any).data.map((u: any) => u._id || u.id);
@@ -102,11 +109,11 @@ export default function HomeScreen() {
 
   const loadFeed = async (pageNumber = 0, append = false) => {
     if (!token) return;
-    
+
     try {
       console.log('[Home] Loading feed...');
       const result = await api.getFeed(0, 20, 'hybrid', 7, token) as any;
-      
+
       if (result.data) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const mappedPosts = result.data.map((p: any) => ({
@@ -118,7 +125,7 @@ export default function HomeScreen() {
             avatar: p.author.avatar,
             isVerified: p.author.isVerified,
             roles: p.author.roles || [],
-            isFollowing: p.author.isFollowing || false, 
+            isFollowing: p.author.isFollowing || false,
           },
           type: p.type,
           mediaUrl: p.mediaUrl,
@@ -131,17 +138,17 @@ export default function HomeScreen() {
           isLiked: p.isLiked || false,
           createdAt: new Date(p.createdAt).toLocaleDateString(),
         }));
-        
+
         if (mappedPosts.length < 20) {
-            setHasMore(false);
+          setHasMore(false);
         } else {
-            setHasMore(true);
+          setHasMore(true);
         }
 
         if (append) {
-            setPosts(prev => [...prev, ...mappedPosts]);
+          setPosts(prev => [...prev, ...mappedPosts]);
         } else {
-            setPosts(mappedPosts);
+          setPosts(mappedPosts);
         }
       }
     } catch (error) {
@@ -160,19 +167,19 @@ export default function HomeScreen() {
   };
 
   const loadMore = async () => {
-      if (!loadingMore && hasMore && !loading) {
-          setLoadingMore(true);
-          const nextPage = page + 1;
-          setPage(nextPage);
-          await loadFeed(nextPage, true);
-          setLoadingMore(false);
-      }
+    if (!loadingMore && hasMore && !loading) {
+      setLoadingMore(true);
+      const nextPage = page + 1;
+      setPage(nextPage);
+      await loadFeed(nextPage, true);
+      setLoadingMore(false);
+    }
   };
 
   const toggleFollow = async (userId: string) => {
     try {
       const isCurrentlyFollowing = followingIds.has(userId);
-      
+
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
       // Optimistic update of the Set
@@ -192,23 +199,23 @@ export default function HomeScreen() {
       } else {
         const result = await api.followUser(userId, token || undefined) as any;
         console.log('[Home] Followed user:', result);
-        
+
         if (result.status === 'pending') {
           Alert.alert('Follow Request Sent', 'This account is private. Your request is pending.');
           setFollowingIds(prev => {
-             const next = new Set(prev);
-             next.delete(userId);
-             return next;
+            const next = new Set(prev);
+            next.delete(userId);
+            return next;
           });
         }
       }
     } catch (error) {
       setFollowingIds(prev => {
         const next = new Set(prev);
-        if (followingIds.has(userId)) { 
-           next.add(userId);
+        if (followingIds.has(userId)) {
+          next.add(userId);
         } else {
-           next.delete(userId);
+          next.delete(userId);
         }
         return next;
       });
@@ -220,7 +227,7 @@ export default function HomeScreen() {
   const handleLike = async (postId: string) => {
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      
+
       const post = posts.find(p => p.id === postId);
       if (!post) return;
 
@@ -230,10 +237,10 @@ export default function HomeScreen() {
       setPosts(prevPosts => prevPosts.map((p) =>
         p.id === postId
           ? {
-              ...p,
-              isLiked: !p.isLiked,
-              likes: p.isLiked ? p.likes - 1 : p.likes + 1,
-            }
+            ...p,
+            isLiked: !p.isLiked,
+            likes: p.isLiked ? p.likes - 1 : p.likes + 1,
+          }
           : p
       ));
 
@@ -241,7 +248,7 @@ export default function HomeScreen() {
       if (wasLiked) {
         const result = await api.unlikePost(postId, token || undefined) as any;
         console.log('[Home] Unliked post:', result);
-        
+
         // Update with real count from server
         setPosts(prevPosts => prevPosts.map((p) =>
           p.id === postId ? { ...p, likes: result.likesCount, isLiked: false } : p
@@ -249,7 +256,7 @@ export default function HomeScreen() {
       } else {
         const result = await api.likePost(postId, token || undefined) as any;
         console.log('[Home] Liked post:', result);
-        
+
         // Update with real count from server
         setPosts(prevPosts => prevPosts.map((p) =>
           p.id === postId ? { ...p, likes: result.likesCount, isLiked: true } : p
@@ -260,8 +267,8 @@ export default function HomeScreen() {
         if (p.id === postId) {
           return {
             ...p,
-            isLiked: !p.isLiked, 
-            likes: p.isLiked ? p.likes + 1 : p.likes - 1, 
+            isLiked: !p.isLiked,
+            likes: p.isLiked ? p.likes + 1 : p.likes - 1,
           };
         }
         return p;
@@ -280,7 +287,7 @@ export default function HomeScreen() {
       if (!post) return;
 
       const shareUrl = `https://filmy.app/post/${postId}`;
-      const message = post.caption 
+      const message = post.caption
         ? `${post.caption}\n\n${shareUrl}`
         : shareUrl;
 
@@ -302,45 +309,76 @@ export default function HomeScreen() {
           headerStyle: { backgroundColor: colors.background },
           headerTintColor: colors.text,
           headerRight: () => (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-              <TouchableOpacity 
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 20, paddingRight: 16 }}>
+              <TouchableOpacity
                 onPress={() => router.push('/trending')}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <Flame size={24} color={colors.text} />
               </TouchableOpacity>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => router.push('/notifications')}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                style={{ position: 'relative' }}
               >
-                <Bell size={24} color={colors.text} />
-                {unreadCount > 0 && (
-                  <View
-                    style={{
-                      position: 'absolute',
-                      top: -4,
-                      right: -6,
-                      backgroundColor: colors.error,
-                      borderRadius: 10,
-                      minWidth: 18,
-                      height: 18,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      paddingHorizontal: 4,
-                    }}
-                  >
-                    <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '700' }}>
-                      {unreadCount > 99 ? '99+' : unreadCount}
-                    </Text>
-                  </View>
-                )}
+                <View style={{ width: 24, height: 24 }}>
+                  <Bell size={24} color={colors.text} />
+                  {notificationCount > 0 && (
+                    <View
+                      style={{
+                        position: 'absolute',
+                        top: -6,
+                        right: -6,
+                        backgroundColor: '#FF3B30',
+                        borderRadius: 10,
+                        minWidth: 18,
+                        height: 18,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        paddingHorizontal: 4,
+                        borderWidth: 2,
+                        borderColor: colors.background,
+                        elevation: 5,
+                        zIndex: 999,
+                      }}
+                    >
+                      <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: 'bold' }}>
+                        {notificationCount > 99 ? '99+' : notificationCount}
+                      </Text>
+                    </View>
+                  )}
+                </View>
               </TouchableOpacity>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => router.push('/messages')}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <MessageCircle size={24} color={colors.text} />
+                <View style={{ width: 24, height: 24 }}>
+                  <MessageCircle size={24} color={colors.text} />
+                  {messageCount > 0 && (
+                    <View
+                      style={{
+                        position: 'absolute',
+                        top: -6,
+                        right: -6,
+                        backgroundColor: '#FF3B30',
+                        borderRadius: 10,
+                        minWidth: 18,
+                        height: 18,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        paddingHorizontal: 4,
+                        borderWidth: 2,
+                        borderColor: colors.background,
+                        elevation: 5, // Android shadow/z-index
+                        zIndex: 999,
+                      }}
+                    >
+                      <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: 'bold' }}>
+                        {messageCount > 99 ? '99+' : messageCount}
+                      </Text>
+                    </View>
+                  )}
+                </View>
               </TouchableOpacity>
             </View>
           ),
@@ -360,40 +398,40 @@ export default function HomeScreen() {
           </Text>
         </View>
       ) : (
-      <FlatList
-        style={[styles.container, { backgroundColor: colors.background }]}
-        data={posts}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <FeedPost
-            post={item}
-            isFollowing={followingIds.has(item.user.id)}
-            onFollow={toggleFollow}
-            onLike={handleLike}
-            onComment={handleComment}
-            onShare={handleShare}
-            primaryColor={colors.primary}
-            borderColor={colors.border}
-          />
-        )}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={colors.primary}
-          />
-        }
-        onEndReached={loadMore}
-        onEndReachedThreshold={0.5}
-        ListFooterComponent={
+        <FlatList
+          style={[styles.container, { backgroundColor: colors.background }]}
+          data={posts}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <FeedPost
+              post={item}
+              isFollowing={followingIds.has(item.user.id)}
+              onFollow={toggleFollow}
+              onLike={handleLike}
+              onComment={handleComment}
+              onShare={handleShare}
+              primaryColor={colors.primary}
+              borderColor={colors.border}
+            />
+          )}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.primary}
+            />
+          }
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
             loadingMore ? (
-                <View style={{ padding: 20, alignItems: 'center' }}>
-                    <ActivityIndicator color={colors.primary} />
-                </View>
+              <View style={{ padding: 20, alignItems: 'center' }}>
+                <ActivityIndicator color={colors.primary} />
+              </View>
             ) : null
-        }
-      />
+          }
+        />
       )}
     </>
   );

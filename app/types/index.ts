@@ -25,6 +25,7 @@ export type Industry =
 export type ContentType = 'video' | 'audio' | 'image' | 'script';
 
 export interface User {
+  _id?: string;
   id: string;
   name: string;
   email: string;

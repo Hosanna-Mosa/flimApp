@@ -24,6 +24,7 @@ const getFeed = async (req, res, next) => {
     const feed = await postService.getFeed(req.user);
     return success(res, feed);
   } catch (err) {
+    console.error('[FeedController] getFeed Error:', err);
     return next(err);
   }
 };

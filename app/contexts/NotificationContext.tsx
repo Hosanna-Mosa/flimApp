@@ -26,15 +26,19 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       if (Array.isArray(data)) {
         // Show only unread notifications count
         const count = data.filter((n: any) => !n.isRead).length;
+        console.log('[NotificationContext] Unread count updated:', count);
         setUnreadCount(count);
       }
     } catch (error) {
-      console.error('Failed to fetch unread count:', error);
+      console.error('[NotificationContext] Failed to fetch unread count:', error);
     }
   };
 
   const incrementUnreadCount = () => {
-    setUnreadCount((prev) => prev + 1);
+    setUnreadCount((prev) => {
+      console.log('[NotificationContext] Incrementing unread count:', prev + 1);
+      return prev + 1;
+    });
   };
 
   const decrementUnreadCount = () => {
@@ -45,10 +49,13 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     setUnreadCount(0);
   };
 
-  // Load initial count when token is available
+  // Load initial count when token is available and socket connects
   useEffect(() => {
     if (token) {
       refreshUnreadCount();
+      // Poll every 5 seconds as fallback
+      const interval = setInterval(refreshUnreadCount, 5000);
+      return () => clearInterval(interval);
     }
   }, [token]);
 
@@ -56,7 +63,8 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!socket) return;
 
-    const handleNewNotification = () => {
+    const handleNewNotification = (data: any) => {
+      console.log('[NotificationContext] Received new notification:', data);
       incrementUnreadCount();
     };
 

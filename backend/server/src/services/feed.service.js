@@ -32,7 +32,7 @@ class FeedService {
           .lean();
 
         // Maintain cache order
-        const orderedPosts = cachedFeed.map(id => 
+        const orderedPosts = cachedFeed.map(id =>
           posts.find(p => p._id.toString() === id)
         ).filter(Boolean);
 
@@ -47,7 +47,7 @@ class FeedService {
 
       // Generate fresh feed
       let feedPosts;
-      
+
       switch (algorithm) {
         case 'chronological':
           feedPosts = await this.getChronologicalFeed(userId, timeRange);
@@ -97,9 +97,13 @@ class FeedService {
    */
   async enrichPosts(posts, userId) {
     if (!posts || posts.length === 0) return [];
-    
-    const postIds = posts.map(p => p._id);
-    const authorIds = [...new Set(posts.map(p => p.author._id))];
+
+    // Filter out posts where author is null/missing (e.g. deleted users)
+    const validPosts = posts.filter(p => p.author && p.author._id);
+    if (validPosts.length === 0) return [];
+
+    const postIds = validPosts.map(p => p._id);
+    const authorIds = [...new Set(validPosts.map(p => p.author._id))];
 
     const [userLikes, userFollows] = await Promise.all([
       Like.find({
@@ -112,11 +116,11 @@ class FeedService {
         status: 'accepted'
       }).select('following').lean()
     ]);
-    
+
     const likedPostIds = new Set(userLikes.map(like => like.post.toString()));
     const followedUserIds = new Set(userFollows.map(follow => follow.following.toString()));
-    
-    return posts.map(post => ({
+
+    return validPosts.map(post => ({
       ...post,
       isLiked: likedPostIds.has(post._id.toString()),
       author: {
@@ -143,10 +147,10 @@ class FeedService {
       // If user follows no one, show trending/public posts as fallback (excluding own posts)
       if (followingIds.length === 0) {
         logger.info(`User ${userId} has no follows, showing trending posts as fallback`);
-        
+
         const cutoffDate = new Date();
         cutoffDate.setDate(cutoffDate.getDate() - timeRange);
-        
+
         const posts = await Post.find({
           author: { $ne: userId }, // Exclude user's own posts
           isActive: true,
@@ -157,7 +161,7 @@ class FeedService {
           .sort({ score: -1, createdAt: -1 }) // Sort by score then recency
           .limit(100)
           .lean();
-        
+
         return posts;
       }
 
@@ -292,7 +296,7 @@ class FeedService {
     // Relevance score (industry/role match)
     let relevanceScore = 0;
     if (user.industries && post.industries) {
-      const matchingIndustries = user.industries.filter(ind => 
+      const matchingIndustries = user.industries.filter(ind =>
         post.industries.includes(ind)
       ).length;
       relevanceScore = matchingIndustries / Math.max(user.industries.length, 1);
@@ -419,12 +423,12 @@ class FeedService {
       const skip = page * limit;
 
       // Check if viewer is following the user
-      const isFollowing = viewerId 
+      const isFollowing = viewerId
         ? await Follow.findOne({
-            follower: viewerId,
-            following: userId,
-            status: 'accepted',
-          })
+          follower: viewerId,
+          following: userId,
+          status: 'accepted',
+        })
         : null;
 
       const isOwnProfile = userId === viewerId;

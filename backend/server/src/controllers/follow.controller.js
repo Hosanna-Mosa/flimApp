@@ -12,11 +12,11 @@ const { success, error } = require('../utils/response');
 const followUser = async (req, res, next) => {
   try {
     const result = await followService.followUser(req.user.id, req.params.id);
-    
+
     if (!result.success) {
       return res.status(400).json(result);
     }
-    
+
     return success(res, result);
   } catch (err) {
     return next(err);
@@ -30,11 +30,11 @@ const followUser = async (req, res, next) => {
 const unfollowUser = async (req, res, next) => {
   try {
     const result = await followService.unfollowUser(req.user.id, req.params.id);
-    
+
     if (!result.success) {
       return res.status(400).json(result);
     }
-    
+
     return success(res, result);
   } catch (err) {
     return next(err);
@@ -51,11 +51,11 @@ const acceptFollowRequest = async (req, res, next) => {
       req.user.id,
       req.params.userId
     );
-    
+
     if (!result.success) {
       return res.status(400).json(result);
     }
-    
+
     return success(res, result);
   } catch (err) {
     return next(err);
@@ -72,11 +72,11 @@ const rejectFollowRequest = async (req, res, next) => {
       req.user.id,
       req.params.userId
     );
-    
+
     if (!result.success) {
       return res.status(400).json(result);
     }
-    
+
     return success(res, result);
   } catch (err) {
     return next(err);
@@ -89,13 +89,14 @@ const rejectFollowRequest = async (req, res, next) => {
  */
 const getFollowers = async (req, res, next) => {
   try {
-    const { page = 0, limit = 20 } = req.query;
+    const { page = 0, limit = 20, q } = req.query;
     const result = await followService.getFollowers(
       req.params.id,
       parseInt(page),
-      parseInt(limit)
+      parseInt(limit),
+      q
     );
-    
+
     return success(res, result);
   } catch (err) {
     return next(err);
@@ -108,13 +109,14 @@ const getFollowers = async (req, res, next) => {
  */
 const getFollowing = async (req, res, next) => {
   try {
-    const { page = 0, limit = 20 } = req.query;
+    const { page = 0, limit = 20, q } = req.query;
     const result = await followService.getFollowing(
       req.params.id,
       parseInt(page),
-      parseInt(limit)
+      parseInt(limit),
+      q
     );
-    
+
     return success(res, result);
   } catch (err) {
     return next(err);
@@ -133,7 +135,7 @@ const getPendingRequests = async (req, res, next) => {
       parseInt(page),
       parseInt(limit)
     );
-    
+
     return success(res, result);
   } catch (err) {
     return next(err);
@@ -147,12 +149,12 @@ const getPendingRequests = async (req, res, next) => {
 const isFollowing = async (req, res, next) => {
   try {
     const following = await followService.isFollowing(req.user.id, req.params.id);
-    
+
     // Disable caching to ensure fresh data
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     res.set('Pragma', 'no-cache');
     res.set('Expires', '0');
-    
+
     return success(res, { following });
   } catch (err) {
     return next(err);
@@ -166,7 +168,7 @@ const isFollowing = async (req, res, next) => {
 const getMutualFollowers = async (req, res, next) => {
   try {
     const result = await followService.getMutualFollowers(req.user.id, req.params.id);
-    
+
     return success(res, result);
   } catch (err) {
     return next(err);
