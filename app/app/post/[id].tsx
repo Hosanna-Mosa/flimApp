@@ -426,7 +426,7 @@ const styles = StyleSheet.create({
     height: 400,
   },
   audioContainer: {
-    height: 200,
+    height: 120,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
@@ -437,6 +437,7 @@ const styles = StyleSheet.create({
   },
   postContent: {
     padding: 16,
+    paddingTop: 8,
   },
   caption: {
     fontSize: 14,
