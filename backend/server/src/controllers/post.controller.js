@@ -49,7 +49,9 @@ const getUserPosts = async (req, res, next) => {
 
 const getPost = async (req, res, next) => {
   try {
-    const post = await postService.getPostById(req.params.id);
+    const userId = req.user?.id; // Get user ID if authenticated
+    console.log(`[PostController] getPost - userId: ${userId}, postId: ${req.params.id}`);
+    const post = await postService.getPostById(req.params.id, userId);
     if (!post) {
       const error = new Error('Post not found');
       error.statusCode = 404;

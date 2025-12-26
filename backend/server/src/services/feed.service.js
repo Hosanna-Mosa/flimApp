@@ -86,7 +86,7 @@ class FeedService {
       };
     } catch (error) {
       logger.error('Error getting personalized feed:', error);
-      throw new Error('Failed to get feed');
+      throw new Error(error.message || 'Failed to get feed');
     }
   }
 
@@ -235,6 +235,13 @@ class FeedService {
     try {
       // Get user data for relevance scoring
       const user = await User.findById(userId).select('industries roles').lean();
+      
+      if (!user) {
+        // Fallback for when user record is missing but auth passed (should trigger logout ideally)
+        logger.warn(`User ${userId} not found during feed generation`);
+        return this.getTrendingFeed(userId, page, limit); 
+        // Or throw error: throw new Error('User not found');
+      }
 
       // Get users that the current user follows
       const following = await Follow.find({

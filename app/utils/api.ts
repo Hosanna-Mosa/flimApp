@@ -195,28 +195,201 @@ export const apiGetPost = (postId: string, token?: string) =>
   request(`/posts/${postId}`, { token });
 
 // Communities
+// Communities
 export const apiCreateCommunity = (
   payload: {
     name: string;
     description?: string;
-    type: 'industry' | 'role' | 'project';
+    avatar?: string;
+    coverImage?: string;
+    type: 'industry' | 'role' | 'project' | 'general';
     industry?: string;
     role?: string;
+    privacy?: 'public' | 'private' | 'invite-only';
+    tags?: string[];
   },
   token?: string
 ) => request('/communities', { method: 'POST', body: payload, token });
 
-export const apiCommunities = (token?: string) =>
-  request('/communities', { token });
+export const apiCommunities = (
+  params?: {
+    type?: string;
+    industry?: string;
+    role?: string;
+    privacy?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  },
+  token?: string
+) => {
+  const query = new URLSearchParams();
+  if (params?.type) query.append('type', params.type);
+  if (params?.industry) query.append('industry', params.industry);
+  if (params?.role) query.append('role', params.role);
+  if (params?.privacy) query.append('privacy', params.privacy);
+  if (params?.search) query.append('search', params.search);
+  if (params?.page) query.append('page', params.page.toString());
+  if (params?.limit) query.append('limit', params.limit.toString());
+  return request(`/communities?${query.toString()}`, { token });
+};
+
+export const apiMyCommunities = (page = 0, limit = 20, token?: string) =>
+  request(`/communities/my?page=${page}&limit=${limit}`, { token });
 
 export const apiCommunity = (id: string, token?: string) =>
   request(`/communities/${id}`, { token });
+
+export const apiUpdateCommunity = (
+  id: string,
+  payload: any,
+  token?: string
+) => request(`/communities/${id}`, { method: 'PUT', body: payload, token });
+
+export const apiDeleteCommunity = (id: string, token?: string) =>
+  request(`/communities/${id}`, { method: 'DELETE', token });
 
 export const apiJoinCommunity = (id: string, token?: string) =>
   request(`/communities/${id}/join`, { method: 'POST', token });
 
 export const apiLeaveCommunity = (id: string, token?: string) =>
   request(`/communities/${id}/leave`, { method: 'POST', token });
+
+export const apiApproveJoinRequest = (communityId: string, userId: string, token?: string) =>
+  request(`/communities/${communityId}/requests/${userId}/approve`, { method: 'POST', token });
+
+export const apiRejectJoinRequest = (communityId: string, userId: string, token?: string) =>
+  request(`/communities/${communityId}/requests/${userId}/reject`, { method: 'POST', token });
+
+// Community Members
+export const apiCommunityMembers = (
+  id: string,
+  page = 0,
+  limit = 50,
+  token?: string
+) => request(`/communities/${id}/members?page=${page}&limit=${limit}`, { token });
+
+export const apiUpdateMemberRole = (
+  communityId: string,
+  userId: string,
+  role: 'admin' | 'moderator' | 'member',
+  token?: string
+) => 
+  request(`/communities/${communityId}/members/${userId}/role`, {
+    method: 'PUT',
+    body: { role },
+    token
+  });
+
+export const apiRemoveMember = (
+  communityId: string,
+  userId: string,
+  token?: string
+) =>
+  request(`/communities/${communityId}/members/${userId}`, {
+    method: 'DELETE',
+    token
+  });
+
+// Community Groups
+export const apiCreateGroup = (
+  communityId: string,
+  payload: {
+    name: string;
+    description?: string;
+    type?: 'announcement' | 'discussion' | 'general';
+    isAnnouncementOnly?: boolean;
+  },
+  token?: string
+) => request(`/communities/${communityId}/groups`, { method: 'POST', body: payload, token });
+
+export const apiCommunityGroups = (communityId: string, token?: string) =>
+  request(`/communities/${communityId}/groups`, { token });
+
+export const apiJoinGroup = (
+  communityId: string,
+  groupId: string,
+  token?: string
+) => request(`/communities/${communityId}/groups/${groupId}/join`, { method: 'POST', token });
+
+export const apiLeaveGroup = (
+  communityId: string,
+  groupId: string,
+  token?: string
+) => request(`/communities/${communityId}/groups/${groupId}/leave`, { method: 'POST', token });
+
+export const apiUpdateGroup = (
+  communityId: string,
+  groupId: string,
+  payload: any,
+  token?: string
+) => request(`/communities/${communityId}/groups/${groupId}`, { method: 'PUT', body: payload, token });
+
+export const apiDeleteGroup = (
+  communityId: string,
+  groupId: string,
+  token?: string
+) => request(`/communities/${communityId}/groups/${groupId}`, { method: 'DELETE', token });
+
+// Community Posts
+export const apiDeleteCommunityPost = (
+  communityId: string,
+  postId: string,
+  token?: string
+) => request(`/communities/${communityId}/posts/${postId}`, { method: 'DELETE', token });
+
+export const apiCreateCommunityPost = (
+  communityId: string,
+  payload: {
+    groupId: string;
+    type?: 'text' | 'image' | 'video' | 'poll' | 'announcement';
+    content: string;
+    media?: any[];
+    poll?: any;
+  },
+  token?: string
+) => request(`/communities/${communityId}/posts`, { method: 'POST', body: payload, token });
+
+export const apiCommunityFeed = (
+  communityId: string,
+  page = 0,
+  limit = 20,
+  token?: string
+) => request(`/communities/${communityId}/posts?page=${page}&limit=${limit}`, { token });
+
+export const apiGroupPosts = (
+  communityId: string,
+  groupId: string,
+  page = 0,
+  limit = 20,
+  token?: string
+) => request(`/communities/${communityId}/groups/${groupId}/posts?page=${page}&limit=${limit}`, { token });
+
+export const apiLikeCommunityPost = (
+  communityId: string,
+  postId: string,
+  token?: string
+) => request(`/communities/${communityId}/posts/${postId}/like`, { method: 'POST', token });
+
+export const apiUnlikeCommunityPost = (
+  communityId: string,
+  postId: string,
+  token?: string
+) => request(`/communities/${communityId}/posts/${postId}/like`, { method: 'DELETE', token });
+
+export const apiVotePoll = (
+  communityId: string,
+  postId: string,
+  optionIndex: number,
+  token?: string
+) => request(`/communities/${communityId}/posts/${postId}/vote`, { method: 'POST', body: { optionIndex }, token });
+
+export const apiPinPost = (
+  communityId: string,
+  postId: string,
+  token?: string
+) => request(`/communities/${communityId}/posts/${postId}/pin`, { method: 'POST', token });
+
 
 // Messages
 export const apiConversation = (userId: string, token?: string) =>
@@ -532,9 +705,38 @@ export const api = {
   userPosts: apiUserPosts,
   createCommunity: apiCreateCommunity,
   communities: apiCommunities,
+  myCommunities: apiMyCommunities,
   community: apiCommunity,
+  updateCommunity: apiUpdateCommunity,
+  deleteCommunity: apiDeleteCommunity,
   joinCommunity: apiJoinCommunity,
   leaveCommunity: apiLeaveCommunity,
+  approveJoinRequest: apiApproveJoinRequest,
+  rejectJoinRequest: apiRejectJoinRequest,
+  
+  // Community Members
+  communityMembers: apiCommunityMembers,
+  updateMemberRole: apiUpdateMemberRole,
+  removeMember: apiRemoveMember,
+  
+  // Community Groups
+  createGroup: apiCreateGroup,
+  communityGroups: apiCommunityGroups,
+  joinGroup: apiJoinGroup,
+  leaveGroup: apiLeaveGroup,
+  updateGroup: apiUpdateGroup,
+  deleteGroup: apiDeleteGroup,
+  
+  // Community Posts
+  createCommunityPost: apiCreateCommunityPost,
+  deleteCommunityPost: apiDeleteCommunityPost,
+  communityFeed: apiCommunityFeed,
+  groupPosts: apiGroupPosts,
+  likeCommunityPost: apiLikeCommunityPost,
+  unlikeCommunityPost: apiUnlikeCommunityPost,
+  votePoll: apiVotePoll,
+  pinPost: apiPinPost,
+  
   conversation: apiConversation,
   markConversationRead: apiMarkConversationRead,
   notifications: apiNotifications,

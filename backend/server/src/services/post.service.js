@@ -127,11 +127,34 @@ const getFeed = async (user) => feedService.getPersonalizedFeed(user);
 /**
  * Get post by ID
  * @param {string} postId - Post ID
- * @returns {Promise<Post>} Post
+ * @param {string} userId - Current user ID (optional)
+ * @returns {Promise<Post>} Post with isLiked status
  */
-const getPostById = async (postId) => {
-  return Post.findById(postId)
-    .populate('author', 'name avatar isVerified roles bio stats');
+const getPostById = async (postId, userId = null) => {
+  const post = await Post.findById(postId)
+    .populate('author', 'name avatar isVerified roles bio stats')
+    .lean();
+  
+  if (!post) {
+    return null;
+  }
+  
+  // Check if user has liked this post
+  if (userId) {
+    const Like = require('../models/Like.model');
+    const like = await Like.findOne({ 
+      user: userId, 
+      post: postId
+      // Note: Like model doesn't have isActive field
+    });
+    post.isLiked = !!like;
+    console.log(`[PostService] getPostById - userId: ${userId}, postId: ${postId}, isLiked: ${post.isLiked}, likeFound: ${!!like}`);
+  } else {
+    post.isLiked = false;
+    console.log(`[PostService] getPostById - No userId provided, setting isLiked to false`);
+  }
+  
+  return post;
 };
 
 /**
