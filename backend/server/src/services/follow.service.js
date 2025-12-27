@@ -233,7 +233,8 @@ class FollowService {
       queueService.addNotificationJob({
         userId: followerId,
         type: 'follow_request_accepted',
-        acceptedBy: userId,
+        actorId: userId, // The user who accepted the request
+        acceptedBy: userId, // Keep for backward compatibility
       }).catch(err => logger.error('Notification job failed', err));
 
       logger.info(`User ${userId} accepted follow request from ${followerId}`);
@@ -267,6 +268,19 @@ class FollowService {
       }
 
       logger.info(`User ${userId} rejected follow request from ${followerId}`);
+
+      // Send notification to the requester
+      try {
+        await queueService.addNotificationJob({
+          userId: followerId, // Notify the person who requested
+          type: 'follow_request_rejected',
+          actorId: userId, // The person who rejected
+        });
+        logger.info(`Notification queued for rejected follow request: ${followerId}`);
+      } catch (notifError) {
+        logger.error('Failed to queue rejection notification:', notifError);
+        // Don't fail the request if notification fails
+      }
 
       return {
         success: true,

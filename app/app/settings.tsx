@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { Moon, Sun, Bell, Shield, Lock, ChevronRight } from 'lucide-react-native';
+import { Moon, Sun, Bell, Shield, Lock, ChevronRight, User } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -122,6 +122,38 @@ export default function SettingsScreen() {
               </View>
             </View>
           </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Account
+          </Text>
+
+          <TouchableOpacity
+            style={[
+              styles.settingItem,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
+            onPress={() => router.push('/personal-details')}
+          >
+            <View style={styles.settingInfo}>
+              <User size={24} color={colors.textSecondary} />
+              <View style={styles.settingText}>
+                <Text style={[styles.settingLabel, { color: colors.text }]}>
+                  Personal Details
+                </Text>
+                <Text
+                  style={[
+                    styles.settingDescription,
+                    { color: colors.textSecondary },
+                  ]}
+                >
+                  Edit email, phone, location, and more
+                </Text>
+              </View>
+            </View>
+            <ChevronRight size={20} color={colors.textSecondary} />
+          </TouchableOpacity>
         </View>
 
         <View style={styles.section}>

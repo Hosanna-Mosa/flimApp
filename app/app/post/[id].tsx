@@ -239,31 +239,33 @@ export default function PostDetailScreen() {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Post Header */}
         {/* Post Header */}
-        <View style={styles.postHeader}>
-          <TouchableOpacity onPress={() => router.push(`/user/${post.author._id}`)}>
-            <Image
-              source={{ uri: post.author.avatar }}
-              style={styles.avatar}
-              contentFit="cover"
-            />
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.userInfo} 
-            onPress={() => router.push(`/user/${post.author._id}`)}
-          >
-            <View style={styles.nameContainer}>
-              <Text style={[styles.userName, { color: colors.text }]}>
-                {post.author.name}
+        {post.author && (
+          <View style={styles.postHeader}>
+            <TouchableOpacity onPress={() => router.push(`/user/${post.author._id}`)}>
+              <Image
+                source={{ uri: post.author.avatar || '' }}
+                style={styles.avatar}
+                contentFit="cover"
+              />
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.userInfo} 
+              onPress={() => router.push(`/user/${post.author._id}`)}
+            >
+              <View style={styles.nameContainer}>
+                <Text style={[styles.userName, { color: colors.text }]}>
+                  {post.author.name || 'Unknown User'}
+                </Text>
+                {post.author.isVerified && (
+                  <BadgeCheck size={16} color={colors.primary} fill="transparent" />
+                )}
+              </View>
+              <Text style={[styles.role, { color: colors.textSecondary }]}>
+                {post.author.roles?.slice(0, 2).join(' • ')}
               </Text>
-              {post.author.isVerified && (
-                <BadgeCheck size={16} color={colors.primary} fill="transparent" />
-              )}
-            </View>
-            <Text style={[styles.role, { color: colors.textSecondary }]}>
-              {post.author.roles?.slice(0, 2).join(' • ')}
-            </Text>
-          </TouchableOpacity>
-        </View>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Post Media */}
         {(post.type === 'image' || post.type === 'video') && post.mediaUrl && (
@@ -317,19 +319,21 @@ export default function PostDetailScreen() {
             Comments ({comments.length})
           </Text>
           
-          {comments.map((comment) => (
+          {comments
+            .filter((comment) => comment.user) // Filter out comments with null users
+            .map((comment) => (
             <View key={comment._id} style={styles.commentItem}>
               <Image
-                source={{ uri: comment.user.avatar }}
+                source={{ uri: comment.user?.avatar || '' }}
                 style={styles.commentAvatar}
                 contentFit="cover"
               />
               <View style={styles.commentContent}>
                 <View style={styles.commentHeader}>
                   <Text style={[styles.commentUserName, { color: colors.text }]}>
-                    {comment.user.name}
+                    {comment.user?.name || 'Unknown User'}
                   </Text>
-                  {comment.user.isVerified && (
+                  {comment.user?.isVerified && (
                     <BadgeCheck size={12} color={colors.primary} fill="transparent" />
                   )}
                 </View>

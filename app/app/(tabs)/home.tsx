@@ -140,8 +140,9 @@ export default function HomeScreen() {
             isFollowing: p.author.isFollowing || false,
           },
           type: p.type,
-          mediaUrl: p.mediaUrl,
-          thumbnailUrl: p.thumbnailUrl,
+          // Support both new media structure and legacy mediaUrl/thumbnailUrl
+          mediaUrl: p.mediaUrl || p.media?.url,
+          thumbnailUrl: p.thumbnailUrl || p.media?.thumbnail,
           media: p.media,
           caption: p.caption,
           likes: p.engagement?.likesCount || 0,

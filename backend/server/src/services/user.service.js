@@ -3,10 +3,42 @@ const Follow = require('../models/Follow.model');
 
 const getMe = async (userId) => User.findById(userId).select('-password -refreshTokens');
 
-const updateMe = async (userId, payload) =>
-  User.findByIdAndUpdate(userId, payload, { new: true }).select(
+const updateMe = async (userId, payload) => {
+  // Check for duplicate email if email is being updated
+  if (payload.email) {
+    const existingUser = await User.findOne({ 
+      email: payload.email.toLowerCase(),
+      _id: { $ne: userId }
+    });
+    if (existingUser) {
+      const err = new Error('Email already in use');
+      err.status = 409;
+      throw err;
+    }
+  }
+
+  // Check for duplicate phone if phone is being updated
+  if (payload.phone) {
+    const existingUser = await User.findOne({ 
+      phone: payload.phone,
+      _id: { $ne: userId }
+    });
+    if (existingUser) {
+      const err = new Error('Phone number already in use');
+      err.status = 409;
+      throw err;
+    }
+  }
+
+  // Normalize email to lowercase
+  if (payload.email) {
+    payload.email = payload.email.toLowerCase().trim();
+  }
+
+  return User.findByIdAndUpdate(userId, payload, { new: true }).select(
     '-password -refreshTokens'
   );
+};
 
 const getById = async (id, viewerId = null) => {
   const user = await User.findById(id).select('-password -refreshTokens').lean();
@@ -31,7 +63,7 @@ const getById = async (id, viewerId = null) => {
       status: 'accepted',
     });
 
-    // If not following, return limited data
+    // If not following, return limited data (but include stats like Instagram/Twitter)
     if (!isFollowing) {
       return {
         _id: user._id,
@@ -39,7 +71,13 @@ const getById = async (id, viewerId = null) => {
         avatar: user.avatar,
         accountType: user.accountType,
         isVerified: user.isVerified,
-        // Don't return: bio, stats, roles, industries, location, experience, etc.
+        // Always show stats (like Instagram, Twitter, etc.)
+        stats: user.stats || {
+          followersCount: 0,
+          followingCount: 0,
+          postsCount: 0,
+        },
+        // Don't return: bio, roles, industries, location, experience, etc.
       };
     }
   }

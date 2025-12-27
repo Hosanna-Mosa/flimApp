@@ -101,8 +101,8 @@ queues.notification.process('send-notification', async (job) => {
   try {
     const { userId, type, actorId, followerId, acceptedBy } = data;
 
-    // Determine who performed the action
-    const actionUserId = actorId || followerId || acceptedBy;
+    // Determine who performed the action (prioritize actorId for navigation)
+    const actionUserId = actorId || acceptedBy || followerId;
 
     // Don't notify if user triggered action on themselves
     if (actionUserId === userId) return { success: true, skipped: true };
@@ -125,6 +125,10 @@ queues.notification.process('send-notification', async (job) => {
       case 'follow_request_accepted':
         title = 'Follow Request Accepted';
         body = `${actorName} accepted your follow request`;
+        break;
+      case 'follow_request_rejected':
+        title = 'Follow Request Declined';
+        body = `${actorName} declined your follow request`;
         break;
       case 'like':
         title = 'New Like';
@@ -150,7 +154,10 @@ queues.notification.process('send-notification', async (job) => {
       title,
       body,
       type,
-      metadata: data,
+      metadata: {
+        ...data,
+        actorId: actionUserId, // Ensure actorId is in metadata for easy access
+      },
     });
 
     logger.info('Notification sent:', data);

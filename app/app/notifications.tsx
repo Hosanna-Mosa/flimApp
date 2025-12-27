@@ -163,7 +163,7 @@ export default function NotificationsScreen() {
   };
 
   const handleNotificationPress = (notification: NotificationItem) => {
-    const { type, metadata } = notification;
+    const { type, metadata, actorId } = notification;
 
     // Don't navigate for follow_request - user can accept/reject
     if (type === 'follow_request') {
@@ -183,8 +183,20 @@ export default function NotificationsScreen() {
 
       case 'follow':
         // Navigate to the follower's profile
-        if (metadata?.followerId || metadata?.actorId) {
-          const userId = metadata.followerId || metadata.actorId;
+        if (metadata?.followerId || metadata?.actorId || actorId) {
+          const userId = metadata?.followerId || metadata?.actorId || actorId;
+          router.push({
+            pathname: '/user/[id]',
+            params: { id: userId }
+          });
+        }
+        break;
+
+      case 'follow_request_accepted':
+      case 'follow_request_rejected':
+        // Navigate to the profile of the user who accepted/rejected
+        if (metadata?.actorId || actorId) {
+          const userId = metadata?.actorId || actorId;
           router.push({
             pathname: '/user/[id]',
             params: { id: userId }
@@ -194,10 +206,10 @@ export default function NotificationsScreen() {
 
       case 'message':
         // Navigate to chat with the sender
-        if (metadata?.actorId) {
+        if (metadata?.actorId || actorId) {
           router.push({
             pathname: '/chat',
-            params: { userId: metadata.actorId }
+            params: { userId: metadata?.actorId || actorId }
           });
         }
         break;
