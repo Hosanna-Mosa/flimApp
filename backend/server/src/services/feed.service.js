@@ -445,10 +445,7 @@ class FeedService {
     try {
       const skip = page * limit;
 
-      // Normalize IDs to strings for comparison
-      const userIdStr = userId?.toString();
-      const viewerIdStr = viewerId?.toString();
-      const isOwnProfile = userIdStr && viewerIdStr && userIdStr === viewerIdStr;
+      const isOwnProfile = userId === viewerId;
 
       // Get user account type
       const user = await User.findById(userId).select('accountType').lean();
@@ -483,13 +480,7 @@ class FeedService {
       if (isOwnProfile) {
         visibilityFilter = {}; // Show all posts
       } else if (isFollowing) {
-        // If following a private account, show all posts (they're approved followers)
-        // If following a public account, show public and followers posts
-        if (isPrivateAccount) {
-          visibilityFilter = {}; // Show all posts for private account followers
-        } else {
-          visibilityFilter = { visibility: { $in: ['public', 'followers'] } };
-        }
+        visibilityFilter = { visibility: { $in: ['public', 'followers'] } };
       } else {
         visibilityFilter = { visibility: 'public' };
       }

@@ -74,12 +74,9 @@ const getUserFeed = async (req, res, next) => {
   try {
     const { page = 0, limit = 20 } = req.query;
     
-    // Get viewer ID from authenticated user (if available)
-    const viewerId = req.user?._id?.toString() || req.user?.id || null;
-    
     const result = await feedService.getUserPosts(
       req.params.id,
-      viewerId, // Viewer ID (may be null for public viewing)
+      req.user?.id, // Viewer ID (may be undefined for public viewing)
       parseInt(page),
       parseInt(limit)
     );
