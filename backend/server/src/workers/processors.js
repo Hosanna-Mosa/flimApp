@@ -118,6 +118,10 @@ queues.notification.process('send-notification', async (job) => {
         title = 'New Follower';
         body = `${actorName} started following you`;
         break;
+      case 'follow_request':
+        title = 'New Follow Request';
+        body = `${actorName} wants to follow you`;
+        break;
       case 'like':
         title = 'New Like';
         body = `${actorName} liked your post`;

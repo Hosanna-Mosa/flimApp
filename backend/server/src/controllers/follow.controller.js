@@ -162,6 +162,25 @@ const isFollowing = async (req, res, next) => {
 };
 
 /**
+ * Get follow status (pending/accepted/not following)
+ * GET /api/users/:id/follow-status
+ */
+const getFollowStatus = async (req, res, next) => {
+  try {
+    const status = await followService.getFollowStatus(req.user.id, req.params.id);
+
+    // Disable caching to ensure fresh data
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+
+    return success(res, status);
+  } catch (err) {
+    return next(err);
+  }
+};
+
+/**
  * Get mutual followers between two users
  * GET /api/users/:id/mutual-followers
  */
@@ -184,5 +203,6 @@ module.exports = {
   getFollowing,
   getPendingRequests,
   isFollowing,
+  getFollowStatus,
   getMutualFollowers,
 };
