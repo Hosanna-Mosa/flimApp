@@ -1,10 +1,14 @@
 // Support Expo environment variables without requiring @types/node
-const API_BASE =
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ((globalThis as any)?.process?.env?.EXPO_PUBLIC_API_URL as string) ||
-  'http://10.18.107.42:8000';
 
+import Constants from 'expo-constants';
 
+const API_BASE_URL =
+  Constants.expoConfig?.extra?.apiUrl ?? Constants.manifest?.extra?.apiUrl;
+
+ const API_BASE = API_BASE_URL
+   ? API_BASE_URL
+   : ((globalThis as any)?.process?.env?.EXPO_PUBLIC_API_URL as string) ||
+     'http://10.18.107.42:8000';
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
 interface RequestOptions {

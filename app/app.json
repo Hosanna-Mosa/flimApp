@@ -71,6 +71,7 @@
       ]
     ],
     "extra": {
+      "apiUrl": "https://api2.brelis.in",
       "router": {},
       "expo-navigation-bar": {
         "position": "absolute",
