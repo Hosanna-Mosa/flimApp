@@ -11,9 +11,12 @@ import {
 import { Stack, useRouter, useFocusEffect } from 'expo-router';
 import { Image } from 'expo-image';
 import { MessageCircle, Search } from 'lucide-react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Platform } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiGetConversations } from '@/utils/api';
+import { getAvatarUrl } from '@/utils/avatar';
 
 interface ChatItem {
   id: string; // Peer ID
@@ -33,6 +36,7 @@ export default function MessagesScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { token } = useAuth();
+  const insets = useSafeAreaInsets();
   const [chats, setChats] = useState<ChatItem[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -87,7 +91,10 @@ export default function MessagesScreen() {
   };
 
   return (
-    <>
+    <SafeAreaView 
+      style={[styles.container, { backgroundColor: colors.background }]} 
+      edges={['top', 'bottom', 'left', 'right']}
+    >
       <Stack.Screen
         options={{
           headerShown: true,
@@ -97,7 +104,10 @@ export default function MessagesScreen() {
         }}
       />
       <ScrollView
-        style={[styles.container, { backgroundColor: colors.background }]}
+        style={styles.scrollView}
+        contentContainerStyle={{
+          paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 20) : 0,
+        }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
@@ -131,22 +141,47 @@ export default function MessagesScreen() {
               })
             }
           >
-            <View style={styles.avatarContainer}>
+            <TouchableOpacity
+              onPress={() => {
+                router.push({
+                  pathname: '/user/[id]',
+                  params: { id: chat.user.id }
+                });
+              }}
+              activeOpacity={0.7}
+              hitSlop={{ top: 10, bottom: 10, left: 5, right: 5 }}
+              style={styles.avatarContainer}
+            >
               <Image
-                source={{ uri: chat.user.avatar }}
+                source={{ 
+                  uri: getAvatarUrl(chat.user.avatar, chat.user.id, chat.user.name, 56)
+                }}
                 style={styles.avatar}
                 contentFit="cover"
+                onError={(e) => {
+                  console.log('Avatar load error:', e);
+                }}
               />
-              {/* Online badge logic would go here */}
-            </View>
+            </TouchableOpacity>
             <View style={styles.chatInfo}>
               <View style={styles.chatHeader}>
-                <Text style={[styles.userName, { color: colors.text }]}>
-                  {chat.user.name}
-                  {chat.user.isVerified && (
-                    <Text style={{ color: colors.primary }}> ✓</Text>
-                  )}
-                </Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    router.push({
+                      pathname: '/user/[id]',
+                      params: { id: chat.user.id }
+                    });
+                  }}
+                  activeOpacity={0.6}
+                  hitSlop={{ top: 10, bottom: 10, left: 5, right: 5 }}
+                >
+                  <Text style={[styles.userName, { color: colors.text }]}>
+                    {chat.user.name}
+                    {chat.user.isVerified && (
+                      <Text style={{ color: colors.primary }}> ✓</Text>
+                    )}
+                  </Text>
+                </TouchableOpacity>
                 <Text style={[styles.time, { color: colors.textSecondary }]}>
                   {chat.lastMessageTime}
                 </Text>
@@ -184,12 +219,15 @@ export default function MessagesScreen() {
           </View>
         )}
       </ScrollView>
-    </>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  scrollView: {
     flex: 1,
   },
   chatItem: {
@@ -207,6 +245,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
+    backgroundColor: '#333',
   },
   chatInfo: {
     flex: 1,

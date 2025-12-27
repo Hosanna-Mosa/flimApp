@@ -377,25 +377,49 @@ export default function PublicProfileScreen() {
                         <View
                             style={[styles.statDivider, { backgroundColor: colors.border }]}
                         />
-                        <View style={styles.stat}>
+                        <TouchableOpacity 
+                            style={styles.stat}
+                            onPress={() => {
+                                router.push({
+                                    pathname: '/user/network',
+                                    params: { 
+                                        userId: id, 
+                                        type: 'followers' 
+                                    }
+                                });
+                            }}
+                            activeOpacity={0.7}
+                        >
                             <Text style={[styles.statValue, { color: colors.text }]}>
                                 {user.stats.followersCount || 0}
                             </Text>
                             <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
                                 Followers
                             </Text>
-                        </View>
+                        </TouchableOpacity>
                         <View
                             style={[styles.statDivider, { backgroundColor: colors.border }]}
                         />
-                        <View style={styles.stat}>
+                        <TouchableOpacity 
+                            style={styles.stat}
+                            onPress={() => {
+                                router.push({
+                                    pathname: '/user/network',
+                                    params: { 
+                                        userId: id, 
+                                        type: 'following' 
+                                    }
+                                });
+                            }}
+                            activeOpacity={0.7}
+                        >
                             <Text style={[styles.statValue, { color: colors.text }]}>
                                 {user.stats.followingCount || 0}
                             </Text>
                             <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
                                 Following
                             </Text>
-                        </View>
+                        </TouchableOpacity>
                     </View>
                 </View>
 
