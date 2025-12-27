@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "/Users/hosanna/BYV-WORKS/Flim app/cpy-10/flimApp/backend/server/logs/.e0122d8127966fda5228ec40b9fe025a682d16cb-audit.json",
+    "files": [
+        {
+            "date": 1766812757574,
+            "name": "/Users/hosanna/BYV-WORKS/Flim app/cpy-10/flimApp/backend/server/logs/combined-2025-12-27.log",
+            "hash": "6d29edc05d69dc21d35875faa3b4cbf72b49c2379db8ed7fed0ea60d6b27c9b4"
+        }
+    ],
+    "hashType": "sha256"
+}
