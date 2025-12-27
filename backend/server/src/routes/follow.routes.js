@@ -19,6 +19,7 @@ router.get('/users/:id/following', followController.getFollowing); // Public
 
 // Check follow status
 router.get('/users/:id/following-status', auth, followController.isFollowing);
+router.get('/users/:id/follow-status', auth, followController.getFollowStatus);
 
 // Get mutual followers
 router.get('/users/:id/mutual-followers', auth, followController.getMutualFollowers);

@@ -16,8 +16,18 @@ export default function SettingsScreen() {
   const { colors, changeTheme, isDark } = useTheme();
   const { user, updateProfile } = useAuth();
 
-  const togglePrivateAccount = () => {
-    updateProfile({ isPrivate: !user?.isPrivate });
+  const togglePrivateAccount = async () => {
+    if (!user) return;
+    
+    // Map between frontend isPrivate and backend accountType
+    const currentAccountType = (user as any).accountType || (user.isPrivate ? 'private' : 'public');
+    const newAccountType = currentAccountType === 'private' ? 'public' : 'private';
+    
+    try {
+      await updateProfile({ accountType: newAccountType });
+    } catch (error) {
+      console.error('Failed to update account type:', error);
+    }
   };
 
   return (
@@ -137,8 +147,8 @@ export default function SettingsScreen() {
                     { color: colors.textSecondary },
                   ]}
                 >
-                  {user?.isPrivate
-                    ? 'Only followers can see your posts'
+                  {((user as any)?.accountType === 'private' || user?.isPrivate)
+                    ? 'Only approved followers can see your posts'
                     : 'Anyone can see your posts'}
                 </Text>
               </View>
@@ -147,7 +157,7 @@ export default function SettingsScreen() {
               style={[
                 styles.toggle,
                 {
-                  backgroundColor: user?.isPrivate
+                  backgroundColor: ((user as any)?.accountType === 'private' || user?.isPrivate)
                     ? colors.primary
                     : colors.surface,
                 },
@@ -158,11 +168,11 @@ export default function SettingsScreen() {
                 style={[
                   styles.toggleThumb,
                   {
-                    backgroundColor: user?.isPrivate
+                    backgroundColor: ((user as any)?.accountType === 'private' || user?.isPrivate)
                       ? '#000000'
                       : colors.border,
                   },
-                  user?.isPrivate && styles.toggleThumbActive,
+                  ((user as any)?.accountType === 'private' || user?.isPrivate) && styles.toggleThumbActive,
                 ]}
               />
             </TouchableOpacity>

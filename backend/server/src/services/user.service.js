@@ -1,4 +1,5 @@
 const User = require('../models/User.model');
+const Follow = require('../models/Follow.model');
 
 const getMe = async (userId) => User.findById(userId).select('-password -refreshTokens');
 
@@ -7,7 +8,45 @@ const updateMe = async (userId, payload) =>
     '-password -refreshTokens'
   );
 
-const getById = async (id) => User.findById(id).select('-password -refreshTokens');
+const getById = async (id, viewerId = null) => {
+  const user = await User.findById(id).select('-password -refreshTokens').lean();
+  
+  if (!user) {
+    return null;
+  }
+
+  // If viewer is the owner, return all data
+  if (viewerId && viewerId.toString() === id.toString()) {
+    return user;
+  }
+
+  // Check if account is private
+  const isPrivateAccount = user.accountType === 'private';
+
+  // If private account, check if viewer is following
+  if (isPrivateAccount && viewerId) {
+    const isFollowing = await Follow.findOne({
+      follower: viewerId,
+      following: id,
+      status: 'accepted',
+    });
+
+    // If not following, return limited data
+    if (!isFollowing) {
+      return {
+        _id: user._id,
+        name: user.name,
+        avatar: user.avatar,
+        accountType: user.accountType,
+        isVerified: user.isVerified,
+        // Don't return: bio, stats, roles, industries, location, experience, etc.
+      };
+    }
+  }
+
+  // Public account or viewer is following private account - return full data
+  return user;
+};
 
 const search = async ({ q, roles, industries }, currentUserId) => {
   console.log('[User Service] Search params - q:', q, 'roles:', roles, 'industries:', industries);

@@ -204,17 +204,25 @@ class FeedService {
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - timeRange);
 
-      // Global Feed: Show all public posts + posts from users I follow (excluding own posts)
+      // Get all private account user IDs
+      const privateUsers = await User.find({ accountType: 'private' }).select('_id').lean();
+      const privateUserIds = privateUsers.map(u => u._id.toString());
+
+      // Global Feed: Show all public posts (excluding private accounts) + posts from users I follow
       const posts = await Post.find({
         author: { $ne: userId }, // Exclude user's own posts
         isActive: true,
         createdAt: { $gte: cutoffDate },
         $or: [
-          { visibility: 'public' }, // Show ALL public posts
+          { 
+            visibility: 'public',
+            // Exclude posts from private accounts (they should only be visible to followers)
+            author: { $nin: privateUserIds }
+          },
           { author: { $in: followingIds } } // Show posts from people I follow (including private/followers-only)
         ]
       })
-        .populate('author', 'name avatar isVerified roles')
+        .populate('author', 'name avatar isVerified roles accountType')
         .sort({ 'engagement.likesCount': -1, 'engagement.commentsCount': -1 })
         .limit(100)
         .lean();
@@ -254,17 +262,25 @@ class FeedService {
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - timeRange);
 
-      // Global Feed: Show all public posts + posts from users I follow (excluding own posts)
+      // Get all private account user IDs
+      const privateUsers = await User.find({ accountType: 'private' }).select('_id').lean();
+      const privateUserIds = privateUsers.map(u => u._id.toString());
+
+      // Global Feed: Show all public posts (excluding private accounts) + posts from users I follow
       const posts = await Post.find({
         author: { $ne: userId }, // Exclude user's own posts
         isActive: true,
         createdAt: { $gte: cutoffDate },
         $or: [
-          { visibility: 'public' }, // Show ALL public posts
+          { 
+            visibility: 'public',
+            // Exclude posts from private accounts (they should only be visible to followers)
+            author: { $nin: privateUserIds }
+          },
           { author: { $in: followingIds } } // Show posts from people I follow (including private/followers-only)
         ]
       })
-        .populate('author', 'name avatar isVerified roles')
+        .populate('author', 'name avatar isVerified roles accountType')
         .lean();
 
       // Calculate score for each post
@@ -429,8 +445,17 @@ class FeedService {
     try {
       const skip = page * limit;
 
-      // Check if viewer is following the user
-      const isFollowing = viewerId
+      // Normalize IDs to strings for comparison
+      const userIdStr = userId?.toString();
+      const viewerIdStr = viewerId?.toString();
+      const isOwnProfile = userIdStr && viewerIdStr && userIdStr === viewerIdStr;
+
+      // Get user account type
+      const user = await User.findById(userId).select('accountType').lean();
+      const isPrivateAccount = user?.accountType === 'private';
+
+      // Check if viewer is following the user (only for non-own profiles)
+      const isFollowing = !isOwnProfile && viewerId
         ? await Follow.findOne({
           follower: viewerId,
           following: userId,
@@ -438,14 +463,33 @@ class FeedService {
         })
         : null;
 
-      const isOwnProfile = userId === viewerId;
+      // For private accounts: only show posts if viewer is the owner or an approved follower
+      if (isPrivateAccount && !isOwnProfile && !isFollowing) {
+        // Private account and viewer is not an approved follower - return empty
+        return {
+          success: true,
+          data: [],
+          pagination: {
+            page,
+            limit,
+            total: 0,
+            pages: 0,
+          },
+        };
+      }
 
       // Determine visibility filter
       let visibilityFilter;
       if (isOwnProfile) {
         visibilityFilter = {}; // Show all posts
       } else if (isFollowing) {
-        visibilityFilter = { visibility: { $in: ['public', 'followers'] } };
+        // If following a private account, show all posts (they're approved followers)
+        // If following a public account, show public and followers posts
+        if (isPrivateAccount) {
+          visibilityFilter = {}; // Show all posts for private account followers
+        } else {
+          visibilityFilter = { visibility: { $in: ['public', 'followers'] } };
+        }
       } else {
         visibilityFilter = { visibility: 'public' };
       }

@@ -6,14 +6,15 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { Stack, useFocusEffect, useRouter } from 'expo-router';
-import { Bell, CheckCircle2, Clock } from 'lucide-react-native';
+import { Bell, CheckCircle2, Clock, Check, X } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSocket } from '@/contexts/SocketContext';
 import { useNotifications } from '@/contexts/NotificationContext';
-import { apiNotifications, apiMarkAllNotificationsRead } from '@/utils/api';
+import { apiNotifications, apiMarkAllNotificationsRead, apiAcceptFollowRequest, apiRejectFollowRequest } from '@/utils/api';
 
 type NotificationItem = {
   id: string;
@@ -23,6 +24,8 @@ type NotificationItem = {
   isRead: boolean;
   type: string;
   metadata: any;
+  actorId?: string;
+  followerId?: string;
 };
 
 export default function NotificationsScreen() {
@@ -33,6 +36,7 @@ export default function NotificationsScreen() {
   const { unreadCount, refreshUnreadCount } = useNotifications();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [processingRequest, setProcessingRequest] = useState<string | null>(null);
 
   const loadNotifications = async () => {
     if (!token) return;
@@ -51,6 +55,8 @@ export default function NotificationsScreen() {
             isRead: n.isRead,
             type: n.type,
             metadata: n.metadata || {},
+            actorId: n.actor?._id || n.metadata?.actorId,
+            followerId: n.metadata?.followerId || n.actor?._id,
           }));
         setNotifications(items);
       }
@@ -100,6 +106,8 @@ export default function NotificationsScreen() {
           isRead: false,
           type: n.type,
           metadata: n.metadata || {},
+          actorId: n.actor?._id || n.metadata?.actorId,
+          followerId: n.metadata?.followerId || n.actor?._id,
         },
         ...prev,
       ]);
@@ -117,8 +125,47 @@ export default function NotificationsScreen() {
     setRefreshing(false);
   };
 
+  const handleAcceptRequest = async (notification: NotificationItem) => {
+    const userId = notification.followerId || notification.actorId;
+    if (!userId || !token) return;
+
+    setProcessingRequest(notification.id);
+    try {
+      await apiAcceptFollowRequest(userId, token);
+      // Remove the notification after accepting
+      setNotifications((prev) => prev.filter((n) => n.id !== notification.id));
+      refreshUnreadCount();
+    } catch (error) {
+      console.error('Failed to accept follow request:', error);
+    } finally {
+      setProcessingRequest(null);
+    }
+  };
+
+  const handleRejectRequest = async (notification: NotificationItem) => {
+    const userId = notification.followerId || notification.actorId;
+    if (!token) return;
+
+    setProcessingRequest(notification.id);
+    try {
+      await apiRejectFollowRequest(userId, token);
+      // Remove the notification after rejecting
+      setNotifications((prev) => prev.filter((n) => n.id !== notification.id));
+      refreshUnreadCount();
+    } catch (error) {
+      console.error('Failed to reject follow request:', error);
+    } finally {
+      setProcessingRequest(null);
+    }
+  };
+
   const handleNotificationPress = (notification: NotificationItem) => {
     const { type, metadata } = notification;
+
+    // Don't navigate for follow_request - user can accept/reject
+    if (type === 'follow_request') {
+      return;
+    }
 
     // Navigate based on notification type
     switch (type) {
@@ -236,6 +283,38 @@ export default function NotificationsScreen() {
                     {notification.time}
                   </Text>
                 </View>
+                {notification.type === 'follow_request' && (
+                  <View style={styles.actionButtons}>
+                    <TouchableOpacity
+                      style={[styles.acceptButton, { backgroundColor: colors.primary }]}
+                      onPress={() => handleAcceptRequest(notification)}
+                      disabled={processingRequest === notification.id}
+                    >
+                      {processingRequest === notification.id ? (
+                        <ActivityIndicator size="small" color="#fff" />
+                      ) : (
+                        <>
+                          <Check size={16} color="#fff" />
+                          <Text style={styles.buttonText}>Accept</Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.rejectButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                      onPress={() => handleRejectRequest(notification)}
+                      disabled={processingRequest === notification.id}
+                    >
+                      {processingRequest === notification.id ? (
+                        <ActivityIndicator size="small" color={colors.text} />
+                      ) : (
+                        <>
+                          <X size={16} color={colors.text} />
+                          <Text style={[styles.buttonText, { color: colors.text }]}>Reject</Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
             </TouchableOpacity>
           ))
@@ -300,5 +379,36 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     paddingHorizontal: 24,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 12,
+  },
+  acceptButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  rejectButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

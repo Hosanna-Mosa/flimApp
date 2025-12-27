@@ -37,7 +37,8 @@ export interface User {
   experience: number;
   location: string;
   isOnline: boolean;
-  isPrivate?: boolean;
+  isPrivate?: boolean; // Legacy field, use accountType instead
+  accountType?: 'public' | 'private' | 'business';
   isVerified?: boolean;
   isFollowing?: boolean;
 }
