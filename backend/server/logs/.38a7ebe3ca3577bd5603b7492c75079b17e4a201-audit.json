@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "D:\\BYV works\\film\\4\\flimApp\\backend\\server\\logs\\.38a7ebe3ca3577bd5603b7492c75079b17e4a201-audit.json",
+    "files": [
+        {
+            "date": 1766810731640,
+            "name": "D:\\BYV works\\film\\4\\flimApp\\backend\\server\\logs\\error-2025-12-27.log",
+            "hash": "4c2729228b9f574c5946730f5841a33ac07b083003eb1d1c1456b1789742515b"
+        }
+    ],
+    "hashType": "sha256"
+}

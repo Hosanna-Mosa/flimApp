@@ -1,6 +1,7 @@
 const express = require('express');
 const feedController = require('../controllers/feed.controller');
 const auth = require('../middlewares/auth.middleware');
+const optionalAuth = require('../middlewares/optionalAuth.middleware');
 
 const router = express.Router();
 
@@ -14,7 +15,7 @@ router.get('/trending', auth, feedController.getTrendingFeed);
 router.get('/industry/:industry', feedController.getIndustryFeed); // Public
 
 // Get user's posts (profile feed)
-router.get('/users/:id/posts', feedController.getUserFeed); // Public with optional auth
+router.get('/users/:id/posts', optionalAuth, feedController.getUserFeed); // Public with optional auth
 
 // Invalidate feed cache
 router.post('/invalidate', auth, feedController.invalidateFeed);
