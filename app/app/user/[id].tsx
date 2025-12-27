@@ -154,8 +154,9 @@ export default function PublicProfileScreen() {
                     setUser({
                         ...user,
                         stats: {
-                            ...user.stats,
-                            followersCount: Math.max(0, user.stats.followersCount - 1),
+                            followersCount: Math.max(0, (user.stats?.followersCount || 0) - 1),
+                            followingCount: user.stats?.followingCount || 0,
+                            postsCount: user.stats?.postsCount || 0,
                         },
                     });
                 }
@@ -179,8 +180,9 @@ export default function PublicProfileScreen() {
                         setUser({
                             ...user,
                             stats: {
-                                ...user.stats,
-                                followersCount: user.stats.followersCount + 1,
+                                followersCount: (user.stats?.followersCount || 0) + 1,
+                                followingCount: user.stats?.followingCount || 0,
+                                postsCount: user.stats?.postsCount || 0,
                             },
                         });
                     }
@@ -194,8 +196,9 @@ export default function PublicProfileScreen() {
                     setUser({
                         ...user,
                         stats: {
-                            ...user.stats,
                             followersCount: result.followersCount,
+                            followingCount: user.stats?.followingCount || 0,
+                            postsCount: user.stats?.postsCount || 0,
                         },
                     });
                 }
@@ -406,7 +409,7 @@ export default function PublicProfileScreen() {
                     <View style={styles.stats}>
                         <View style={styles.stat}>
                             <Text style={[styles.statValue, { color: colors.text }]}>
-                                {user.stats.postsCount || posts.length}
+                                {user.stats?.postsCount || posts.length}
                             </Text>
                             <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
                                 Posts
@@ -429,7 +432,7 @@ export default function PublicProfileScreen() {
                             activeOpacity={0.7}
                         >
                             <Text style={[styles.statValue, { color: colors.text }]}>
-                                {user.stats.followersCount || 0}
+                                {user.stats?.followersCount || 0}
                             </Text>
                             <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
                                 Followers
@@ -452,7 +455,7 @@ export default function PublicProfileScreen() {
                             activeOpacity={0.7}
                         >
                             <Text style={[styles.statValue, { color: colors.text }]}>
-                                {user.stats.followingCount || 0}
+                                {user.stats?.followingCount || 0}
                             </Text>
                             <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
                                 Following

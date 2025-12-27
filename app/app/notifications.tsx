@@ -11,7 +11,7 @@ import {
 import { Stack, useFocusEffect, useRouter } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Platform } from 'react-native';
-import { Bell, CheckCircle2, Clock } from 'lucide-react-native';
+import { Bell, CheckCircle2, Clock, Check, X } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSocket } from '@/contexts/SocketContext';
@@ -147,7 +147,7 @@ export default function NotificationsScreen() {
 
   const handleRejectRequest = async (notification: NotificationItem) => {
     const userId = notification.followerId || notification.actorId;
-    if (!token) return;
+    if (!userId || !token) return;
 
     setProcessingRequest(notification.id);
     try {
@@ -211,7 +211,7 @@ export default function NotificationsScreen() {
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: colors.background }]}
-      edges={['bottom', 'left', 'right']}
+      edges={['top','bottom', 'left', 'right']}
     >
       <ScrollView
         style={styles.scrollView}
