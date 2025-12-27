@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "139431710468",
+    "project_id": "flimy-app-demo",
+    "storage_bucket": "flimy-app-demo.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:139431710468:android:95d294812f828bd55d8a51",
+        "android_client_info": {
+          "package_name": "app.rork.filmy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB-TmmYsOQ1MFguhQ-UHlXmhMGM4dUueHE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
