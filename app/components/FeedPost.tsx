@@ -79,8 +79,14 @@ export default function FeedPost({
         }
       } else {
         setLoadingAudio(true);
+        const mediaUrl = post.media?.url || post.mediaUrl;
+        if (!mediaUrl) {
+          setLoadingAudio(false);
+          console.log('Audio URL not available');
+          return;
+        }
         const { sound: newSound, status } = await Audio.Sound.createAsync(
-          { uri: post.mediaUrl },
+          { uri: mediaUrl },
           { shouldPlay: true },
           (status) => {
             if (status.isLoaded) {
@@ -127,24 +133,70 @@ export default function FeedPost({
   };
 
   const renderMedia = () => {
+    // Get media URL - prioritize new structure over legacy
+    const mediaUrl = post.media?.url || post.mediaUrl;
+    const thumbnailUrl = post.media?.thumbnail || post.thumbnailUrl;
+    
+    // Debug logging
+    if (!mediaUrl && post.type !== 'audio') {
+      console.warn('[FeedPost] Missing media URL for post:', {
+        postId: post.id,
+        type: post.type,
+        hasMedia: !!post.media,
+        hasMediaUrl: !!post.mediaUrl,
+        media: post.media
+      });
+    }
+    
     const defaultRatio = post.type === 'video' ? 16/9 : 1; 
-    const aspectRatio = (post.media?.width && post.media?.height) 
-      ? post.media.width / post.media.height 
-      : defaultRatio;
+    let aspectRatio = defaultRatio;
+    
+    // Calculate aspect ratio safely
+    if (post.media?.width && post.media?.height && post.media.height > 0) {
+      aspectRatio = post.media.width / post.media.height;
+      // Ensure aspect ratio is valid (not 0, not infinity, not NaN)
+      if (!isFinite(aspectRatio) || aspectRatio <= 0) {
+        aspectRatio = defaultRatio;
+      }
+    }
 
     if (post.type === 'video') {
+      if (!mediaUrl) {
+        console.warn('[FeedPost] Video post missing URL:', {
+          postId: post.id,
+          hasMedia: !!post.media,
+          media: post.media
+        });
+        const safeAspectRatio = isFinite(aspectRatio) && aspectRatio > 0 ? aspectRatio : 16/9;
+        return (
+          <View style={[styles.mediaContainer, { aspectRatio: safeAspectRatio, minHeight: 200, backgroundColor: colors.surface }]}>
+            <View style={[styles.media, { backgroundColor: colors.surface, justifyContent: 'center', alignItems: 'center', minHeight: 200 }]}>
+              <Text style={{ color: colors.textSecondary }}>Video unavailable</Text>
+            </View>
+          </View>
+        );
+      }
+      
+      const safeAspectRatio = isFinite(aspectRatio) && aspectRatio > 0 ? aspectRatio : 16/9;
       return (
-        <View style={[styles.mediaContainer, { aspectRatio }]}>
+        <View style={[styles.mediaContainer, { aspectRatio: safeAspectRatio, minHeight: 200 }]}>
           <Video
             ref={videoRef}
-            style={styles.media}
-            source={{ uri: post.mediaUrl }}
+            style={[styles.media, { minHeight: 200 }]}
+            source={{ uri: mediaUrl }}
             useNativeControls={false} 
             resizeMode={ResizeMode.CONTAIN}
             isLooping
-            posterSource={{ uri: post.thumbnailUrl }}
-            usePoster
+            posterSource={thumbnailUrl ? { uri: thumbnailUrl } : undefined}
+            usePoster={!!thumbnailUrl}
             onPlaybackStatusUpdate={status => setVideoStatus(status)}
+            onError={(error) => {
+              console.error('[FeedPost] Video load error:', {
+                postId: post.id,
+                mediaUrl,
+                error: error.nativeEvent?.error || error
+              });
+            }}
           />
           {(!videoStatus?.isPlaying || videoStatus?.didJustFinish) && (
               <TouchableOpacity style={styles.centerOverlay} onPress={toggleVideo}>
@@ -197,7 +249,21 @@ export default function FeedPost({
     }
 
     if (post.type === 'script') {
-        const isPdf = post.mediaUrl.toLowerCase().endsWith('.pdf') || (post.media?.format === 'pdf');
+        const scriptUrl = post.media?.url || post.mediaUrl;
+        if (!scriptUrl) {
+          return (
+            <View style={[styles.scriptCard, { backgroundColor: colors.surface }]}>
+              <View style={styles.genericScriptCard}>
+                <View style={styles.scriptIcon}>
+                  <FileText size={48} color={primaryColor} />
+                </View>
+                <Text style={[styles.scriptTitle, { color: colors.text }]}>Document unavailable</Text>
+              </View>
+            </View>
+          );
+        }
+        
+        const isPdf = scriptUrl.toLowerCase().endsWith('.pdf') || (post.media?.format === 'pdf');
         
         // Unified LinkedIn Style Carousel: Always attempt to show slides
         if (isPdf) {
@@ -205,7 +271,7 @@ export default function FeedPost({
             const pages = post.media?.pages || 3; 
             
             const pageUrls = [];
-            const baseUrl = post.mediaUrl.replace(/\.pdf$/i, '.jpg'); 
+            const baseUrl = scriptUrl.replace(/\.pdf$/i, '.jpg'); 
             const uploadIndex = baseUrl.indexOf('/upload/');
             const hasUpload = uploadIndex > -1;
 
@@ -251,7 +317,7 @@ export default function FeedPost({
         return (
             <TouchableOpacity 
                 style={[styles.scriptCard, { backgroundColor: colors.surface }]}
-                onPress={() => WebBrowser.openBrowserAsync(post.mediaUrl)}
+                onPress={() => WebBrowser.openBrowserAsync(scriptUrl)}
             >
                 <View style={styles.genericScriptCard}>
                     <View style={styles.scriptIcon}>
@@ -265,13 +331,42 @@ export default function FeedPost({
     }
 
     // Image
+    if (!mediaUrl) {
+      console.warn('[FeedPost] Image post missing URL:', {
+        postId: post.id,
+        type: post.type,
+        hasMedia: !!post.media,
+        media: post.media
+      });
+      return (
+        <View style={[styles.mediaContainer, { aspectRatio, minHeight: 200, backgroundColor: colors.surface }]}>
+          <View style={[styles.media, { backgroundColor: colors.surface, justifyContent: 'center', alignItems: 'center', minHeight: 200 }]}>
+            <Text style={{ color: colors.textSecondary }}>Image unavailable</Text>
+          </View>
+        </View>
+      );
+    }
+    
+    // Ensure aspectRatio is valid for rendering
+    const safeAspectRatio = isFinite(aspectRatio) && aspectRatio > 0 ? aspectRatio : 1;
+    
     return (
-      <View style={[styles.mediaContainer, { aspectRatio }]}>
+      <View style={[styles.mediaContainer, { aspectRatio: safeAspectRatio, minHeight: 200 }]}>
         <Image
-            source={{ uri: post.mediaUrl }}
-            style={styles.media}
+            source={{ uri: mediaUrl }}
+            style={[styles.media, { minHeight: 200 }]}
             contentFit="cover"
             transition={200}
+            onError={(error) => {
+              console.error('[FeedPost] Image load error:', {
+                postId: post.id,
+                mediaUrl,
+                error: error.nativeEvent?.error || error
+              });
+            }}
+            onLoad={() => {
+              console.log('[FeedPost] Image loaded successfully:', post.id);
+            }}
         />
       </View>
     );
@@ -305,9 +400,19 @@ export default function FeedPost({
       </View>
 
       {/* Content */}
-      <View style={{ width: '100%' }}>
-          {renderMedia()}
-      </View>
+      {(() => {
+        const mediaUrl = post.media?.url || post.mediaUrl;
+        // Only render media if there's actually media to show
+        if (mediaUrl || post.type === 'audio') {
+          return (
+            <View style={{ width: '100%' }}>
+              {renderMedia()}
+            </View>
+          );
+        }
+        // For posts without media, don't render empty container
+        return null;
+      })()}
 
       <View style={styles.content}>
          <Text style={[styles.caption, { color: colors.text }]}>{post.caption}</Text>
@@ -367,9 +472,11 @@ const styles = StyleSheet.create({
     width: '100%',
     justifyContent: 'center',
     position: 'relative',
+    backgroundColor: '#000',
   },
   media: {
     width: '100%',
+    height: '100%',
   },
   content: {
     padding: 12,

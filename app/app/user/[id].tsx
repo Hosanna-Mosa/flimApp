@@ -94,34 +94,37 @@ export default function PublicProfileScreen() {
             const accountType = userInfo?.accountType || (userInfo?.isPrivate ? 'private' : 'public');
             setIsPrivateAccount(accountType === 'private');
             
-            // Check if we have limited data (private account, not following)
-            // Limited data means: no stats, no bio, no roles, no industries, etc.
-            const limitedData = accountType === 'private' && (!userInfo?.stats && !userInfo?.bio && (!userInfo?.roles || userInfo.roles.length === 0));
-            setHasLimitedData(limitedData);
+            // Check follow status first to determine if we have limited data
+            let isFollowingValue = false;
+            let statusValue: 'pending' | 'accepted' | null = null;
             
-            // Check follow status (including pending requests) - only if we have access
-            if (!limitedData) {
-                try {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const statusResponse: any = await api.getFollowStatus(id, token || undefined);
-                    console.log('[UserProfile] Follow status response:', JSON.stringify(statusResponse));
-                    
-                    const status = statusResponse?.status ?? statusResponse?.data?.status ?? null;
-                    const isFollowingValue = statusResponse?.isFollowing ?? statusResponse?.data?.isFollowing ?? false;
-                    
-                    console.log('[UserProfile] Follow status:', status, 'isFollowing:', isFollowingValue);
-                    setFollowStatus(status);
-                    setIsFollowing(isFollowingValue);
-                } catch (followError) {
-                    console.error('[UserProfile] Error checking follow status:', followError);
-                    setIsFollowing(false);
-                    setFollowStatus(null);
-                }
-            } else {
-                // Limited data - user is not following private account
+            try {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const statusResponse: any = await api.getFollowStatus(id, token || undefined);
+                console.log('[UserProfile] Follow status response:', JSON.stringify(statusResponse));
+                
+                statusValue = statusResponse?.status ?? statusResponse?.data?.status ?? null;
+                isFollowingValue = statusResponse?.isFollowing ?? statusResponse?.data?.isFollowing ?? false;
+                
+                console.log('[UserProfile] Follow status:', statusValue, 'isFollowing:', isFollowingValue);
+                setFollowStatus(statusValue);
+                setIsFollowing(isFollowingValue);
+            } catch (followError) {
+                console.error('[UserProfile] Error checking follow status:', followError);
                 setIsFollowing(false);
                 setFollowStatus(null);
             }
+            
+            // Check if we have limited data (private account AND not following)
+            // Even if stats are returned, we should limit access if it's private and not following
+            const limitedData = accountType === 'private' && !isFollowingValue && statusValue !== 'accepted';
+            setHasLimitedData(limitedData);
+            console.log('[UserProfile] Limited data check:', {
+                accountType,
+                isFollowing: isFollowingValue,
+                status: statusValue,
+                hasLimitedData: limitedData
+            });
         } catch (error) {
             console.error('[UserProfile] Error loading:', error);
             Alert.alert('Error', 'Failed to load user profile');
@@ -373,6 +376,9 @@ export default function PublicProfileScreen() {
                                 {
                                     backgroundColor: (isFollowing || followStatus === 'pending') ? colors.surface : colors.primary,
                                     borderColor: (isFollowing || followStatus === 'pending') ? colors.border : colors.primary,
+                                    // Make button full width if message button is hidden
+                                    flex: (!isPrivateAccount || isFollowing) ? 1 : undefined,
+                                    width: (!isPrivateAccount || isFollowing) ? undefined : '100%',
                                 },
                             ]}
                             onPress={toggleFollow}
@@ -389,27 +395,30 @@ export default function PublicProfileScreen() {
                             </Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity
-                            style={[
-                                styles.messageButton,
-                                {
-                                    backgroundColor: colors.surface,
-                                    borderColor: colors.border,
-                                },
-                            ]}
-                            onPress={handleMessage}
-                        >
-                            <MessageCircle size={20} color={colors.text} />
-                            <Text style={[styles.messageButtonText, { color: colors.text }]}>
-                                Message
-                            </Text>
-                        </TouchableOpacity>
+                        {/* Only show message button if not private account OR if following private account */}
+                        {(!isPrivateAccount || isFollowing) && (
+                            <TouchableOpacity
+                                style={[
+                                    styles.messageButton,
+                                    {
+                                        backgroundColor: colors.surface,
+                                        borderColor: colors.border,
+                                    },
+                                ]}
+                                onPress={handleMessage}
+                            >
+                                <MessageCircle size={20} color={colors.text} />
+                                <Text style={[styles.messageButtonText, { color: colors.text }]}>
+                                    Message
+                                </Text>
+                            </TouchableOpacity>
+                        )}
                     </View>
 
                     <View style={styles.stats}>
                         <View style={styles.stat}>
                             <Text style={[styles.statValue, { color: colors.text }]}>
-                                {user.stats?.postsCount || posts.length}
+                                {user.stats?.postsCount ?? 0}
                             </Text>
                             <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
                                 Posts
@@ -418,49 +427,73 @@ export default function PublicProfileScreen() {
                         <View
                             style={[styles.statDivider, { backgroundColor: colors.border }]}
                         />
-                        <TouchableOpacity 
-                            style={styles.stat}
-                            onPress={() => {
-                                router.push({
-                                    pathname: '/user/network',
-                                    params: { 
-                                        userId: id, 
-                                        type: 'followers' 
-                                    }
-                                });
-                            }}
-                            activeOpacity={0.7}
-                        >
-                            <Text style={[styles.statValue, { color: colors.text }]}>
-                                {user.stats?.followersCount || 0}
-                            </Text>
-                            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                                Followers
-                            </Text>
-                        </TouchableOpacity>
+                        {hasLimitedData ? (
+                            // Private account, not following - show non-clickable stats
+                            <View style={styles.stat} pointerEvents="none">
+                                <Text style={[styles.statValue, { color: colors.text }]}>
+                                    {user.stats?.followersCount ?? 0}
+                                </Text>
+                                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+                                    Followers
+                                </Text>
+                            </View>
+                        ) : (
+                            <TouchableOpacity 
+                                style={styles.stat}
+                                onPress={() => {
+                                    router.push({
+                                        pathname: '/user/network',
+                                        params: { 
+                                            userId: id, 
+                                            type: 'followers' 
+                                        }
+                                    });
+                                }}
+                                activeOpacity={0.7}
+                            >
+                                <Text style={[styles.statValue, { color: colors.text }]}>
+                                    {user.stats?.followersCount ?? 0}
+                                </Text>
+                                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+                                    Followers
+                                </Text>
+                            </TouchableOpacity>
+                        )}
                         <View
                             style={[styles.statDivider, { backgroundColor: colors.border }]}
                         />
-                        <TouchableOpacity 
-                            style={styles.stat}
-                            onPress={() => {
-                                router.push({
-                                    pathname: '/user/network',
-                                    params: { 
-                                        userId: id, 
-                                        type: 'following' 
-                                    }
-                                });
-                            }}
-                            activeOpacity={0.7}
-                        >
-                            <Text style={[styles.statValue, { color: colors.text }]}>
-                                {user.stats?.followingCount || 0}
-                            </Text>
-                            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                                Following
-                            </Text>
-                        </TouchableOpacity>
+                        {hasLimitedData ? (
+                            // Private account, not following - show non-clickable stats
+                            <View style={styles.stat} pointerEvents="none">
+                                <Text style={[styles.statValue, { color: colors.text }]}>
+                                    {user.stats?.followingCount ?? 0}
+                                </Text>
+                                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+                                    Following
+                                </Text>
+                            </View>
+                        ) : (
+                            <TouchableOpacity 
+                                style={styles.stat}
+                                onPress={() => {
+                                    router.push({
+                                        pathname: '/user/network',
+                                        params: { 
+                                            userId: id, 
+                                            type: 'following' 
+                                        }
+                                    });
+                                }}
+                                activeOpacity={0.7}
+                            >
+                                <Text style={[styles.statValue, { color: colors.text }]}>
+                                    {user.stats?.followingCount ?? 0}
+                                </Text>
+                                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+                                    Following
+                                </Text>
+                            </TouchableOpacity>
+                        )}
                     </View>
                 </View>
 

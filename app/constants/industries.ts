@@ -9,16 +9,16 @@ export interface IndustryData {
 
 export const INDUSTRIES: IndustryData[] = [
   {
-    id: 'bollywood',
-    label: 'Bollywood',
-    description: 'Hindi Cinema',
-    color: '#FFD700',
-  },
-  {
     id: 'tollywood',
     label: 'Tollywood',
     description: 'Telugu Cinema',
     color: '#FF6B6B',
+  },
+  {
+    id: 'bollywood',
+    label: 'Bollywood',
+    description: 'Hindi Cinema',
+    color: '#FFD700',
   },
   {
     id: 'kollywood',

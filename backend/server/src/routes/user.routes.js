@@ -15,8 +15,10 @@ router.put(
     Joi.object({
       body: Joi.object({
         name: Joi.string(),
+        email: Joi.string().email().lowercase(),
+        phone: Joi.string(),
         avatar: Joi.string(),
-        bio: Joi.string(),
+        bio: Joi.string().max(500),
         roles: Joi.array().items(Joi.string()),
         industries: Joi.array().items(Joi.string()),
         experience: Joi.number(),
@@ -28,6 +30,7 @@ router.put(
             url: Joi.string(),
           })
         ),
+        accountType: Joi.string().valid('public', 'private', 'business'),
       }),
     })
   ),
