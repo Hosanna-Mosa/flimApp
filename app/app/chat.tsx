@@ -12,11 +12,13 @@ import {
 } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Send, ChevronLeft, Check, CheckCheck } from 'lucide-react-native';
+import { Image } from 'expo-image';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSocket } from '@/contexts/SocketContext';
-import { apiConversation, apiDeleteMessage } from '@/utils/api';
+import { apiConversation, apiDeleteMessage, apiGetUser } from '@/utils/api';
+import { getAvatarUrl } from '@/utils/avatar';
 
 interface ChatMessage {
   id: string;
@@ -40,6 +42,29 @@ export default function ChatScreen() {
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState<string>('');
+  const [userAvatar, setUserAvatar] = useState<string>('');
+  const [userName, setUserName] = useState<string>(name || 'Chat');
+
+  // Fetch user data for avatar
+  useEffect(() => {
+    if (userId && token) {
+      const loadUserData = async () => {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const userData: any = await apiGetUser(userId, token);
+          if (userData) {
+            setUserAvatar(userData.avatar || '');
+            if (userData.name) {
+              setUserName(userData.name);
+            }
+          }
+        } catch (e) {
+          console.error('[Chat] Error loading user data:', e);
+        }
+      };
+      loadUserData();
+    }
+  }, [userId, token]);
 
   // 1. Fetch History
   // 1. Fetch History & Mark Read
@@ -211,11 +236,31 @@ export default function ChatScreen() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={{ paddingTop: insets.top, backgroundColor: colors.background }}>
-        <View style={styles.header}>
+        <View style={[styles.header, { borderBottomColor: colors.border }]}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
             <ChevronLeft size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>{name || 'Chat'}</Text>
+          <TouchableOpacity
+            style={styles.headerContent}
+            onPress={() => {
+              if (userId) {
+                router.push({
+                  pathname: '/user/[id]',
+                  params: { id: userId }
+                });
+              }
+            }}
+            activeOpacity={0.7}
+          >
+            <Image
+              source={{ 
+                uri: getAvatarUrl(userAvatar, userId, userName, 40)
+              }}
+              style={styles.headerAvatar}
+              contentFit="cover"
+            />
+            <Text style={[styles.headerTitle, { color: colors.text }]}>{userName}</Text>
+          </TouchableOpacity>
         </View>
       </View>
       <KeyboardAvoidingView
@@ -390,10 +435,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#333',
   },
   backButton: {
     marginRight: 16,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: 12,
+  },
+  headerAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#333',
   },
   headerTitle: {
     fontSize: 18,

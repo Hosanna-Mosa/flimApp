@@ -327,12 +327,14 @@ export default function HomeScreen() {
               <TouchableOpacity
                 onPress={() => router.push('/trending')}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                style={{ marginHorizontal: 4 }}
               >
                 <Flame size={24} color={colors.text} />
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => router.push('/notifications')}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                style={{ marginHorizontal: 4 }}
               >
                 <View style={{ width: 24, height: 24 }}>
                   <Bell size={24} color={colors.text} />
@@ -365,6 +367,7 @@ export default function HomeScreen() {
               <TouchableOpacity
                 onPress={() => router.push('/messages')}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                style={{ marginHorizontal: 4 }}
               >
                 <View style={{ width: 24, height: 24 }}>
                   <MessageCircle size={24} color={colors.text} />

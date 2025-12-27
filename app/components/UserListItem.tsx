@@ -15,27 +15,41 @@ export default function UserListItem({ user, onPress }: UserListItemProps) {
   const { colors } = useTheme();
   const router = useRouter();
 
-  const handlePress = () => {
+  const navigateToProfile = () => {
     if (onPress) {
       onPress();
     } else {
-      router.push(`/user/${user._id || user.id}`);
+      router.push({
+        pathname: '/user/[id]',
+        params: { id: user._id || user.id }
+      });
     }
   };
 
   return (
-    <TouchableOpacity
+    <View
       style={[styles.container, { backgroundColor: colors.card, borderColor: colors.border }]}
-      onPress={handlePress}
     >
-      <Image
-        source={{ uri: user.avatar }}
-        style={styles.avatar}
-        contentFit="cover"
-      />
+      <TouchableOpacity
+        onPress={navigateToProfile}
+        activeOpacity={0.7}
+        hitSlop={{ top: 10, bottom: 10, left: 5, right: 5 }}
+      >
+        <Image
+          source={{ uri: user.avatar }}
+          style={styles.avatar}
+          contentFit="cover"
+        />
+      </TouchableOpacity>
       <View style={styles.content}>
         <View style={styles.header}>
-          <Text style={[styles.name, { color: colors.text }]}>{user.name}</Text>
+          <TouchableOpacity
+            onPress={navigateToProfile}
+            activeOpacity={0.7}
+            hitSlop={{ top: 10, bottom: 10, left: 5, right: 5 }}
+          >
+            <Text style={[styles.name, { color: colors.text }]}>{user.name}</Text>
+          </TouchableOpacity>
           {user.isVerified && (
             <BadgeCheck size={16} color={colors.primary} fill="transparent" style={styles.badge} />
           )}
@@ -53,7 +67,7 @@ export default function UserListItem({ user, onPress }: UserListItemProps) {
           </Text>
         )}
       </View>
-    </TouchableOpacity>
+    </View>
   );
 }
 

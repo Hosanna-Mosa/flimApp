@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, RefreshControl, TouchableOpacity } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Platform } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiGetTrendingFeed } from '@/utils/api';
@@ -11,6 +13,7 @@ export default function TrendingScreen() {
   const { colors } = useTheme();
   const { token } = useAuth();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   
   const [trendingPosts, setTrendingPosts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -64,29 +67,47 @@ export default function TrendingScreen() {
   };
 
   return (
-    <>
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerTitle: 'Trending',
-          headerStyle: { backgroundColor: colors.background },
-          headerTintColor: colors.text,
-        }}
-      />
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      edges={['bottom', 'left', 'right']}
+    >
       <ScrollView
-        style={[styles.container, { backgroundColor: colors.background }]}
+        style={styles.scrollView}
+        contentContainerStyle={{
+          paddingBottom:
+            Platform.OS === 'android' ? Math.max(insets.bottom, 20) : 0,
+        }}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+          />
         }
       >
+        <Stack.Screen
+          options={{
+            headerShown: true,
+            headerTitle: 'Trending',
+            headerStyle: { backgroundColor: colors.background },
+            headerTintColor: colors.text,
+          }}
+        />
+
         <View style={styles.header}>
-             <Flame size={32} color={colors.primary} />
-             <Text style={[styles.headerTitle, { color: colors.text }]}>Trending Now</Text>
+          <Flame size={32} color={colors.primary} />
+          <Text style={[styles.headerTitle, { color: colors.text }]}>
+            Trending Now
+          </Text>
         </View>
 
         {isLoading ? (
-          <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 20 }} />
+          <ActivityIndicator
+            size="large"
+            color={colors.primary}
+            style={{ marginTop: 20 }}
+          />
         ) : (
           trendingPosts.map((post, index) => (
             <TouchableOpacity
@@ -98,36 +119,42 @@ export default function TrendingScreen() {
               onPress={() => router.push(`/post/${post.id}`)}
             >
               <View style={styles.rankBadge}>
-                  <Text style={styles.rankText}>#{index + 1}</Text>
+                <Text style={styles.rankText}>#{index + 1}</Text>
               </View>
-              
+
               <Image
                 source={{ uri: post.thumbnailUrl || post.mediaUrl }}
                 style={styles.thumbnail}
                 contentFit="cover"
               />
-              
+
               <View style={styles.info}>
-                  <Text style={[styles.caption, { color: colors.text }]} numberOfLines={2}>
-                      {post.caption}
+                <Text
+                  style={[styles.caption, { color: colors.text }]}
+                  numberOfLines={2}
+                >
+                  {post.caption}
+                </Text>
+                <View style={styles.meta}>
+                  {renderMediaIcon(post.type)}
+                  <Text style={[styles.likes, { color: colors.textSecondary }]}>
+                    {post.likes} Likes
                   </Text>
-                  <View style={styles.meta}>
-                       {renderMediaIcon(post.type)}
-                       <Text style={[styles.likes, { color: colors.textSecondary }]}>
-                          {post.likes} Likes
-                       </Text>
-                  </View>
+                </View>
               </View>
             </TouchableOpacity>
           ))
         )}
       </ScrollView>
-    </>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  scrollView: {
     flex: 1,
   },
   header: {

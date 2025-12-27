@@ -9,7 +9,9 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Stack, useFocusEffect, useRouter } from 'expo-router';
-import { Bell, CheckCircle2, Clock, Check, X } from 'lucide-react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Platform } from 'react-native';
+import { Bell, CheckCircle2, Clock } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSocket } from '@/contexts/SocketContext';
@@ -34,6 +36,7 @@ export default function NotificationsScreen() {
   const { token } = useAuth();
   const { socket } = useSocket();
   const { unreadCount, refreshUnreadCount } = useNotifications();
+  const insets = useSafeAreaInsets();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [processingRequest, setProcessingRequest] = useState<string | null>(null);
@@ -206,32 +209,48 @@ export default function NotificationsScreen() {
   };
 
   return (
-    <>
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerTitle: unreadCount
-            ? `Notifications (${unreadCount})`
-            : 'Notifications',
-          headerStyle: { backgroundColor: colors.background },
-          headerTintColor: colors.text,
-        }}
-      />
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      edges={['bottom', 'left', 'right']}
+    >
       <ScrollView
-        style={[styles.container, { backgroundColor: colors.background }]}
-        contentContainerStyle={styles.contentContainer}
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.contentContainer,
+          {
+            paddingBottom:
+              Platform.OS === 'android' ? Math.max(insets.bottom + 16, 20) : 16,
+          },
+        ]}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+          />
         }
       >
+        <Stack.Screen
+          options={{
+            headerShown: true,
+            headerTitle: unreadCount
+              ? `Notifications (${unreadCount})`
+              : 'Notifications',
+            headerStyle: { backgroundColor: colors.background },
+            headerTintColor: colors.text,
+          }}
+        />
+
         {notifications.length === 0 ? (
           <View style={styles.emptyState}>
             <Bell size={48} color={colors.textSecondary} />
             <Text style={[styles.emptyTitle, { color: colors.text }]}>
               No notifications yet
             </Text>
-            <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
+            <Text
+              style={[styles.emptySubtitle, { color: colors.textSecondary }]}
+            >
               Updates about your account will appear here.
             </Text>
           </View>
@@ -320,12 +339,15 @@ export default function NotificationsScreen() {
           ))
         )}
       </ScrollView>
-    </>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  scrollView: {
     flex: 1,
   },
   contentContainer: {

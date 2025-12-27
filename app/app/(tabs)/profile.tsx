@@ -153,6 +153,7 @@ export default function ProfileScreen() {
             <TouchableOpacity
               onPress={() => router.push('/edit-profile')}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              style={{ marginRight: 16, marginHorizontal: 4 }}
             >
               <Edit size={20} color={colors.text} />
             </TouchableOpacity>
