@@ -229,6 +229,13 @@ class FollowService {
       // Queue feed update for the new follower
       await queueService.addFeedUpdateJob(followerId);
 
+      // Send notification to the follower that their request was accepted
+      queueService.addNotificationJob({
+        userId: followerId,
+        type: 'follow_request_accepted',
+        acceptedBy: userId,
+      }).catch(err => logger.error('Notification job failed', err));
+
       logger.info(`User ${userId} accepted follow request from ${followerId}`);
 
       return {

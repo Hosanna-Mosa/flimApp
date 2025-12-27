@@ -18,7 +18,7 @@ const queues = queueService.getQueues();
 queues.like.process('sync-like', async (job) => {
   const { userId, postId } = job.data;
   logger.info(`Processing like sync: ${userId} -> ${postId}`);
-  
+
   try {
     await likeService.syncLikeToDatabase(userId, postId);
     return { success: true, userId, postId };
@@ -31,7 +31,7 @@ queues.like.process('sync-like', async (job) => {
 queues.like.process('sync-unlike', async (job) => {
   const { userId, postId } = job.data;
   logger.info(`Processing unlike sync: ${userId} -> ${postId}`);
-  
+
   try {
     await likeService.syncUnlikeToDatabase(userId, postId);
     return { success: true, userId, postId };
@@ -47,7 +47,7 @@ queues.like.process('sync-unlike', async (job) => {
 queues.follow.process('sync-follow', async (job) => {
   const data = job.data;
   logger.info(`Processing follow sync: ${data.followerId} -> ${data.followingId}`);
-  
+
   try {
     await followService.syncFollowToDatabase(data);
     return { success: true, ...data };
@@ -60,7 +60,7 @@ queues.follow.process('sync-follow', async (job) => {
 queues.follow.process('sync-unfollow', async (job) => {
   const data = job.data;
   logger.info(`Processing unfollow sync: ${data.followerId} -> ${data.followingId}`);
-  
+
   try {
     await followService.syncUnfollowToDatabase(data);
     return { success: true, ...data };
@@ -76,7 +76,7 @@ queues.follow.process('sync-unfollow', async (job) => {
 queues.feed.process('update-feed', async (job) => {
   const { userId } = job.data;
   logger.info(`Processing feed update: ${userId}`);
-  
+
   try {
     await feedService.regenerateFeed(userId);
     return { success: true, userId };
@@ -97,13 +97,13 @@ const User = require('../models/User.model');
 queues.notification.process('send-notification', async (job) => {
   const data = job.data;
   logger.info(`Processing notification: ${data.type} for user ${data.userId}`);
-  
+
   try {
-    const { userId, type, actorId, followerId } = data;
-    
+    const { userId, type, actorId, followerId, acceptedBy } = data;
+
     // Determine who performed the action
-    const actionUserId = actorId || followerId;
-    
+    const actionUserId = actorId || followerId || acceptedBy;
+
     // Don't notify if user triggered action on themselves
     if (actionUserId === userId) return { success: true, skipped: true };
 
@@ -121,6 +121,10 @@ queues.notification.process('send-notification', async (job) => {
       case 'follow_request':
         title = 'New Follow Request';
         body = `${actorName} wants to follow you`;
+        break;
+      case 'follow_request_accepted':
+        title = 'Follow Request Accepted';
+        body = `${actorName} accepted your follow request`;
         break;
       case 'like':
         title = 'New Like';
@@ -148,7 +152,7 @@ queues.notification.process('send-notification', async (job) => {
       type,
       metadata: data,
     });
-    
+
     logger.info('Notification sent:', data);
     return { success: true, ...data };
   } catch (error) {
