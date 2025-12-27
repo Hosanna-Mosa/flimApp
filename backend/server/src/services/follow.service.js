@@ -91,10 +91,17 @@ class FollowService {
         // Queue feed update (no immediate need for feed update, can still use queue)
         queueService.addFeedUpdateJob(followerId).catch(err => logger.error('Feed update job failed', err));
 
-        // Send notification
+        // Send notification for accepted follow
         queueService.addNotificationJob({
           userId: followingId,
           type: 'follow',
+          followerId: followerId,
+        }).catch(err => logger.error('Notification job failed', err));
+      } else if (status === 'pending') {
+        // Send notification for follow request (private accounts)
+        queueService.addNotificationJob({
+          userId: followingId,
+          type: 'follow_request',
           followerId: followerId,
         }).catch(err => logger.error('Notification job failed', err));
       }
@@ -221,6 +228,13 @@ class FollowService {
 
       // Queue feed update for the new follower
       await queueService.addFeedUpdateJob(followerId);
+
+      // Send notification to the follower that their request was accepted
+      queueService.addNotificationJob({
+        userId: followerId,
+        type: 'follow_request_accepted',
+        acceptedBy: userId,
+      }).catch(err => logger.error('Notification job failed', err));
 
       logger.info(`User ${userId} accepted follow request from ${followerId}`);
 
@@ -444,6 +458,33 @@ class FollowService {
     } catch (error) {
       logger.error('Error checking follow status:', error);
       return false;
+    }
+  }
+
+  /**
+   * Get follow status (pending, accepted, or null)
+   * @param {string} followerId - User ID
+   * @param {string} followingId - User ID
+   * @returns {Promise<{status: string | null, isFollowing: boolean}>} Follow status
+   */
+  async getFollowStatus(followerId, followingId) {
+    try {
+      const follow = await Follow.findOne({
+        follower: followerId,
+        following: followingId,
+      });
+
+      if (!follow) {
+        return { status: null, isFollowing: false };
+      }
+
+      return {
+        status: follow.status,
+        isFollowing: follow.status === 'accepted',
+      };
+    } catch (error) {
+      logger.error('Error getting follow status:', error);
+      return { status: null, isFollowing: false };
     }
   }
 

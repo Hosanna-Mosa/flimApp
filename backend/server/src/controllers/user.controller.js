@@ -21,7 +21,9 @@ const updateMe = async (req, res, next) => {
 
 const getById = async (req, res, next) => {
   try {
-    const user = await userService.getById(req.params.id);
+    // Pass viewerId (current user) to check privacy
+    const viewerId = req.user?.id || null;
+    const user = await userService.getById(req.params.id, viewerId);
     return success(res, user || {}, user ? 200 : 404);
   } catch (err) {
     return next(err);

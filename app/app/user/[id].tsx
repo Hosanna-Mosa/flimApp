@@ -22,6 +22,7 @@ import {
     Plus,
     BadgeCheck,
     MessageCircle,
+    Clock,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -62,6 +63,9 @@ export default function PublicProfileScreen() {
     
     const [selectedFilter, setSelectedFilter] = useState<ContentType | 'all'>('all');
     const [isFollowing, setIsFollowing] = useState(false);
+    const [followStatus, setFollowStatus] = useState<'pending' | 'accepted' | null>(null);
+    const [isPrivateAccount, setIsPrivateAccount] = useState(false);
+    const [hasLimitedData, setHasLimitedData] = useState(false);
     const [user, setUser] = useState<UserProfile | null>(null);
     const [posts, setPosts] = useState<UserPost[]>([]);
     const [loading, setLoading] = useState(true);
@@ -77,26 +81,46 @@ export default function PublicProfileScreen() {
             setLoading(true);
             const [userData, postsData] = await Promise.all([
                 api.user(id, token || undefined),
-                api.getUserFeed(id, 0, 100, token || undefined),
+                api.getUserFeed(id, 0, 100, token || undefined).catch(() => ({ data: [] })),
             ]);
             
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            setUser(userData as any);
+            const userInfo = userData as any;
+            setUser(userInfo);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             setPosts((postsData as any).data || []);
             
-            // Check if already following
-            try {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const followStatus: any = await api.isFollowing(id, token || undefined);
-                console.log('[UserProfile] Follow status response:', JSON.stringify(followStatus));
-                // Handle both {following: true} and {data: {following: true}} formats
-                const isFollowingValue = followStatus?.following ?? followStatus?.data?.following ?? false;
-                console.log('[UserProfile] Is following:', isFollowingValue);
-                setIsFollowing(isFollowingValue === true);
-            } catch (followError) {
-                console.error('[UserProfile] Error checking follow status:', followError);
+            // Check if account is private
+            const accountType = userInfo?.accountType || (userInfo?.isPrivate ? 'private' : 'public');
+            setIsPrivateAccount(accountType === 'private');
+            
+            // Check if we have limited data (private account, not following)
+            // Limited data means: no stats, no bio, no roles, no industries, etc.
+            const limitedData = accountType === 'private' && (!userInfo?.stats && !userInfo?.bio && (!userInfo?.roles || userInfo.roles.length === 0));
+            setHasLimitedData(limitedData);
+            
+            // Check follow status (including pending requests) - only if we have access
+            if (!limitedData) {
+                try {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const statusResponse: any = await api.getFollowStatus(id, token || undefined);
+                    console.log('[UserProfile] Follow status response:', JSON.stringify(statusResponse));
+                    
+                    const status = statusResponse?.status ?? statusResponse?.data?.status ?? null;
+                    const isFollowingValue = statusResponse?.isFollowing ?? statusResponse?.data?.isFollowing ?? false;
+                    
+                    console.log('[UserProfile] Follow status:', status, 'isFollowing:', isFollowingValue);
+                    setFollowStatus(status);
+                    setIsFollowing(isFollowingValue);
+                } catch (followError) {
+                    console.error('[UserProfile] Error checking follow status:', followError);
+                    setIsFollowing(false);
+                    setFollowStatus(null);
+                }
+            } else {
+                // Limited data - user is not following private account
                 setIsFollowing(false);
+                setFollowStatus(null);
             }
         } catch (error) {
             console.error('[UserProfile] Error loading:', error);
@@ -113,89 +137,85 @@ export default function PublicProfileScreen() {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             
             const wasFollowing = isFollowing;
-            setIsFollowing(!wasFollowing);
-
-            // Optimistically update follower count
-            setUser({
-                ...user,
-                stats: {
-                    ...user.stats,
-                    followersCount: wasFollowing 
-                        ? user.stats.followersCount - 1 
-                        : user.stats.followersCount + 1,
-                },
-            });
-
+            const wasPending = followStatus === 'pending';
+            
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             let result: any;
             
-            if (wasFollowing) {
+            if (wasFollowing || wasPending) {
+                // Unfollow or cancel request
                 result = await api.unfollowUser(id, token || undefined);
                 console.log('[UserProfile] Unfollow result:', JSON.stringify(result));
-            } else {
-                result = await api.followUser(id, token || undefined);
-                console.log('[UserProfile] Follow result:', JSON.stringify(result));
+                setIsFollowing(false);
+                setFollowStatus(null);
                 
-                if (result.status === 'pending') {
-                    Alert.alert('Follow Request Sent', 'This account is private. Your request is pending.');
-                    // Revert if pending
-                    setIsFollowing(false);
+                // Update follower count only if it was accepted (not pending)
+                if (wasFollowing && user) {
                     setUser({
                         ...user,
                         stats: {
                             ...user.stats,
-                            followersCount: user.stats.followersCount - 1,
+                            followersCount: Math.max(0, user.stats.followersCount - 1),
                         },
                     });
-                    return;
+                }
+            } else {
+                // Follow or send request
+                result = await api.followUser(id, token || undefined);
+                console.log('[UserProfile] Follow result:', JSON.stringify(result));
+                
+                if (result.status === 'pending') {
+                    // Private account - request sent
+                    setFollowStatus('pending');
+                    setIsFollowing(false);
+                    Alert.alert('Follow Request Sent', 'This account is private. Your request is pending approval.');
+                } else {
+                    // Public account - immediately followed
+                    setIsFollowing(true);
+                    setFollowStatus('accepted');
+                    
+                    // Optimistically update follower count
+                    if (user) {
+                        setUser({
+                            ...user,
+                            stats: {
+                                ...user.stats,
+                                followersCount: user.stats.followersCount + 1,
+                            },
+                        });
+                    }
                 }
             }
 
-            // Update with actual data from backend
+            // Update with actual data from backend if available
             if (result && result.followersCount !== undefined) {
                 console.log('[UserProfile] Updating follower count from backend:', result.followersCount);
-                setUser({
-                    ...user,
-                    stats: {
-                        ...user.stats,
-                        followersCount: result.followersCount,
-                    },
-                });
+                if (user) {
+                    setUser({
+                        ...user,
+                        stats: {
+                            ...user.stats,
+                            followersCount: result.followersCount,
+                        },
+                    });
+                }
             }
         } catch (error: any) {
             console.error('[UserProfile] Follow error:', error);
             
-            // If "already following" error, refresh the follow status
-            if (error?.message?.toLowerCase().includes('already following')) {
-                console.log('[UserProfile] Detected "already following" error, refreshing status...');
-                try {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const followStatus: any = await api.isFollowing(id, token || undefined);
-                    const isFollowingValue = followStatus?.following ?? followStatus?.data?.following ?? false;
-                    setIsFollowing(isFollowingValue === true);
-                    console.log('[UserProfile] Refreshed follow status:', isFollowingValue);
-                    
-                    // Don't show error alert for this case
-                    return;
-                } catch (refreshError) {
-                    console.error('[UserProfile] Error refreshing follow status:', refreshError);
-                }
+            // Refresh follow status on error
+            try {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const statusResponse: any = await api.getFollowStatus(id, token || undefined);
+                const status = statusResponse?.status ?? statusResponse?.data?.status ?? null;
+                const isFollowingValue = statusResponse?.isFollowing ?? statusResponse?.data?.isFollowing ?? false;
+                setFollowStatus(status);
+                setIsFollowing(isFollowingValue);
+            } catch (refreshError) {
+                console.error('[UserProfile] Error refreshing follow status:', refreshError);
             }
             
-            // Revert on error
-            setIsFollowing(!isFollowing);
-            if (user) {
-                setUser({
-                    ...user,
-                    stats: {
-                        ...user.stats,
-                        followersCount: isFollowing 
-                            ? user.stats.followersCount + 1 
-                            : user.stats.followersCount - 1,
-                    },
-                });
-            }
-            Alert.alert('Error', 'Failed to update follow status');
+            Alert.alert('Error', error?.message || 'Failed to update follow status');
         }
     };
 
@@ -288,63 +308,81 @@ export default function PublicProfileScreen() {
                         )}
                     </View>
 
-                    <View style={styles.rolesContainer}>
-                        {user.roles.map((role, idx) => (
-                            <View
-                                key={idx}
-                                style={[styles.roleBadge, { backgroundColor: colors.surface }]}
-                            >
-                                <Text style={[styles.roleText, { color: colors.text }]}>
-                                    {role}
+                    {!hasLimitedData && (
+                        <>
+                            {user.roles && user.roles.length > 0 && (
+                                <View style={styles.rolesContainer}>
+                                    {user.roles.map((role, idx) => (
+                                        <View
+                                            key={idx}
+                                            style={[styles.roleBadge, { backgroundColor: colors.surface }]}
+                                        >
+                                            <Text style={[styles.roleText, { color: colors.text }]}>
+                                                {role}
+                                            </Text>
+                                        </View>
+                                    ))}
+                                </View>
+                            )}
+                            {user.bio && (
+                                <Text style={[styles.bio, { color: colors.textSecondary }]}>
+                                    {user.bio}
                                 </Text>
-                            </View>
-                        ))}
-                    </View>
-                    <Text style={[styles.bio, { color: colors.textSecondary }]}>
-                        {user.bio || 'No bio available'}
-                    </Text>
+                            )}
 
-                    <View style={styles.info}>
-                        {user.location && (
-                            <View style={styles.infoRow}>
-                                <MapPin size={16} color={colors.textSecondary} />
-                                <Text
-                                    style={[styles.infoText, { color: colors.textSecondary }]}
-                                >
-                                    {user.location}
-                                </Text>
+                            <View style={styles.info}>
+                                {user.location && (
+                                    <View style={styles.infoRow}>
+                                        <MapPin size={16} color={colors.textSecondary} />
+                                        <Text
+                                            style={[styles.infoText, { color: colors.textSecondary }]}
+                                        >
+                                            {user.location}
+                                        </Text>
+                                    </View>
+                                )}
+                                {user.experience && user.experience > 0 && (
+                                    <View style={styles.infoRow}>
+                                        <Briefcase size={16} color={colors.textSecondary} />
+                                        <Text
+                                            style={[styles.infoText, { color: colors.textSecondary }]}
+                                        >
+                                            {user.experience} years experience
+                                        </Text>
+                                    </View>
+                                )}
                             </View>
-                        )}
-                        {user.experience && user.experience > 0 && (
-                            <View style={styles.infoRow}>
-                                <Briefcase size={16} color={colors.textSecondary} />
-                                <Text
-                                    style={[styles.infoText, { color: colors.textSecondary }]}
-                                >
-                                    {user.experience} years experience
-                                </Text>
-                            </View>
-                        )}
-                    </View>
+                        </>
+                    )}
+                    
+                    {hasLimitedData && (
+                        <View style={styles.privateMessageContainer}>
+                            <Text style={[styles.privateMessage, { color: colors.textSecondary }]}>
+                                This account is private. Follow to see their posts and updates.
+                            </Text>
+                        </View>
+                    )}
 
                     <View style={styles.actionsContainer}>
                         <TouchableOpacity
                             style={[
                                 styles.followButton,
                                 {
-                                    backgroundColor: isFollowing ? colors.surface : colors.primary,
-                                    borderColor: isFollowing ? colors.border : colors.primary,
+                                    backgroundColor: (isFollowing || followStatus === 'pending') ? colors.surface : colors.primary,
+                                    borderColor: (isFollowing || followStatus === 'pending') ? colors.border : colors.primary,
                                 },
                             ]}
                             onPress={toggleFollow}
                         >
                             {isFollowing ? (
                                 <Check size={20} color={colors.text} />
+                            ) : followStatus === 'pending' ? (
+                                <Clock size={20} color={colors.text} />
                             ) : (
                                 <Plus size={20} color="#fff" />
                             )}
-                            <Text style={[styles.followButtonText, { color: isFollowing ? colors.text : '#fff' }]}>
-                                {isFollowing ? 'Following' : 'Follow'}
+                            <Text style={[styles.followButtonText, { color: (isFollowing || followStatus === 'pending') ? colors.text : '#fff' }]}>
+                                {isFollowing ? 'Following' : followStatus === 'pending' ? 'Requested' : (isPrivateAccount ? 'Request' : 'Follow')}
                             </Text>
                         </TouchableOpacity>
 
@@ -423,69 +461,81 @@ export default function PublicProfileScreen() {
                     </View>
                 </View>
 
-                <View style={[styles.filters, { borderBottomColor: colors.border }]}>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                        {filters.map((filter) => {
-                            const Icon = filter.icon;
-                            return (
-                                <TouchableOpacity
-                                    key={filter.id}
-                                    style={[
-                                        styles.filter,
-                                        selectedFilter === filter.id && {
-                                            borderBottomColor: colors.primary,
-                                            borderBottomWidth: 2,
-                                        },
-                                    ]}
-                                    onPress={() => setSelectedFilter(filter.id)}
-                                >
-                                    <Icon
-                                        size={20}
-                                        color={
-                                            selectedFilter === filter.id
-                                                ? colors.primary
-                                                : colors.textSecondary
-                                        }
-                                    />
-                                    <Text
+                {!hasLimitedData && (
+                    <View style={[styles.filters, { borderBottomColor: colors.border }]}>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                            {filters.map((filter) => {
+                                const Icon = filter.icon;
+                                return (
+                                    <TouchableOpacity
+                                        key={filter.id}
                                         style={[
-                                            styles.filterText,
-                                            {
-                                                color:
-                                                    selectedFilter === filter.id
-                                                        ? colors.primary
-                                                        : colors.textSecondary,
+                                            styles.filter,
+                                            selectedFilter === filter.id && {
+                                                borderBottomColor: colors.primary,
+                                                borderBottomWidth: 2,
                                             },
                                         ]}
+                                        onPress={() => setSelectedFilter(filter.id)}
                                     >
-                                        {filter.label}
-                                    </Text>
-                                </TouchableOpacity>
-                            );
-                        })}
-                    </ScrollView>
-                </View>
+                                        <Icon
+                                            size={20}
+                                            color={
+                                                selectedFilter === filter.id
+                                                    ? colors.primary
+                                                    : colors.textSecondary
+                                            }
+                                        />
+                                        <Text
+                                            style={[
+                                                styles.filterText,
+                                                {
+                                                    color:
+                                                        selectedFilter === filter.id
+                                                            ? colors.primary
+                                                            : colors.textSecondary,
+                                                },
+                                            ]}
+                                        >
+                                            {filter.label}
+                                        </Text>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </ScrollView>
+                    </View>
+                )}
 
-                <View style={styles.portfolio}>
-                    {filteredPosts.map((post) => (
-                        <TouchableOpacity
-                            key={post._id}
-                            style={styles.portfolioItem}
-                            onPress={() => router.push(`/post/${post._id}`)}
-                        >
-                            <Image
-                                source={{ uri: post.thumbnailUrl || post.mediaUrl }}
-                                style={styles.portfolioImage}
-                                contentFit="cover"
-                            />
-                        </TouchableOpacity>
-                    ))}
-                    {filteredPosts.length === 0 && (
-                        <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                            No {selectedFilter === 'all' ? 'posts' : selectedFilter} yet
+                {!hasLimitedData && (
+                    <View style={styles.portfolio}>
+                        {filteredPosts.map((post) => (
+                            <TouchableOpacity
+                                key={post._id}
+                                style={styles.portfolioItem}
+                                onPress={() => router.push(`/post/${post._id}`)}
+                            >
+                                <Image
+                                    source={{ uri: post.thumbnailUrl || post.mediaUrl }}
+                                    style={styles.portfolioImage}
+                                    contentFit="cover"
+                                />
+                            </TouchableOpacity>
+                        ))}
+                        {filteredPosts.length === 0 && (
+                            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                                No {selectedFilter === 'all' ? 'posts' : selectedFilter} yet
+                            </Text>
+                        )}
+                    </View>
+                )}
+                
+                {hasLimitedData && (
+                    <View style={styles.privatePostsContainer}>
+                        <Text style={[styles.privatePostsText, { color: colors.textSecondary }]}>
+                            Posts are hidden for private accounts
                         </Text>
-                    )}
-                </View>
+                    </View>
+                )}
             </ScrollView>
         </>
     );
@@ -647,5 +697,23 @@ const styles = StyleSheet.create({
         padding: 40,
         fontSize: 14,
         width: '100%',
+    },
+    privateMessageContainer: {
+        padding: 20,
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    privateMessage: {
+        fontSize: 14,
+        textAlign: 'center',
+        lineHeight: 20,
+    },
+    privatePostsContainer: {
+        padding: 40,
+        alignItems: 'center',
+    },
+    privatePostsText: {
+        fontSize: 14,
+        textAlign: 'center',
     },
 });

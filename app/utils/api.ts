@@ -529,6 +529,12 @@ export const apiIsFollowing = (userId: string, token?: string) =>
     { token }
   );
 
+export const apiGetFollowStatus = (userId: string, token?: string) =>
+  request<{ success: boolean; status: 'pending' | 'accepted' | null; isFollowing: boolean }>(
+    `/api/users/${userId}/follow-status`,
+    { token }
+  );
+
 export const apiGetMutualFollowers = (userId: string, token?: string) =>
   request<{ success: boolean; count: number }>(
     `/api/users/${userId}/mutual-followers`,
@@ -763,6 +769,7 @@ export const api = {
   acceptFollowRequest: apiAcceptFollowRequest,
   rejectFollowRequest: apiRejectFollowRequest,
   isFollowing: apiIsFollowing,
+  getFollowStatus: apiGetFollowStatus,
   getMutualFollowers: apiGetMutualFollowers,
 
   addComment: apiAddComment,
