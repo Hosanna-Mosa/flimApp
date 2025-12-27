@@ -2,12 +2,14 @@
   "name": "expo-app",
   "main": "expo-router/entry",
   "version": "1.0.0",
-  "scripts": {
-    "start": "bunx rork start -p cvc8qm94usvs9c9bue5yd --tunnel",
-    "start-web": "bunx rork start -p cvc8qm94usvs9c9bue5yd --web --tunnel",
-    "start-web-dev": "DEBUG=expo* bunx rork start -p cvc8qm94usvs9c9bue5yd --web --tunnel",
-    "lint": "expo lint"
-  },
+  "packageManager": "npm@10.8.2",
+ "scripts": {
+  "start": "expo start --tunnel",
+  "start-web": "expo start --web --tunnel",
+  "start-web-dev": "DEBUG=expo* expo start --web --tunnel",
+  "lint": "expo lint"
+},
+
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
     "@nkzw/create-context-hook": "^1.1.0",
