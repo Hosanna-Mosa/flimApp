@@ -196,12 +196,12 @@ export default function ChatScreen() {
   }, [socket, userId, user]);
 
   // Ensure socket is connected on mount
-  useEffect(() => {
-    if (socket && !socket.connected) {
-      console.log('[CHAT] Socket not connected on mount, calling connect()');
-      socket.connect();
-    }
-  }, [socket]);
+  // useEffect(() => {
+  //   if (socket && !socket.connected) {
+  //     console.log('[CHAT] Socket not connected on mount, calling connect()');
+  //     // socket.connect(); 
+  //   }
+  // }, [socket]);
 
   const handleSend = () => {
     if (!inputMessage.trim()) return;
@@ -212,8 +212,8 @@ export default function ChatScreen() {
     }
 
     if (!socket.connected) {
-      console.log('[CHAT] Socket not connected. Attempting to connect...');
-      socket.connect();
+      console.log('[CHAT] Socket not connected. Cannot send.');
+      // socket.connect(); // Removed manual connect
       return;
     }
 
