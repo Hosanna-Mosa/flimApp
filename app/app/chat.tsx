@@ -195,8 +195,27 @@ export default function ChatScreen() {
     };
   }, [socket, userId, user]);
 
+  // Ensure socket is connected on mount
+  useEffect(() => {
+    if (socket && !socket.connected) {
+      console.log('[CHAT] Socket not connected on mount, calling connect()');
+      socket.connect();
+    }
+  }, [socket]);
+
   const handleSend = () => {
     if (!inputMessage.trim()) return;
+
+    if (!socket) {
+      console.error('[CHAT] No socket instance available');
+      return;
+    }
+
+    if (!socket.connected) {
+      console.log('[CHAT] Socket not connected. Attempting to connect...');
+      socket.connect();
+      return;
+    }
 
     const content = inputMessage.trim();
     const payload = {
@@ -206,11 +225,7 @@ export default function ChatScreen() {
 
     console.log('[SEND] Button clicked');
     console.log('[SEND] Payload:', payload);
-    console.log('[SEND] Socket connected:', socket?.connected);
-
-    if (!socket) {
-      return;
-    }
+    console.log('[SEND] Socket connected:', socket.connected);
 
     socket.emit('send_message', payload);
     console.log('[SEND] socket.emit(send_message) called');
