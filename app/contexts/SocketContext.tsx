@@ -43,25 +43,41 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     const newSocket = io(API_URL, {
       auth: { token },
-      transports: ['websocket'],
+      transports: ['websocket'],      // Force WebSocket only
+      upgrade: false,                  // Disable transport upgrade
+      secure: true,                    // Use secure connection
       autoConnect: true,
-      reconnection: true,             // Enable reconnection
-      reconnectionAttempts: 5,        // Max retries
-      reconnectionDelay: 1000,        // Start with 1s delay
+      reconnection: true,              // Enable reconnection
+      reconnectionAttempts: 5,         // Max retries
+      reconnectionDelay: 1000,         // Start with 1s delay
     });
 
     newSocket.on('connect', () => {
-      console.log('[Socket] Connected:', newSocket.id);
+      console.log('[Socket] ✅ Connected successfully!');
+      console.log('[Socket] Socket ID:', newSocket.id);
+      console.log('[Socket] Transport:', newSocket.io.engine.transport.name);
       setIsConnected(true);
+      
+      // Join user's socket room after connection
+      if (user?._id) {
+        console.log('[Socket] Emitting join event for user:', user._id);
+        newSocket.emit('join', user._id);
+      }
     });
 
     newSocket.on('disconnect', (reason) => {
-      console.log('[Socket] Disconnected:', reason);
+      console.log('[Socket] ❌ Disconnected:', reason);
       setIsConnected(false);
     });
 
     newSocket.on('connect_error', (err) => {
-      console.log('[Socket] Connection error:', err.message);
+      console.error('[Socket] ⚠️ Connection error:', err.message);
+      console.error('[Socket] Error details:', {
+        message: err.message,
+        description: (err as any).description,
+        context: (err as any).context,
+        type: (err as any).type,
+      });
     });
 
     // Global listener to acknowledge delivery
