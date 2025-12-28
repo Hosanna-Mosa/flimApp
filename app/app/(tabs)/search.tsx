@@ -54,22 +54,22 @@ export default function SearchScreen() {
         industries: selectedIndustries,
       };
       
-      console.log('[Search] Performing search with params:', params);
+      // console.log('[Search] Performing search with params:', params);
       const response = await api.searchUsers(params, token || undefined) as any;
-      console.log('[Search] Response:', response);
+      // console.log('[Search] Response:', response);
       
       if (response && response.data) {
-        console.log('[Search] Results count:', response.data.length);
+        // console.log('[Search] Results count:', response.data.length);
         setResults(response.data);
       } else if (response && Array.isArray(response)) {
-        console.log('[Search] Response is array, count:', response.length);
+        // console.log('[Search] Response is array, count:', response.length);
         setResults(response);
       } else {
-        console.log('[Search] No data in response');
+        // console.log('[Search] No data in response');
         setResults([]);
       }
     } catch (error) {
-      console.error('[Search] Error:', error);
+      // console.error('[Search] Error:', error);
     } finally {
       setIsSearching(false);
       setShowFilters(false); // Close modal after search

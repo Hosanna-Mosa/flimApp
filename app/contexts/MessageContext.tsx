@@ -23,17 +23,17 @@ export const MessageProvider = ({ children }: { children: ReactNode }) => {
         try {
             const response = await apiGetUnreadMessageCount(token);
             if (response && typeof response.count === 'number') {
-                console.log('[MessageContext] Unread count updated:', response.count);
+                // console.log('[MessageContext] Unread count updated:', response.count);
                 setUnreadCount(response.count);
             }
         } catch (error) {
-            console.error('[MessageContext] Failed to fetch unread count:', error);
+            // console.error('[MessageContext] Failed to fetch unread count:', error);
         }
     };
 
     const incrementUnreadCount = () => {
         setUnreadCount((prev) => {
-            console.log('[MessageContext] Incrementing unread count:', prev + 1);
+            // console.log('[MessageContext] Incrementing unread count:', prev + 1);
             return prev + 1;
         });
     };
@@ -63,11 +63,11 @@ export const MessageProvider = ({ children }: { children: ReactNode }) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const handleNewMessage = (message: any) => {
             // Basic check: if meaningful content and not sent by me (though socket usually only emits to recipient)
-            console.log('[MessageContext] Socket event received: receive_message', message);
+            // console.log('[MessageContext] Socket event received: receive_message', message);
             incrementUnreadCount();
         };
 
-        console.log('[MessageContext] Setting up socket listener for receive_message');
+        // console.log('[MessageContext] Setting up socket listener for receive_message');
 
         socket.on('receive_message', handleNewMessage);
 

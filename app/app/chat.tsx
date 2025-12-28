@@ -114,10 +114,13 @@ export default function ChatScreen() {
 
   // 2. Socket Listeners
   useEffect(() => {
+    console.log('[CHAT] Screen opened');
+    console.log('[CHAT] Socket connected:', socket?.connected);
+    console.log('[CHAT] Socket ID:', socket?.id);
+
     if (!socket) return;
 
     const handleReceiveMessage = (message: any) => {
-      console.log('[Chat] Received message:', message);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const sender = (message.sender && typeof message.sender === 'object') ? message.sender._id : (message.sender || message.senderId);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -141,7 +144,6 @@ export default function ChatScreen() {
 
     // Listen for status updates (e.g. "delivered" or "read")
     const handleStatusUpdate = (payload: any) => {
-      console.log('[Chat] handleStatusUpdate:', payload);
       const { messageId, status, userId: peerId } = payload;
 
       setMessages((prev) => prev.map((msg) => {
@@ -162,7 +164,6 @@ export default function ChatScreen() {
     };
 
     const handleMessageSent = (message: any) => {
-      console.log('[Chat] Message sent confirmed:', message);
       setMessages((prev) => {
         const exists = prev.some(m => m.id === (message._id || message.id));
         if (exists) return prev;
@@ -197,17 +198,22 @@ export default function ChatScreen() {
   const handleSend = () => {
     if (!inputMessage.trim()) return;
 
+    const content = inputMessage.trim();
+    const payload = {
+      to: userId,
+      content: content,
+    };
+
+    console.log('[SEND] Button clicked');
+    console.log('[SEND] Payload:', payload);
+    console.log('[SEND] Socket connected:', socket?.connected);
+
     if (!socket) {
-      console.error('Socket not connected');
       return;
     }
 
-    const content = inputMessage.trim();
-
-    socket.emit('send_message', {
-      to: userId,
-      content: content,
-    });
+    socket.emit('send_message', payload);
+    console.log('[SEND] socket.emit(send_message) called');
 
     setInputMessage('');
   };

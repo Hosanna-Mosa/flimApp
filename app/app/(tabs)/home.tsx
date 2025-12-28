@@ -49,7 +49,7 @@ export default function HomeScreen() {
   const { unreadCount: messageCount } = useMessages();
 
   useEffect(() => {
-    console.log('[Home] Render messageCount:', messageCount);
+    // console.log('[Home] Render messageCount:', messageCount);
   }, [messageCount]);
 
   const [posts, setPosts] = useState<Post[]>([]);
@@ -69,7 +69,7 @@ export default function HomeScreen() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const userId = user.id || (user as any)._id;
       if (!userId) {
-        console.error('[Home] User ID missing', user);
+        // console.error('[Home] User ID missing', user);
         return;
       }
 
@@ -81,10 +81,10 @@ export default function HomeScreen() {
         const rawIds = (result as any).data.map((u: any) => u._id || u.id);
         const ids = new Set<string>(rawIds);
         setFollowingIds(ids);
-        console.log('[Home] Following IDs refreshed:', Array.from(ids).length);
+        // console.log('[Home] Following IDs refreshed:', Array.from(ids).length);
       }
     } catch (error) {
-      console.error('[Home] Error fetching following list:', error);
+      // console.error('[Home] Error fetching following list:', error);
     }
   }, [user, token]);
 
@@ -100,7 +100,7 @@ export default function HomeScreen() {
     useCallback(() => {
       // Only reload if we already have posts (not initial load)
       if (posts.length > 0 && token) {
-        console.log('[Home] Screen focused - refreshing feed data');
+        // console.log('[Home] Screen focused - refreshing feed data');
         loadFeed(0, false);
       }
     }, [posts.length, token])
@@ -123,7 +123,7 @@ export default function HomeScreen() {
     if (!token) return;
 
     try {
-      console.log('[Home] Loading feed...');
+      // console.log('[Home] Loading feed...');
       const result = await api.getFeed(0, 20, 'hybrid', 7, token) as any;
 
       if (result.data) {
@@ -165,7 +165,7 @@ export default function HomeScreen() {
         }
       }
     } catch (error) {
-      console.error('[Home] Error loading feed:', error);
+      // console.error('[Home] Error loading feed:', error);
       Alert.alert('Error', 'Failed to load feed');
     }
   };
@@ -208,10 +208,10 @@ export default function HomeScreen() {
 
       if (isCurrentlyFollowing) {
         const result = await api.unfollowUser(userId, token || undefined) as any;
-        console.log('[Home] Unfollowed user:', result);
+        // console.log('[Home] Unfollowed user:', result);
       } else {
         const result = await api.followUser(userId, token || undefined) as any;
-        console.log('[Home] Followed user:', result);
+        // console.log('[Home] Followed user:', result);
 
         if (result.status === 'pending') {
           Alert.alert('Follow Request Sent', 'This account is private. Your request is pending.');
@@ -232,14 +232,14 @@ export default function HomeScreen() {
         }
         return next;
       });
-      console.error('[Home] Follow error:', error);
+      // console.error('[Home] Follow error:', error);
       Alert.alert('Error', 'Failed to update follow status');
     }
   };
 
   const handleLike = async (postId: string) => {
     try {
-      console.log('[Home] handleLike - Current user:', user ? `${user.name} (${(user as any)._id || user.id})` : 'Not logged in');
+      // console.log('[Home] handleLike - Current user:', user ? `${user.name} (${(user as any)._id || user.id})` : 'Not logged in');
       
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
@@ -262,7 +262,7 @@ export default function HomeScreen() {
       // API call
       if (wasLiked) {
         const result = await api.unlikePost(postId, token || undefined) as any;
-        console.log('[Home] Unliked post:', result);
+        // console.log('[Home] Unliked post:', result);
 
         // Update with real count from server
         setPosts(prevPosts => prevPosts.map((p) =>
@@ -270,7 +270,7 @@ export default function HomeScreen() {
         ));
       } else {
         const result = await api.likePost(postId, token || undefined) as any;
-        console.log('[Home] Liked post:', result);
+        // console.log('[Home] Liked post:', result);
 
         // Update with real count from server
         setPosts(prevPosts => prevPosts.map((p) =>
@@ -288,7 +288,7 @@ export default function HomeScreen() {
         }
         return p;
       }));
-      console.error('[Home] Like error:', error);
+      // console.error('[Home] Like error:', error);
     }
   };
 
@@ -311,7 +311,7 @@ export default function HomeScreen() {
         url: shareUrl,
       });
     } catch (error) {
-      console.error('[Home] Share error:', error);
+      // console.error('[Home] Share error:', error);
     }
   };
 

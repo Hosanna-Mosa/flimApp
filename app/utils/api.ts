@@ -28,7 +28,7 @@ const request = async <T>(
   path: string,
   { method = 'GET', body, token, headers }: RequestOptions = {}
 ): Promise<T> => {
-  console.log(`[API Request] ${method} ${path}`, body ? JSON.stringify(body) : '');
+  // console.log(`[API Request] ${method} ${path}`, body ? JSON.stringify(body) : '');
 
   try {
     const res = await fetch(`${API_BASE}${path}`, {
@@ -37,18 +37,18 @@ const request = async <T>(
       body: body ? JSON.stringify(body) : undefined,
     });
 
-    console.log(`[API Response Status] ${res.status} ${res.url}`);
+    // console.log(`[API Response Status] ${res.status} ${res.url}`);
 
     const json = await res.json().catch(() => ({}));
     if (!res.ok) {
       const message = (json && json.message) || res.statusText || 'Request failed';
-      console.error(`[API Error] ${res.status}: ${message}`);
+      // console.error(`[API Error] ${res.status}: ${message}`);
       throw new Error(message);
     }
-    console.log(`[API Response Data]`, JSON.stringify(json.data ?? json, null, 2));
+    // console.log(`[API Response Data]`, JSON.stringify(json.data ?? json, null, 2));
     return json.data ?? json;
   } catch (error) {
-    console.error(`[API Network Error] ${path}`, error);
+    // console.error(`[API Network Error] ${path}`, error);
     throw error;
   }
 };

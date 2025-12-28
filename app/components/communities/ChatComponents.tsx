@@ -37,7 +37,9 @@ export const MessageBubble = ({ message, isMe, onVote, onLongPress }: any) => {
       // Check if file already exists locally
       FileSystem.getInfoAsync(fileUri).then(info => {
         if (info.exists) setDownloaded(true);
-      }).catch(err => console.log('File check error:', err));
+      }).catch(err => {
+        // console.log('File check error:', err)
+      });
     }
   }, [message._id, fileUri]);
 
@@ -72,7 +74,7 @@ export const MessageBubble = ({ message, isMe, onVote, onLongPress }: any) => {
       
       setDownloaded(true);
     } catch (e) {
-      console.error(e);
+      // console.error(e);
       alert('Failed to download image');
     } finally {
       setDownloading(false);

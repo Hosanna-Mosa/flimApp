@@ -42,33 +42,33 @@ export default function GroupChatScreen() {
 
       let comRes, groupsRes, postsRes;
 
-      console.log('🚀 [LoadData] Starting...', { id, groupId });
+      // console.log('🚀 [LoadData] Starting...', { id, groupId });
 
       // 1. Load Community (Independent)
       try {
-        console.log('📡 [LoadData] Fetching community...');
+        // console.log('📡 [LoadData] Fetching community...');
         comRes = await api.community(id, token || undefined) as any;
-        console.log('✅ [LoadData] Community loaded');
+        // console.log('✅ [LoadData] Community loaded');
       } catch (e) {
-        console.error('❌ [LoadData] Community failed:', e);
+        // console.error('❌ [LoadData] Community failed:', e);
       }
 
       // 2. Load Groups (Independent)
       try {
-        console.log('📡 [LoadData] Fetching groups...');
+        // console.log('📡 [LoadData] Fetching groups...');
         groupsRes = await api.communityGroups(id, token || undefined) as any;
-        console.log('✅ [LoadData] Groups loaded');
+        // console.log('✅ [LoadData] Groups loaded');
       } catch (e) {
-        console.error('❌ [LoadData] Groups failed:', e);
+        // console.error('❌ [LoadData] Groups failed:', e);
       }
 
       // 3. Load Posts (Independent - often fails if not a member)
       try {
-        console.log('📡 [LoadData] Fetching posts...');
+        // console.log('📡 [LoadData] Fetching posts...');
         postsRes = await api.groupPosts(id, groupId, 0, 50, token || undefined) as any;
-        console.log('✅ [LoadData] Posts loaded');
+        // console.log('✅ [LoadData] Posts loaded');
       } catch (e) {
-        console.warn('⚠️ [LoadData] Posts failed (user likely not a member):', e);
+        // console.warn('⚠️ [LoadData] Posts failed (user likely not a member):', e);
       }
 
       setRole(comRes?.memberRole || 'member');
@@ -93,7 +93,7 @@ export default function GroupChatScreen() {
       const postsList = postsRes?.data || [];
       setPosts(Array.isArray(postsList) ? postsList : []);
     } catch (error) {
-      console.error(error);
+      // console.error(error);
     } finally {
       setLoading(false);
     }
@@ -217,7 +217,8 @@ export default function GroupChatScreen() {
       await api.votePoll(id!, postId, idx, token || undefined);
       // Reload or update locally? Ideally socket handles poll update too.
       loadData();
-    } catch (e) { console.error(e); }
+    } catch (e) { // console.error(e); 
+    }
   };
 
   const handleMenu = () => {
@@ -253,7 +254,8 @@ export default function GroupChatScreen() {
           try {
             await api.leaveGroup(id!, groupId!, token || undefined);
             router.back();
-          } catch (e) { console.error(e); }
+          } catch (e) { // console.error(e); 
+          }
         }
       } as any);
     }
@@ -265,14 +267,14 @@ export default function GroupChatScreen() {
 
   useEffect(() => {
     if (group) {
-      console.log('🔍 Group Permission Debug:', {
-        groupName: group.name,
-        groupType: group.type,
-        isAnnouncementOnly: group.isAnnouncementOnly, // This is the key field
-        myRole: role,
-        canISend: canSend,
-        rawGroup: JSON.stringify(group) // Inspect the full object
-      });
+      // console.log('🔍 Group Permission Debug:', {
+      //   groupName: group.name,
+      //   groupType: group.type,
+      //   isAnnouncementOnly: group.isAnnouncementOnly, // This is the key field
+      //   myRole: role,
+      //   canISend: canSend,
+      //   rawGroup: JSON.stringify(group) // Inspect the full object
+      // });
     }
   }, [group, role, canSend]);
 

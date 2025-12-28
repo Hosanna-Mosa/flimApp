@@ -101,16 +101,16 @@ export default function PublicProfileScreen() {
             try {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const statusResponse: any = await api.getFollowStatus(id, token || undefined);
-                console.log('[UserProfile] Follow status response:', JSON.stringify(statusResponse));
+                // console.log('[UserProfile] Follow status response:', JSON.stringify(statusResponse));
                 
                 statusValue = statusResponse?.status ?? statusResponse?.data?.status ?? null;
                 isFollowingValue = statusResponse?.isFollowing ?? statusResponse?.data?.isFollowing ?? false;
                 
-                console.log('[UserProfile] Follow status:', statusValue, 'isFollowing:', isFollowingValue);
+                // console.log('[UserProfile] Follow status:', statusValue, 'isFollowing:', isFollowingValue);
                 setFollowStatus(statusValue);
                 setIsFollowing(isFollowingValue);
             } catch (followError) {
-                console.error('[UserProfile] Error checking follow status:', followError);
+                // console.error('[UserProfile] Error checking follow status:', followError);
                 setIsFollowing(false);
                 setFollowStatus(null);
             }
@@ -119,14 +119,14 @@ export default function PublicProfileScreen() {
             // Even if stats are returned, we should limit access if it's private and not following
             const limitedData = accountType === 'private' && !isFollowingValue && statusValue !== 'accepted';
             setHasLimitedData(limitedData);
-            console.log('[UserProfile] Limited data check:', {
-                accountType,
-                isFollowing: isFollowingValue,
-                status: statusValue,
-                hasLimitedData: limitedData
-            });
+            // console.log('[UserProfile] Limited data check:', {
+            //     accountType,
+            //     isFollowing: isFollowingValue,
+            //     status: statusValue,
+            //     hasLimitedData: limitedData
+            // });
         } catch (error) {
-            console.error('[UserProfile] Error loading:', error);
+            // console.error('[UserProfile] Error loading:', error);
             Alert.alert('Error', 'Failed to load user profile');
         } finally {
             setLoading(false);
@@ -148,7 +148,7 @@ export default function PublicProfileScreen() {
             if (wasFollowing || wasPending) {
                 // Unfollow or cancel request
                 result = await api.unfollowUser(id, token || undefined);
-                console.log('[UserProfile] Unfollow result:', JSON.stringify(result));
+                // console.log('[UserProfile] Unfollow result:', JSON.stringify(result));
                 setIsFollowing(false);
                 setFollowStatus(null);
                 
@@ -166,7 +166,7 @@ export default function PublicProfileScreen() {
             } else {
                 // Follow or send request
                 result = await api.followUser(id, token || undefined);
-                console.log('[UserProfile] Follow result:', JSON.stringify(result));
+                // console.log('[UserProfile] Follow result:', JSON.stringify(result));
                 
                 if (result.status === 'pending') {
                     // Private account - request sent
@@ -194,7 +194,7 @@ export default function PublicProfileScreen() {
 
             // Update with actual data from backend if available
             if (result && result.followersCount !== undefined) {
-                console.log('[UserProfile] Updating follower count from backend:', result.followersCount);
+                // console.log('[UserProfile] Updating follower count from backend:', result.followersCount);
                 if (user) {
                     setUser({
                         ...user,
@@ -207,7 +207,7 @@ export default function PublicProfileScreen() {
                 }
             }
         } catch (error: any) {
-            console.error('[UserProfile] Follow error:', error);
+            // console.error('[UserProfile] Follow error:', error);
             
             // Refresh follow status on error
             try {
@@ -218,7 +218,7 @@ export default function PublicProfileScreen() {
                 setFollowStatus(status);
                 setIsFollowing(isFollowingValue);
             } catch (refreshError) {
-                console.error('[UserProfile] Error refreshing follow status:', refreshError);
+                // console.error('[UserProfile] Error refreshing follow status:', refreshError);
             }
             
             Alert.alert('Error', error?.message || 'Failed to update follow status');

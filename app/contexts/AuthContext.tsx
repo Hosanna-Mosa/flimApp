@@ -14,7 +14,7 @@ interface AuthState {
 
 
 // Push Notification Logic
-import * as Notifications from 'expo-notifications';
+// import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { Platform } from 'react-native';
@@ -24,31 +24,33 @@ const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreCl
 
 // Only set handler if NOT in Expo Go on Android (or just not in Expo Go generally to be safe)
 // Only set handler if NOT in Expo Go
-if (!isExpoGo) {
-  try {
-    Notifications.setNotificationHandler({
-      handleNotification: async () => ({
-        shouldShowAlert: true,
-        shouldPlaySound: true,
-        shouldSetBadge: true,
-        shouldShowBanner: true,
-        shouldShowList: true,
-      }),
-    });
-  } catch (e) {
-    console.warn('Failed to set notification handler:', e);
-  }
-}
+// if (!isExpoGo) {
+//   try {
+//     Notifications.setNotificationHandler({
+//       handleNotification: async () => ({
+//         shouldShowAlert: true,
+//         shouldPlaySound: true,
+//         shouldSetBadge: true,
+//         shouldShowBanner: true,
+//         shouldShowList: true,
+//       }),
+//     });
+//   } catch (e) {
+//     // console.warn('Failed to set notification handler:', e);
+//   }
+// }
 
 async function registerForPushNotificationsAsync() {
+  return null;
+  /*
   if (isExpoGo) {
-    console.log('[Notification] Push notifications are not supported in Expo Go. Skipping.');
+    // console.log('[Notification] Push notifications are not supported in Expo Go. Skipping.');
     return null;
   }
 
   // Double check strict check for physical device
   if (!Device.isDevice) {
-    console.log('[Notification] Must use physical device for Push Notifications');
+    // console.log('[Notification] Must use physical device for Push Notifications');
     return null;
   }
 
@@ -63,7 +65,7 @@ async function registerForPushNotificationsAsync() {
         lightColor: '#FF231F7C',
       });
     } catch (e) {
-      console.log('[Notification] Failed to set notification channel', e);
+      // console.log('[Notification] Failed to set notification channel', e);
     }
   }
 
@@ -75,7 +77,7 @@ async function registerForPushNotificationsAsync() {
       finalStatus = status;
     }
     if (finalStatus !== 'granted') {
-      console.log('Failed to get push token for push notification!');
+      // console.log('Failed to get push token for push notification!');
       return;
     }
 
@@ -85,12 +87,13 @@ async function registerForPushNotificationsAsync() {
     const pushTokenString = (await Notifications.getExpoPushTokenAsync({
       projectId,
     })).data;
-    console.log('Expo Push Token:', pushTokenString);
+    // console.log('Expo Push Token:', pushTokenString);
     return pushTokenString;
   } catch (e) {
-    console.error('Error getting push token:', e);
+    // console.error('Error getting push token:', e);
     return null;
   }
+  */
 }
 
 export const [AuthProvider, useAuth] = createContextHook(() => {
@@ -112,10 +115,10 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       const pushToken = await registerForPushNotificationsAsync();
       if (pushToken && authToken) {
         await api.registerPushToken(pushToken, authToken);
-        console.log('[Auth] Push token registered with backend');
+        // console.log('[Auth] Push token registered with backend');
       }
     } catch (error) {
-      console.error('[Auth] Failed to register push token:', error);
+      // console.error('[Auth] Failed to register push token:', error);
     }
   };
 
@@ -153,7 +156,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         });
       }
     } catch (error) {
-      console.error('Error loading auth state:', error);
+      // console.error('Error loading auth state:', error);
       setAuthState({
         user: null,
         token: null,
@@ -234,7 +237,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
       return { success: true, user: updatedUser };
     } catch (error) {
-      console.error('[AuthContext] Error updating profile:', error);
+      // console.error('[AuthContext] Error updating profile:', error);
       throw error;
     }
   };

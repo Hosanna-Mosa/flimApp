@@ -21,7 +21,7 @@ export const [ThemeProvider, useTheme] = createContextHook(() => {
         setTheme(savedTheme as Theme);
       }
     } catch (error) {
-      console.error('Error loading theme:', error);
+      // console.error('Error loading theme:', error);
     }
   };
 

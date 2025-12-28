@@ -50,7 +50,7 @@ export default function PostDetailScreen() {
   const { token, user } = useAuth();
   const insets = useSafeAreaInsets();
   
-  console.log('[PostDetail] Current user:', user ? `${user.name} (${(user as any)._id || user.id})` : 'Not logged in');
+  // console.log('[PostDetail] Current user:', user ? `${user.name} (${(user as any)._id || user.id})` : 'Not logged in');
   
   const [post, setPost] = useState<any>(null);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -80,7 +80,7 @@ export default function PostDetailScreen() {
       
       // Refresh on subsequent focuses
       if (id && token) {
-        console.log('[PostDetail] Screen focused - refreshing post data');
+        // console.log('[PostDetail] Screen focused - refreshing post data');
         loadPostAndComments();
       }
     }, [id, token])
@@ -94,18 +94,12 @@ export default function PostDetailScreen() {
         api.getComments(id, 0, 50, 'recent', token || undefined) as any,
       ]);
       
-      console.log('[PostDetail] Post data received:', {
-        isLiked: postData.isLiked,
-        likesCount: postData.engagement?.likesCount,
-        postId: postData._id
-      });
-      
-      setPost(postData);
-      setIsLiked(postData.isLiked || false);
-      setLikesCount(postData.engagement?.likesCount || 0);
-      setComments(commentsData.data || []);
-    } catch (error) {
-      console.error('[PostDetail] Error loading:', error);
+      // console.log('[PostDetail] Post data received:', {
+      //   isLiked: postData.isLiked,
+      //   likesCount: postData.engagement?.likesCount,
+      //   postId: postData._id
+      // });
+      // console.error('[PostDetail] Error loading:', error);
       Alert.alert('Error', 'Failed to load post');
     } finally {
       setLoading(false);
@@ -129,7 +123,7 @@ export default function PostDetailScreen() {
       // Revert on error
       setIsLiked(!isLiked);
       setLikesCount(prev => isLiked ? prev + 1 : prev - 1);
-      console.error('[PostDetail] Like error:', error);
+      // console.error('[PostDetail] Like error:', error);
     }
   };
 
@@ -157,7 +151,7 @@ export default function PostDetailScreen() {
       
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
-      console.error('[PostDetail] Comment error:', error);
+      // console.error('[PostDetail] Comment error:', error);
       Alert.alert('Error', 'Failed to add comment');
     } finally {
       setSubmitting(false);
@@ -176,7 +170,7 @@ export default function PostDetailScreen() {
         url: shareUrl,
       });
     } catch (error) {
-      console.error('[PostDetail] Share error:', error);
+      // console.error('[PostDetail] Share error:', error);
     }
   };
 

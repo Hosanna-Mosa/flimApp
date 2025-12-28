@@ -107,7 +107,7 @@ export default function PersonalDetailsScreen() {
         }
       }
 
-      console.log('[PersonalDetails] Saving updates:', updates);
+      // console.log('[PersonalDetails] Saving updates:', updates);
 
       // Call updateProfile which calls the backend
       await updateProfile(updates);
@@ -119,7 +119,7 @@ export default function PersonalDetailsScreen() {
         },
       ]);
     } catch (error: any) {
-      console.error('[PersonalDetails] Error saving:', error);
+      // console.error('[PersonalDetails] Error saving:', error);
       Alert.alert(
         'Error',
         error?.message || 'Failed to update personal details. Please try again.',

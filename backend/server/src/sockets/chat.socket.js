@@ -17,16 +17,30 @@ const registerChatHandlers = (io) => {
   });
 
   io.on('connection', (socket) => {
-    socket.join(socket.userId);
-    logger.info(`[Socket Debug] Socket connected: ${socket.userId}, SocketID: ${socket.id}`);
-    console.log(`[Socket Debug] User ${socket.userId} joined room ${socket.userId}`);
+    console.log('[CHAT SOCKET] Connection:', socket.id);
+    console.log('[CHAT SOCKET] userId:', socket.userId);
 
-    socket.on('send_message', async ({ to, content }) => {
+    // Existing middleware sets socket.userId and joins room automatically,
+    // but we add this listener per user request for debug logging flow.
+    socket.on('join', (userId) => {
+      console.log('[CHAT SOCKET] join event:', userId);
+      socket.join(userId.toString());
+      console.log('[SOCKET] User joined room:', userId);
+    });
+
+    // Auto-join from middleware (keeping logic, just logging)
+    if (socket.userId) {
+        socket.join(socket.userId);
+        console.log('[SOCKET] User joined room (auto):', socket.userId);
+    }
+
+    socket.on('send_message', async (data) => {
+      console.log('[CHAT SOCKET] send_message RECEIVED:', data);
+      const { to, content } = data;
+
       try {
-        console.log(`[Socket Debug] Raw send_message payload: to='${to}', content='${content}'`);
-
         if (!to || !content) {
-          console.log('[Socket Debug] Missing to or content');
+          console.log('[SOCKET] Missing to or content');
           return;
         }
 
@@ -38,27 +52,22 @@ const registerChatHandlers = (io) => {
           content,
         });
 
-        // Message Persisted
-        console.log(`[Socket Debug] Message Persisted: ID=${message._id}, Recipient=${message.recipient}`);
-        // Notification logic removed as per user request (no notifications for messages)
-
         const roomClients = io.sockets.adapter.rooms.get(recipientId);
         const clientCount = roomClients ? roomClients.size : 0;
-        console.log(`[Socket Debug] Emitting receive_message to room ${recipientId}. Active clients: ${clientCount}`);
-
+        
         if (clientCount === 0) {
-          console.log(`[Socket Warning] Recipient ${recipientId} is NOT connected to the socket room. They will NOT receive the real-time event.`);
+           // console.log(`[Socket Warning] Recipient ${recipientId} is NOT connected...`);
         }
 
         io.to(recipientId).emit('receive_message', message);
         socket.emit('message_sent', message);
       } catch (error) {
-        console.error('[Socket Debug] CRITICAL ERROR in send_message handler:', error);
+        console.error('[SOCKET] Error in send_message:', error);
       }
     });
 
     socket.on('disconnect', () => {
-      logger.info(`Socket disconnected: ${socket.userId}`);
+      console.log('[SOCKET] Disconnected:', socket.id);
     });
 
     socket.on('mark_delivered', async ({ messageId, senderId }) => {

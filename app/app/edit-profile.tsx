@@ -67,7 +67,7 @@ export default function EditProfileScreen() {
         avatar,
       };
       
-      console.log('[EditProfile] Saving updates:', updates);
+      // console.log('[EditProfile] Saving updates:', updates);
       
       // Call updateProfile which now calls the backend
       await updateProfile(updates);
@@ -79,7 +79,7 @@ export default function EditProfileScreen() {
         },
       ]);
     } catch (error) {
-      console.error('[EditProfile] Error saving:', error);
+      // console.error('[EditProfile] Error saving:', error);
       Alert.alert(
         'Error',
         'Failed to update profile. Please try again.',

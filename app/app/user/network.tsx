@@ -46,7 +46,7 @@ export default function UserNetworkScreen() {
             setHasMore(data.length === 20);
             setPage(pageNum);
         } catch (error) {
-            console.error('Error loading network:', error);
+            // console.error('Error loading network:', error);
         } finally {
             setLoading(false);
             setRefreshing(false);

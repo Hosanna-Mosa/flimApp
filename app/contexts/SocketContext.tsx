@@ -26,7 +26,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     // If no token, disconnect if connected
     if (!token) {
       if (socket) {
-        console.log('[Socket] Disconnecting socket as token is missing');
+        // console.log('[Socket] Disconnecting socket as token is missing');
         socket.disconnect();
         setSocket(null);
         setIsConnected(false);
@@ -39,7 +39,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return;
     }
 
-    console.log('[Socket] Initialize connection', API_URL);
+    // console.log('[Socket] Initialize connection', API_URL);
 
     const newSocket = io(API_URL, {
       auth: { token },
@@ -53,38 +53,38 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     });
 
     newSocket.on('connect', () => {
-      console.log('[Socket] ✅ Connected successfully!');
-      console.log('[Socket] Socket ID:', newSocket.id);
-      console.log('[Socket] Transport:', newSocket.io.engine.transport.name);
+      // console.log('[Socket] ✅ Connected successfully!');
+      // console.log('[Socket] Socket ID:', newSocket.id);
+      // console.log('[Socket] Transport:', newSocket.io.engine.transport.name);
       setIsConnected(true);
       
       // Join user's socket room after connection
       if (user?._id) {
-        console.log('[Socket] Emitting join event for user:', user._id);
+        // console.log('[Socket] Emitting join event for user:', user._id);
         newSocket.emit('join', user._id);
       }
     });
 
     newSocket.on('disconnect', (reason) => {
-      console.log('[Socket] ❌ Disconnected:', reason);
+      // console.log('[Socket] ❌ Disconnected:', reason);
       setIsConnected(false);
     });
 
     newSocket.on('connect_error', (err) => {
-      console.error('[Socket] ⚠️ Connection error:', err.message);
-      console.error('[Socket] Error details:', {
-        message: err.message,
-        description: (err as any).description,
-        context: (err as any).context,
-        type: (err as any).type,
-      });
+      // console.error('[Socket] ⚠️ Connection error:', err.message);
+      // console.error('[Socket] Error details:', {
+      //   message: err.message,
+      //   description: (err as any).description,
+      //   context: (err as any).context,
+      //   type: (err as any).type,
+      // });
     });
 
     // Global listener to acknowledge delivery
     newSocket.on('receive_message', (message) => {
       // If I received it, tell the server I got it (Delivered)
       // We only ack if it wasn't sent by me (though typically receive_message is only for incoming)
-      console.log('[Socket] Global receive_message, acknowledging delivery...', message._id);
+      // console.log('[Socket] Global receive_message, acknowledging delivery...', message._id);
       newSocket.emit('mark_delivered', {
         messageId: message._id,
         senderId: message.senderId || (typeof message.sender === 'object' ? message.sender._id : message.sender),
@@ -94,7 +94,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setSocket(newSocket);
 
     return () => {
-      console.log('[Socket] Cleanup - Disconnecting');
+      // console.log('[Socket] Cleanup - Disconnecting');
       newSocket.disconnect();
     };
   }, [token]); // Only depend on token changes

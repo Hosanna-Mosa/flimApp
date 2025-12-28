@@ -10,7 +10,8 @@
     "seed": "node scripts/seedAll.js",
     "seed:users": "node scripts/seedUsers.js",
     "seed:posts": "node scripts/seedPosts.js",
-    "seed:clear": "node scripts/clearDatabase.js"
+    "seed:clear": "node scripts/clearDatabase.js",
+    "clear:comments": "node scripts/clearComments.js"
   },
   "keywords": [],
   "author": "",

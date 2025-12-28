@@ -63,42 +63,42 @@ export default function ProfileScreen() {
       const userId = (user as any)?._id || (user as any)?.id || user?.id;
 
       if (!userId) {
-        console.error('[Profile] No user ID found');
+        // console.error('[Profile] No user ID found');
         setLoading(false);
         return;
       }
 
-      console.log('[Profile] Loading data for user:', userId);
+      // console.log('[Profile] Loading data for user:', userId);
 
       // Fetch user data and posts
       const [userData, postsData] = await Promise.all([
         api.user(userId, token || undefined).catch(err => {
-          console.error('[Profile] Error fetching user:', err);
+          // console.error('[Profile] Error fetching user:', err);
           return null;
         }),
         api.getUserFeed(userId, 0, 100, token || undefined).catch(err => {
-          console.error('[Profile] Error fetching posts:', err);
+          // console.error('[Profile] Error fetching posts:', err);
           return { data: [] };
         }),
       ]);
 
-      console.log('[Profile] User data:', userData);
-      console.log('[Profile] Posts data:', postsData);
+      // console.log('[Profile] User data:', userData);
+      // console.log('[Profile] Posts data:', postsData);
 
       // Update stats if available
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const userInfo = userData as any;
       if (userInfo?.stats) {
-        console.log('[Profile] Setting stats:', userInfo.stats);
+        // console.log('[Profile] Setting stats:', userInfo.stats);
         setStats(userInfo.stats);
       } else {
-        console.log('[Profile] No stats in user data, using defaults');
+        // console.log('[Profile] No stats in user data, using defaults');
       }
 
       // Update posts
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const postsArray = (postsData as any)?.data || [];
-      console.log('[Profile] Setting posts:', postsArray.length);
+      // console.log('[Profile] Setting posts:', postsArray.length);
       setPosts(postsArray);
 
       // If no stats from API, use post count
@@ -109,7 +109,7 @@ export default function ProfileScreen() {
         }));
       }
     } catch (error) {
-      console.error('[Profile] Error loading:', error);
+      // console.error('[Profile] Error loading:', error);
       Alert.alert('Error', 'Failed to load profile data');
     } finally {
       setLoading(false);

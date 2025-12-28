@@ -82,7 +82,7 @@ export default function FeedPost({
         const mediaUrl = post.media?.url || post.mediaUrl;
         if (!mediaUrl) {
           setLoadingAudio(false);
-          console.log('Audio URL not available');
+          // console.log('Audio URL not available');
           return;
         }
         const { sound: newSound, status } = await Audio.Sound.createAsync(
@@ -106,7 +106,7 @@ export default function FeedPost({
         setIsPlaying(true);
       }
     } catch (error) {
-      console.log('Error playing audio', error);
+      // console.log('Error playing audio', error);
       setLoadingAudio(false);
     }
   };
@@ -139,13 +139,13 @@ export default function FeedPost({
     
     // Debug logging
     if (!mediaUrl && post.type !== 'audio') {
-      console.warn('[FeedPost] Missing media URL for post:', {
-        postId: post.id,
-        type: post.type,
-        hasMedia: !!post.media,
-        hasMediaUrl: !!post.mediaUrl,
-        media: post.media
-      });
+      // console.warn('[FeedPost] Missing media URL for post:', {
+      //   postId: post.id,
+      //   type: post.type,
+      //   hasMedia: !!post.media,
+      //   hasMediaUrl: !!post.mediaUrl,
+      //   media: post.media
+      // });
     }
     
     const defaultRatio = post.type === 'video' ? 16/9 : 1; 
@@ -162,11 +162,11 @@ export default function FeedPost({
 
     if (post.type === 'video') {
       if (!mediaUrl) {
-        console.warn('[FeedPost] Video post missing URL:', {
-          postId: post.id,
-          hasMedia: !!post.media,
-          media: post.media
-        });
+        // console.warn('[FeedPost] Video post missing URL:', {
+        //   postId: post.id,
+        //   hasMedia: !!post.media,
+        //   media: post.media
+        // });
         const safeAspectRatio = isFinite(aspectRatio) && aspectRatio > 0 ? aspectRatio : 16/9;
         return (
           <View style={[styles.mediaContainer, { aspectRatio: safeAspectRatio, minHeight: 200, backgroundColor: colors.surface }]}>
@@ -191,11 +191,11 @@ export default function FeedPost({
             usePoster={!!thumbnailUrl}
             onPlaybackStatusUpdate={status => setVideoStatus(status)}
             onError={(error) => {
-              console.error('[FeedPost] Video load error:', {
-                postId: post.id,
-                mediaUrl,
-                error: error.nativeEvent?.error || error
-              });
+              // console.error('[FeedPost] Video load error:', {
+              //   postId: post.id,
+              //   mediaUrl,
+              //   error: error.nativeEvent?.error || error
+              // });
             }}
           />
           {(!videoStatus?.isPlaying || videoStatus?.didJustFinish) && (
@@ -332,12 +332,12 @@ export default function FeedPost({
 
     // Image
     if (!mediaUrl) {
-      console.warn('[FeedPost] Image post missing URL:', {
-        postId: post.id,
-        type: post.type,
-        hasMedia: !!post.media,
-        media: post.media
-      });
+      // console.warn('[FeedPost] Image post missing URL:', {
+      //   postId: post.id,
+      //   type: post.type,
+      //   hasMedia: !!post.media,
+      //   media: post.media
+      // });
       return (
         <View style={[styles.mediaContainer, { aspectRatio, minHeight: 200, backgroundColor: colors.surface }]}>
           <View style={[styles.media, { backgroundColor: colors.surface, justifyContent: 'center', alignItems: 'center', minHeight: 200 }]}>
@@ -358,14 +358,14 @@ export default function FeedPost({
             contentFit="cover"
             transition={200}
             onError={(error) => {
-              console.error('[FeedPost] Image load error:', {
-                postId: post.id,
-                mediaUrl,
-                error: error.nativeEvent?.error || error
-              });
+              // console.error('[FeedPost] Image load error:', {
+              //   postId: post.id,
+              //   mediaUrl,
+              //   error: error.nativeEvent?.error || error
+              // });
             }}
             onLoad={() => {
-              console.log('[FeedPost] Image loaded successfully:', post.id);
+              // console.log('[FeedPost] Image loaded successfully:', post.id);
             }}
         />
       </View>
