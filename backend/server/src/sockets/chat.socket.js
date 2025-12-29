@@ -2,6 +2,8 @@ const jwt = require('jsonwebtoken');
 const messageService = require('../services/message.service');
 const queueService = require('../services/queue.service');
 const logger = require('../config/logger');
+const notificationService = require('../services/notification.service');
+const User = require('../models/User.model');
 
 const registerChatHandlers = (io) => {
   io.use((socket, next) => {
@@ -56,7 +58,10 @@ const registerChatHandlers = (io) => {
         const clientCount = roomClients ? roomClients.size : 0;
         
         if (clientCount === 0) {
-           // console.log(`[Socket Warning] Recipient ${recipientId} is NOT connected...`);
+           console.log(`[SOCKET] Recipient ${recipientId} is offline, sending push.`);
+           const sender = await User.findById(socket.userId).select('name');
+           const title = sender ? sender.name : 'New Message';
+           notificationService.sendPushNotifications(recipientId, title, content, { type: 'chat', senderId: socket.userId });
         }
 
         io.to(recipientId).emit('receive_message', message);
