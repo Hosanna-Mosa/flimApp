@@ -107,14 +107,39 @@ const sendPushNotifications = async (userId, title, body, data = {}) => {
         console.log('[PUSH][SEND] Expo API Response:', JSON.stringify(ticketChunk, null, 2));
         
         // Check for errors in tickets
+        // Check for tickets and handle cleanup
+        const invalidTokens = [];
+        
         ticketChunk.forEach((ticket, idx) => {
+          const token = chunk[idx].to; // Map ticket back to original token
+
           if (ticket.status === 'error') {
             console.error(`[PUSH][SEND] ❌ Ticket ${idx} error:`, ticket.message);
             console.error('[PUSH][SEND] Error details:', JSON.stringify(ticket.details));
+            
+            // AUTOMATIC CLEANUP: Remove token if invalid
+            if (ticket.details && (ticket.details.error === 'DeviceNotRegistered' || ticket.details.error === 'InvalidCredentials')) {
+              console.warn(`[PUSH][CLEANUP] ⚠️ Flagging invalid token for removal: ${token} (Reason: ${ticket.details.error})`);
+              invalidTokens.push(token);
+            }
           } else if (ticket.status === 'ok') {
             console.log(`[PUSH][SEND] ✅ Ticket ${idx} accepted - ID:`, ticket.id);
           }
         });
+
+        // Execute cleanup if valid/invalid tokens were found
+        if (invalidTokens.length > 0) {
+          try {
+            console.log(`[PUSH][CLEANUP] 🗑️ Removing ${invalidTokens.length} invalid token(s) from user ${userId}...`);
+            await User.updateOne(
+              { _id: userId },
+              { $pull: { pushTokens: { $in: invalidTokens } } }
+            );
+            console.log('[PUSH][CLEANUP] ✅ Cleanup complete');
+          } catch (cleanupError) {
+            console.error('[PUSH][CLEANUP] ❌ Failed to remove tokens:', cleanupError);
+          }
+        }
       } catch (error) {
         console.error(`[PUSH][SEND] ❌ Error sending chunk ${i + 1}:`, error.message);
         console.error('[PUSH][SEND] Error stack:', error.stack);
