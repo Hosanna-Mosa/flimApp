@@ -6,61 +6,127 @@ const { getIo } = require('../utils/socketStore');
 const expo = new Expo();
 
 const registerPushToken = async (userId, token) => {
+  console.log('[PUSH][SERVICE] Validating Expo push token...');
+  console.log('[PUSH][SERVICE] Token format:', token);
+  
   if (!Expo.isExpoPushToken(token)) {
-    console.error(`[Notification] Invalid Expo push token: ${token}`);
+    console.error('[PUSH][SERVICE] ❌ Invalid Expo push token format:', token);
     throw new Error('Invalid Expo push token');
   }
+  
+  console.log('[PUSH][SERVICE] ✅ Token format valid');
+  console.log('[PUSH][SERVICE] Looking up user:', userId);
 
   const user = await User.findById(userId);
   if (!user) {
+    console.error('[PUSH][SERVICE] ❌ User not found:', userId);
     throw new Error('User not found');
   }
+  
+  console.log('[PUSH][SERVICE] ✅ User found');
+  console.log('[PUSH][SERVICE] Existing tokens count:', user.pushTokens?.length || 0);
 
   // Add token if not exists
   if (!user.pushTokens.includes(token)) {
     user.pushTokens.push(token);
     await user.save();
-    console.log(`[Notification] Registered push token for user ${userId}`);
+    console.log('[PUSH][SERVICE] ✅ New token added and saved to database');
+    console.log('[PUSH][SERVICE] Total tokens for user:', user.pushTokens.length);
+  } else {
+    console.log('[PUSH][SERVICE] ℹ️  Token already exists - no update needed');
   }
   
   return { success: true };
 };
 
 const sendPushNotifications = async (userId, title, body, data = {}) => {
+  const timestamp = new Date().toISOString();
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log(`[PUSH][SEND] 🚀 Sending push notification at ${timestamp}`);
+  console.log('[PUSH][SEND] Target user ID:', userId);
+  console.log('[PUSH][SEND] Title:', title);
+  console.log('[PUSH][SEND] Body:', body);
+  console.log('[PUSH][SEND] Data:', JSON.stringify(data));
+  
   try {
     const user = await User.findById(userId);
-    if (!user || !user.pushTokens || user.pushTokens.length === 0) {
-      console.log(`[Notification] No push tokens for user ${userId}`);
+    
+    if (!user) {
+      console.error('[PUSH][SEND] ❌ User not found:', userId);
       return;
     }
+    
+    if (!user.pushTokens || user.pushTokens.length === 0) {
+      console.warn('[PUSH][SEND] ⚠️  No push tokens registered for user:', userId);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      return;
+    }
+    
+    console.log('[PUSH][SEND] Found', user.pushTokens.length, 'token(s) for user');
 
     const messages = [];
     for (const token of user.pushTokens) {
       if (!Expo.isExpoPushToken(token)) {
-        console.error(`[Notification] Invalid push token for user ${userId}: ${token}`);
+        console.error('[PUSH][SEND] ❌ Invalid token format (skipping):', token);
         continue;
       }
       
-      messages.push({
+      const message = {
         to: token,
         sound: 'default',
         title,
         body,
+        priority: 'high',
+        channelId: 'default',
         data,
-      });
+      };
+      
+      messages.push(message);
+      console.log('[PUSH][SEND] Message prepared for token:', token);
     }
+    
+    if (messages.length === 0) {
+      console.error('[PUSH][SEND] ❌ No valid messages to send');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      return;
+    }
+    
+    console.log('[PUSH][SEND] Total messages to send:', messages.length);
+    console.log('[PUSH][SEND] Message payload:', JSON.stringify(messages[0], null, 2));
 
     const chunks = expo.chunkPushNotifications(messages);
-    for (const chunk of chunks) {
+    console.log('[PUSH][SEND] Messages chunked into', chunks.length, 'batch(es)');
+    
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i];
+      console.log(`[PUSH][SEND] Sending chunk ${i + 1}/${chunks.length} (${chunk.length} message(s))...`);
+      
       try {
         const ticketChunk = await expo.sendPushNotificationsAsync(chunk);
-        console.log('[Notification] Push tickets:', ticketChunk);
+        console.log(`[PUSH][SEND] ✅ Chunk ${i + 1} sent successfully`);
+        console.log('[PUSH][SEND] Expo API Response:', JSON.stringify(ticketChunk, null, 2));
+        
+        // Check for errors in tickets
+        ticketChunk.forEach((ticket, idx) => {
+          if (ticket.status === 'error') {
+            console.error(`[PUSH][SEND] ❌ Ticket ${idx} error:`, ticket.message);
+            console.error('[PUSH][SEND] Error details:', JSON.stringify(ticket.details));
+          } else if (ticket.status === 'ok') {
+            console.log(`[PUSH][SEND] ✅ Ticket ${idx} accepted - ID:`, ticket.id);
+          }
+        });
       } catch (error) {
-        console.error('[Notification] Error sending push chunk:', error);
+        console.error(`[PUSH][SEND] ❌ Error sending chunk ${i + 1}:`, error.message);
+        console.error('[PUSH][SEND] Error stack:', error.stack);
       }
     }
+    
+    console.log('[PUSH][SEND] ✅ Push notification sending complete');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   } catch (error) {
-    console.error('[Notification] Error sending push notifications:', error);
+    console.error('[PUSH][SEND] ❌ Fatal error in sendPushNotifications:', error.message);
+    console.error('[PUSH][SEND] Error stack:', error.stack);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   }
 };
 

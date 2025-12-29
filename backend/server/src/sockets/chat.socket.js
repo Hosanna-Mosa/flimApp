@@ -53,21 +53,32 @@ const registerChatHandlers = (io) => {
           recipientId: recipientId,
           content,
         });
+        
+        console.log('[SOCKET][MESSAGE] Message created in database');
+        console.log('[SOCKET][MESSAGE] Checking recipient online status...');
 
         const roomClients = io.sockets.adapter.rooms.get(recipientId);
         const clientCount = roomClients ? roomClients.size : 0;
         
+        console.log('[SOCKET][MESSAGE] Recipient ID:', recipientId);
+        console.log('[SOCKET][MESSAGE] Connected clients:', clientCount);
+        
         if (clientCount === 0) {
-           console.log(`[SOCKET] Recipient ${recipientId} is offline, sending push.`);
+           console.log('[SOCKET][MESSAGE] ⚠️  Recipient is OFFLINE - triggering push notification');
            const sender = await User.findById(socket.userId).select('name');
            const title = sender ? sender.name : 'New Message';
+           console.log('[SOCKET][MESSAGE] Sender name:', title);
+           console.log('[SOCKET][MESSAGE] Message content:', content);
+           console.log('[SOCKET][MESSAGE] Calling sendPushNotifications...');
            notificationService.sendPushNotifications(recipientId, title, content, { type: 'chat', senderId: socket.userId });
+        } else {
+           console.log('[SOCKET][MESSAGE] ✅ Recipient is ONLINE - push notification NOT needed');
         }
 
         io.to(recipientId).emit('receive_message', message);
         socket.emit('message_sent', message);
       } catch (error) {
-        console.error('[SOCKET] Error in send_message:', error);
+        console.error('[SOCKET][MESSAGE] ❌ Error in send_message:', error);
       }
     });
 
