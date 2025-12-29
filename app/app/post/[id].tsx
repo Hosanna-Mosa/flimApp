@@ -94,12 +94,18 @@ export default function PostDetailScreen() {
         api.getComments(id, 0, 50, 'recent', token || undefined) as any,
       ]);
       
-      // console.log('[PostDetail] Post data received:', {
-      //   isLiked: postData.isLiked,
-      //   likesCount: postData.engagement?.likesCount,
-      //   postId: postData._id
-      // });
-      // console.error('[PostDetail] Error loading:', error);
+      // Set post data
+      setPost(postData);
+      
+      // Set like status and count from post data
+      setIsLiked(postData.isLiked || false);
+      setLikesCount(postData.engagement?.likesCount || 0);
+      
+      // Set comments
+      setComments(commentsData.data || commentsData || []);
+      
+    } catch (error) {
+      console.error('[PostDetail] Error loading:', error);
       Alert.alert('Error', 'Failed to load post');
     } finally {
       setLoading(false);
