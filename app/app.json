@@ -71,7 +71,7 @@
       ]
     ],
     "extra": {
-      "apiUrl": "http://192.168.1.3:8000",
+      "apiUrl": "https://api2.brelis.in",
       "router": {},
       "expo-navigation-bar": {
         "position": "absolute",
