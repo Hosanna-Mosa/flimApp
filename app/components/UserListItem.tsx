@@ -51,7 +51,7 @@ export default function UserListItem({ user, onPress }: UserListItemProps) {
             <Text style={[styles.name, { color: colors.text }]}>{user.name}</Text>
           </TouchableOpacity>
           {user.isVerified && (
-            <BadgeCheck size={16} color={colors.primary} fill="transparent" style={styles.badge} />
+            <BadgeCheck size={16} color="#FFFFFF" fill={colors.primary} style={styles.badge} />
           )}
         </View>
         

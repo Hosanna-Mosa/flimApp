@@ -17,6 +17,9 @@ const commentRoutes = require('./routes/comment.routes');
 const shareRoutes = require('./routes/share.routes');
 const feedRoutes = require('./routes/feed.routes');
 const mediaRoutes = require('./routes/media.routes');
+const adminAuthRoutes = require('./routes/adminAuth.routes');
+const adminVerificationRoutes = require('./routes/adminVerification.routes');
+const verificationRoutes = require('./routes/verification.routes');
 
 const app = express();
 
@@ -48,6 +51,9 @@ app.use('/api', followRoutes);       // /api/users/:id/follow, etc.
 app.use('/api', commentRoutes);      // /api/posts/:id/comments, etc.
 app.use('/api', shareRoutes);        // /api/posts/:id/share, etc.
 app.use('/api/feed', feedRoutes);    // /api/feed, /api/feed/trending, etc.
+app.use('/admin/auth', adminAuthRoutes);
+app.use('/admin/verification', adminVerificationRoutes);
+app.use('/verification', verificationRoutes);
 
 app.use((req, res) => res.status(404).json({ success: false, message: 'Not found' }));
 app.use(errorHandler);

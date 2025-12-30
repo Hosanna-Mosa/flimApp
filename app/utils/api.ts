@@ -708,6 +708,19 @@ export const apiGetUserFeed = (
 export const apiInvalidateFeed = (token?: string) =>
   request('/api/feed/invalidate', { method: 'POST', token });
 
+// Verification
+export const apiSubmitVerificationRequest = (
+  payload: {
+    verificationType: string;
+    reason: string;
+    documents: Array<{ type: string; url: string; name: string }>;
+  },
+  token?: string
+) => request('/verification/request', { method: 'POST', body: payload, token });
+
+export const apiGetVerificationStatus = (token?: string) =>
+  request('/verification/status', { token });
+
 export const api = {
   login: apiLogin,
   verifyOtp: apiVerifyOtp,
@@ -807,6 +820,8 @@ export const api = {
   getIndustryFeed: apiGetIndustryFeed,
   getUserFeed: apiGetUserFeed,
   invalidateFeed: apiInvalidateFeed,
+  submitVerificationRequest: apiSubmitVerificationRequest,
+  getVerificationStatus: apiGetVerificationStatus,
 };
 
 export default api;

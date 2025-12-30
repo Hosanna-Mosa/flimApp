@@ -11,6 +11,8 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { 
   Select,
   SelectContent,
@@ -27,127 +29,31 @@ import { Eye, ClipboardList, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
-// Mock data for demo
-const mockRequests: VerificationRequest[] = [
-  {
-    id: '1',
-    userId: 'u1',
-    user: {
-      id: 'u1',
-      name: 'Sarah Johnson',
-      email: 'sarah@example.com',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop',
-      role: 'CREATOR',
-      bio: 'Digital content creator and lifestyle influencer',
-      isVerified: false,
-      createdAt: '2024-01-15T10:00:00Z',
-    },
-    verificationType: 'CREATOR',
-    status: 'PENDING',
-    reason: 'I have 500k followers on Instagram and create daily lifestyle content.',
-    documents: [
-      { id: 'd1', type: 'SOCIAL_LINK', url: 'https://instagram.com/sarahjohnson', name: 'Instagram Profile' }
-    ],
-    adminNotes: null,
-    submittedAt: '2024-12-28T14:30:00Z',
-    reviewedAt: null,
-    reviewedBy: null,
-  },
-  {
-    id: '2',
-    userId: 'u2',
-    user: {
-      id: 'u2',
-      name: 'Tech Gadgets Inc',
-      email: 'contact@techgadgets.com',
-      avatar: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=100&h=100&fit=crop',
-      role: 'BRAND',
-      bio: 'Leading tech accessories brand',
-      isVerified: false,
-      createdAt: '2024-02-20T10:00:00Z',
-    },
-    verificationType: 'BRAND',
-    status: 'PENDING',
-    reason: 'We are an established tech brand with official business registration.',
-    documents: [
-      { id: 'd2', type: 'ID_DOCUMENT', url: '#', name: 'Business Registration' }
-    ],
-    adminNotes: null,
-    submittedAt: '2024-12-27T09:15:00Z',
-    reviewedAt: null,
-    reviewedBy: null,
-  },
-  {
-    id: '3',
-    userId: 'u3',
-    user: {
-      id: 'u3',
-      name: 'Michael Chen',
-      email: 'michael@news.com',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
-      role: 'CREATOR',
-      bio: 'Senior journalist at Daily News',
-      isVerified: true,
-      createdAt: '2024-01-10T10:00:00Z',
-    },
-    verificationType: 'JOURNALIST',
-    status: 'APPROVED',
-    reason: 'I am a senior journalist at Daily News covering tech and business.',
-    documents: [
-      { id: 'd3', type: 'PROOF_OF_WORK', url: '#', name: 'Press ID Card' }
-    ],
-    adminNotes: 'Verified press credentials.',
-    submittedAt: '2024-12-20T11:00:00Z',
-    reviewedAt: '2024-12-21T15:30:00Z',
-    reviewedBy: 'admin1',
-  },
-  {
-    id: '4',
-    userId: 'u4',
-    user: {
-      id: 'u4',
-      name: 'Alex Rivera',
-      email: 'alex@example.com',
-      avatar: null,
-      role: 'USER',
-      bio: 'Aspiring influencer',
-      isVerified: false,
-      createdAt: '2024-03-01T10:00:00Z',
-    },
-    verificationType: 'PUBLIC_FIGURE',
-    status: 'REJECTED',
-    reason: 'I want to be verified because I am famous.',
-    documents: [],
-    adminNotes: 'Insufficient documentation provided.',
-    submittedAt: '2024-12-22T16:45:00Z',
-    reviewedAt: '2024-12-23T10:00:00Z',
-    reviewedBy: 'admin1',
-  },
-];
-
 export default function VerificationRequestsPage() {
   const [requests, setRequests] = useState<VerificationRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [nameFilter, setNameFilter] = useState('');
+  const [roleFilter, setRoleFilter] = useState('ALL');
+  const [phoneFilter, setPhoneFilter] = useState('');
+  const [industryFilter, setIndustryFilter] = useState('ALL');
   const navigate = useNavigate();
 
   const fetchRequests = async () => {
     setIsLoading(true);
     try {
-      // In production, use the API
-      // const response = await verificationApi.getRequests(currentPage, 10, statusFilter);
-      // setRequests(response.data);
-      // setTotalPages(response.totalPages);
-      
-      // Demo: Use mock data with filtering
-      let filtered = mockRequests;
-      if (statusFilter !== 'ALL') {
-        filtered = mockRequests.filter(r => r.status === statusFilter);
-      }
-      setRequests(filtered);
-      setTotalPages(1);
+      const response = await verificationApi.getRequests(currentPage, 10, {
+        status: statusFilter,
+        name: nameFilter,
+        role: roleFilter !== 'ALL' ? roleFilter : undefined,
+        phone: phoneFilter,
+        industry: industryFilter !== 'ALL' ? industryFilter : undefined
+      });
+
+      setRequests(response.data);
+      setTotalPages(response.totalPages);
     } catch (error) {
       toast.error('Failed to load verification requests');
     } finally {
@@ -157,7 +63,15 @@ export default function VerificationRequestsPage() {
 
   useEffect(() => {
     fetchRequests();
-  }, [currentPage, statusFilter]);
+  }, [currentPage, statusFilter, roleFilter, industryFilter]);
+
+  // Debounced effect for text inputs
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchRequests();
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [nameFilter, phoneFilter]);
 
   const handleViewRequest = (id: string) => {
     navigate(`/requests/${id}`);
@@ -166,28 +80,111 @@ export default function VerificationRequestsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Verification Requests</h1>
-          <p className="text-muted-foreground mt-1">
-            Review and manage user verification applications
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">All Status</SelectItem>
-              <SelectItem value="PENDING">Pending</SelectItem>
-              <SelectItem value="APPROVED">Approved</SelectItem>
-              <SelectItem value="REJECTED">Rejected</SelectItem>
-            </SelectContent>
-          </Select>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Verification Requests</h1>
+            <p className="text-muted-foreground mt-1">
+              Review and manage user verification applications
+            </p>
+          </div>
           <Button variant="outline" size="icon" onClick={fetchRequests}>
             <RefreshCw className="h-4 w-4" />
           </Button>
+        </div>
+
+        {/* Filters Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 bg-card p-4 rounded-lg border border-border">
+          <div className="space-y-1.5">
+            <Label className="text-xs uppercase text-muted-foreground font-semibold">Status</Label>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Status</SelectItem>
+                <SelectItem value="PENDING">Pending</SelectItem>
+                <SelectItem value="APPROVED">Approved</SelectItem>
+                <SelectItem value="REJECTED">Rejected</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs uppercase text-muted-foreground font-semibold">Name</Label>
+            <Input 
+              placeholder="Search name..." 
+              value={nameFilter}
+              onChange={(e) => setNameFilter(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs uppercase text-muted-foreground font-semibold">Phone</Label>
+            <Input 
+              placeholder="Search phone..." 
+              value={phoneFilter}
+              onChange={(e) => setPhoneFilter(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs uppercase text-muted-foreground font-semibold">Role</Label>
+            <Select value={roleFilter} onValueChange={setRoleFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Roles</SelectItem>
+                <SelectItem value="actor">Actor</SelectItem>
+                <SelectItem value="director">Director</SelectItem>
+                <SelectItem value="producer">Producer</SelectItem>
+                <SelectItem value="production_manager">Production Manager</SelectItem>
+                <SelectItem value="casting_artists">Casting / Artists</SelectItem>
+                <SelectItem value="story_screenplay_writer">Story / Screenplay Writer</SelectItem>
+                <SelectItem value="dialogue_writer">Dialogue Writer</SelectItem>
+                <SelectItem value="music_director_composer">Music Director / Composer</SelectItem>
+                <SelectItem value="lyrics_writer">Lyrics Writer</SelectItem>
+                <SelectItem value="cinematographer_dop">Cinematographer (DOP)</SelectItem>
+                <SelectItem value="art_director">Art Director</SelectItem>
+                <SelectItem value="makeup_department">Make-up Department</SelectItem>
+                <SelectItem value="costume_designer">Costume Designer</SelectItem>
+                <SelectItem value="choreographer">Choreographer</SelectItem>
+                <SelectItem value="stunt_master_action_director">Stunt Master / Action Director</SelectItem>
+                <SelectItem value="editor">Editor</SelectItem>
+                <SelectItem value="sound_designer_engineer">Sound Designer / Sound Engineer</SelectItem>
+                <SelectItem value="playback_singers">Playback Singers</SelectItem>
+                <SelectItem value="dubbing_artists">Dubbing Artists</SelectItem>
+                <SelectItem value="vfx_cgi_department">VFX / CGI Department</SelectItem>
+                <SelectItem value="lighting_technicians">Lighting Technicians</SelectItem>
+                <SelectItem value="camera_assistants_focus_pullers">Camera Assistants / Focus Pullers</SelectItem>
+                <SelectItem value="set_designers_workers">Set Designers / Set Workers</SelectItem>
+                <SelectItem value="production_assistants_ad_team">Production Assistants / AD Team</SelectItem>
+                <SelectItem value="publicity_promotion_pro">Publicity & Promotion / PRO</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs uppercase text-muted-foreground font-semibold">Industry</Label>
+            <Select value={industryFilter} onValueChange={setIndustryFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Industry" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Industries</SelectItem>
+                <SelectItem value="tollywood">Tollywood</SelectItem>
+                <SelectItem value="bollywood">Bollywood</SelectItem>
+                <SelectItem value="kollywood">Kollywood</SelectItem>
+                <SelectItem value="mollywood">Mollywood</SelectItem>
+                <SelectItem value="sandalwood">Sandalwood</SelectItem>
+                <SelectItem value="punjabi">Punjabi</SelectItem>
+                <SelectItem value="bengali">Bengali</SelectItem>
+                <SelectItem value="bhojpuri">Bhojpuri</SelectItem>
+                <SelectItem value="marathi">Marathi</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 

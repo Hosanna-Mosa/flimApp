@@ -88,45 +88,14 @@ export default function HomeScreen() {
     }
   }, [user, token]);
 
-  // Refresh following list when screen comes into focus
-  useFocusEffect(
-    useCallback(() => {
-      fetchFollowingList();
-    }, [fetchFollowingList])
-  );
-
-  // Refresh feed when screen comes into focus (to update comment counts, etc.)
-  useFocusEffect(
-    useCallback(() => {
-      // Only reload if we already have posts (not initial load)
-      if (posts.length > 0 && token) {
-        // console.log('[Home] Screen focused - refreshing feed data');
-        loadFeed(0, false);
-      }
-    }, [posts.length, token])
-  );
-
-  // Load feed and following list when token changes (Initial load)
-  useEffect(() => {
-    if (!authLoading && token && user) {
-      loadData();
-    }
-  }, [token, authLoading, user]);
-
-  const loadData = async () => {
-    setLoading(true);
-    await Promise.all([fetchFollowingList(), loadFeed()]);
-    setLoading(false);
-  };
-
-  const loadFeed = async (pageNumber = 0, append = false) => {
+  const loadFeed = useCallback(async (pageNumber = 0, append = false) => {
     if (!token) return;
 
     try {
       console.log(`[Home] Loading feed page ${pageNumber}...`);
       const result = await api.getFeed(pageNumber, 20, 'hybrid', 7, token) as any;
 
-      // Handle different response structures: result, result.data, or result.data.data
+      // ... existing mapping logic ...
       let feedItems = [];
       if (Array.isArray(result)) {
         feedItems = result;
@@ -136,10 +105,7 @@ export default function HomeScreen() {
         feedItems = result.data.data;
       }
       
-      console.log(`[Home] Raw feed items count: ${feedItems.length}`);
-
       if (feedItems.length > 0) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const mappedPosts = feedItems.map((p: any) => ({
           id: p._id || p.id,
           userId: p.author?._id || p.author?.id || p.userId,
@@ -170,16 +136,13 @@ export default function HomeScreen() {
         } else {
           setPosts(mappedPosts);
         }
-        console.log(`[Home] Successfully mapped and set ${mappedPosts.length} posts`);
       } else {
-        console.log('[Home] No feed items returned from API');
         if (!append) setPosts([]);
         setHasMore(false);
       }
     } catch (error) {
-      // console.error('[Home] Error loading feed:', error);
-      // Fallback to legacy feed endpoint if algorithm feed fails
-      if (!append) {
+       // Legacy fallback...
+       if (!append) {
         try {
            const legacyResult = await api.feed(token) as any;
            const legacyItems = Array.isArray(legacyResult) ? legacyResult : (legacyResult.data || []);
@@ -210,13 +173,43 @@ export default function HomeScreen() {
               setHasMore(false);
               return;
            }
-        } catch (legacyError) {
-           // console.error('[Home] Legacy feed fallback also failed:', legacyError);
-        }
+        } catch (err) {}
       }
-      Alert.alert('Error', 'Failed to load feed. Please check your connection.');
+      Alert.alert('Error', 'Failed to load feed');
     }
+  }, [token]);
+
+  const loadData = async () => {
+    setLoading(true);
+    await Promise.all([fetchFollowingList(), loadFeed()]);
+    setLoading(false);
   };
+
+  // Reload data every time the screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      fetchFollowingList();
+    }, [fetchFollowingList])
+  );
+
+  // Refresh feed when screen comes into focus (to update comment counts, etc.)
+  useFocusEffect(
+    useCallback(() => {
+      // Only reload if we already have posts (not initial load)
+      if (token) {
+        // We can check if we have posts, but we shouldn't depend on posts.length
+        // because it changes after loading, causing a loop.
+        loadFeed(0, false);
+      }
+    }, [token, loadFeed])
+  );
+
+  // Load feed and following list when token changes (Initial load)
+  useEffect(() => {
+    if (!authLoading && token && user) {
+      loadData();
+    }
+  }, [token, authLoading, user]);
 
   const onRefresh = async () => {
     setRefreshing(true);

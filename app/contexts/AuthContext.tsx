@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import createContextHook from '@nkzw/create-context-hook';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Platform, PermissionsAndroid } from 'react-native';
 import { User, UserRole, Industry } from '@/types';
 import api from '@/utils/api';
@@ -147,6 +147,16 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     }
   };
 
+  const refreshUser = useCallback(async () => {
+    if (!authState.token) return;
+    try {
+      const updatedUser = await api.me(authState.token);
+      await _updateUser(updatedUser as User);
+    } catch (err) {
+      console.error('Failed to refresh user:', err);
+    }
+  }, [authState.token]);
+
   const updateUserRoles = async (roles: UserRole[]) => {
     await updateProfile({ roles });
   };
@@ -238,5 +248,6 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     updateProfile,
     updateUserRoles,
     updateUserIndustries,
+    refreshUser,
   };
 });

@@ -43,7 +43,7 @@ interface UserStats {
 export default function ProfileScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { user, token } = useAuth();
+  const { user, token, refreshUser } = useAuth();
   const [selectedFilter, setSelectedFilter] = useState<ContentType | 'all'>('all');
   const [posts, setPosts] = useState<UserPost[]>([]);
   const [stats, setStats] = useState<UserStats>({ followersCount: 0, followingCount: 0, postsCount: 0 });
@@ -54,51 +54,38 @@ export default function ProfileScreen() {
 
 
 
+  const userId = (user as any)?._id || (user as any)?.id || user?.id;
+
   const loadUserData = useCallback(async () => {
+    if (!userId || !token) return;
+
     try {
       setLoading(true);
-
-      // Get user ID - try multiple sources
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const userId = (user as any)?._id || (user as any)?.id || user?.id;
-
-      if (!userId) {
-        // console.error('[Profile] No user ID found');
-        setLoading(false);
-        return;
-      }
 
       // console.log('[Profile] Loading data for user:', userId);
 
       // Fetch user data and posts
       const [userData, postsData] = await Promise.all([
-        api.user(userId, token || undefined).catch(err => {
+        api.user(userId, token).catch(err => {
           // console.error('[Profile] Error fetching user:', err);
           return null;
         }),
-        api.getUserFeed(userId, 0, 100, token || undefined).catch(err => {
+        api.getUserFeed(userId, 0, 100, token).catch(err => {
           // console.error('[Profile] Error fetching posts:', err);
           return { data: [] };
         }),
       ]);
 
-      // console.log('[Profile] User data:', userData);
-      // console.log('[Profile] Posts data:', postsData);
-
       // Update stats if available
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const userInfo = userData as any;
       if (userInfo?.stats) {
-        // console.log('[Profile] Setting stats:', userInfo.stats);
         setStats(userInfo.stats);
-      } else {
-        // console.log('[Profile] No stats in user data, using defaults');
       }
 
       // Update posts
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const postsArray = (postsData as any)?.data || [];
-      // console.log('[Profile] Setting posts:', postsArray.length);
       setPosts(postsArray);
 
       // If no stats from API, use post count
@@ -114,15 +101,13 @@ export default function ProfileScreen() {
     } finally {
       setLoading(false);
     }
-  }, [user, token]);
+  }, [userId, token]);
 
   // Reload data when screen comes into focus (e.g., after editing profile)
   useFocusEffect(
     useCallback(() => {
-      if (user && token) {
-        loadUserData();
-      }
-    }, [user, token])
+      loadUserData();
+    }, [loadUserData])
   );
 
   const filteredPosts = selectedFilter === 'all'
@@ -175,7 +160,7 @@ export default function ProfileScreen() {
               {user.name || 'Your Name'}
             </Text>
             {user.isVerified && (
-              <BadgeCheck size={24} color={colors.primary} fill="transparent" />
+              <BadgeCheck size={24} color="#FFFFFF" fill={colors.primary} />
             )}
           </View>
           <View style={styles.rolesContainer}>

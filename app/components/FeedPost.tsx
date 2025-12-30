@@ -382,7 +382,7 @@ export default function FeedPost({
               <TouchableOpacity onPress={() => router.push({ pathname: '/user/[id]', params: { id: post.user.id } })}>
                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                     <Text style={[styles.userName, { color: colors.text }]}>{post.user.name}</Text>
-                    {post.user.isVerified && <BadgeCheck size={16} color={primaryColor} fill="transparent" />}
+                    {post.user.isVerified && <BadgeCheck size={16} color="#FFFFFF" fill={primaryColor} />}
                  </View>
               </TouchableOpacity>
               <Text style={[styles.role, { color: colors.textSecondary }]}>{post.user.roles?.[0] || 'Member'}</Text>

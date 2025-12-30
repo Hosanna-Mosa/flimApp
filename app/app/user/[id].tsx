@@ -310,7 +310,7 @@ export default function PublicProfileScreen() {
                             {user.name}
                         </Text>
                         {user.isVerified && (
-                            <BadgeCheck size={24} color={colors.primary} fill="transparent" />
+                            <BadgeCheck size={24} color="#FFFFFF" fill={colors.primary} />
                         )}
                     </View>
 
