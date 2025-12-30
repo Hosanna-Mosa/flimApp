@@ -10,6 +10,15 @@ const createPost = async (req, res, next) => {
   }
 };
 
+const updatePost = async (req, res, next) => {
+  try {
+    const post = await postService.updatePost(req.params.id, req.user.id, req.body);
+    return success(res, post);
+  } catch (err) {
+    return next(err);
+  }
+};
+
 const deletePost = async (req, res, next) => {
   try {
     const deleted = await postService.deletePost(req.params.id, req.user.id);
@@ -70,5 +79,6 @@ module.exports = {
   getTrending,
   getUserPosts,
   getPost,
+  updatePost,
 };
 

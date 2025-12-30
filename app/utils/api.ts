@@ -28,7 +28,7 @@ const request = async <T>(
   path: string,
   { method = 'GET', body, token, headers }: RequestOptions = {}
 ): Promise<T> => {
-  // console.log(`[API Request] ${method} ${path}`, body ? JSON.stringify(body) : '');
+  console.log(`[API Request] ${method} ${path}`, body ? JSON.stringify(body) : '');
 
   try {
     const res = await fetch(`${API_BASE}${path}`, {
@@ -37,7 +37,7 @@ const request = async <T>(
       body: body ? JSON.stringify(body) : undefined,
     });
 
-    // console.log(`[API Response Status] ${res.status} ${res.url}`);
+    console.log(`[API Response Status] ${res.status} ${res.url}`);
 
     const json = await res.json().catch(() => ({}));
     if (!res.ok) {
@@ -45,7 +45,7 @@ const request = async <T>(
       // console.error(`[API Error] ${res.status}: ${message}`);
       throw new Error(message);
     }
-    // console.log(`[API Response Data]`, JSON.stringify(json.data ?? json, null, 2));
+    console.log(`[API Response Data] ${path}`, JSON.stringify(json.data ?? json, null, 2));
     return json.data ?? json;
   } catch (error) {
     // console.error(`[API Network Error] ${path}`, error);
@@ -187,6 +187,17 @@ export const apiCreatePost = (
 
 export const apiDeletePost = (id: string, token?: string) =>
   request(`/posts/${id}`, { method: 'DELETE', token });
+
+export const apiUpdatePost = (
+  id: string,
+  payload: {
+    caption?: string;
+    industries?: string[];
+    roles?: string[];
+    visibility?: 'public' | 'followers' | 'private';
+  },
+  token?: string
+) => request(`/posts/${id}`, { method: 'PUT', body: payload, token });
 
 export const apiFeed = (token?: string) => request('/posts/feed', { token });
 
@@ -709,6 +720,7 @@ export const api = {
   getMediaSignature: apiGetMediaSignature,
   validateMedia: apiValidateMedia,
   createPost: apiCreatePost,
+  updatePost: apiUpdatePost,
   deletePost: apiDeletePost,
   getPost: apiGetPost,
   feed: apiFeed,

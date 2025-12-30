@@ -33,6 +33,21 @@ router.get('/feed', auth, postController.getFeed);
 router.get('/trending', auth, postController.getTrending);
 router.get('/user/:id', auth, postController.getUserPosts);
 router.get('/:id', auth, postController.getPost);
+router.put(
+  '/:id',
+  auth,
+  validate(
+    Joi.object({
+      body: Joi.object({
+        caption: Joi.string().max(1000).allow('').optional(),
+        industries: Joi.array().items(Joi.string()).optional(),
+        roles: Joi.array().items(Joi.string()).optional(),
+        visibility: Joi.string().valid('public', 'followers', 'private').optional(),
+      }).required(),
+    })
+  ),
+  postController.updatePost
+);
 router.delete('/:id', auth, postController.deletePost);
 
 module.exports = router;

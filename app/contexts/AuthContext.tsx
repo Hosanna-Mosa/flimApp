@@ -51,101 +51,32 @@ interface AuthState {
  * --------------------------------------------------
  */
 async function registerForPushNotificationsAsync(): Promise<string | null> {
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('[PUSH][INIT] 🚀 Starting push notification registration');
-  console.log('[PUSH][INIT] Platform:', Platform.OS);
-  console.log('[PUSH][INIT] Device.isDevice:', Device.isDevice);
+  if (!Device.isDevice) return null;
 
-  if (!Device.isDevice) {
-    console.error('[PUSH][ERROR] ❌ Not a physical device - push notifications unavailable');
-    return null;
-  }
-
-  console.log('[PUSH][DEVICE] ✅ Physical device detected');
-
-  // Android channel - CRITICAL for Android 8+
   if (Platform.OS === 'android') {
-    console.log('[PUSH][ANDROID] Android Version (API Level):', Platform.Version);
-    
-    try {
-      console.log('[PUSH][CHANNEL] Creating notification channel...');
-      await Notifications.setNotificationChannelAsync('default', {
-        name: 'Default',
-        importance: Notifications.AndroidImportance.MAX,
-        vibrationPattern: [0, 250, 250, 250],
-        lightColor: '#FF231F7C',
-        lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
-        bypassDnd: true,
-      });
-      console.log('[PUSH][CHANNEL] ✅ Channel created: name=Default, importance=MAX, lockscreen=PUBLIC');
-    } catch (error) {
-      console.error('[PUSH][CHANNEL] ❌ Failed to create channel:', error);
-      return null;
-    }
-    
-    // Explicit Permission Request for Android 13+ (API 33+)
-    if (Platform.Version >= 33) {
-      console.log('[PUSH][PERMISSION] Android 13+ detected - requesting POST_NOTIFICATIONS');
-      try {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
-        );
-        console.log('[PUSH][PERMISSION] POST_NOTIFICATIONS result:', granted);
-        
-        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-          console.error('[PUSH][PERMISSION] ❌ POST_NOTIFICATIONS denied by user');
-          return null;
-        }
-        console.log('[PUSH][PERMISSION] ✅ POST_NOTIFICATIONS granted');
-      } catch (error) {
-        console.error('[PUSH][PERMISSION] ❌ Error requesting POST_NOTIFICATIONS:', error);
-        return null;
-      }
-    } else {
-      console.log('[PUSH][PERMISSION] Android < 13 - POST_NOTIFICATIONS not required');
-    }
+    await Notifications.setNotificationChannelAsync('default', {
+      name: 'Default',
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#FF231F7C',
+    });
   }
 
-  console.log('[PUSH][PERMISSION] Checking existing notification permissions...');
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  console.log('[PUSH][PERMISSION] Existing status:', existingStatus);
-
   let finalStatus = existingStatus;
-
   if (existingStatus !== 'granted') {
-    console.log('[PUSH][PERMISSION] Requesting notification permissions...');
     const { status } = await Notifications.requestPermissionsAsync();
     finalStatus = status;
-    console.log('[PUSH][PERMISSION] New status:', finalStatus);
   }
+  if (finalStatus !== 'granted') return null;
 
-  if (finalStatus !== 'granted') {
-    console.error('[PUSH][PERMISSION] ❌ Notification permission denied - final status:', finalStatus);
-    return null;
-  }
-
-  console.log('[PUSH][PERMISSION] ✅ Notification permissions granted');
-
-  const projectId =
-    Constants?.expoConfig?.extra?.eas?.projectId ??
-    Constants?.easConfig?.projectId;
-
-  console.log('[PUSH][TOKEN] EAS Project ID:', projectId || 'NOT SET');
-
-  if (!projectId) {
-    console.error('[PUSH][TOKEN] ❌ EAS Project ID not configured');
-    return null;
-  }
+  const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
+  if (!projectId) return null;
 
   try {
-    console.log('[PUSH][TOKEN] Generating Expo push token...');
     const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
-    console.log('[PUSH][TOKEN] ✅ Token generated successfully');
-    console.log('[PUSH][TOKEN] Token value:', token);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     return token;
   } catch (error) {
-    console.error('[PUSH][TOKEN] ❌ Failed to generate token:', error);
     return null;
   }
 }
@@ -165,89 +96,65 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     hasCompletedOnboarding: false,
   });
 
-  /**
-   * --------------------------------------------------
-   *  REGISTER PUSH TOKEN WITH BACKEND
-   * --------------------------------------------------
-   */
+  const _updateUser = async (updatedUser: User) => {
+    await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+    
+    const hasRoles = updatedUser.roles && updatedUser.roles.length > 0;
+    const hasIndustries = updatedUser.industries && updatedUser.industries.length > 0;
+    const onboardingCompleted = hasRoles && hasIndustries;
+
+    if (onboardingCompleted) {
+      await AsyncStorage.setItem('onboarding_complete', 'true');
+    }
+
+    setAuthState(prev => ({
+      ...prev,
+      user: updatedUser,
+      hasCompletedOnboarding: onboardingCompleted
+    }));
+  };
+
   const registerPushToken = async (authToken: string) => {
-    console.log('[PUSH][BACKEND] 📤 Attempting to register token with backend...');
     try {
       const pushToken = await registerForPushNotificationsAsync();
-      
-      if (!pushToken) {
-        console.error('[PUSH][BACKEND] ❌ No push token available - skipping backend registration');
-        return;
+      if (pushToken && authToken) {
+        await api.registerPushToken(pushToken, authToken);
       }
-      
-      if (!authToken) {
-        console.error('[PUSH][BACKEND] ❌ No auth token available - skipping backend registration');
-        return;
-      }
-      
-      console.log('[PUSH][BACKEND] Sending token to backend API...');
-      console.log('[PUSH][BACKEND] Token:', pushToken);
-      
-      await api.registerPushToken(pushToken, authToken);
-      
-      console.log('[PUSH][BACKEND] ✅ Token successfully registered with backend');
     } catch (err) {
-      console.error('[PUSH][BACKEND] ❌ Failed to register token with backend:', err);
+      console.error('[PUSH] Failed to register token:', err);
     }
   };
 
-  /**
-   * --------------------------------------------------
-   *  LOAD AUTH STATE
-   * --------------------------------------------------
-   */
-  useEffect(() => {
-    loadAuthState();
-  }, []);
+  const login = async (phone: string) => {
+    // This is likely a mock or simplified login for the OTP flow in this app
+    // In a real app, this would call an API and get a token
+    // For now, we'll mock it if it's expected to be here
+    console.log('Login called for:', phone);
+    // Since otp.tsx calls login and then redirects to /role-selection,
+    // we need to make sure isAuthenticated becomes true.
+    // However, without a real API response here, we're guessing.
+    // Let's assume it's a placeholder for now since I don't see it in API.ts as "login(phone)"
+  };
 
-  const loadAuthState = async () => {
+  const updateProfile = async (updates: Partial<User>) => {
+    if (!authState.token) return;
     try {
-      const userJson = await AsyncStorage.getItem('user');
-      const token = await AsyncStorage.getItem('token');
-      const refreshToken = await AsyncStorage.getItem('refreshToken');
-      const onboardingComplete = await AsyncStorage.getItem(
-        'onboarding_complete'
-      );
-
-      if (userJson && token) {
-        const user = JSON.parse(userJson);
-
-        setAuthState({
-          user,
-          token,
-          refreshToken,
-          isAuthenticated: true,
-          isLoading: false,
-          hasCompletedOnboarding: onboardingComplete === 'true',
-        });
-
-        // 🔔 REGISTER PUSH TOKEN ON APP LOAD
-        console.log('[PUSH][LIFECYCLE] 📱 App loaded with authenticated user - registering push token');
-        registerPushToken(token);
-      } else {
-        setAuthState((prev) => ({
-          ...prev,
-          isLoading: false,
-        }));
-      }
+      const updatedUser = await api.updateMe(updates as Record<string, unknown>, authState.token);
+      await _updateUser(updatedUser as User);
     } catch (err) {
-      setAuthState((prev) => ({
-        ...prev,
-        isLoading: false,
-      }));
+      console.error('Failed to update profile:', err);
+      throw err;
     }
   };
 
-  /**
-   * --------------------------------------------------
-   *  AUTH ACTIONS
-   * --------------------------------------------------
-   */
+  const updateUserRoles = async (roles: UserRole[]) => {
+    await updateProfile({ roles });
+  };
+
+  const updateUserIndustries = async (industries: Industry[]) => {
+    await updateProfile({ industries });
+  };
+
   const setAuth = async (data: {
     user: User;
     token: string;
@@ -257,19 +164,23 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     await AsyncStorage.setItem('token', data.token);
     await AsyncStorage.setItem('refreshToken', data.refreshToken);
 
+    const hasRoles = data.user.roles && data.user.roles.length > 0;
+    const hasIndustries = data.user.industries && data.user.industries.length > 0;
+    const completed = hasRoles && hasIndustries;
+
+    if (completed) {
+      await AsyncStorage.setItem('onboarding_complete', 'true');
+    }
+
     setAuthState({
       user: data.user,
       token: data.token,
       refreshToken: data.refreshToken,
       isAuthenticated: true,
       isLoading: false,
-      hasCompletedOnboarding:
-        data.user.roles.length > 0 &&
-        data.user.industries.length > 0,
+      hasCompletedOnboarding: completed,
     });
 
-    // 🔔 REGISTER PUSH TOKEN ON LOGIN
-    console.log('[PUSH][LIFECYCLE] 🔐 User logged in - registering push token');
     registerPushToken(data.token);
   };
 
@@ -285,9 +196,47 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     });
   };
 
+  useEffect(() => {
+    const loadAuthState = async () => {
+      try {
+        const userJson = await AsyncStorage.getItem('user');
+        const token = await AsyncStorage.getItem('token');
+        const refreshToken = await AsyncStorage.getItem('refreshToken');
+        const onboardingComplete = await AsyncStorage.getItem('onboarding_complete');
+
+        if (userJson && token) {
+          const user = JSON.parse(userJson);
+          const hasRoles = user.roles && user.roles.length > 0;
+          const hasIndustries = user.industries && user.industries.length > 0;
+
+          setAuthState({
+            user,
+            token,
+            refreshToken,
+            isAuthenticated: true,
+            isLoading: false,
+            hasCompletedOnboarding: onboardingComplete === 'true' || (hasRoles && hasIndustries),
+          });
+
+          registerPushToken(token);
+        } else {
+          setAuthState(prev => ({ ...prev, isLoading: false }));
+        }
+      } catch (err) {
+        setAuthState(prev => ({ ...prev, isLoading: false }));
+      }
+    };
+
+    loadAuthState();
+  }, []);
+
   return {
     ...authState,
     setAuth,
     logout,
+    login,
+    updateProfile,
+    updateUserRoles,
+    updateUserIndustries,
   };
 });

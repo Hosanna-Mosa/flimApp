@@ -123,50 +123,98 @@ export default function HomeScreen() {
     if (!token) return;
 
     try {
-      // console.log('[Home] Loading feed...');
-      const result = await api.getFeed(0, 20, 'hybrid', 7, token) as any;
+      console.log(`[Home] Loading feed page ${pageNumber}...`);
+      const result = await api.getFeed(pageNumber, 20, 'hybrid', 7, token) as any;
 
-      if (result.data) {
+      // Handle different response structures: result, result.data, or result.data.data
+      let feedItems = [];
+      if (Array.isArray(result)) {
+        feedItems = result;
+      } else if (result && Array.isArray(result.data)) {
+        feedItems = result.data;
+      } else if (result && result.data && Array.isArray(result.data.data)) {
+        feedItems = result.data.data;
+      }
+      
+      console.log(`[Home] Raw feed items count: ${feedItems.length}`);
+
+      if (feedItems.length > 0) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const mappedPosts = result.data.map((p: any) => ({
-          id: p._id,
-          userId: p.author._id,
+        const mappedPosts = feedItems.map((p: any) => ({
+          id: p._id || p.id,
+          userId: p.author?._id || p.author?.id || p.userId,
           user: {
-            id: p.author._id,
-            name: p.author.name,
-            avatar: p.author.avatar,
-            isVerified: p.author.isVerified,
-            roles: p.author.roles || [],
-            isFollowing: p.author.isFollowing || false,
+            id: p.author?._id || p.author?.id || p.userId,
+            name: p.author?.name || 'Unknown User',
+            avatar: p.author?.avatar || 'https://via.placeholder.com/150',
+            isVerified: p.author?.isVerified || false,
+            roles: p.author?.roles || [],
+            isFollowing: p.author?.isFollowing || false,
           },
-          type: p.type,
-          // Support both new media structure and legacy mediaUrl/thumbnailUrl
+          type: p.type || 'image',
           mediaUrl: p.mediaUrl || p.media?.url,
           thumbnailUrl: p.thumbnailUrl || p.media?.thumbnail,
           media: p.media,
-          caption: p.caption,
-          likes: p.engagement?.likesCount || 0,
-          comments: p.engagement?.commentsCount || 0,
-          shares: p.engagement?.sharesCount || 0,
+          caption: p.caption || '',
+          likes: p.engagement?.likesCount || p.likes || 0,
+          comments: p.engagement?.commentsCount || p.comments || 0,
+          shares: p.engagement?.sharesCount || p.shares || 0,
           isLiked: p.isLiked || false,
-          createdAt: new Date(p.createdAt).toLocaleDateString(),
+          createdAt: p.createdAt ? new Date(p.createdAt).toLocaleDateString() : 'Just now',
         }));
 
-        if (mappedPosts.length < 20) {
-          setHasMore(false);
-        } else {
-          setHasMore(true);
-        }
+        setHasMore(mappedPosts.length === 20);
 
         if (append) {
           setPosts(prev => [...prev, ...mappedPosts]);
         } else {
           setPosts(mappedPosts);
         }
+        console.log(`[Home] Successfully mapped and set ${mappedPosts.length} posts`);
+      } else {
+        console.log('[Home] No feed items returned from API');
+        if (!append) setPosts([]);
+        setHasMore(false);
       }
     } catch (error) {
       // console.error('[Home] Error loading feed:', error);
-      Alert.alert('Error', 'Failed to load feed');
+      // Fallback to legacy feed endpoint if algorithm feed fails
+      if (!append) {
+        try {
+           const legacyResult = await api.feed(token) as any;
+           const legacyItems = Array.isArray(legacyResult) ? legacyResult : (legacyResult.data || []);
+           if (legacyItems.length > 0) {
+              const mappedPosts = legacyItems.map((p: any) => ({
+                id: p._id || p.id,
+                userId: p.author?._id || p.author?.id || p.userId,
+                user: {
+                  id: p.author?._id || p.author?.id || p.userId,
+                  name: p.author?.name || 'Unknown User',
+                  avatar: p.author?.avatar || 'https://via.placeholder.com/150',
+                  isVerified: p.author?.isVerified || false,
+                  roles: p.author?.roles || [],
+                  isFollowing: false,
+                },
+                type: p.type || 'image',
+                mediaUrl: p.mediaUrl || p.media?.url,
+                thumbnailUrl: p.thumbnailUrl || p.media?.thumbnail,
+                media: p.media,
+                caption: p.caption || '',
+                likes: p.engagement?.likesCount || p.likes || 0,
+                comments: p.engagement?.commentsCount || p.comments || 0,
+                shares: p.engagement?.sharesCount || p.shares || 0,
+                isLiked: p.isLiked || false,
+                createdAt: p.createdAt ? new Date(p.createdAt).toLocaleDateString() : 'Just now',
+              }));
+              setPosts(mappedPosts);
+              setHasMore(false);
+              return;
+           }
+        } catch (legacyError) {
+           // console.error('[Home] Legacy feed fallback also failed:', legacyError);
+        }
+      }
+      Alert.alert('Error', 'Failed to load feed. Please check your connection.');
     }
   };
 

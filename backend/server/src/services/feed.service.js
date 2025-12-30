@@ -245,10 +245,10 @@ class FeedService {
       const user = await User.findById(userId).select('industries roles').lean();
       
       if (!user) {
-        // Fallback for when user record is missing but auth passed (should trigger logout ideally)
+        // Fallback for when user record is missing (should trigger logout ideally)
         logger.warn(`User ${userId} not found during feed generation`);
-        return this.getTrendingFeed(userId, page, limit); 
-        // Or throw error: throw new Error('User not found');
+        const trending = await this.getTrendingFeed(userId, 0, 100);
+        return trending.data || [];
       }
 
       // Get users that the current user follows
