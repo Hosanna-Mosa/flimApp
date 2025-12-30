@@ -20,9 +20,11 @@ import {
   FileText,
   Image as ImageIcon,
   BadgeCheck,
+  Bookmark,
 } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { ProfileSkeleton } from '@/components/skeletons/ProfileSkeleton';
 import api from '@/utils/api';
 import { ContentType } from '@/types';
 
@@ -135,26 +137,38 @@ export default function ProfileScreen() {
           headerStyle: { backgroundColor: colors.background },
           headerTintColor: colors.text,
           headerRight: () => (
-            <TouchableOpacity
-              onPress={() => router.push('/edit-profile')}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              style={{ marginRight: 16, marginHorizontal: 4 }}
-            >
-              <Edit size={20} color={colors.text} />
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <TouchableOpacity
+                onPress={() => router.push('/saved' as any)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                style={{ marginRight: 16 }}
+              >
+                <Bookmark size={20} color={colors.text} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => router.push('/edit-profile')}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                style={{ marginRight: 16 }}
+              >
+                <Edit size={20} color={colors.text} />
+              </TouchableOpacity>
+            </View>
           ),
         }}
       />
-      <ScrollView
-        style={[styles.container, { backgroundColor: colors.background }]}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.header}>
-          <Image
-            source={{ uri: user.avatar }}
-            style={styles.avatar}
-            contentFit="cover"
-          />
+      {loading ? (
+        <ProfileSkeleton />
+      ) : (
+        <ScrollView
+          style={[styles.container, { backgroundColor: colors.background }]}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.header}>
+            <Image
+              source={{ uri: user.avatar }}
+              style={styles.avatar}
+              contentFit="cover"
+            />
           <View style={styles.nameContainer}>
             <Text style={[styles.name, { color: colors.text }]}>
               {user.name || 'Your Name'}
@@ -285,33 +299,28 @@ export default function ProfileScreen() {
           </ScrollView>
         </View>
 
-        {loading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={colors.primary} />
-          </View>
-        ) : (
-          <View style={styles.portfolio}>
-            {filteredPosts.map((post) => (
-              <TouchableOpacity
-                key={post._id}
-                style={styles.portfolioItem}
-                onPress={() => router.push(`/post/${post._id}`)}
-              >
-                <Image
-                  source={{ uri: post.thumbnailUrl || post.mediaUrl }}
-                  style={styles.portfolioImage}
-                  contentFit="cover"
-                />
-              </TouchableOpacity>
-            ))}
-            {filteredPosts.length === 0 && (
-              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                No {selectedFilter === 'all' ? 'posts' : selectedFilter} yet
-              </Text>
-            )}
-          </View>
-        )}
+        <View style={styles.portfolio}>
+          {filteredPosts.map((post) => (
+            <TouchableOpacity
+              key={post._id}
+              style={styles.portfolioItem}
+              onPress={() => router.push(`/post/${post._id}`)}
+            >
+              <Image
+                source={{ uri: post.thumbnailUrl || post.mediaUrl }}
+                style={styles.portfolioImage}
+                contentFit="cover"
+              />
+            </TouchableOpacity>
+          ))}
+          {filteredPosts.length === 0 && (
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+              No {selectedFilter === 'all' ? 'posts' : selectedFilter} yet
+            </Text>
+          )}
+        </View>
       </ScrollView>
+      )}
     </>
   );
 }

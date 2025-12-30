@@ -721,6 +721,16 @@ export const apiSubmitVerificationRequest = (
 export const apiGetVerificationStatus = (token?: string) =>
   request('/verification/status', { token });
 
+// Saved Posts
+export const apiToggleSavePost = (postId: string, token?: string) =>
+  request<{ saved: boolean; savedPostsCount: number }>(`/posts/${postId}/save`, {
+    method: 'POST',
+    token,
+  });
+
+export const apiGetSavedPosts = (page = 0, limit = 20, token?: string) =>
+  request(`/users/me/saved?page=${page}&limit=${limit}`, { token });
+
 export const api = {
   login: apiLogin,
   verifyOtp: apiVerifyOtp,
@@ -822,6 +832,8 @@ export const api = {
   invalidateFeed: apiInvalidateFeed,
   submitVerificationRequest: apiSubmitVerificationRequest,
   getVerificationStatus: apiGetVerificationStatus,
+  toggleSavePost: apiToggleSavePost,
+  getSavedPosts: apiGetSavedPosts,
 };
 
 export default api;

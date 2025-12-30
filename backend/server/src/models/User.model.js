@@ -38,6 +38,7 @@ const UserSchema = new Schema(
     
     // Recent posts reference (limit to last 100 for quick access)
     posts: [{ type: Types.ObjectId, ref: 'Post' }],
+    savedPosts: [{ type: Types.ObjectId, ref: 'Post' }],
     
     // Privacy Settings
     privacy: {

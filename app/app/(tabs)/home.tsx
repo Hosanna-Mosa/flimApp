@@ -34,10 +34,10 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { useMessages } from '@/contexts/MessageContext';
-import api from '@/utils/api';
-import { Post } from '@/types';
-
 import FeedPost from '@/components/FeedPost';
+import { FeedSkeleton } from '@/components/skeletons/FeedSkeleton';
+import api from '@/utils/api';
+import { Post, User } from '@/types';
 
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
@@ -339,13 +339,11 @@ export default function HomeScreen() {
 
   const handleShare = async (postId: string) => {
     try {
-      const post = posts.find(p => p.id === postId);
+      const post = posts.find((p) => p.id === postId);
       if (!post) return;
 
       const shareUrl = `https://filmy.app/post/${postId}`;
-      const message = post.caption
-        ? `${post.caption}\n\n${shareUrl}`
-        : shareUrl;
+      const message = post.caption ? `${post.caption}\n\n${shareUrl}` : shareUrl;
 
       await Share.share({
         message,
@@ -353,6 +351,40 @@ export default function HomeScreen() {
       });
     } catch (error) {
       // console.error('[Home] Share error:', error);
+    }
+  };
+
+  const handleSave = async (postId: string) => {
+    if (!token) return;
+
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+      // Find if post is already saved
+      const post = posts.find(p => p.id === postId);
+      const wasSaved = post?.isSaved;
+
+      // Optimistic update
+      setPosts(prevPosts => prevPosts.map((p) =>
+        p.id === postId ? { ...p, isSaved: !wasSaved } : p
+      ));
+
+      // API call
+      const result = await api.toggleSavePost(postId, token);
+      
+      // Sync with server response
+      setPosts(prevPosts => prevPosts.map((p) =>
+        p.id === postId ? { ...p, isSaved: result.saved } : p
+      ));
+    } catch (error) {
+      // Revert on error
+      setPosts(prevPosts => prevPosts.map((p) => {
+        if (p.id === postId) {
+          return { ...p, isSaved: !p.isSaved };
+        }
+        return p;
+      }));
+      Alert.alert('Error', 'Failed to save post');
     }
   };
 
@@ -444,11 +476,10 @@ export default function HomeScreen() {
         }}
       />
       {loading && page === 0 ? (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 100 }}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={{ color: colors.textSecondary, marginTop: 16 }}>
-            Loading feed...
-          </Text>
+        <View style={{ flex: 1, paddingTop: 10 }}>
+          {[1, 2, 3].map((i) => (
+             <FeedSkeleton key={i} />
+          ))}
         </View>
       ) : posts.length === 0 ? (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 100 }}>
@@ -469,6 +500,7 @@ export default function HomeScreen() {
               onLike={handleLike}
               onComment={handleComment}
               onShare={handleShare}
+              onSave={handleSave}
               primaryColor={colors.primary}
               borderColor={colors.border}
             />

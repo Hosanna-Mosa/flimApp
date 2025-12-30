@@ -1,12 +1,14 @@
 const express = require('express');
 const Joi = require('joi');
 const userController = require('../controllers/user.controller');
+const savedPostController = require('../controllers/savedPost.controller');
 const auth = require('../middlewares/auth.middleware');
 const validate = require('../middlewares/validate.middleware');
 
 const router = express.Router();
 
 router.get('/me', auth, userController.getMe);
+router.get('/me/saved', auth, savedPostController.getSavedPosts);
 
 router.put(
   '/me',

@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { apiGetTrendingFeed } from '@/utils/api';
 import { Image } from 'expo-image';
 import { Play, Music, FileText, Film, Flame } from 'lucide-react-native';
+import { TrendingSkeleton } from '@/components/skeletons/TrendingSkeleton';
 
 export default function TrendingScreen() {
   const { colors } = useTheme();
@@ -103,11 +104,9 @@ export default function TrendingScreen() {
         </View>
 
         {isLoading ? (
-          <ActivityIndicator
-            size="large"
-            color={colors.primary}
-            style={{ marginTop: 20 }}
-          />
+          <View>
+             {[1, 2, 3, 4, 5].map(i => <TrendingSkeleton key={i} />)}
+          </View>
         ) : (
           trendingPosts.map((post, index) => (
             <TouchableOpacity

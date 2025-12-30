@@ -69,6 +69,7 @@ export interface Post {
   comments: number;
   shares: number;
   isLiked: boolean;
+  isSaved?: boolean;
   createdAt: string;
   media?: {
     url: string;

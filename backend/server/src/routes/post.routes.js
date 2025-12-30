@@ -1,6 +1,7 @@
 const express = require('express');
 const Joi = require('joi');
 const postController = require('../controllers/post.controller');
+const savedPostController = require('../controllers/savedPost.controller');
 const auth = require('../middlewares/auth.middleware');
 const validate = require('../middlewares/validate.middleware');
 
@@ -49,6 +50,7 @@ router.put(
   postController.updatePost
 );
 router.delete('/:id', auth, postController.deletePost);
+router.post('/:postId/save', auth, savedPostController.toggleSavePost);
 
 module.exports = router;
 
