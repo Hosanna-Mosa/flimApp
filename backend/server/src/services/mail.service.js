@@ -1,14 +1,14 @@
 const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
+  service: "gmail",
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+});
 
-const sendEmail = async ({ to, subject, text, html }) => {
+const sendEmail = async ({ to, subject, text, html, attachments }) => {
   try {
     // If not in production and no real SMTP configured, just log to console
     if (process.env.NODE_ENV !== 'production' && (!process.env.SMTP_USER || process.env.SMTP_USER === 'mock_user')) {
@@ -16,6 +16,7 @@ const sendEmail = async ({ to, subject, text, html }) => {
       console.log('📧 MOCK EMAIL SENT TO:', to);
       console.log('Subject:', subject);
       console.log('Content:', text);
+      if (attachments) console.log('Attachments:', attachments.length);
       console.log('-----------------------------------------');
       return { messageId: 'mock-id' };
     }
@@ -26,7 +27,9 @@ const sendEmail = async ({ to, subject, text, html }) => {
       subject,
       text,
       html,
+      attachments,
     });
+
 
     console.log('Message sent: %s', info.messageId);
     return info;

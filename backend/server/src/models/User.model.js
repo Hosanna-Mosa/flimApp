@@ -19,15 +19,24 @@ const UserSchema = new Schema(
         url: String,
       },
     ],
-    
+
     // Social Features
     isVerified: { type: Boolean, default: false },
-    accountType: { 
-      type: String, 
-      enum: ['public', 'private', 'business'], 
-      default: 'public' 
+    accountType: {
+      type: String,
+      enum: ['public', 'private', 'business'],
+      default: 'public'
     },
-    
+
+    // Status & Suspension
+    status: {
+      type: String,
+      enum: ['active', 'suspended', 'banned'],
+      default: 'active'
+    },
+    suspensionReason: { type: String },
+    suspendedUntil: { type: Date },
+
     // Denormalized Stats (for performance)
     stats: {
       followersCount: { type: Number, default: 0 },
@@ -35,11 +44,11 @@ const UserSchema = new Schema(
       postsCount: { type: Number, default: 0 },
       likesReceived: { type: Number, default: 0 }
     },
-    
+
     // Recent posts reference (limit to last 100 for quick access)
     posts: [{ type: Types.ObjectId, ref: 'Post' }],
     savedPosts: [{ type: Types.ObjectId, ref: 'Post' }],
-    
+
     // Privacy Settings
     privacy: {
       showFollowers: { type: Boolean, default: true },
@@ -48,7 +57,7 @@ const UserSchema = new Schema(
       allowShares: { type: Boolean, default: true },
       allowMessages: { type: Boolean, default: true }
     },
-    
+
     refreshTokens: [{ type: String }],
     pushTokens: [{ type: String }],
     lastLoginAt: { type: Date },
@@ -64,7 +73,7 @@ UserSchema.index({ roles: 1 });
 UserSchema.index({ industries: 1 });
 
 // Virtual for public profile
-UserSchema.virtual('publicProfile').get(function() {
+UserSchema.virtual('publicProfile').get(function () {
   return {
     id: this._id,
     name: this.name,

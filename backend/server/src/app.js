@@ -20,6 +20,8 @@ const mediaRoutes = require('./routes/media.routes');
 const adminAuthRoutes = require('./routes/adminAuth.routes');
 const adminVerificationRoutes = require('./routes/adminVerification.routes');
 const verificationRoutes = require('./routes/verification.routes');
+const supportRoutes = require('./routes/support.routes');
+
 
 const app = express();
 
@@ -53,7 +55,11 @@ app.use('/api', shareRoutes);        // /api/posts/:id/share, etc.
 app.use('/api/feed', feedRoutes);    // /api/feed, /api/feed/trending, etc.
 app.use('/admin/auth', adminAuthRoutes);
 app.use('/admin/verification', adminVerificationRoutes);
+app.use('/admin/users', require('./routes/adminUser.routes'));
+
 app.use('/verification', verificationRoutes);
+app.use('/support', supportRoutes);
+
 
 app.use((req, res) => res.status(404).json({ success: false, message: 'Not found' }));
 app.use(errorHandler);

@@ -9,6 +9,7 @@ import { AdminLayout } from "@/components/layout/AdminLayout";
 import LoginPage from "@/pages/LoginPage";
 import VerificationRequestsPage from "@/pages/VerificationRequestsPage";
 import VerificationDetailPage from "@/pages/VerificationDetailPage";
+import UsersPage from "@/pages/Users";
 import AuditLogsPage from "@/pages/AuditLogsPage";
 import NotFound from "@/pages/NotFound";
 
@@ -24,10 +25,10 @@ const App = () => (
           <Routes>
             {/* Public routes */}
             <Route path="/login" element={<LoginPage />} />
-            
+
             {/* Redirect root to requests */}
             <Route path="/" element={<Navigate to="/requests" replace />} />
-            
+
             {/* Protected admin routes */}
             <Route
               element={
@@ -38,9 +39,10 @@ const App = () => (
             >
               <Route path="/requests" element={<VerificationRequestsPage />} />
               <Route path="/requests/:id" element={<VerificationDetailPage />} />
+              <Route path="/users" element={<UsersPage />} />
               <Route path="/logs" element={<AuditLogsPage />} />
             </Route>
-            
+
             {/* Catch-all */}
             <Route path="*" element={<NotFound />} />
           </Routes>
