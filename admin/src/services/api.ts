@@ -32,12 +32,22 @@ api.interceptors.request.use(
 
 // Response interceptor for error handling
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // If the response has the standard backend wrapper { success: true, data: ... }
+    // we return the internal data directly
+    if (response.data && response.data.success === true && response.data.data !== undefined) {
+      return { ...response, data: response.data.data };
+    }
+    return response;
+  },
   (error: AxiosError<ApiError>) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('admin_token');
       localStorage.removeItem('admin_user');
-      window.location.href = '/login';
+      // Only redirect if not already on login page to avoid infinite loops
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
@@ -63,21 +73,32 @@ export const authApi = {
     }
   },
 };
-
 // Verification API
 export const verificationApi = {
   getRequests: async (
     page: number = 1, 
     limit: number = 10,
-    status?: string
+    filters?: {
+      status?: string;
+      name?: string;
+      role?: string;
+      phone?: string;
+      industry?: string;
+    }
   ): Promise<PaginatedResponse<VerificationRequest>> => {
     const params = new URLSearchParams({ 
       page: page.toString(), 
       limit: limit.toString() 
     });
-    if (status && status !== 'ALL') {
-      params.append('status', status);
+    
+    if (filters) {
+      if (filters.status && filters.status !== 'ALL') params.append('status', filters.status);
+      if (filters.name) params.append('name', filters.name);
+      if (filters.role) params.append('role', filters.role);
+      if (filters.phone) params.append('phone', filters.phone);
+      if (filters.industry) params.append('industry', filters.industry);
     }
+    
     const response = await api.get<PaginatedResponse<VerificationRequest>>(
       `/admin/verification/requests?${params.toString()}`
     );
@@ -99,10 +120,24 @@ export const verificationApi = {
   
   getLogs: async (
     page: number = 1, 
-    limit: number = 20
+    limit: number = 20,
+    filters?: {
+      userName?: string;
+      action?: string;
+    }
   ): Promise<PaginatedResponse<VerificationLog>> => {
+    const params = new URLSearchParams({ 
+      page: page.toString(), 
+      limit: limit.toString() 
+    });
+    
+    if (filters) {
+      if (filters.userName) params.append('userName', filters.userName);
+      if (filters.action && filters.action !== 'ALL') params.append('action', filters.action);
+    }
+
     const response = await api.get<PaginatedResponse<VerificationLog>>(
-      `/admin/verification/logs?page=${page}&limit=${limit}`
+      `/admin/verification/logs?${params.toString()}`
     );
     return response.data;
   },

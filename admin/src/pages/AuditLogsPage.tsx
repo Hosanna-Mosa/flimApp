@@ -17,54 +17,15 @@ import { RefreshCw, History, CheckCircle2, XCircle, Ban } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-
-// Mock data for demo
-const mockLogs: VerificationLog[] = [
-  {
-    id: 'l1',
-    userId: 'u3',
-    userName: 'Michael Chen',
-    userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
-    action: 'APPROVE',
-    adminId: 'admin1',
-    adminName: 'Admin User',
-    notes: 'Verified press credentials.',
-    timestamp: '2024-12-21T15:30:00Z',
-  },
-  {
-    id: 'l2',
-    userId: 'u4',
-    userName: 'Alex Rivera',
-    userAvatar: null,
-    action: 'REJECT',
-    adminId: 'admin1',
-    adminName: 'Admin User',
-    notes: 'Insufficient documentation provided.',
-    timestamp: '2024-12-23T10:00:00Z',
-  },
-  {
-    id: 'l3',
-    userId: 'u5',
-    userName: 'Emma Wilson',
-    userAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop',
-    action: 'APPROVE',
-    adminId: 'admin2',
-    adminName: 'Senior Admin',
-    notes: 'Verified celebrity status.',
-    timestamp: '2024-12-22T09:15:00Z',
-  },
-  {
-    id: 'l4',
-    userId: 'u6',
-    userName: 'James Brown',
-    userAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop',
-    action: 'REVOKE',
-    adminId: 'admin1',
-    adminName: 'Admin User',
-    notes: 'Violation of community guidelines.',
-    timestamp: '2024-12-20T16:45:00Z',
-  },
-];
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
 
 const actionConfig: Record<VerificationAction, { 
   label: string; 
@@ -93,18 +54,18 @@ export default function AuditLogsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [userNameFilter, setUserNameFilter] = useState('');
+  const [actionFilter, setActionFilter] = useState('ALL');
 
   const fetchLogs = async () => {
     setIsLoading(true);
     try {
-      // In production, use the API
-      // const response = await verificationApi.getLogs(currentPage, 20);
-      // setLogs(response.data);
-      // setTotalPages(response.totalPages);
-      
-      // Demo: Use mock data
-      setLogs(mockLogs);
-      setTotalPages(1);
+      const response = await verificationApi.getLogs(currentPage, 20, {
+        userName: userNameFilter,
+        action: actionFilter !== 'ALL' ? actionFilter : undefined
+      });
+      setLogs(response.data);
+      setTotalPages(response.totalPages);
     } catch (error) {
       toast.error('Failed to load audit logs');
     } finally {
@@ -114,21 +75,57 @@ export default function AuditLogsPage() {
 
   useEffect(() => {
     fetchLogs();
-  }, [currentPage]);
+  }, [currentPage, actionFilter]);
+
+  // Debounced effect for name input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchLogs();
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [userNameFilter]);
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Audit Logs</h1>
-          <p className="text-muted-foreground mt-1">
-            History of all verification actions
-          </p>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Audit Logs</h1>
+            <p className="text-muted-foreground mt-1">
+              History of all verification actions
+            </p>
+          </div>
+          <Button variant="outline" size="icon" onClick={fetchLogs}>
+            <RefreshCw className="h-4 w-4" />
+          </Button>
         </div>
-        <Button variant="outline" size="icon" onClick={fetchLogs}>
-          <RefreshCw className="h-4 w-4" />
-        </Button>
+
+        {/* Filters bar */}
+        <div className="flex flex-col sm:flex-row gap-4 bg-card p-4 rounded-lg border border-border">
+          <div className="flex-1 space-y-1.5">
+            <Label className="text-xs uppercase text-muted-foreground font-semibold">User Name</Label>
+            <Input 
+              placeholder="Filter by user name..." 
+              value={userNameFilter}
+              onChange={(e) => setUserNameFilter(e.target.value)}
+            />
+          </div>
+          <div className="w-full sm:w-[200px] space-y-1.5">
+            <Label className="text-xs uppercase text-muted-foreground font-semibold">Action</Label>
+            <Select value={actionFilter} onValueChange={setActionFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="All Actions" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Actions</SelectItem>
+                <SelectItem value="APPROVE">Approved</SelectItem>
+                <SelectItem value="REJECT">Rejected</SelectItem>
+                <SelectItem value="REVOKE">Revoked</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
       </div>
 
       {/* Table */}

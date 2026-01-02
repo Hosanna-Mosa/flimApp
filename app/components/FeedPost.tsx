@@ -12,6 +12,7 @@ import {
   Pause,
   FileText,
   BadgeCheck,
+  Bookmark,
 } from 'lucide-react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { Post } from '@/types';
@@ -24,6 +25,7 @@ interface FeedPostProps {
   onLike: (postId: string) => void;
   onComment: (postId: string) => void;
   onShare: (postId: string) => void;
+  onSave?: (postId: string) => void;
   primaryColor: string;
   borderColor: string;
 }
@@ -43,6 +45,7 @@ export default function FeedPost({
   onLike,
   onComment,
   onShare,
+  onSave,
   primaryColor,
   borderColor,
 }: FeedPostProps) {
@@ -375,29 +378,31 @@ export default function FeedPost({
   return (
     <View style={[styles.container, { backgroundColor: colors.card, borderColor: borderColor }]}>
       {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.userInfo}>
-           <Image source={{ uri: post.user.avatar }} style={styles.avatar} contentFit="cover" />
-           <View style={{ marginLeft: 12, flex: 1 }}>
-              <TouchableOpacity onPress={() => router.push({ pathname: '/user/[id]', params: { id: post.user.id } })}>
-                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    <Text style={[styles.userName, { color: colors.text }]}>{post.user.name}</Text>
-                    {post.user.isVerified && <BadgeCheck size={16} color={primaryColor} fill="transparent" />}
-                 </View>
+      {post.user && (
+        <View style={styles.header}>
+          <View style={styles.userInfo}>
+            <Image source={{ uri: post.user.avatar }} style={styles.avatar} contentFit="cover" />
+            <View style={{ marginLeft: 12, flex: 1 }}>
+                <TouchableOpacity onPress={() => router.push({ pathname: '/user/[id]', params: { id: post.user.id } })}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                      <Text style={[styles.userName, { color: colors.text }]}>{post.user.name}</Text>
+                      {post.user.isVerified && <BadgeCheck size={16} color="#FFFFFF" fill={primaryColor} />}
+                  </View>
+                </TouchableOpacity>
+                <Text style={[styles.role, { color: colors.textSecondary }]}>{post.user.roles?.[0] || 'Member'}</Text>
+            </View>
+            
+              <TouchableOpacity 
+                  style={[styles.followBtn, { backgroundColor: isFollowing ? 'transparent' : primaryColor, borderColor: isFollowing ? borderColor : primaryColor, borderWidth: 1 }]}
+                  onPress={() => onFollow(post.user.id)}
+              >
+                  <Text style={{ color: isFollowing ? colors.text : '#fff', fontSize: 12, fontWeight: '600' }}>
+                      {isFollowing ? 'Following' : 'Follow'}
+                  </Text>
               </TouchableOpacity>
-              <Text style={[styles.role, { color: colors.textSecondary }]}>{post.user.roles?.[0] || 'Member'}</Text>
-           </View>
-           
-            <TouchableOpacity 
-                style={[styles.followBtn, { backgroundColor: isFollowing ? 'transparent' : primaryColor, borderColor: isFollowing ? borderColor : primaryColor, borderWidth: 1 }]}
-                onPress={() => onFollow(post.user.id)}
-            >
-                <Text style={{ color: isFollowing ? colors.text : '#fff', fontSize: 12, fontWeight: '600' }}>
-                    {isFollowing ? 'Following' : 'Follow'}
-                </Text>
-            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      )}
 
       {/* Content */}
       {(() => {
@@ -434,6 +439,18 @@ export default function FeedPost({
          <TouchableOpacity style={styles.actionBtn} onPress={() => onShare(post.id)}>
              <Share2 size={24} color={colors.textSecondary} />
          </TouchableOpacity>
+
+         <View style={{ flex: 1 }} />
+
+         {onSave && (
+           <TouchableOpacity style={styles.saveBtn} onPress={() => onSave(post.id)}>
+               <Bookmark 
+                 size={24} 
+                 color={post.isSaved ? primaryColor : colors.textSecondary} 
+                 fill={post.isSaved ? primaryColor : 'transparent'} 
+               />
+           </TouchableOpacity>
+         )}
       </View>
     </View>
   );
@@ -504,6 +521,9 @@ const styles = StyleSheet.create({
   actionText: {
     fontSize: 14,
     fontWeight: '500',
+  },
+  saveBtn: {
+    padding: 2,
   },
   
   // Audio Styles

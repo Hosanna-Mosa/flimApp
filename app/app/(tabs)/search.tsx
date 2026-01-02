@@ -167,7 +167,7 @@ export default function SearchScreen() {
                     {user.name}
                   </Text>
                   {user.isVerified && (
-                    <BadgeCheck size={14} color={colors.primary} fill={colors.primary} style={{ marginLeft: 4 }} />
+                    <BadgeCheck size={14} color="#FFFFFF" fill={colors.primary} style={{ marginLeft: 4 }} />
                   )}
                   {user.isOnline && (
                     <View

@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  RefreshControl,
+  Dimensions,
 } from 'react-native';
 import { Stack, useRouter, useFocusEffect } from 'expo-router';
 import { Image } from 'expo-image';
@@ -20,9 +22,11 @@ import {
   FileText,
   Image as ImageIcon,
   BadgeCheck,
+  Bookmark,
 } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { ProfileSkeleton } from '@/components/skeletons/ProfileSkeleton';
 import api from '@/utils/api';
 import { ContentType } from '@/types';
 
@@ -40,65 +44,83 @@ interface UserStats {
   postsCount: number;
 }
 
+const { width } = Dimensions.get('window');
+const ITEM_WIDTH = width / 3;
+
+function PostThumbnail({ post, onPress }: { post: UserPost; onPress: () => void }) {
+  const { colors } = useTheme();
+  const [hasError, setHasError] = useState(false);
+
+  return (
+    <TouchableOpacity
+      style={[styles.portfolioItem, { width: ITEM_WIDTH, height: ITEM_WIDTH }]}
+      onPress={onPress}
+      activeOpacity={0.8}
+    >
+      {!hasError ? (
+        <Image
+          source={{ uri: post.thumbnailUrl || post.mediaUrl }}
+          style={styles.portfolioImage}
+          contentFit="cover"
+          onError={() => setHasError(true)}
+          transition={200}
+        />
+      ) : (
+        <View style={[styles.placeholderContainer, { backgroundColor: colors.surface }]}>
+          <ImageIcon size={32} color={colors.textSecondary} />
+        </View>
+      )}
+    </TouchableOpacity>
+  );
+}
+
 export default function ProfileScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { user, token } = useAuth();
+  const { user, token, refreshUser } = useAuth();
   const [selectedFilter, setSelectedFilter] = useState<ContentType | 'all'>('all');
   const [posts, setPosts] = useState<UserPost[]>([]);
   const [stats, setStats] = useState<UserStats>({ followersCount: 0, followingCount: 0, postsCount: 0 });
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Reload data every time the screen comes into focus
 
 
 
 
-  const loadUserData = useCallback(async () => {
+  const userId = (user as any)?._id || (user as any)?.id || user?.id;
+
+  const loadUserData = useCallback(async (showLoading = true) => {
+    if (!userId || !token) return;
+
     try {
-      setLoading(true);
-
-      // Get user ID - try multiple sources
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const userId = (user as any)?._id || (user as any)?.id || user?.id;
-
-      if (!userId) {
-        // console.error('[Profile] No user ID found');
-        setLoading(false);
-        return;
-      }
+      if (showLoading) setLoading(true);
 
       // console.log('[Profile] Loading data for user:', userId);
 
       // Fetch user data and posts
       const [userData, postsData] = await Promise.all([
-        api.user(userId, token || undefined).catch(err => {
+        api.user(userId, token).catch(err => {
           // console.error('[Profile] Error fetching user:', err);
           return null;
         }),
-        api.getUserFeed(userId, 0, 100, token || undefined).catch(err => {
+        api.getUserFeed(userId, 0, 100, token).catch(err => {
           // console.error('[Profile] Error fetching posts:', err);
           return { data: [] };
         }),
       ]);
 
-      // console.log('[Profile] User data:', userData);
-      // console.log('[Profile] Posts data:', postsData);
-
       // Update stats if available
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const userInfo = userData as any;
       if (userInfo?.stats) {
-        // console.log('[Profile] Setting stats:', userInfo.stats);
         setStats(userInfo.stats);
-      } else {
-        // console.log('[Profile] No stats in user data, using defaults');
       }
 
       // Update posts
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const postsArray = (postsData as any)?.data || [];
-      // console.log('[Profile] Setting posts:', postsArray.length);
       setPosts(postsArray);
 
       // If no stats from API, use post count
@@ -112,17 +134,26 @@ export default function ProfileScreen() {
       // console.error('[Profile] Error loading:', error);
       Alert.alert('Error', 'Failed to load profile data');
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
-  }, [user, token]);
+  }, [userId, token]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([
+      loadUserData(false),
+      refreshUser()
+    ]);
+    setRefreshing(false);
+  }, [loadUserData, refreshUser]);
 
   // Reload data when screen comes into focus (e.g., after editing profile)
   useFocusEffect(
     useCallback(() => {
-      if (user && token) {
-        loadUserData();
-      }
-    }, [user, token])
+      loadUserData();
+      // Also refresh user data to ensure status is up to date when returning to screen
+      refreshUser();
+    }, [loadUserData, refreshUser])
   );
 
   const filteredPosts = selectedFilter === 'all'
@@ -150,32 +181,51 @@ export default function ProfileScreen() {
           headerStyle: { backgroundColor: colors.background },
           headerTintColor: colors.text,
           headerRight: () => (
-            <TouchableOpacity
-              onPress={() => router.push('/edit-profile')}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              style={{ marginRight: 16, marginHorizontal: 4 }}
-            >
-              <Edit size={20} color={colors.text} />
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <TouchableOpacity
+                onPress={() => router.push('/saved' as any)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                style={{ marginRight: 16 }}
+              >
+                <Bookmark size={20} color={colors.text} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => router.push('/edit-profile')}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                style={{ marginRight: 16 }}
+              >
+                <Edit size={20} color={colors.text} />
+              </TouchableOpacity>
+            </View>
           ),
         }}
       />
-      <ScrollView
-        style={[styles.container, { backgroundColor: colors.background }]}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.header}>
-          <Image
-            source={{ uri: user.avatar }}
-            style={styles.avatar}
-            contentFit="cover"
-          />
+      {loading ? (
+        <ProfileSkeleton />
+      ) : (
+        <ScrollView
+          style={[styles.container, { backgroundColor: colors.background }]}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.primary}
+            />
+          }
+        >
+          <View style={styles.header}>
+            <Image
+              source={{ uri: user.avatar }}
+              style={styles.avatar}
+              contentFit="cover"
+            />
           <View style={styles.nameContainer}>
             <Text style={[styles.name, { color: colors.text }]}>
               {user.name || 'Your Name'}
             </Text>
             {user.isVerified && (
-              <BadgeCheck size={24} color={colors.primary} fill="transparent" />
+              <BadgeCheck size={24} color="#FFFFFF" fill={colors.primary} />
             )}
           </View>
           <View style={styles.rolesContainer}>
@@ -300,33 +350,22 @@ export default function ProfileScreen() {
           </ScrollView>
         </View>
 
-        {loading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={colors.primary} />
-          </View>
-        ) : (
-          <View style={styles.portfolio}>
-            {filteredPosts.map((post) => (
-              <TouchableOpacity
-                key={post._id}
-                style={styles.portfolioItem}
-                onPress={() => router.push(`/post/${post._id}`)}
-              >
-                <Image
-                  source={{ uri: post.thumbnailUrl || post.mediaUrl }}
-                  style={styles.portfolioImage}
-                  contentFit="cover"
-                />
-              </TouchableOpacity>
-            ))}
-            {filteredPosts.length === 0 && (
-              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                No {selectedFilter === 'all' ? 'posts' : selectedFilter} yet
-              </Text>
-            )}
-          </View>
-        )}
+        <View style={styles.portfolio}>
+          {filteredPosts.map((post) => (
+            <PostThumbnail
+              key={post._id}
+              post={post}
+              onPress={() => router.push(`/post/${post._id}`)}
+            />
+          ))}
+          {filteredPosts.length === 0 && (
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+              No {selectedFilter === 'all' ? 'posts' : selectedFilter} yet
+            </Text>
+          )}
+        </View>
       </ScrollView>
+      )}
     </>
   );
 }
@@ -433,19 +472,22 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   portfolio: {
-    padding: 2,
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
   portfolioItem: {
-    width: '33.33%',
-    aspectRatio: 1,
-    padding: 2,
+    borderWidth: 0.5,
+    borderColor: 'transparent',
   },
   portfolioImage: {
     width: '100%',
     height: '100%',
-    borderRadius: 4,
+  },
+  placeholderContainer: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   emptyText: {
     textAlign: 'center',

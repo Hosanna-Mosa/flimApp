@@ -17,6 +17,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useSocket } from '@/contexts/SocketContext';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { apiNotifications, apiMarkAllNotificationsRead, apiAcceptFollowRequest, apiRejectFollowRequest } from '@/utils/api';
+import { NotificationSkeleton } from '@/components/skeletons/NotificationSkeleton';
 
 type NotificationItem = {
   id: string;
@@ -38,12 +39,14 @@ export default function NotificationsScreen() {
   const { unreadCount, refreshUnreadCount } = useNotifications();
   const insets = useSafeAreaInsets();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [processingRequest, setProcessingRequest] = useState<string | null>(null);
 
-  const loadNotifications = async () => {
+  const loadNotifications = async (showLoadingState = true) => {
     if (!token) return;
     try {
+      if (showLoadingState) setLoading(true);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const data: any = await apiNotifications(token);
       if (Array.isArray(data)) {
@@ -65,6 +68,8 @@ export default function NotificationsScreen() {
       }
     } catch (error) {
       console.error('Failed to load notifications:', error);
+    } finally {
+      if (showLoadingState) setLoading(false);
     }
   };
 
@@ -123,7 +128,7 @@ export default function NotificationsScreen() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await loadNotifications();
+    await loadNotifications(false);
     await refreshUnreadCount();
     setRefreshing(false);
   };
@@ -254,7 +259,11 @@ export default function NotificationsScreen() {
           }}
         />
 
-        {notifications.length === 0 ? (
+        {loading ? (
+          <View>
+             {[1, 2, 3, 4, 5, 6].map(i => <NotificationSkeleton key={i} />)}
+          </View>
+        ) : notifications.length === 0 ? (
           <View style={styles.emptyState}>
             <Bell size={48} color={colors.textSecondary} />
             <Text style={[styles.emptyTitle, { color: colors.text }]}>

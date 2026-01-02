@@ -18,6 +18,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiGetConversations } from '@/utils/api';
 import { getAvatarUrl } from '@/utils/avatar';
+import { MessageSkeleton } from '@/components/skeletons/MessageSkeleton';
 
 interface ChatItem {
   id: string;
@@ -38,6 +39,7 @@ export default function MessagesScreen() {
   const { colors } = useTheme();
   const { token } = useAuth();
 
+  const [loading, setLoading] = useState(true);
   const [chats, setChats] = useState<ChatItem[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -47,6 +49,7 @@ export default function MessagesScreen() {
       if (!token) return;
 
       try {
+        if (!refreshing) setLoading(true);
         const data: any = await apiGetConversations(token, query);
 
         if (Array.isArray(data)) {
@@ -75,6 +78,8 @@ export default function MessagesScreen() {
         }
       } catch (err) {
         console.error('Failed to load chats:', err);
+      } finally {
+        setLoading(false);
       }
     },
     [token]
@@ -147,7 +152,11 @@ export default function MessagesScreen() {
           </View>
 
           {/* Chats */}
-          {chats.map((chat) => (
+          {loading ? (
+             <View>
+                 {[1, 2, 3, 4, 5, 6].map(i => <MessageSkeleton key={i} />)}
+             </View>
+          ) : chats.map((chat) => (
             <TouchableOpacity
               key={chat.id}
               style={[

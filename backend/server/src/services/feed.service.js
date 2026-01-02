@@ -105,7 +105,7 @@ class FeedService {
     const postIds = validPosts.map(p => p._id);
     const authorIds = [...new Set(validPosts.map(p => p.author._id))];
 
-    const [userLikes, userFollows] = await Promise.all([
+    const [userLikes, userFollows, userData] = await Promise.all([
       Like.find({
         user: userId,
         post: { $in: postIds }
@@ -114,15 +114,18 @@ class FeedService {
         follower: userId,
         following: { $in: authorIds },
         status: 'accepted'
-      }).select('following').lean()
+      }).select('following').lean(),
+      User.findById(userId).select('savedPosts').lean()
     ]);
 
     const likedPostIds = new Set(userLikes.map(like => like.post.toString()));
     const followedUserIds = new Set(userFollows.map(follow => follow.following.toString()));
+    const savedPostIds = new Set((userData?.savedPosts || []).map(id => id.toString()));
 
     return validPosts.map(post => ({
       ...post,
       isLiked: likedPostIds.has(post._id.toString()),
+      isSaved: savedPostIds.has(post._id.toString()),
       author: {
         ...post.author,
         isFollowing: followedUserIds.has(post.author._id.toString())

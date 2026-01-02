@@ -2,14 +2,28 @@ export type UserRole =
   | 'actor'
   | 'director'
   | 'producer'
-  | 'writer'
-  | 'dop'
+  | 'production_manager'
+  | 'casting_artists'
+  | 'story_screenplay_writer'
+  | 'dialogue_writer'
+  | 'music_director_composer'
+  | 'lyrics_writer'
+  | 'cinematographer_dop'
+  | 'art_director'
+  | 'makeup_department'
+  | 'costume_designer'
+  | 'choreographer'
+  | 'stunt_master_action_director'
   | 'editor'
-  | 'music'
-  | 'vfx'
-  | 'sound'
-  | 'makeup'
-  | 'costume';
+  | 'sound_designer_engineer'
+  | 'playback_singers'
+  | 'dubbing_artists'
+  | 'vfx_cgi_department'
+  | 'lighting_technicians'
+  | 'camera_assistants_focus_pullers'
+  | 'set_designers_workers'
+  | 'production_assistants_ad_team'
+  | 'publicity_promotion_pro';
 
 export type Industry =
   | 'bollywood'
@@ -55,6 +69,7 @@ export interface Post {
   comments: number;
   shares: number;
   isLiked: boolean;
+  isSaved?: boolean;
   createdAt: string;
   media?: {
     url: string;

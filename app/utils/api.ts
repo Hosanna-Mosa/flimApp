@@ -708,6 +708,29 @@ export const apiGetUserFeed = (
 export const apiInvalidateFeed = (token?: string) =>
   request('/api/feed/invalidate', { method: 'POST', token });
 
+// Verification
+export const apiSubmitVerificationRequest = (
+  payload: {
+    verificationType: string;
+    reason: string;
+    documents: Array<{ type: string; url: string; name: string }>;
+  },
+  token?: string
+) => request('/verification/request', { method: 'POST', body: payload, token });
+
+export const apiGetVerificationStatus = (token?: string) =>
+  request('/verification/status', { token });
+
+// Saved Posts
+export const apiToggleSavePost = (postId: string, token?: string) =>
+  request<{ saved: boolean; savedPostsCount: number }>(`/posts/${postId}/save`, {
+    method: 'POST',
+    token,
+  });
+
+export const apiGetSavedPosts = (page = 0, limit = 20, token?: string) =>
+  request(`/users/me/saved?page=${page}&limit=${limit}`, { token });
+
 export const api = {
   login: apiLogin,
   verifyOtp: apiVerifyOtp,
@@ -807,6 +830,10 @@ export const api = {
   getIndustryFeed: apiGetIndustryFeed,
   getUserFeed: apiGetUserFeed,
   invalidateFeed: apiInvalidateFeed,
+  submitVerificationRequest: apiSubmitVerificationRequest,
+  getVerificationStatus: apiGetVerificationStatus,
+  toggleSavePost: apiToggleSavePost,
+  getSavedPosts: apiGetSavedPosts,
 };
 
 export default api;

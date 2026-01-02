@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { Moon, Sun, Bell, Shield, Lock, ChevronRight, User } from 'lucide-react-native';
+import { Moon, Sun, Bell, Shield, Lock, ChevronRight, User, BadgeCheck } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -149,6 +149,32 @@ export default function SettingsScreen() {
                   ]}
                 >
                   Edit email, phone, location, and more
+                </Text>
+              </View>
+            </View>
+            <ChevronRight size={20} color={colors.textSecondary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.settingItem,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
+            onPress={() => router.push('/verification')}
+          >
+            <View style={styles.settingInfo}>
+              <BadgeCheck size={24} color={colors.primary} />
+              <View style={styles.settingText}>
+                <Text style={[styles.settingLabel, { color: colors.text }]}>
+                  Verification
+                </Text>
+                <Text
+                  style={[
+                    styles.settingDescription,
+                    { color: colors.textSecondary },
+                  ]}
+                >
+                  Apply for a verified badge
                 </Text>
               </View>
             </View>

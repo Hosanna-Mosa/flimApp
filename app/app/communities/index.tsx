@@ -17,6 +17,7 @@ import { Community } from '@/types';
 import CommunityCard from '@/components/communities/CommunityCard';
 import { useAuth } from '@/contexts/AuthContext';
 import { Plus, Users, Globe, Search } from 'lucide-react-native';
+import { CommunitySkeleton } from '@/components/skeletons/CommunitySkeleton';
 
 type Tab = 'my' | 'discover';
 
@@ -152,8 +153,8 @@ export default function CommunitiesScreen() {
       )}
 
       {loading && !refreshing ? (
-        <View style={styles.center}>
-          <ActivityIndicator color={colors.primary} size="large" />
+        <View style={{ padding: 16 }}>
+           {[1, 2, 3].map(i => <CommunitySkeleton key={i} />)}
         </View>
       ) : (
         <FlatList

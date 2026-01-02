@@ -33,60 +33,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-// Mock data lookup
-const mockRequests: Record<string, VerificationRequest> = {
-  '1': {
-    id: '1',
-    userId: 'u1',
-    user: {
-      id: 'u1',
-      name: 'Sarah Johnson',
-      email: 'sarah@example.com',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop',
-      role: 'CREATOR',
-      bio: 'Digital content creator and lifestyle influencer with a passion for travel, fashion, and sustainable living. Sharing daily inspiration with my amazing community.',
-      isVerified: false,
-      createdAt: '2024-01-15T10:00:00Z',
-    },
-    verificationType: 'CREATOR',
-    status: 'PENDING',
-    reason: 'I have 500k followers on Instagram and create daily lifestyle content. I have been featured in major publications and collaborate with leading brands.',
-    documents: [
-      { id: 'd1', type: 'SOCIAL_LINK', url: 'https://instagram.com/sarahjohnson', name: 'Instagram Profile' },
-      { id: 'd2', type: 'PROOF_OF_WORK', url: '#', name: 'Brand Collaboration Examples' },
-    ],
-    adminNotes: null,
-    submittedAt: '2024-12-28T14:30:00Z',
-    reviewedAt: null,
-    reviewedBy: null,
-  },
-  '2': {
-    id: '2',
-    userId: 'u2',
-    user: {
-      id: 'u2',
-      name: 'Tech Gadgets Inc',
-      email: 'contact@techgadgets.com',
-      avatar: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=150&h=150&fit=crop',
-      role: 'BRAND',
-      bio: 'Leading tech accessories brand providing innovative solutions for modern consumers.',
-      isVerified: false,
-      createdAt: '2024-02-20T10:00:00Z',
-    },
-    verificationType: 'BRAND',
-    status: 'PENDING',
-    reason: 'We are an established tech brand with official business registration and trademark.',
-    documents: [
-      { id: 'd2', type: 'ID_DOCUMENT', url: '#', name: 'Business Registration Certificate' },
-      { id: 'd3', type: 'OTHER', url: '#', name: 'Trademark Documentation' },
-    ],
-    adminNotes: null,
-    submittedAt: '2024-12-27T09:15:00Z',
-    reviewedAt: null,
-    reviewedBy: null,
-  },
-};
-
 export default function VerificationDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -103,19 +49,9 @@ export default function VerificationDetailPage() {
     const fetchRequest = async () => {
       setIsLoading(true);
       try {
-        // In production, use the API
-        // const data = await verificationApi.getRequestById(id!);
-        // setRequest(data);
-        
-        // Demo: Use mock data
-        const mockData = mockRequests[id!];
-        if (mockData) {
-          setRequest(mockData);
-          setAdminNotes(mockData.adminNotes || '');
-        } else {
-          toast.error('Request not found');
-          navigate('/requests');
-        }
+        const data = await verificationApi.getRequestById(id!);
+        setRequest(data);
+        setAdminNotes(data.adminNotes || '');
       } catch (error) {
         toast.error('Failed to load request details');
         navigate('/requests');
@@ -203,7 +139,7 @@ export default function VerificationDetailPage() {
               <p className="text-muted-foreground text-sm">{request.user.email}</p>
               <div className="flex items-center gap-3 mt-2">
                 <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground capitalize">
-                  {request.user.role.toLowerCase()}
+                  {request.user.roles?.[0]?.toLowerCase().replace('_', ' ') || 'User'}
                 </span>
                 <VerificationTypeBadge type={request.verificationType} />
               </div>
@@ -268,44 +204,44 @@ export default function VerificationDetailPage() {
       </Card>
 
       {/* Admin Actions */}
-      {isPending && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Admin Review</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="notes">Admin Notes (optional)</Label>
-              <Textarea
-                id="notes"
-                placeholder="Add notes about your decision..."
-                value={adminNotes}
-                onChange={(e) => setAdminNotes(e.target.value)}
-                rows={3}
-              />
-            </div>
-            <div className="flex gap-3">
-              <Button
-                className="flex-1"
-                onClick={() => setConfirmDialog({ open: true, action: 'approve' })}
-                disabled={isProcessing}
-              >
-                <CheckCircle2 className="h-4 w-4 mr-2" />
-                Approve
-              </Button>
-              <Button
-                variant="destructive"
-                className="flex-1"
-                onClick={() => setConfirmDialog({ open: true, action: 'reject' })}
-                disabled={isProcessing}
-              >
-                <XCircle className="h-4 w-4 mr-2" />
-                Reject
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">
+            {isPending ? 'Admin Review' : 'Re-evaluate Verification'}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="notes">Admin Notes (optional)</Label>
+            <Textarea
+              id="notes"
+              placeholder="Add notes about your decision..."
+              value={adminNotes}
+              onChange={(e) => setAdminNotes(e.target.value)}
+              rows={3}
+            />
+          </div>
+          <div className="flex gap-3">
+            <Button
+              className="flex-1"
+              onClick={() => setConfirmDialog({ open: true, action: 'approve' })}
+              disabled={isProcessing || request.status === 'APPROVED'}
+            >
+              <CheckCircle2 className="h-4 w-4 mr-2" />
+              {request.status === 'APPROVED' ? 'Already Approved' : 'Approve'}
+            </Button>
+            <Button
+              variant="destructive"
+              className="flex-1"
+              onClick={() => setConfirmDialog({ open: true, action: 'reject' })}
+              disabled={isProcessing || request.status === 'REJECTED'}
+            >
+              <XCircle className="h-4 w-4 mr-2" />
+              {request.status === 'REJECTED' ? 'Already Rejected' : 'Reject'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Already reviewed info */}
       {!isPending && request.reviewedAt && (

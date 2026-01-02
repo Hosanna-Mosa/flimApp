@@ -29,6 +29,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/utils/api';
 import { ContentType } from '@/types';
+import { ProfileSkeleton } from '@/components/skeletons/ProfileSkeleton';
 
 interface UserProfile {
     _id: string;
@@ -260,9 +261,7 @@ export default function PublicProfileScreen() {
                         headerTintColor: colors.text,
                     }}
                 />
-                <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color={colors.primary} />
-                </View>
+                <ProfileSkeleton />
             </View>
         );
     }
@@ -310,7 +309,7 @@ export default function PublicProfileScreen() {
                             {user.name}
                         </Text>
                         {user.isVerified && (
-                            <BadgeCheck size={24} color={colors.primary} fill="transparent" />
+                            <BadgeCheck size={24} color="#FFFFFF" fill={colors.primary} />
                         )}
                     </View>
 

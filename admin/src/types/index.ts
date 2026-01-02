@@ -1,10 +1,22 @@
-// User types
+export type Industry =
+  | 'bollywood'
+  | 'tollywood'
+  | 'kollywood'
+  | 'mollywood'
+  | 'sandalwood'
+  | 'punjabi'
+  | 'bengali'
+  | 'bhojpuri'
+  | 'marathi';
+
 export interface User {
   id: string;
   name: string;
   email: string;
+  phone?: string;
   avatar: string | null;
-  role: 'USER' | 'CREATOR' | 'BRAND';
+  roles: string[];
+  industries: Industry[];
   bio: string | null;
   isVerified: boolean;
   createdAt: string;
