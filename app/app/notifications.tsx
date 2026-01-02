@@ -43,10 +43,10 @@ export default function NotificationsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [processingRequest, setProcessingRequest] = useState<string | null>(null);
 
-  const loadNotifications = async () => {
+  const loadNotifications = async (showLoadingState = true) => {
     if (!token) return;
     try {
-      if (!refreshing) setLoading(true);
+      if (showLoadingState) setLoading(true);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const data: any = await apiNotifications(token);
       if (Array.isArray(data)) {
@@ -68,6 +68,8 @@ export default function NotificationsScreen() {
       }
     } catch (error) {
       console.error('Failed to load notifications:', error);
+    } finally {
+      if (showLoadingState) setLoading(false);
     }
   };
 
@@ -126,7 +128,7 @@ export default function NotificationsScreen() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await loadNotifications();
+    await loadNotifications(false);
     await refreshUnreadCount();
     setRefreshing(false);
   };

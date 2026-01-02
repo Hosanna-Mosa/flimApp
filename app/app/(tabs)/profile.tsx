@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  RefreshControl,
+  Dimensions,
 } from 'react-native';
 import { Stack, useRouter, useFocusEffect } from 'expo-router';
 import { Image } from 'expo-image';
@@ -42,6 +44,36 @@ interface UserStats {
   postsCount: number;
 }
 
+const { width } = Dimensions.get('window');
+const ITEM_WIDTH = width / 3;
+
+function PostThumbnail({ post, onPress }: { post: UserPost; onPress: () => void }) {
+  const { colors } = useTheme();
+  const [hasError, setHasError] = useState(false);
+
+  return (
+    <TouchableOpacity
+      style={[styles.portfolioItem, { width: ITEM_WIDTH, height: ITEM_WIDTH }]}
+      onPress={onPress}
+      activeOpacity={0.8}
+    >
+      {!hasError ? (
+        <Image
+          source={{ uri: post.thumbnailUrl || post.mediaUrl }}
+          style={styles.portfolioImage}
+          contentFit="cover"
+          onError={() => setHasError(true)}
+          transition={200}
+        />
+      ) : (
+        <View style={[styles.placeholderContainer, { backgroundColor: colors.surface }]}>
+          <ImageIcon size={32} color={colors.textSecondary} />
+        </View>
+      )}
+    </TouchableOpacity>
+  );
+}
+
 export default function ProfileScreen() {
   const router = useRouter();
   const { colors } = useTheme();
@@ -50,6 +82,7 @@ export default function ProfileScreen() {
   const [posts, setPosts] = useState<UserPost[]>([]);
   const [stats, setStats] = useState<UserStats>({ followersCount: 0, followingCount: 0, postsCount: 0 });
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Reload data every time the screen comes into focus
 
@@ -58,11 +91,11 @@ export default function ProfileScreen() {
 
   const userId = (user as any)?._id || (user as any)?.id || user?.id;
 
-  const loadUserData = useCallback(async () => {
+  const loadUserData = useCallback(async (showLoading = true) => {
     if (!userId || !token) return;
 
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
 
       // console.log('[Profile] Loading data for user:', userId);
 
@@ -101,15 +134,26 @@ export default function ProfileScreen() {
       // console.error('[Profile] Error loading:', error);
       Alert.alert('Error', 'Failed to load profile data');
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   }, [userId, token]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([
+      loadUserData(false),
+      refreshUser()
+    ]);
+    setRefreshing(false);
+  }, [loadUserData, refreshUser]);
 
   // Reload data when screen comes into focus (e.g., after editing profile)
   useFocusEffect(
     useCallback(() => {
       loadUserData();
-    }, [loadUserData])
+      // Also refresh user data to ensure status is up to date when returning to screen
+      refreshUser();
+    }, [loadUserData, refreshUser])
   );
 
   const filteredPosts = selectedFilter === 'all'
@@ -162,6 +206,13 @@ export default function ProfileScreen() {
         <ScrollView
           style={[styles.container, { backgroundColor: colors.background }]}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.primary}
+            />
+          }
         >
           <View style={styles.header}>
             <Image
@@ -301,17 +352,11 @@ export default function ProfileScreen() {
 
         <View style={styles.portfolio}>
           {filteredPosts.map((post) => (
-            <TouchableOpacity
+            <PostThumbnail
               key={post._id}
-              style={styles.portfolioItem}
+              post={post}
               onPress={() => router.push(`/post/${post._id}`)}
-            >
-              <Image
-                source={{ uri: post.thumbnailUrl || post.mediaUrl }}
-                style={styles.portfolioImage}
-                contentFit="cover"
-              />
-            </TouchableOpacity>
+            />
           ))}
           {filteredPosts.length === 0 && (
             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
@@ -427,19 +472,22 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   portfolio: {
-    padding: 2,
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
   portfolioItem: {
-    width: '33.33%',
-    aspectRatio: 1,
-    padding: 2,
+    borderWidth: 0.5,
+    borderColor: 'transparent',
   },
   portfolioImage: {
     width: '100%',
     height: '100%',
-    borderRadius: 4,
+  },
+  placeholderContainer: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   emptyText: {
     textAlign: 'center',
