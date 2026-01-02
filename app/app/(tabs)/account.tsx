@@ -13,6 +13,7 @@ import {
   Wallet,
   Settings as SettingsIcon,
   LogOut,
+  Info,
 } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -59,7 +60,15 @@ export default function AccountScreen() {
       subtitle: 'App preferences',
       onPress: () => router.push('/settings'),
     },
+    {
+      id: 'support',
+      icon: Info,
+      label: 'Support',
+      subtitle: 'Contact support',
+      onPress: () => router.push('/support'),
+    },
   ];
+
 
   return (
     <>

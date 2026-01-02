@@ -1,11 +1,12 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { 
-  BadgeCheck, 
-  ClipboardList, 
-  History, 
+import {
+  BadgeCheck,
+  ClipboardList,
+  History,
   LogOut,
   Menu,
-  X
+  X,
+  Users as UsersIcon
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -14,6 +15,7 @@ import { cn } from '@/lib/utils';
 
 const navigation = [
   { name: 'Verification Requests', href: '/requests', icon: ClipboardList },
+  { name: 'Users', href: '/users', icon: UsersIcon },
   { name: 'Audit Logs', href: '/logs', icon: History },
 ];
 
@@ -26,7 +28,7 @@ export function AdminLayout() {
     <div className="min-h-screen bg-background">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-40 bg-foreground/20 backdrop-blur-sm lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
@@ -46,7 +48,7 @@ export function AdminLayout() {
               <BadgeCheck className="h-7 w-7 text-primary" />
               <span className="font-semibold text-lg text-foreground">Flimy Verify</span>
             </div>
-            <button 
+            <button
               className="lg:hidden text-muted-foreground hover:text-foreground"
               onClick={() => setSidebarOpen(false)}
             >
@@ -57,7 +59,7 @@ export function AdminLayout() {
           {/* Navigation */}
           <nav className="flex-1 px-4 py-6 space-y-1">
             {navigation.map((item) => {
-              const isActive = location.pathname === item.href || 
+              const isActive = location.pathname === item.href ||
                 (item.href === '/requests' && location.pathname.startsWith('/requests'));
               return (
                 <NavLink
@@ -66,8 +68,8 @@ export function AdminLayout() {
                   onClick={() => setSidebarOpen(false)}
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
-                    isActive 
-                      ? "bg-primary text-primary-foreground" 
+                    isActive
+                      ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                   )}
                 >
