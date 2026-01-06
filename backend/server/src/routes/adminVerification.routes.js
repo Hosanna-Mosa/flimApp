@@ -8,6 +8,8 @@ router.use(adminAuthMiddleware);
 
 router.get('/requests', adminVerificationController.getRequests);
 router.get('/requests/:id', adminVerificationController.getRequestById);
+router.get('/subscriptions', adminVerificationController.getSubscriptions);
+router.delete('/subscriptions/:id', adminVerificationController.deleteSubscription);
 router.post('/:userId/approve', adminVerificationController.approve);
 router.post('/:userId/reject', adminVerificationController.reject);
 router.get('/logs', adminVerificationController.getLogs);

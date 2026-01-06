@@ -175,7 +175,10 @@ export default function SettingsScreen() {
                     { color: colors.textSecondary },
                   ]}
                 >
-                  Apply for a verified badge
+                  {user?.verificationStatus === 'active' 
+                    ? `Active until ${new Date(user.verifiedUntil!).toLocaleDateString()}`
+                    : 'Apply for a verified badge'
+                  }
                 </Text>
               </View>
             </View>

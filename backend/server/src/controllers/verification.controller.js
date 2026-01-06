@@ -1,4 +1,5 @@
 const VerificationRequest = require('../models/VerificationRequest.model');
+const User = require('../models/User.model');
 const { success } = require('../utils/response');
 
 const submitRequest = async (req, res, next) => {
@@ -24,6 +25,9 @@ const submitRequest = async (req, res, next) => {
       reason,
       documents
     });
+
+    // Update user status
+    await User.findByIdAndUpdate(userId, { verificationStatus: 'pending_docs' });
 
     return success(res, request, 201);
   } catch (err) {

@@ -60,6 +60,28 @@ export interface VerificationDocument {
   name: string;
 }
 
+// Subscription type
+export interface Subscription {
+  id: string;
+  userId: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    avatar: string | null;
+    verificationStatus: string;
+    isVerified: boolean;
+  };
+  planType: '1_MONTH' | '3_MONTHS' | '6_MONTHS' | '9_MONTHS';
+  amount: number;
+  status: 'PENDING' | 'ACTIVE' | 'EXPIRED' | 'CANCELLED';
+  startDate: string | null;
+  endDate: string | null;
+  razorpayOrderId: string;
+  razorpayPaymentId: string | null;
+  createdAt: string;
+}
+
 // Verification log action
 export type VerificationAction = 'APPROVE' | 'REJECT' | 'REVOKE';
 

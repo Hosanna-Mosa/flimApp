@@ -1,5 +1,6 @@
 const VerificationRequest = require('../models/VerificationRequest.model');
 const VerificationLog = require('../models/VerificationLog.model');
+const Subscription = require('../models/Subscription.model');
 const User = require('../models/User.model');
 const { success } = require('../utils/response');
 const { sendVerificationApproved, sendVerificationRejected } = require('../services/mail.service');
@@ -152,9 +153,15 @@ const approve = async (req, res, next) => {
 
     // Update user
     const user = await User.findById(userId);
+    console.log(`[Admin Verification] Approving user: ${userId}, found: ${!!user}`);
+    
     if (user) {
-      user.isVerified = true;
+      user.verificationStatus = 'approved_docs';
+      // user.isVerified remains false until payment
+      console.log(`[Admin Verification] Updating user ${userId} status to approved_docs`);
       await user.save();
+    } else {
+      console.error(`[Admin Verification] User not found: ${userId}`);
     }
 
     // Log action
@@ -202,9 +209,15 @@ const reject = async (req, res, next) => {
 
     // Update user
     const user = await User.findById(userId);
+    console.log(`[Admin Verification] Rejecting user: ${userId}, found: ${!!user}`);
+    
     if (user) {
+      user.verificationStatus = 'rejected';
       user.isVerified = false;
+      console.log(`[Admin Verification] Updating user ${userId} status to rejected`);
       await user.save();
+    } else {
+      console.error(`[Admin Verification] User not found: ${userId}`);
     }
 
     // Log action
@@ -266,10 +279,76 @@ const getLogs = async (req, res, next) => {
   }
 };
 
+const getSubscriptions = async (req, res, next) => {
+  try {
+    const { page = 1, limit = 10, status, name } = req.query;
+
+    const query = {};
+    if (status && status !== 'ALL') {
+      query.status = status;
+    }
+
+    if (name) {
+      const matchingUsers = await User.find({ name: { $regex: name, $options: 'i' } }).select('_id');
+      query.user = { $in: matchingUsers.map(u => u._id) };
+    }
+
+    const total = await Subscription.countDocuments(query);
+    const subscriptions = await Subscription.find(query)
+      .populate('user', 'name email avatar verificationStatus isVerified')
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(Number(limit));
+
+    const formattedSubscriptions = subscriptions.map(sub => ({
+      id: sub._id,
+      userId: sub.user?._id,
+      user: {
+        id: sub.user?._id,
+        name: sub.user?.name,
+        email: sub.user?.email,
+        avatar: sub.user?.avatar,
+        verificationStatus: sub.user?.verificationStatus,
+        isVerified: sub.user?.isVerified
+      },
+      planType: sub.planType,
+      amount: sub.amount,
+      status: sub.status,
+      startDate: sub.startDate,
+      endDate: sub.endDate,
+      razorpayOrderId: sub.razorpayOrderId,
+      razorpayPaymentId: sub.razorpayPaymentId,
+      createdAt: sub.createdAt
+    }));
+
+    return success(res, {
+      data: formattedSubscriptions,
+      total,
+      page: Number(page),
+      limit: Number(limit),
+      totalPages: Math.ceil(total / limit)
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const deleteSubscription = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    await Subscription.findByIdAndDelete(id);
+    return success(res, { message: 'Subscription record deleted' });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   getRequests,
   getRequestById,
   approve,
   reject,
-  getLogs
+  getLogs,
+  getSubscriptions,
+  deleteSubscription
 };

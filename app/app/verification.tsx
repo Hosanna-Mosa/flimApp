@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
   Modal,
 } from 'react-native';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useRouter, useFocusEffect } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
 import {
   BadgeCheck,
@@ -55,9 +55,13 @@ export default function VerificationScreen() {
   const { colors } = useTheme();
   const { token, user, refreshUser } = useAuth();
 
-  const [status, setStatus] = useState<'LOADING' | 'NONE' | 'PENDING' | 'APPROVED' | 'REJECTED'>('LOADING');
+  const [status, setStatus] = useState<'LOADING' | 'NONE' | 'PENDING_DOCS' | 'APPROVED_DOCS' | 'ACTIVE' | 'REJECTED'>('LOADING');
   const [requestData, setRequestData] = useState<any>(null);
   
+  // Step 2: Plans State
+  const [selectedPlan, setSelectedPlan] = useState<'1_MONTH' | '3_MONTHS' | '6_MONTHS' | '9_MONTHS' | null>(null);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
   // Form State
   const [verificationType, setVerificationType] = useState('CREATOR');
   const [reason, setReason] = useState('');
@@ -71,26 +75,129 @@ export default function VerificationScreen() {
   const [tempDocName, setTempDocName] = useState('');
   const [tempDocType, setTempDocType] = useState('ID_DOCUMENT');
 
-  useEffect(() => {
-    fetchStatus();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchStatus();
+    }, [])
+  );
 
   const fetchStatus = async () => {
     try {
       setStatus('LOADING');
-      const response = await api.getVerificationStatus(token || undefined) as any;
-      if (response && response.status !== 'NONE') {
-        setRequestData(response);
-        setStatus(response.status);
-        if (response.status === 'APPROVED') {
-          refreshUser();
-        }
-      } else {
+      // Always refresh user to get latest status
+      const updatedUser = await refreshUser();
+      
+      const vStatus = updatedUser?.verificationStatus || user?.verificationStatus || 'none';
+      
+      if (vStatus === 'none') {
         setStatus('NONE');
+      } else if (vStatus === 'pending_docs') {
+        const response = await api.getVerificationStatus(token || undefined) as any;
+        setRequestData(response);
+        
+        // Fallback: even if user.verificationStatus is still 'pending_docs', 
+        // if the request itself is APPROVED, move to stage 3.
+        if (response && response.status === 'APPROVED') {
+          setStatus('APPROVED_DOCS');
+        } else if (response && response.status === 'REJECTED') {
+          setStatus('REJECTED');
+        } else {
+          setStatus('PENDING_DOCS');
+        }
+      } else if (vStatus === 'approved_docs') {
+        setStatus('APPROVED_DOCS');
+      } else if (vStatus === 'active') {
+        setStatus('ACTIVE');
+      } else if (vStatus === 'rejected') {
+        const response = await api.getVerificationStatus(token || undefined) as any;
+        setRequestData(response);
+        setStatus('REJECTED');
       }
     } catch (error) {
       console.error('Failed to fetch verification status:', error);
       setStatus('NONE');
+    }
+  };
+
+  const PLANS = [
+    { id: '1_MONTH', label: '1 Month', price: '₹499', description: 'Perfect for starters' },
+    { id: '3_MONTHS', label: '3 Months', price: '₹1299', description: 'Most popular choice', popular: true },
+    { id: '6_MONTHS', label: '6 Months', price: '₹2199', description: 'Best value for professionals' },
+    { id: '9_MONTHS', label: '9 Months', price: '₹2999', description: 'The power creator package' },
+  ] as const;
+
+  const handlePayment = async (planId: '1_MONTH' | '3_MONTHS' | '6_MONTHS' | '9_MONTHS') => {
+    try {
+      setIsProcessingPayment(true);
+      
+      // Step 1: Create Order on Backend
+      const order = await api.apiCreateSubscriptionOrder(planId, token || undefined);
+      
+      // Step 2: In a real app, this would open the Razorpay Native Modal.
+      // Since we can't do that here, we'll simulate a successful payment for now.
+      // If you are using react-native-razorpay, the code would be:
+      /*
+      var options = {
+        description: 'Verification Badge Subscription',
+        image: 'https://i.imgur.com/3g7Y69t.png',
+        currency: order.currency,
+        key: order.keyId,
+        amount: order.amount,
+        name: 'Filmy App',
+        order_id: order.orderId,
+        prefill: {
+          email: user?.email,
+          contact: user?.phone,
+          name: user?.name
+        },
+        theme: {color: colors.primary}
+      }
+      RazorpayCheckout.open(options).then(async (data) => {
+        await api.apiVerifySubscriptionPayment({
+          razorpay_order_id: data.razorpay_order_id,
+          razorpay_payment_id: data.razorpay_payment_id,
+          razorpay_signature: data.razorpay_signature
+        }, token);
+        fetchStatus();
+      })
+      */
+      
+      // For this demo/setup, we will just show an alert or proceed if you want to skip actual Razorpay UI.
+      Alert.alert(
+        'Payment Demo', 
+        `In a real build, we would open Razorpay checkout for ${planId} plan (${PLANS.find(p => p.id === planId)?.price}). Proceed with simulated success?`,
+        [
+          { text: 'Cancel', style: 'cancel', onPress: () => setIsProcessingPayment(false) },
+          { 
+            text: 'Success', 
+            onPress: async () => {
+              try {
+                // We simulate the callback from Razorpay
+                // We actually call the backend with a special 'simulated_success' signature 
+                // which the backend will accept ONLY in development mode.
+                await api.apiVerifySubscriptionPayment({
+                  razorpay_order_id: order.orderId,
+                  razorpay_payment_id: `pay_simulated_${Date.now()}`,
+                  razorpay_signature: 'simulated_success'
+                }, token || undefined);
+
+                Alert.alert('Success', 'Payment simulated and verified in database!');
+                fetchStatus();
+                // refreshUser to update global auth state
+                await refreshUser();
+              } catch (e: any) {
+                Alert.alert('Error', e.message || 'Payment verification failed');
+              } finally {
+                setIsProcessingPayment(false);
+              }
+            }
+          }
+        ]
+      );
+
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to initiate payment');
+      setIsProcessingPayment(false);
     }
   };
 
@@ -188,24 +295,24 @@ export default function VerificationScreen() {
     );
   }
 
-  if (status === 'PENDING') {
+  if (status === 'PENDING_DOCS') {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <Stack.Screen options={{ headerTitle: 'Verification Status' }} />
         <View style={styles.statusCard}>
           <Clock size={64} color={colors.primary} />
-          <Text style={[styles.statusTitle, { color: colors.text }]}>Request Pending</Text>
+          <Text style={[styles.statusTitle, { color: colors.text }]}>Documents Under Review</Text>
           <Text style={[styles.statusDesc, { color: colors.textSecondary }]}>
             Your verification request is currently being reviewed by our team. 
-            We'll notify you once a decision is made.
+            We'll notify you once a decision is made. Then you can pick a plan.
           </Text>
           <View style={[styles.infoBox, { backgroundColor: colors.surface }]}>
              <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Submitted on:</Text>
              <Text style={[styles.infoValue, { color: colors.text }]}>
-               {new Date(requestData.createdAt).toLocaleDateString()}
+               {requestData ? new Date(requestData.createdAt).toLocaleDateString() : 'Loading...'}
              </Text>
              <Text style={[styles.infoLabel, { color: colors.textSecondary, marginTop: 8 }]}>Type:</Text>
-             <Text style={[styles.infoValue, { color: colors.text }]}>{requestData.verificationType}</Text>
+             <Text style={[styles.infoValue, { color: colors.text }]}>{requestData?.verificationType}</Text>
           </View>
           <Button title="Back to Settings" onPress={() => router.back()} variant="outline" style={{ marginTop: 24, width: '100%' }} />
         </View>
@@ -213,7 +320,60 @@ export default function VerificationScreen() {
     );
   }
 
-  if (status === 'APPROVED') {
+  if (status === 'APPROVED_DOCS') {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <Stack.Screen options={{ headerTitle: 'Select a Plan' }} />
+        <ScrollView contentContainerStyle={styles.planContainer}>
+          <View style={styles.planHeader}>
+            <CheckCircle2 size={48} color="#4CAF50" />
+            <Text style={[styles.planTitle, { color: colors.text }]}>Documents Verified!</Text>
+            <Text style={[styles.planSubtitle, { color: colors.textSecondary }]}>
+              Your documents have been approved. Pick a plan to activate your badge.
+            </Text>
+          </View>
+
+          <View style={styles.planGrid}>
+            {PLANS.map((plan) => (
+              <TouchableOpacity
+                key={plan.id}
+                style={[
+                  styles.planCard,
+                  { backgroundColor: colors.card, borderColor: colors.border },
+                  selectedPlan === plan.id && { borderColor: colors.primary, borderWidth: 2 }
+                ]}
+                onPress={() => setSelectedPlan(plan.id)}
+              >
+                {('popular' in plan) && (
+                  <View style={[styles.popularBadge, { backgroundColor: colors.primary }]}>
+                    <Text style={styles.popularText}>POPULAR</Text>
+                  </View>
+                )}
+                <Text style={[styles.planLabel, { color: colors.text }]}>{plan.label}</Text>
+                <Text style={[styles.planPrice, { color: colors.text }]}>{plan.price}</Text>
+                <Text style={[styles.planDesc, { color: colors.textSecondary }]}>{plan.description}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <View style={styles.planFooter}>
+             <Button 
+               title={isProcessingPayment ? "Processing..." : "Pay Now with Razorpay"} 
+               onPress={() => selectedPlan && handlePayment(selectedPlan)} 
+               disabled={!selectedPlan || isProcessingPayment}
+               loading={isProcessingPayment}
+               size="large"
+             />
+             <Text style={[styles.secureText, { color: colors.textSecondary }]}>
+               Secure payment via Razorpay. Badge activated instantly.
+             </Text>
+          </View>
+        </ScrollView>
+      </View>
+    );
+  }
+
+  if (status === 'ACTIVE') {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <Stack.Screen options={{ headerTitle: 'Verification Status' }} />
@@ -461,4 +621,25 @@ const styles = StyleSheet.create({
   typeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   typeOption: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, borderWidth: 1 },
   typeOptionText: { fontSize: 12, fontWeight: '500' },
+
+  planContainer: { padding: 20 },
+  planHeader: { alignItems: 'center', marginBottom: 32 },
+  planTitle: { fontSize: 24, fontWeight: 'bold', marginTop: 16 },
+  planSubtitle: { fontSize: 15, textAlign: 'center', marginTop: 8, lineHeight: 22 },
+  planGrid: { gap: 16 },
+  planCard: { padding: 20, borderRadius: 20, borderWidth: 1, position: 'relative', overflow: 'hidden' },
+  popularBadge: { 
+    position: 'absolute', 
+    top: 0, 
+    right: 0, 
+    paddingHorizontal: 12, 
+    paddingVertical: 4, 
+    borderBottomLeftRadius: 12 
+  },
+  popularText: { color: '#000', fontSize: 10, fontWeight: '900' },
+  planLabel: { fontSize: 18, fontWeight: 'bold' },
+  planPrice: { fontSize: 24, fontWeight: '900', marginTop: 4 },
+  planDesc: { fontSize: 13, marginTop: 8 },
+  planFooter: { marginTop: 32, gap: 16, alignItems: 'center' },
+  secureText: { fontSize: 12, textAlign: 'center' },
 });

@@ -6,6 +6,7 @@ import {
   LogOut,
   Menu,
   X,
+  CreditCard,
   Users as UsersIcon
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
@@ -15,6 +16,7 @@ import { cn } from '@/lib/utils';
 
 const navigation = [
   { name: 'Verification Requests', href: '/requests', icon: ClipboardList },
+  { name: 'Subscription Users', href: '/subscriptions', icon: CreditCard },
   { name: 'Users', href: '/users', icon: UsersIcon },
   { name: 'Audit Logs', href: '/logs', icon: History },
 ];

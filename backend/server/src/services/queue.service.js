@@ -126,6 +126,17 @@ if (enableRedis) {
  * Queue Service - Manages background jobs for async operations
  */
 class QueueService {
+  constructor() {
+    this.initRecurringJobs();
+  }
+
+  initRecurringJobs() {
+    // Check for expired subscriptions every hour
+    queues.subscription.add('check-expiry', {}, {
+      repeat: { cron: '0 * * * *' }, // Every hour
+      removeOnComplete: true,
+    }).catch(err => logger.error('Error starting subscription expiry check job:', err));
+  }
   /**
    * Like/Unlike Jobs
    */

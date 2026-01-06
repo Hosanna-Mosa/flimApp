@@ -54,6 +54,8 @@ export interface User {
   isPrivate?: boolean; // Legacy field, use accountType instead
   accountType?: 'public' | 'private' | 'business';
   isVerified?: boolean;
+  verificationStatus?: 'none' | 'pending_docs' | 'approved_docs' | 'pending_payment' | 'active' | 'rejected';
+  verifiedUntil?: string;
   isFollowing?: boolean;
 }
 
