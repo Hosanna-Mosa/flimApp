@@ -1,6 +1,83 @@
 const Queue = require('bull');
 const logger = require('../config/logger');
 
+const enableRedis = process.env.ENABLE_REDIS !== 'false';
+
+// Mock Queue class for when Redis is disabled
+class MockQueue {
+  constructor(name) {
+    this.name = name;
+    this.handlers = {};
+    this.eventHandlers = {};
+  }
+
+  process(name, handler) {
+    // If name is function, it's the default handler
+    if (typeof name === 'function') {
+      this.handlers['__default__'] = name;
+    } else {
+      this.handlers[name] = handler;
+    }
+  }
+
+  async add(name, data, opts) {
+    // Handle optional name argument (Bull signature: (name?, data, opts?))
+    if (typeof name !== 'string') {
+      opts = data;
+      data = name;
+      name = '__default__';
+    }
+
+    logger.info(`[MockQueue] Adding job to ${this.name}: ${name}`);
+
+    // Execute handler immediately
+    const handler = this.handlers[name];
+    if (handler) {
+      try {
+        const job = { data, id: 'mock-id-' + Date.now() };
+        await handler(job);
+        this.emit('completed', job, { mocked: true });
+        return job;
+      } catch (err) {
+        logger.error(`[MockQueue] Error processing job ${name}:`, err);
+        this.emit('failed', { data, id: 'mock-id' }, err);
+        // We don't rethrow to avoid crashing the caller
+      }
+    } else {
+      logger.warn(`[MockQueue] No handler found for job ${name} in queue ${this.name}`);
+    }
+    return { id: 'mock-id' };
+  }
+
+  async addBulk(jobs) {
+    logger.info(`[MockQueue] Adding bulk jobs to ${this.name}`);
+    return Promise.all(jobs.map(job => this.add(job.name, job.data, job.opts)));
+  }
+
+  on(event, callback) {
+    if (!this.eventHandlers[event]) {
+      this.eventHandlers[event] = [];
+    }
+    this.eventHandlers[event].push(callback);
+  }
+
+  emit(event, ...args) {
+    if (this.eventHandlers[event]) {
+      this.eventHandlers[event].forEach(cb => cb(...args));
+    }
+  }
+
+  async getWaitingCount() { return 0; }
+  async getActiveCount() { return 0; }
+  async getCompletedCount() { return 0; }
+  async getFailedCount() { return 0; }
+  async getDelayedCount() { return 0; }
+  async clean() { return []; }
+  async pause() { return true; }
+  async resume() { return true; }
+  async close() { return true; }
+}
+
 // Queue configuration
 const queueConfig = {
   redis: {
@@ -20,16 +97,30 @@ const queueConfig = {
 };
 
 // Create queues for different job types
-const queues = {
-  like: new Queue('like-sync', queueConfig),
-  follow: new Queue('follow-sync', queueConfig),
-  comment: new Queue('comment-sync', queueConfig),
-  share: new Queue('share-sync', queueConfig),
-  feed: new Queue('feed-update', queueConfig),
-  stats: new Queue('stats-sync', queueConfig),
-  notification: new Queue('notification', queueConfig),
-  subscription: new Queue('subscription', queueConfig),
-};
+let queues = {};
+
+if (enableRedis) {
+  queues = {
+    like: new Queue('like-sync', queueConfig),
+    follow: new Queue('follow-sync', queueConfig),
+    comment: new Queue('comment-sync', queueConfig),
+    share: new Queue('share-sync', queueConfig),
+    feed: new Queue('feed-update', queueConfig),
+    stats: new Queue('stats-sync', queueConfig),
+    notification: new Queue('notification', queueConfig),
+  };
+} else {
+  logger.info('Redis disabled. Using MockQueues.');
+  queues = {
+    like: new MockQueue('like-sync'),
+    follow: new MockQueue('follow-sync'),
+    comment: new MockQueue('comment-sync'),
+    share: new MockQueue('share-sync'),
+    feed: new MockQueue('feed-update'),
+    stats: new MockQueue('stats-sync'),
+    notification: new MockQueue('notification'),
+  };
+}
 
 /**
  * Queue Service - Manages background jobs for async operations
@@ -173,7 +264,7 @@ class QueueService {
         data: { userId },
         opts: { priority: 3, delay: 5000 },
       }));
-      
+
       await queues.feed.addBulk(jobs);
       logger.info(`Bulk feed update jobs queued for ${userIds.length} users`);
       return true;
@@ -222,7 +313,7 @@ class QueueService {
   async getQueueStats() {
     try {
       const stats = {};
-      
+
       for (const [name, queue] of Object.entries(queues)) {
         const [waiting, active, completed, failed, delayed] = await Promise.all([
           queue.getWaitingCount(),
@@ -231,7 +322,7 @@ class QueueService {
           queue.getFailedCount(),
           queue.getDelayedCount(),
         ]);
-        
+
         stats[name] = {
           waiting,
           active,
@@ -241,7 +332,7 @@ class QueueService {
           total: waiting + active + delayed,
         };
       }
-      
+
       return stats;
     } catch (error) {
       logger.error('Error getting queue stats:', error);

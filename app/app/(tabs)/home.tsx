@@ -93,7 +93,7 @@ export default function HomeScreen() {
 
     try {
       console.log(`[Home] Loading feed page ${pageNumber}...`);
-      const result = await api.getFeed(pageNumber, 20, 'hybrid', 7, token) as any;
+      const result = await api.getFeed(pageNumber, 20, 'hybrid', 36500, token) as any;
 
       // ... existing mapping logic ...
       let feedItems = [];
@@ -104,7 +104,7 @@ export default function HomeScreen() {
       } else if (result && result.data && Array.isArray(result.data.data)) {
         feedItems = result.data.data;
       }
-      
+
       if (feedItems.length > 0) {
         const mappedPosts = feedItems.map((p: any) => ({
           id: p._id || p.id,
@@ -141,39 +141,39 @@ export default function HomeScreen() {
         setHasMore(false);
       }
     } catch (error) {
-       // Legacy fallback...
-       if (!append) {
+      // Legacy fallback...
+      if (!append) {
         try {
-           const legacyResult = await api.feed(token) as any;
-           const legacyItems = Array.isArray(legacyResult) ? legacyResult : (legacyResult.data || []);
-           if (legacyItems.length > 0) {
-              const mappedPosts = legacyItems.map((p: any) => ({
-                id: p._id || p.id,
-                userId: p.author?._id || p.author?.id || p.userId,
-                user: {
-                  id: p.author?._id || p.author?.id || p.userId,
-                  name: p.author?.name || 'Unknown User',
-                  avatar: p.author?.avatar || 'https://via.placeholder.com/150',
-                  isVerified: p.author?.isVerified || false,
-                  roles: p.author?.roles || [],
-                  isFollowing: false,
-                },
-                type: p.type || 'image',
-                mediaUrl: p.mediaUrl || p.media?.url,
-                thumbnailUrl: p.thumbnailUrl || p.media?.thumbnail,
-                media: p.media,
-                caption: p.caption || '',
-                likes: p.engagement?.likesCount || p.likes || 0,
-                comments: p.engagement?.commentsCount || p.comments || 0,
-                shares: p.engagement?.sharesCount || p.shares || 0,
-                isLiked: p.isLiked || false,
-                createdAt: p.createdAt ? new Date(p.createdAt).toLocaleDateString() : 'Just now',
-              }));
-              setPosts(mappedPosts);
-              setHasMore(false);
-              return;
-           }
-        } catch (err) {}
+          const legacyResult = await api.feed(token) as any;
+          const legacyItems = Array.isArray(legacyResult) ? legacyResult : (legacyResult.data || []);
+          if (legacyItems.length > 0) {
+            const mappedPosts = legacyItems.map((p: any) => ({
+              id: p._id || p.id,
+              userId: p.author?._id || p.author?.id || p.userId,
+              user: {
+                id: p.author?._id || p.author?.id || p.userId,
+                name: p.author?.name || 'Unknown User',
+                avatar: p.author?.avatar || 'https://via.placeholder.com/150',
+                isVerified: p.author?.isVerified || false,
+                roles: p.author?.roles || [],
+                isFollowing: false,
+              },
+              type: p.type || 'image',
+              mediaUrl: p.mediaUrl || p.media?.url,
+              thumbnailUrl: p.thumbnailUrl || p.media?.thumbnail,
+              media: p.media,
+              caption: p.caption || '',
+              likes: p.engagement?.likesCount || p.likes || 0,
+              comments: p.engagement?.commentsCount || p.comments || 0,
+              shares: p.engagement?.sharesCount || p.shares || 0,
+              isLiked: p.isLiked || false,
+              createdAt: p.createdAt ? new Date(p.createdAt).toLocaleDateString() : 'Just now',
+            }));
+            setPosts(mappedPosts);
+            setHasMore(false);
+            return;
+          }
+        } catch (err) { }
       }
       Alert.alert('Error', 'Failed to load feed');
     }
@@ -281,7 +281,7 @@ export default function HomeScreen() {
   const handleLike = async (postId: string) => {
     try {
       // console.log('[Home] handleLike - Current user:', user ? `${user.name} (${(user as any)._id || user.id})` : 'Not logged in');
-      
+
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
       const post = posts.find(p => p.id === postId);
@@ -371,7 +371,7 @@ export default function HomeScreen() {
 
       // API call
       const result = await api.toggleSavePost(postId, token);
-      
+
       // Sync with server response
       setPosts(prevPosts => prevPosts.map((p) =>
         p.id === postId ? { ...p, isSaved: result.saved } : p
@@ -478,7 +478,7 @@ export default function HomeScreen() {
       {loading && page === 0 ? (
         <View style={{ flex: 1, paddingTop: 10 }}>
           {[1, 2, 3].map((i) => (
-             <FeedSkeleton key={i} />
+            <FeedSkeleton key={i} />
           ))}
         </View>
       ) : posts.length === 0 ? (

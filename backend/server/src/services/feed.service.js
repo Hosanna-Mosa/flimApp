@@ -20,7 +20,7 @@ class FeedService {
    */
   async getPersonalizedFeed(userId, page = 0, limit = 20, options = {}) {
     try {
-      const { algorithm = 'hybrid', timeRange = 7 } = options;
+      const { algorithm = 'hybrid', timeRange = 36500 } = options;
 
       // Try to get cached feed first
       // Try to get cached feed first
@@ -137,7 +137,7 @@ class FeedService {
    * Get chronological feed (latest posts from following)
    * @private
    */
-  async getChronologicalFeed(userId, timeRange = 7) {
+  async getChronologicalFeed(userId, timeRange = 36500) {
     try {
       // Get users that the current user follows
       const following = await Follow.find({
@@ -194,7 +194,7 @@ class FeedService {
    * Get engagement-based feed (most popular posts)
    * @private
    */
-  async getEngagementFeed(userId, timeRange = 7) {
+  async getEngagementFeed(userId, timeRange = 36500) {
     try {
       // Get users that the current user follows
       const following = await Follow.find({
@@ -217,7 +217,7 @@ class FeedService {
         isActive: true,
         createdAt: { $gte: cutoffDate },
         $or: [
-          { 
+          {
             visibility: 'public',
             // Exclude posts from private accounts (they should only be visible to followers)
             author: { $nin: privateUserIds }
@@ -242,11 +242,11 @@ class FeedService {
    * Combines recency, engagement, and relevance
    * @private
    */
-  async getHybridFeed(userId, timeRange = 7) {
+  async getHybridFeed(userId, timeRange = 36500) {
     try {
       // Get user data for relevance scoring
       const user = await User.findById(userId).select('industries roles').lean();
-      
+
       if (!user) {
         // Fallback for when user record is missing (should trigger logout ideally)
         logger.warn(`User ${userId} not found during feed generation`);
@@ -275,7 +275,7 @@ class FeedService {
         isActive: true,
         createdAt: { $gte: cutoffDate },
         $or: [
-          { 
+          {
             visibility: 'public',
             // Exclude posts from private accounts (they should only be visible to followers)
             author: { $nin: privateUserIds }
@@ -529,7 +529,7 @@ class FeedService {
   async regenerateFeed(userId) {
     try {
       // Generate fresh hybrid feed
-      const feedPosts = await this.getHybridFeed(userId, 7);
+      const feedPosts = await this.getHybridFeed(userId, 36500);
 
       // Cache post IDs (store up to 100 posts)
       const postIds = feedPosts.slice(0, 100).map(p => p._id.toString());

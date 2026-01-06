@@ -11,27 +11,52 @@ const createSupportRequest = async (req, res, next) => {
             return res.status(400).json({ message: 'Reason is required' });
         }
 
+        // Handle Image Upload if present
+        let finalImageUrl = imageUrl;
+        let attachmentPath = null;
+
+        // If imageUrl is base64, upload to Cloudinary
+        if (imageUrl && imageUrl.startsWith('data:image')) {
+            try {
+                const cloudinary = require('../config/cloudinary')();
+                const uploadResponse = await cloudinary.uploader.upload(imageUrl, {
+                    folder: 'support_requests',
+                    resource_type: 'image'
+                });
+                finalImageUrl = uploadResponse.secure_url;
+                attachmentPath = finalImageUrl;
+            } catch (uploadError) {
+                console.error('Cloudinary upload error:', uploadError);
+                // Fallback: If upload fails, keep original base64 or log? 
+                // We will continue but maybe without proper link.
+                // Actually, if upload fails, we likely want to fail the request or just proceed with base64/no-image?
+                // Let's proceed with base64 as fallback for safety, though it's huge.
+                // Better to just not verify here and let standard error handling catch if critical.
+                // For now, let's assume if it fails we don't block the support request but log it.
+            }
+        } else if (imageUrl) {
+            // Already a URL
+            attachmentPath = imageUrl;
+        }
+
         const newSupportRequest = new Support({
             userId: user.id,
             reason,
-            imageUrl,
+            imageUrl: finalImageUrl,
         });
 
         await newSupportRequest.save();
 
         // Send Email to Admin
-        const adminEmail = 'hosannarocker6594@gmail.com';
+        const adminEmail = 'hosannamosa4190@gmail.com';
         const subject = `New Support Request from ${user.name}`;
         const text = `
 User: ${user.name} (${user.email})
 User ID: ${user.id}
 Reason: ${reason}
 Date: ${new Date().toLocaleString()}
-${imageUrl ? 'Image attached' : 'No image attached'}
+${attachmentPath ? `Image Attached. Download here: ${attachmentPath}` : 'No image attached'}
         `;
-
-        // Use CID for inline image to work in Gmail
-        const imageCid = 'support-image-' + Date.now();
 
         let html = `
 <div style="font-family: sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
@@ -45,14 +70,20 @@ ${imageUrl ? 'Image attached' : 'No image attached'}
 `;
 
         const attachments = [];
-        if (imageUrl) {
-            // Pass data URI directly. Nodemailer handles it if path is set to data URI.
-            // We give it a cid to reference in HTML.
+        if (attachmentPath) {
+
+            // 1. Add as downloadable attachment
+            // Derive extension from URL if possible, default to jpg
+            const extension = attachmentPath.split('.').pop().split(/[#?]/)[0] || 'jpg';
+            const cleanExt = ['jpg', 'jpeg', 'png', 'webp'].includes(extension.toLowerCase()) ? extension : 'jpg';
+
             attachments.push({
-                path: imageUrl,
-                cid: imageCid
+                filename: `support-image-${Date.now()}.${cleanExt}`,
+                path: attachmentPath // Nodemailer fetches from URL
             });
-            html += `<p><strong>Attachment:</strong></p><img src="cid:${imageCid}" style="max-width: 500px; height: auto; border-radius: 4px;" />`;
+
+            // 2. Add download link in HTML
+            html += `<p><strong>Attachment:</strong> <a href="${attachmentPath}" download style="color: #007bff; text-decoration: none;">Download Image</a></p>`;
         }
 
         html += `</div>`;
