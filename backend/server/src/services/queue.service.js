@@ -108,6 +108,7 @@ if (enableRedis) {
     feed: new Queue('feed-update', queueConfig),
     stats: new Queue('stats-sync', queueConfig),
     notification: new Queue('notification', queueConfig),
+    subscription: new Queue('subscription-sync', queueConfig),
   };
 } else {
   logger.info('Redis disabled. Using MockQueues.');
@@ -119,6 +120,7 @@ if (enableRedis) {
     feed: new MockQueue('feed-update'),
     stats: new MockQueue('stats-sync'),
     notification: new MockQueue('notification'),
+    subscription: new MockQueue('subscription-sync'),
   };
 }
 
