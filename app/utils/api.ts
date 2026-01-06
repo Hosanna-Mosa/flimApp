@@ -721,6 +721,31 @@ export const apiSubmitVerificationRequest = (
 export const apiGetVerificationStatus = (token?: string) =>
   request('/verification/status', { token });
 
+// Subscriptions
+export const apiCreateSubscriptionOrder = (
+  planType: '1_MONTH' | '3_MONTHS' | '6_MONTHS' | '9_MONTHS',
+  token?: string
+) =>
+  request<{
+    orderId: string;
+    amount: number;
+    currency: string;
+    keyId: string;
+  }>('/subscriptions/create-order', { method: 'POST', body: { planType }, token });
+
+export const apiVerifySubscriptionPayment = (
+  payload: {
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+  },
+  token?: string
+) =>
+  request<{ success: boolean; message: string; subscription: any }>(
+    '/subscriptions/verify-payment',
+    { method: 'POST', body: payload, token }
+  );
+
 // Saved Posts
 export const apiToggleSavePost = (postId: string, token?: string) =>
   request<{ saved: boolean; savedPostsCount: number }>(`/posts/${postId}/save`, {
@@ -834,6 +859,10 @@ export const api = {
   getVerificationStatus: apiGetVerificationStatus,
   toggleSavePost: apiToggleSavePost,
   getSavedPosts: apiGetSavedPosts,
+  
+  // Subscriptions
+  apiCreateSubscriptionOrder,
+  apiVerifySubscriptionPayment
 };
 
 export default api;

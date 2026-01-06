@@ -4,6 +4,7 @@ import {
   PaginatedResponse, 
   VerificationRequest, 
   VerificationLog,
+  Subscription,
   ApiError 
 } from '@/types';
 
@@ -140,6 +141,34 @@ export const verificationApi = {
       `/admin/verification/logs?${params.toString()}`
     );
     return response.data;
+  },
+
+  getSubscriptions: async (
+    page: number = 1, 
+    limit: number = 10,
+    filters?: {
+      status?: string;
+      name?: string;
+    }
+  ): Promise<PaginatedResponse<Subscription>> => {
+    const params = new URLSearchParams({ 
+      page: page.toString(), 
+      limit: limit.toString() 
+    });
+    
+    if (filters) {
+      if (filters.status && filters.status !== 'ALL') params.append('status', filters.status);
+      if (filters.name) params.append('name', filters.name);
+    }
+    
+    const response = await api.get<PaginatedResponse<Subscription>>(
+      `/admin/verification/subscriptions?${params.toString()}`
+    );
+    return response.data;
+  },
+  
+  deleteSubscription: async (id: string): Promise<void> => {
+    await api.delete(`/admin/verification/subscriptions/${id}`);
   },
 };
 

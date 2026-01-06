@@ -148,12 +148,14 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   };
 
   const refreshUser = useCallback(async () => {
-    if (!authState.token) return;
+    if (!authState.token) return null;
     try {
       const updatedUser = await api.me(authState.token);
       await _updateUser(updatedUser as User);
+      return updatedUser as User;
     } catch (err) {
       console.error('Failed to refresh user:', err);
+      return null;
     }
   }, [authState.token]);
 

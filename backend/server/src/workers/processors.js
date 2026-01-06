@@ -94,6 +94,50 @@ const User = require('../models/User.model');
 
 // ... existing code ...
 
+const Subscription = require('../models/Subscription.model');
+
+queues.subscription.process('check-expiry', async (job) => {
+  logger.info('Running subscription expiry check...');
+  try {
+    const now = new Date();
+    
+    // Find all active subscriptions that have expired
+    const expiredSubscriptions = await Subscription.find({
+      status: 'ACTIVE',
+      endDate: { $lt: now }
+    });
+
+    if (expiredSubscriptions.length === 0) {
+      return { success: true, expiredCount: 0 };
+    }
+
+    const userIds = expiredSubscriptions.map(sub => sub.user);
+
+    // Update subscriptions to EXPIRED
+    await Subscription.updateMany(
+      { _id: { $in: expiredSubscriptions.map(sub => sub._id) } },
+      { $set: { status: 'EXPIRED' } }
+    );
+
+    // Remove badges from users
+    await User.updateMany(
+      { _id: { $in: userIds } },
+      { 
+        $set: { 
+          isVerified: false, 
+          verificationStatus: 'none' 
+        } 
+      }
+    );
+
+    logger.info(`Removed badges from ${userIds.length} users with expired subscriptions`);
+    return { success: true, expiredCount: userIds.length };
+  } catch (error) {
+    logger.error('Subscription expiry check failed:', error);
+    throw error;
+  }
+});
+
 queues.notification.process('send-notification', async (job) => {
   const data = job.data;
   logger.info(`Processing notification: ${data.type} for user ${data.userId}`);

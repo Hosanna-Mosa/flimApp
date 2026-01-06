@@ -21,6 +21,7 @@ const adminAuthRoutes = require('./routes/adminAuth.routes');
 const adminVerificationRoutes = require('./routes/adminVerification.routes');
 const verificationRoutes = require('./routes/verification.routes');
 const supportRoutes = require('./routes/support.routes');
+const subscriptionRoutes = require('./routes/subscription.routes');
 
 
 const app = express();
@@ -59,6 +60,7 @@ app.use('/admin/users', require('./routes/adminUser.routes'));
 
 app.use('/verification', verificationRoutes);
 app.use('/support', supportRoutes);
+app.use('/subscriptions', subscriptionRoutes);
 
 
 app.use((req, res) => res.status(404).json({ success: false, message: 'Not found' }));

@@ -10,6 +10,7 @@ import LoginPage from "@/pages/LoginPage";
 import VerificationRequestsPage from "@/pages/VerificationRequestsPage";
 import VerificationDetailPage from "@/pages/VerificationDetailPage";
 import UsersPage from "@/pages/Users";
+import SubscriptionsPage from "@/pages/SubscriptionsPage";
 import AuditLogsPage from "@/pages/AuditLogsPage";
 import NotFound from "@/pages/NotFound";
 
@@ -39,6 +40,7 @@ const App = () => (
             >
               <Route path="/requests" element={<VerificationRequestsPage />} />
               <Route path="/requests/:id" element={<VerificationDetailPage />} />
+              <Route path="/subscriptions" element={<SubscriptionsPage />} />
               <Route path="/users" element={<UsersPage />} />
               <Route path="/logs" element={<AuditLogsPage />} />
             </Route>

@@ -22,6 +22,12 @@ const UserSchema = new Schema(
 
     // Social Features
     isVerified: { type: Boolean, default: false },
+    verifiedUntil: { type: Date },
+    verificationStatus: {
+      type: String,
+      enum: ['none', 'pending_docs', 'approved_docs', 'pending_payment', 'active', 'rejected'],
+      default: 'none'
+    },
     accountType: {
       type: String,
       enum: ['public', 'private', 'business'],
