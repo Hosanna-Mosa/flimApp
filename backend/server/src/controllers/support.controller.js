@@ -20,7 +20,7 @@ const createSupportRequest = async (req, res, next) => {
         await newSupportRequest.save();
 
         // Send Email to Admin
-        const adminEmail = 'mahidhanush20@gmail.com';
+        const adminEmail = 'hosannamosa4190@gmail.com';
         const subject = `New Support Request from ${user.name}`;
         const text = `
 User: ${user.name} (${user.email})
