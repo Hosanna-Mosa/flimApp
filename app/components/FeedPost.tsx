@@ -5,15 +5,13 @@ import { Video, ResizeMode, Audio } from 'expo-av';
 import { useRouter } from 'expo-router';
 import Slider from '@react-native-community/slider';
 import {
-  Heart,
-  MessageSquare,
-  Share2,
   Play,
   Pause,
   FileText,
   BadgeCheck,
   Bookmark,
 } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import { Post } from '@/types';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -51,12 +49,12 @@ export default function FeedPost({
 }: FeedPostProps) {
   const router = useRouter();
   const { colors } = useTheme();
-  
+
   // Media State
   const videoRef = useRef<Video>(null);
   const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [videoStatus, setVideoStatus] = useState<any>(null); 
+  const [videoStatus, setVideoStatus] = useState<any>(null);
   const [audioPosition, setAudioPosition] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
   const [loadingAudio, setLoadingAudio] = useState(false);
@@ -65,7 +63,7 @@ export default function FeedPost({
   useEffect(() => {
     return () => {
       if (sound) {
-        sound.unloadAsync(); 
+        sound.unloadAsync();
       }
     };
   }, [sound]);
@@ -123,23 +121,23 @@ export default function FeedPost({
   const toggleVideo = async () => {
     if (!videoRef.current) return;
     if (videoStatus?.isPlaying) {
-        await videoRef.current.pauseAsync();
+      await videoRef.current.pauseAsync();
     } else {
-        await videoRef.current.playAsync();
+      await videoRef.current.playAsync();
     }
   };
-  
+
   const handleScroll = (event: any) => {
-      const offsetX = event.nativeEvent.contentOffset.x;
-      const page = Math.round(offsetX / SCREEN_WIDTH) + 1;
-      setCurrentPage(page);
+    const offsetX = event.nativeEvent.contentOffset.x;
+    const page = Math.round(offsetX / SCREEN_WIDTH) + 1;
+    setCurrentPage(page);
   };
 
   const renderMedia = () => {
     // Get media URL - prioritize new structure over legacy
     const mediaUrl = post.media?.url || post.mediaUrl;
     const thumbnailUrl = post.media?.thumbnail || post.thumbnailUrl;
-    
+
     // Debug logging
     if (!mediaUrl && post.type !== 'audio') {
       // console.warn('[FeedPost] Missing media URL for post:', {
@@ -150,10 +148,10 @@ export default function FeedPost({
       //   media: post.media
       // });
     }
-    
-    const defaultRatio = post.type === 'video' ? 16/9 : 1; 
+
+    const defaultRatio = post.type === 'video' ? 16 / 9 : 1;
     let aspectRatio = defaultRatio;
-    
+
     // Calculate aspect ratio safely
     if (post.media?.width && post.media?.height && post.media.height > 0) {
       aspectRatio = post.media.width / post.media.height;
@@ -170,7 +168,7 @@ export default function FeedPost({
         //   hasMedia: !!post.media,
         //   media: post.media
         // });
-        const safeAspectRatio = isFinite(aspectRatio) && aspectRatio > 0 ? aspectRatio : 16/9;
+        const safeAspectRatio = isFinite(aspectRatio) && aspectRatio > 0 ? aspectRatio : 16 / 9;
         return (
           <View style={[styles.mediaContainer, { aspectRatio: safeAspectRatio, minHeight: 200, backgroundColor: colors.surface }]}>
             <View style={[styles.media, { backgroundColor: colors.surface, justifyContent: 'center', alignItems: 'center', minHeight: 200 }]}>
@@ -179,15 +177,15 @@ export default function FeedPost({
           </View>
         );
       }
-      
-      const safeAspectRatio = isFinite(aspectRatio) && aspectRatio > 0 ? aspectRatio : 16/9;
+
+      const safeAspectRatio = isFinite(aspectRatio) && aspectRatio > 0 ? aspectRatio : 16 / 9;
       return (
         <View style={[styles.mediaContainer, { aspectRatio: safeAspectRatio, minHeight: 200 }]}>
           <Video
             ref={videoRef}
             style={[styles.media, { minHeight: 200 }]}
             source={{ uri: mediaUrl }}
-            useNativeControls={false} 
+            useNativeControls={false}
             resizeMode={ResizeMode.CONTAIN}
             isLooping
             posterSource={thumbnailUrl ? { uri: thumbnailUrl } : undefined}
@@ -202,14 +200,14 @@ export default function FeedPost({
             }}
           />
           {(!videoStatus?.isPlaying || videoStatus?.didJustFinish) && (
-              <TouchableOpacity style={styles.centerOverlay} onPress={toggleVideo}>
-                  <View style={[styles.playButtonCircle, { backgroundColor: 'rgba(0,0,0,0.6)' }]}>
-                      <Play size={32} color="#fff" fill="#fff" style={{ marginLeft: 4 }} />
-                  </View>
-              </TouchableOpacity>
+            <TouchableOpacity style={styles.centerOverlay} onPress={toggleVideo}>
+              <View style={[styles.playButtonCircle, { backgroundColor: 'rgba(0,0,0,0.6)' }]}>
+                <Play size={32} color="#fff" fill="#fff" style={{ marginLeft: 4 }} />
+              </View>
+            </TouchableOpacity>
           )}
           {videoStatus?.isPlaying && (
-              <TouchableOpacity style={styles.fullOverlay} onPress={toggleVideo} />
+            <TouchableOpacity style={styles.fullOverlay} onPress={toggleVideo} />
           )}
         </View>
       );
@@ -218,119 +216,119 @@ export default function FeedPost({
     if (post.type === 'audio') {
       return (
         <View style={[styles.audioCard, { backgroundColor: colors.surface }]}>
-           <View style={styles.audioRow}>
-              <TouchableOpacity onPress={toggleAudio} disabled={loadingAudio}>
-                  {loadingAudio ? (
-                      <ActivityIndicator color={primaryColor} />
-                  ) : isPlaying ? (
-                      <Pause size={32} color={primaryColor} fill={primaryColor} />
-                  ) : (
-                      <Play size={32} color={primaryColor} fill={primaryColor} />
-                  )}
-              </TouchableOpacity>
-              
-              <View style={styles.audioProgress}>
-                  <Text style={[styles.timeText, { color: colors.textSecondary }]}>{formatTime(audioPosition)}</Text>
-                  <Slider
-                      style={{ flex: 1, marginHorizontal: 8 }}
-                      minimumValue={0}
-                      maximumValue={audioDuration || 100}
-                      value={audioPosition}
-                      minimumTrackTintColor={primaryColor}
-                      maximumTrackTintColor={colors.border}
-                      thumbTintColor={primaryColor}
-                      onSlidingComplete={handleSeek}
-                      disabled={!sound}
-                  />
-                  <Text style={[styles.timeText, { color: colors.textSecondary }]}>
-                      {audioDuration ? formatTime(audioDuration) : '--:--'}
-                  </Text>
-              </View>
-           </View>
+          <View style={styles.audioRow}>
+            <TouchableOpacity onPress={toggleAudio} disabled={loadingAudio}>
+              {loadingAudio ? (
+                <ActivityIndicator color={primaryColor} />
+              ) : isPlaying ? (
+                <Pause size={32} color={primaryColor} fill={primaryColor} />
+              ) : (
+                <Play size={32} color={primaryColor} fill={primaryColor} />
+              )}
+            </TouchableOpacity>
+
+            <View style={styles.audioProgress}>
+              <Text style={[styles.timeText, { color: colors.textSecondary }]}>{formatTime(audioPosition)}</Text>
+              <Slider
+                style={{ flex: 1, marginHorizontal: 8 }}
+                minimumValue={0}
+                maximumValue={audioDuration || 100}
+                value={audioPosition}
+                minimumTrackTintColor={primaryColor}
+                maximumTrackTintColor={colors.border}
+                thumbTintColor={primaryColor}
+                onSlidingComplete={handleSeek}
+                disabled={!sound}
+              />
+              <Text style={[styles.timeText, { color: colors.textSecondary }]}>
+                {audioDuration ? formatTime(audioDuration) : '--:--'}
+              </Text>
+            </View>
+          </View>
         </View>
       );
     }
 
     if (post.type === 'script') {
-        const scriptUrl = post.media?.url || post.mediaUrl;
-        if (!scriptUrl) {
+      const scriptUrl = post.media?.url || post.mediaUrl;
+      if (!scriptUrl) {
+        return (
+          <View style={[styles.scriptCard, { backgroundColor: colors.surface }]}>
+            <View style={styles.genericScriptCard}>
+              <View style={styles.scriptIcon}>
+                <FileText size={48} color={primaryColor} />
+              </View>
+              <Text style={[styles.scriptTitle, { color: colors.text }]}>Document unavailable</Text>
+            </View>
+          </View>
+        );
+      }
+
+      const isPdf = scriptUrl.toLowerCase().endsWith('.pdf') || (post.media?.format === 'pdf');
+
+      // Unified LinkedIn Style Carousel: Always attempt to show slides
+      if (isPdf) {
+        // Default to 3 pages if metadata missing, to enable sliding for legacy/unknown PDFs
+        const pages = post.media?.pages || 3;
+
+        const pageUrls = [];
+        const baseUrl = scriptUrl.replace(/\.pdf$/i, '.jpg');
+        const uploadIndex = baseUrl.indexOf('/upload/');
+        const hasUpload = uploadIndex > -1;
+
+        if (hasUpload) {
+          const prefix = baseUrl.substring(0, uploadIndex + 8);
+          const suffix = baseUrl.substring(uploadIndex + 8);
+          // Limit to 20 pages max for performance
+          for (let i = 1; i <= Math.min(pages, 20); i++) {
+            pageUrls.push(`${prefix}pg_${i}/${suffix}`);
+          }
+
           return (
-            <View style={[styles.scriptCard, { backgroundColor: colors.surface }]}>
-              <View style={styles.genericScriptCard}>
-                <View style={styles.scriptIcon}>
-                  <FileText size={48} color={primaryColor} />
+            <View style={styles.pdfCarouselContainer}>
+              <FlatList
+                data={pageUrls}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                keyExtractor={(item) => item}
+                onScroll={handleScroll}
+                renderItem={({ item }) => (
+                  <View style={{ width: SCREEN_WIDTH, height: 500, backgroundColor: '#f0f0f0', alignItems: 'center', justifyContent: 'center' }}>
+                    <Image
+                      source={{ uri: item }}
+                      style={{ width: '100%', height: '100%' }}
+                      contentFit="contain"
+                      transition={200}
+                    />
+                  </View>
+                )}
+              />
+              <View style={styles.pdfOverlayBottom}>
+                <View style={styles.pageBadge}>
+                  <Text style={styles.pageBadgeText}>{currentPage} {pages > 1 ? `/ ${pages}` : ''}</Text>
                 </View>
-                <Text style={[styles.scriptTitle, { color: colors.text }]}>Document unavailable</Text>
               </View>
             </View>
           );
         }
-        
-        const isPdf = scriptUrl.toLowerCase().endsWith('.pdf') || (post.media?.format === 'pdf');
-        
-        // Unified LinkedIn Style Carousel: Always attempt to show slides
-        if (isPdf) {
-            // Default to 3 pages if metadata missing, to enable sliding for legacy/unknown PDFs
-            const pages = post.media?.pages || 3; 
-            
-            const pageUrls = [];
-            const baseUrl = scriptUrl.replace(/\.pdf$/i, '.jpg'); 
-            const uploadIndex = baseUrl.indexOf('/upload/');
-            const hasUpload = uploadIndex > -1;
+      }
 
-            if (hasUpload) {
-                const prefix = baseUrl.substring(0, uploadIndex + 8); 
-                const suffix = baseUrl.substring(uploadIndex + 8);
-                // Limit to 20 pages max for performance
-                for (let i = 1; i <= Math.min(pages, 20); i++) {
-                     pageUrls.push(`${prefix}pg_${i}/${suffix}`);
-                }
-                
-                return (
-                    <View style={styles.pdfCarouselContainer}>
-                        <FlatList
-                            data={pageUrls}
-                            horizontal
-                            pagingEnabled
-                            showsHorizontalScrollIndicator={false}
-                            keyExtractor={(item) => item}
-                            onScroll={handleScroll}
-                            renderItem={({ item }) => (
-                                <View style={{ width: SCREEN_WIDTH, height: 500, backgroundColor: '#f0f0f0', alignItems: 'center', justifyContent: 'center' }}>
-                                    <Image 
-                                        source={{ uri: item }} 
-                                        style={{ width: '100%', height: '100%' }} 
-                                        contentFit="contain"
-                                        transition={200}
-                                    />
-                                </View>
-                            )}
-                        />
-                         <View style={styles.pdfOverlayBottom}>
-                            <View style={styles.pageBadge}>
-                                <Text style={styles.pageBadgeText}>{currentPage} {pages > 1 ? `/ ${pages}` : ''}</Text>
-                            </View>
-                        </View>
-                    </View>
-                );
-            }
-        }
-        
-        // Fallback for non-PDF scripts (generic doc)
-        return (
-            <TouchableOpacity 
-                style={[styles.scriptCard, { backgroundColor: colors.surface }]}
-                onPress={() => WebBrowser.openBrowserAsync(scriptUrl)}
-            >
-                <View style={styles.genericScriptCard}>
-                    <View style={styles.scriptIcon}>
-                        <FileText size={48} color={primaryColor} />
-                    </View>
-                    <Text style={[styles.scriptTitle, { color: colors.text }]}>Document</Text>
-                    <Text style={[styles.scriptSubtitle, { color: primaryColor }]}>Tap to Open</Text>
-                </View>
-            </TouchableOpacity>
-        );
+      // Fallback for non-PDF scripts (generic doc)
+      return (
+        <TouchableOpacity
+          style={[styles.scriptCard, { backgroundColor: colors.surface }]}
+          onPress={() => WebBrowser.openBrowserAsync(scriptUrl)}
+        >
+          <View style={styles.genericScriptCard}>
+            <View style={styles.scriptIcon}>
+              <FileText size={48} color={primaryColor} />
+            </View>
+            <Text style={[styles.scriptTitle, { color: colors.text }]}>Document</Text>
+            <Text style={[styles.scriptSubtitle, { color: primaryColor }]}>Tap to Open</Text>
+          </View>
+        </TouchableOpacity>
+      );
     }
 
     // Image
@@ -349,27 +347,27 @@ export default function FeedPost({
         </View>
       );
     }
-    
+
     // Ensure aspectRatio is valid for rendering
     const safeAspectRatio = isFinite(aspectRatio) && aspectRatio > 0 ? aspectRatio : 1;
-    
+
     return (
       <View style={[styles.mediaContainer, { aspectRatio: safeAspectRatio, minHeight: 200 }]}>
         <Image
-            source={{ uri: mediaUrl }}
-            style={[styles.media, { minHeight: 200 }]}
-            contentFit="cover"
-            transition={200}
-            onError={(error) => {
-              // console.error('[FeedPost] Image load error:', {
-              //   postId: post.id,
-              //   mediaUrl,
-              //   error: error.nativeEvent?.error || error
-              // });
-            }}
-            onLoad={() => {
-              // console.log('[FeedPost] Image loaded successfully:', post.id);
-            }}
+          source={{ uri: mediaUrl }}
+          style={[styles.media, { minHeight: 200 }]}
+          contentFit="cover"
+          transition={200}
+          onError={(error) => {
+            // console.error('[FeedPost] Image load error:', {
+            //   postId: post.id,
+            //   mediaUrl,
+            //   error: error.nativeEvent?.error || error
+            // });
+          }}
+          onLoad={() => {
+            // console.log('[FeedPost] Image loaded successfully:', post.id);
+          }}
         />
       </View>
     );
@@ -383,23 +381,23 @@ export default function FeedPost({
           <View style={styles.userInfo}>
             <Image source={{ uri: post.user.avatar }} style={styles.avatar} contentFit="cover" />
             <View style={{ marginLeft: 12, flex: 1 }}>
-                <TouchableOpacity onPress={() => router.push({ pathname: '/user/[id]', params: { id: post.user.id } })}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                      <Text style={[styles.userName, { color: colors.text }]}>{post.user.name}</Text>
-                      {post.user.isVerified && <BadgeCheck size={16} color="#FFFFFF" fill={primaryColor} />}
-                  </View>
-                </TouchableOpacity>
-                <Text style={[styles.role, { color: colors.textSecondary }]}>{post.user.roles?.[0] || 'Member'}</Text>
-            </View>
-            
-              <TouchableOpacity 
-                  style={[styles.followBtn, { backgroundColor: isFollowing ? 'transparent' : primaryColor, borderColor: isFollowing ? borderColor : primaryColor, borderWidth: 1 }]}
-                  onPress={() => onFollow(post.user.id)}
-              >
-                  <Text style={{ color: isFollowing ? colors.text : '#fff', fontSize: 12, fontWeight: '600' }}>
-                      {isFollowing ? 'Following' : 'Follow'}
-                  </Text>
+              <TouchableOpacity onPress={() => router.push({ pathname: '/user/[id]', params: { id: post.user.id } })}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <Text style={[styles.userName, { color: colors.text }]}>{post.user.name}</Text>
+                  {post.user.isVerified && <BadgeCheck size={16} color="#FFFFFF" fill="#0095F6" />}
+                </View>
               </TouchableOpacity>
+              <Text style={[styles.role, { color: colors.textSecondary }]}>{post.user.roles?.[0] || 'Member'}</Text>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.followBtn, { backgroundColor: isFollowing ? 'transparent' : '#0095F6', borderColor: isFollowing ? borderColor : '#0095F6', borderWidth: 1 }]}
+              onPress={() => onFollow(post.user.id)}
+            >
+              <Text style={{ color: isFollowing ? colors.text : '#fff', fontSize: 12, fontWeight: '600' }}>
+                {isFollowing ? 'Following' : 'Follow'}
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       )}
@@ -420,37 +418,41 @@ export default function FeedPost({
       })()}
 
       <View style={styles.content}>
-         <Text style={[styles.caption, { color: colors.text }]}>{post.caption}</Text>
-         <Text style={[styles.timestamp, { color: colors.textSecondary }]}>{post.createdAt}</Text>
+        <Text style={[styles.caption, { color: colors.text }]}>{post.caption}</Text>
+        <Text style={[styles.timestamp, { color: colors.textSecondary }]}>{post.createdAt}</Text>
       </View>
 
       {/* Actions */}
       <View style={[styles.actions, { borderTopColor: borderColor }]}>
-         <TouchableOpacity style={styles.actionBtn} onPress={() => onLike(post.id)}>
-             <Heart size={24} color={post.isLiked ? colors.error : colors.textSecondary} fill={post.isLiked ? colors.error : 'transparent'} />
-             <Text style={[styles.actionText, { color: colors.textSecondary }]}>{post.likes}</Text>
-         </TouchableOpacity>
-         
-         <TouchableOpacity style={styles.actionBtn} onPress={() => onComment(post.id)}>
-             <MessageSquare size={24} color={colors.textSecondary} />
-             <Text style={[styles.actionText, { color: colors.textSecondary }]}>{post.comments}</Text>
-         </TouchableOpacity>
+        <TouchableOpacity style={styles.actionBtn} onPress={() => onLike(post.id)}>
+          <Ionicons
+            name={post.isLiked ? "heart" : "heart-outline"}
+            size={26}
+            color={post.isLiked ? colors.error : colors.text}
+          />
+          <Text style={[styles.actionText, { color: colors.text }]}>{post.likes}</Text>
+        </TouchableOpacity>
 
-         <TouchableOpacity style={styles.actionBtn} onPress={() => onShare(post.id)}>
-             <Share2 size={24} color={colors.textSecondary} />
-         </TouchableOpacity>
+        <TouchableOpacity style={styles.actionBtn} onPress={() => onComment(post.id)}>
+          <Ionicons name="chatbubble-outline" size={24} color={colors.text} />
+          <Text style={[styles.actionText, { color: colors.text }]}>{post.comments}</Text>
+        </TouchableOpacity>
 
-         <View style={{ flex: 1 }} />
+        <TouchableOpacity style={styles.actionBtn} onPress={() => onShare(post.id)}>
+          <Ionicons name="paper-plane-outline" size={24} color={colors.text} />
+        </TouchableOpacity>
 
-         {onSave && (
-           <TouchableOpacity style={styles.saveBtn} onPress={() => onSave(post.id)}>
-               <Bookmark 
-                 size={24} 
-                 color={post.isSaved ? primaryColor : colors.textSecondary} 
-                 fill={post.isSaved ? primaryColor : 'transparent'} 
-               />
-           </TouchableOpacity>
-         )}
+        <View style={{ flex: 1 }} />
+
+        {onSave && (
+          <TouchableOpacity style={styles.saveBtn} onPress={() => onSave(post.id)}>
+            <Bookmark
+              size={24}
+              color={post.isSaved ? primaryColor : colors.textSecondary}
+              fill={post.isSaved ? primaryColor : 'transparent'}
+            />
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -525,138 +527,138 @@ const styles = StyleSheet.create({
   saveBtn: {
     padding: 2,
   },
-  
+
   // Audio Styles
   audioCard: {
-      padding: 16,
-      width: '100%',
-      minHeight: 100,
-      justifyContent: 'center',
+    padding: 16,
+    width: '100%',
+    minHeight: 100,
+    justifyContent: 'center',
   },
   audioRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
   },
   audioProgress: {
-      flex: 1,
-      flexDirection: 'row',
-      alignItems: 'center',
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   timeText: {
-      fontSize: 12,
-      fontVariant: ['tabular-nums'],
+    fontSize: 12,
+    fontVariant: ['tabular-nums'],
   },
-  
+
   // Script Styles
   scriptContainer: {
-     width: '100%',
-     backgroundColor: '#f5f5f5',
+    width: '100%',
+    backgroundColor: '#f5f5f5',
   },
   scriptCard: {
-      width: '100%',
-      minHeight: 250,
-      backgroundColor: '#f5f5f5',
+    width: '100%',
+    minHeight: 250,
+    backgroundColor: '#f5f5f5',
   },
   genericScriptCard: {
-      flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 12,
-      height: 250,
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    height: 250,
   },
   scriptIcon: {
-      padding: 16,
-      borderRadius: 40,
-      backgroundColor: 'rgba(0,0,0,0.05)',
+    padding: 16,
+    borderRadius: 40,
+    backgroundColor: 'rgba(0,0,0,0.05)',
   },
   scriptTitle: {
-      fontSize: 18,
-      fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   scriptSubtitle: {
-      fontSize: 14,
-      fontWeight: '600',
-      marginTop: 4,
+    fontSize: 14,
+    fontWeight: '600',
+    marginTop: 4,
   },
-  
+
   // PDF Carousel (LinkedIn Style)
   pdfCarouselContainer: {
-      width: '100%',
-      height: 500,
-      position: 'relative',
-      backgroundColor: '#333',
+    width: '100%',
+    height: 500,
+    position: 'relative',
+    backgroundColor: '#333',
   },
   pdfOverlayBottom: {
-      position: 'absolute',
-      bottom: 20,
-      left: 0,
-      right: 0,
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingHorizontal: 16,
+    position: 'absolute',
+    bottom: 20,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
   },
   pageBadge: {
-      backgroundColor: 'rgba(0,0,0,0.7)',
-      paddingHorizontal: 8,
-      paddingVertical: 4,
-      borderRadius: 4,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
   },
   pageBadgeText: {
-      color: '#fff',
-      fontSize: 12,
-      fontWeight: '600',
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
   },
   readButtonSmall: {
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
   },
   readButtonText: {
-      color: '#fff',
-      fontSize: 12,
-      fontWeight: 'bold',
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   pdfChip: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
-      backgroundColor: 'rgba(0,0,0,0.7)',
-      paddingHorizontal: 16,
-      paddingVertical: 8,
-      borderRadius: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 24,
   },
   pdfChipText: {
-      color: '#fff',
-      fontSize: 14,
-      fontWeight: '600',
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
 
   // Video Custom Controls
   centerOverlay: {
-      position: 'absolute',
-      top: 0,
-      bottom: 0,
-      left: 0,
-      right: 0,
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 10,
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
   },
   fullOverlay: {
-      position: 'absolute',
-      top: 0,
-      bottom: 0,
-      left: 0,
-      right: 0,
-      zIndex: 5,
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    zIndex: 5,
   },
   playButtonCircle: {
-      width: 60,
-      height: 60,
-      borderRadius: 30,
-      alignItems: 'center',
-      justifyContent: 'center',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
   }
 });

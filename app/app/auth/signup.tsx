@@ -18,15 +18,16 @@ import Button from '@/components/Button';
 export default function SignUpScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  
+
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
 
   const handleNext = () => {
-    if (!name || !phone || !password || !confirmPassword) {
+    if (!name || !email || !phone || !password || !confirmPassword) {
       setError('Please fill in all fields');
       return;
     }
@@ -40,12 +41,12 @@ export default function SignUpScreen() {
       setError('Password must be at least 6 characters');
       return;
     }
-    
+
     setError('');
     // Pass data to onboarding via params or context. For simplicity, we use params.
     router.push({
       pathname: '/auth/onboarding',
-      params: { name, phone, password },
+      params: { name, email, phone, password },
     });
   };
 
@@ -54,14 +55,14 @@ export default function SignUpScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={[styles.container, { backgroundColor: '#000000' }]}
     >
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <TouchableOpacity 
-            onPress={() => router.back()} 
+          <TouchableOpacity
+            onPress={() => router.back()}
             style={styles.backButton}
             hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
           >
@@ -79,13 +80,22 @@ export default function SignUpScreen() {
           />
 
           <Input
+            label="Email"
+            placeholder="john@example.com"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            value={email}
+            onChangeText={setEmail}
+          />
+
+          <Input
             label="Phone Number"
             placeholder="+91 98765 43210"
             keyboardType="phone-pad"
             value={phone}
             onChangeText={setPhone}
           />
-          
+
           <Input
             label="Password"
             placeholder="Create a password"
@@ -103,10 +113,10 @@ export default function SignUpScreen() {
             error={error}
           />
 
-          <Button 
-            title="Next" 
-            onPress={handleNext} 
-            size="large" 
+          <Button
+            title="Next"
+            onPress={handleNext}
+            size="large"
             style={styles.button}
           />
         </View>

@@ -36,6 +36,7 @@ router.post(
       body: Joi.object({
         name: Joi.string().required(),
         phone: Joi.string().required(),
+        email: Joi.string().email().required(),
         password: Joi.string().min(6).required(),
         roles: Joi.array().items(Joi.string()).required(),
         industries: Joi.array().items(Joi.string()).required(),
@@ -102,6 +103,32 @@ router.post(
     })
   ),
   authController.changePassword
+);
+
+router.post(
+  '/forgot-password',
+  validate(
+    Joi.object({
+      body: Joi.object({
+        email: Joi.string().email().required(),
+      }).required(),
+    })
+  ),
+  authController.forgotPassword
+);
+
+router.post(
+  '/reset-password',
+  validate(
+    Joi.object({
+      body: Joi.object({
+        email: Joi.string().email().required(),
+        otp: Joi.string().length(6).required(),
+        newPassword: Joi.string().min(6).required(),
+      }).required(),
+    })
+  ),
+  authController.resetPassword
 );
 
 module.exports = router;

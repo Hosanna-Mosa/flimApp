@@ -5,10 +5,11 @@ const {
   generateRefreshToken,
   verifyRefreshToken,
 } = require('../utils/token');
+const mailService = require('./mail.service');
 
 const OTP_CODE = '123456';
 
-const register = async ({ name, phone, password, roles, industries }) => {
+const register = async ({ name, phone, email, password, roles, industries }) => {
   const existingUser = await User.findOne({ phone });
   if (existingUser) {
     const err = new Error('Phone number already registered');
@@ -16,14 +17,24 @@ const register = async ({ name, phone, password, roles, industries }) => {
     throw err;
   }
 
+  if (email) {
+    const normalizedEmail = email.trim().toLowerCase();
+    const existingEmail = await User.findOne({ email: normalizedEmail });
+    if (existingEmail) {
+      const err = new Error('Email already registered');
+      err.status = 409;
+      throw err;
+    }
+  }
+
   const hashedPassword = await bcrypt.hash(password, 10);
-  // Auto-generate placeholder email since it is required by model but not asked in form
-  const email = `${phone}@placeholder.com`;
+  // Use provided email or auto-generate placeholder if not provided
+  const finalEmail = email ? email.trim().toLowerCase() : `${phone}@placeholder.com`;
 
   const user = await User.create({
     name,
     phone,
-    email,
+    email: finalEmail,
     password: hashedPassword,
     roles,
     industries,
@@ -40,24 +51,24 @@ const register = async ({ name, phone, password, roles, industries }) => {
 
 const loginWithPassword = async ({ phone, password }) => {
   console.log('[Auth Debug] Looking for user with phone:', phone);
-  
+
   // Try to find all users to debug
   const allUsers = await User.find({}).select('phone email name');
-  console.log('[Auth Debug] All users in DB:', allUsers.map(u => ({ 
-    phone: u.phone, 
-    email: u.email, 
-    name: u.name 
+  console.log('[Auth Debug] All users in DB:', allUsers.map(u => ({
+    phone: u.phone,
+    email: u.email,
+    name: u.name
   })));
-  
+
   const user = await User.findOne({ phone });
-  console.log('[Auth Debug] User found:', user ? { 
-    id: user._id, 
-    phone: user.phone, 
+  console.log('[Auth Debug] User found:', user ? {
+    id: user._id,
+    phone: user.phone,
     email: user.email,
     name: user.name,
-    hasPassword: !!user.password 
+    hasPassword: !!user.password
   } : 'NO USER FOUND');
-  
+
   if (!user) {
     const err = new Error('Invalid credentials');
     err.status = 401;
@@ -67,7 +78,7 @@ const loginWithPassword = async ({ phone, password }) => {
   console.log('[Auth Debug] Comparing passwords...');
   const isMatch = await bcrypt.compare(password, user.password);
   console.log('[Auth Debug] Password match:', isMatch);
-  
+
   if (!isMatch) {
     const err = new Error('Invalid credentials');
     err.status = 401;
@@ -159,7 +170,7 @@ const verifyPassword = async ({ userId, password }) => {
     err.status = 404;
     throw err;
   }
-  
+
   // If user has no password (e.g. OTP login only), we can't verify
   if (!user.password) {
     const err = new Error('User has no password set');
@@ -183,7 +194,7 @@ const changePassword = async ({ userId, currentPassword, newPassword }) => {
     err.status = 404;
     throw err;
   }
-  
+
   // Verify current password again for security
   if (user.password) {
     const isMatch = await bcrypt.compare(currentPassword, user.password);
@@ -198,9 +209,73 @@ const changePassword = async ({ userId, currentPassword, newPassword }) => {
   const hashedPassword = await bcrypt.hash(newPassword, 10);
   user.password = hashedPassword;
   await user.save();
-  
+
+
+
   return { success: true, message: 'Password updated successfully' };
 };
 
-module.exports = { login, verifyOtp, refresh, logout, register, loginWithPassword, verifyPassword, changePassword };
+const forgotPassword = async ({ email }) => {
+  const normalizedEmail = email ? email.trim().toLowerCase() : '';
+  const user = await User.findOne({ email: normalizedEmail });
+  if (!user) {
+    const err = new Error('User not found with this email');
+    err.status = 404;
+    throw err;
+  }
+
+  // Generate 6 digit OTP
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+  // Set expiry to 10 minutes
+  user.resetPasswordOtp = otp;
+  user.resetPasswordExpires = Date.now() + 10 * 60 * 1000;
+  await user.save();
+
+  // Send Email
+  await mailService.sendEmail({
+    to: email,
+    subject: 'Password Reset OTP',
+    text: `Your OTP for password reset is: ${otp}. It expires in 10 minutes.`,
+    html: `<p>Your OTP for password reset is: <strong>${otp}</strong></p><p>It expires in 10 minutes.</p>`
+  });
+
+  return { message: 'OTP sent to your email' };
+};
+
+const resetPassword = async ({ email, otp, newPassword }) => {
+  const normalizedEmail = email ? email.trim().toLowerCase() : '';
+  const user = await User.findOne({
+    email: normalizedEmail,
+    resetPasswordOtp: otp,
+    resetPasswordExpires: { $gt: Date.now() }
+  });
+
+  if (!user) {
+    const err = new Error('Invalid OTP or OTP expired');
+    err.status = 400;
+    throw err;
+  }
+
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  user.password = hashedPassword;
+  user.resetPasswordOtp = undefined;
+  user.resetPasswordExpires = undefined;
+  await user.save();
+
+  return { success: true, message: 'Password reset successfully' };
+};
+
+module.exports = {
+  login,
+  verifyOtp,
+  refresh,
+  logout,
+  register,
+  loginWithPassword,
+  verifyPassword,
+  changePassword,
+  forgotPassword,
+  resetPassword
+};
 
