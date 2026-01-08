@@ -3,7 +3,7 @@ const { Schema, model, Types } = require('mongoose');
 const UserSchema = new Schema(
   {
     name: { type: String, required: true, trim: true },
-    email: { type: String, required: true, unique: true, lowercase: true },
+    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     phone: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     avatar: { type: String },
@@ -67,6 +67,10 @@ const UserSchema = new Schema(
     refreshTokens: [{ type: String }],
     pushTokens: [{ type: String }],
     lastLoginAt: { type: Date },
+
+    // Password Reset
+    resetPasswordOtp: { type: String },
+    resetPasswordExpires: { type: Date },
   },
   { timestamps: true }
 );

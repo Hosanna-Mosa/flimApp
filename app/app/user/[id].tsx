@@ -61,7 +61,7 @@ export default function PublicProfileScreen() {
     const { colors } = useTheme();
     const { token } = useAuth();
     const router = useRouter();
-    
+
     const [selectedFilter, setSelectedFilter] = useState<ContentType | 'all'>('all');
     const [isFollowing, setIsFollowing] = useState(false);
     const [followStatus, setFollowStatus] = useState<'pending' | 'accepted' | null>(null);
@@ -84,29 +84,29 @@ export default function PublicProfileScreen() {
                 api.user(id, token || undefined),
                 api.getUserFeed(id, 0, 100, token || undefined).catch(() => ({ data: [] })),
             ]);
-            
+
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const userInfo = userData as any;
             setUser(userInfo);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             setPosts((postsData as any).data || []);
-            
+
             // Check if account is private
             const accountType = userInfo?.accountType || (userInfo?.isPrivate ? 'private' : 'public');
             setIsPrivateAccount(accountType === 'private');
-            
+
             // Check follow status first to determine if we have limited data
             let isFollowingValue = false;
             let statusValue: 'pending' | 'accepted' | null = null;
-            
+
             try {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const statusResponse: any = await api.getFollowStatus(id, token || undefined);
                 // console.log('[UserProfile] Follow status response:', JSON.stringify(statusResponse));
-                
+
                 statusValue = statusResponse?.status ?? statusResponse?.data?.status ?? null;
                 isFollowingValue = statusResponse?.isFollowing ?? statusResponse?.data?.isFollowing ?? false;
-                
+
                 // console.log('[UserProfile] Follow status:', statusValue, 'isFollowing:', isFollowingValue);
                 setFollowStatus(statusValue);
                 setIsFollowing(isFollowingValue);
@@ -115,7 +115,7 @@ export default function PublicProfileScreen() {
                 setIsFollowing(false);
                 setFollowStatus(null);
             }
-            
+
             // Check if we have limited data (private account AND not following)
             // Even if stats are returned, we should limit access if it's private and not following
             const limitedData = accountType === 'private' && !isFollowingValue && statusValue !== 'accepted';
@@ -136,23 +136,23 @@ export default function PublicProfileScreen() {
 
     const toggleFollow = async () => {
         if (!user) return;
-        
+
         try {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            
+
             const wasFollowing = isFollowing;
             const wasPending = followStatus === 'pending';
-            
+
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             let result: any;
-            
+
             if (wasFollowing || wasPending) {
                 // Unfollow or cancel request
                 result = await api.unfollowUser(id, token || undefined);
                 // console.log('[UserProfile] Unfollow result:', JSON.stringify(result));
                 setIsFollowing(false);
                 setFollowStatus(null);
-                
+
                 // Update follower count only if it was accepted (not pending)
                 if (wasFollowing && user) {
                     setUser({
@@ -168,7 +168,7 @@ export default function PublicProfileScreen() {
                 // Follow or send request
                 result = await api.followUser(id, token || undefined);
                 // console.log('[UserProfile] Follow result:', JSON.stringify(result));
-                
+
                 if (result.status === 'pending') {
                     // Private account - request sent
                     setFollowStatus('pending');
@@ -178,7 +178,7 @@ export default function PublicProfileScreen() {
                     // Public account - immediately followed
                     setIsFollowing(true);
                     setFollowStatus('accepted');
-                    
+
                     // Optimistically update follower count
                     if (user) {
                         setUser({
@@ -209,7 +209,7 @@ export default function PublicProfileScreen() {
             }
         } catch (error: any) {
             // console.error('[UserProfile] Follow error:', error);
-            
+
             // Refresh follow status on error
             try {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -221,19 +221,19 @@ export default function PublicProfileScreen() {
             } catch (refreshError) {
                 // console.error('[UserProfile] Error refreshing follow status:', refreshError);
             }
-            
+
             Alert.alert('Error', error?.message || 'Failed to update follow status');
         }
     };
 
     const handleMessage = () => {
         if (!user) return;
-        
+
         router.push({
             pathname: '/chat',
-            params: { 
-                userId: id, 
-                name: user.name || 'User' 
+            params: {
+                userId: id,
+                name: user.name || 'User'
             }
         });
     };
@@ -309,7 +309,7 @@ export default function PublicProfileScreen() {
                             {user.name}
                         </Text>
                         {user.isVerified && (
-                            <BadgeCheck size={24} color="#FFFFFF" fill={colors.primary} />
+                            <BadgeCheck size={24} color="#FFFFFF" fill="#0095F6" />
                         )}
                     </View>
 
@@ -359,7 +359,7 @@ export default function PublicProfileScreen() {
                             </View>
                         </>
                     )}
-                    
+
                     {hasLimitedData && (
                         <View style={styles.privateMessageContainer}>
                             <Text style={[styles.privateMessage, { color: colors.textSecondary }]}>
@@ -373,8 +373,8 @@ export default function PublicProfileScreen() {
                             style={[
                                 styles.followButton,
                                 {
-                                    backgroundColor: (isFollowing || followStatus === 'pending') ? colors.surface : colors.primary,
-                                    borderColor: (isFollowing || followStatus === 'pending') ? colors.border : colors.primary,
+                                    backgroundColor: (isFollowing || followStatus === 'pending') ? colors.surface : '#0095F6',
+                                    borderColor: (isFollowing || followStatus === 'pending') ? colors.border : '#0095F6',
                                     // Make button full width if message button is hidden
                                     flex: (!isPrivateAccount || isFollowing) ? 1 : undefined,
                                     width: (!isPrivateAccount || isFollowing) ? undefined : '100%',
@@ -437,14 +437,14 @@ export default function PublicProfileScreen() {
                                 </Text>
                             </View>
                         ) : (
-                            <TouchableOpacity 
+                            <TouchableOpacity
                                 style={styles.stat}
                                 onPress={() => {
                                     router.push({
                                         pathname: '/user/network',
-                                        params: { 
-                                            userId: id, 
-                                            type: 'followers' 
+                                        params: {
+                                            userId: id,
+                                            type: 'followers'
                                         }
                                     });
                                 }}
@@ -472,14 +472,14 @@ export default function PublicProfileScreen() {
                                 </Text>
                             </View>
                         ) : (
-                            <TouchableOpacity 
+                            <TouchableOpacity
                                 style={styles.stat}
                                 onPress={() => {
                                     router.push({
                                         pathname: '/user/network',
-                                        params: { 
-                                            userId: id, 
-                                            type: 'following' 
+                                        params: {
+                                            userId: id,
+                                            type: 'following'
                                         }
                                     });
                                 }}
@@ -563,7 +563,7 @@ export default function PublicProfileScreen() {
                         )}
                     </View>
                 )}
-                
+
                 {hasLimitedData && (
                     <View style={styles.privatePostsContainer}>
                         <Text style={[styles.privatePostsText, { color: colors.textSecondary }]}>

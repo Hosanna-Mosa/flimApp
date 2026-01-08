@@ -20,7 +20,7 @@ export default function SignInScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { setAuth } = useAuth();
-  
+
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -31,7 +31,7 @@ export default function SignInScreen() {
       setError('Please fill in all fields');
       return;
     }
-    
+
     setError('');
     setLoading(true);
 
@@ -55,14 +55,14 @@ export default function SignInScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={[styles.container, { backgroundColor: '#000000' }]}
     >
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <TouchableOpacity 
-            onPress={() => router.back()} 
+          <TouchableOpacity
+            onPress={() => router.back()}
             style={styles.backButton}
             hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
           >
@@ -79,7 +79,7 @@ export default function SignInScreen() {
             value={phone}
             onChangeText={setPhone}
           />
-          
+
           <Input
             label="Password"
             placeholder="Enter your password"
@@ -89,11 +89,20 @@ export default function SignInScreen() {
             error={error}
           />
 
-          <Button 
-            title="Sign In" 
-            onPress={handleSignIn} 
+          <TouchableOpacity
+            onPress={() => router.push('/auth/forgot-password')}
+            style={styles.forgotPasswordContainer}
+          >
+            <Text style={[styles.forgotPasswordText, { color: colors.primary }]}>
+              Forgot Password?
+            </Text>
+          </TouchableOpacity>
+
+          <Button
+            title="Sign In"
+            onPress={handleSignIn}
             loading={loading}
-            size="large" 
+            size="large"
             style={styles.button}
           />
         </View>
@@ -126,5 +135,13 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: 24,
+  },
+  forgotPasswordContainer: {
+    alignSelf: 'flex-end',
+    marginTop: 8,
+  },
+  forgotPasswordText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

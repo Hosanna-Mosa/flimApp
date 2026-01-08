@@ -82,6 +82,7 @@ export const apiLogout = (refreshToken: string, token?: string) =>
 export const apiRegister = (payload: {
   name: string;
   phone: string;
+  email: string;
   password: string;
   roles: string[];
   industries: string[];
@@ -113,6 +114,18 @@ export const apiChangePassword = (
     method: 'POST',
     body: { currentPassword, newPassword },
     token,
+  });
+
+export const apiForgotPassword = (email: string) =>
+  request<{ message: string }>('/auth/forgot-password', {
+    method: 'POST',
+    body: { email },
+  });
+
+export const apiResetPassword = (email: string, otp: string, newPassword: string) =>
+  request<{ success: boolean; message: string }>('/auth/reset-password', {
+    method: 'POST',
+    body: { email, otp, newPassword },
   });
 
 // Users
@@ -859,7 +872,7 @@ export const api = {
   getVerificationStatus: apiGetVerificationStatus,
   toggleSavePost: apiToggleSavePost,
   getSavedPosts: apiGetSavedPosts,
-  
+
   // Subscriptions
   apiCreateSubscriptionOrder,
   apiVerifySubscriptionPayment
