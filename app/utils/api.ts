@@ -54,17 +54,28 @@ const request = async <T>(
 };
 
 // Auth
-export const apiLogin = (identifier: string) =>
-  request<{ otpSent: boolean; userExists: boolean; message: string }>(
-    '/auth/login',
-    { method: 'POST', body: { identifier } }
-  );
+export const apiSendOtp = (phone: string) =>
+  request<{ message: string }>('/auth/send-otp', {
+    method: 'POST',
+    body: { phone },
+  });
 
-export const apiVerifyOtp = (identifier: string, otp: string) =>
+export const apiVerifyOtp = (
+  phone: string,
+  otp: string,
+  details?: { name?: string; email?: string; password?: string }
+) =>
   request<{ user: unknown; accessToken: string; refreshToken: string }>(
     '/auth/verify-otp',
-    { method: 'POST', body: { identifier, otp } }
+    {
+      method: 'POST',
+      body: { phone, otp, ...details },
+    }
   );
+
+export const apiLogin = (identifier: string) =>
+  // Use sendOtp internally or keep legacy if needed, but for now we follow new flow
+  apiSendOtp(identifier);
 
 export const apiRefresh = (refreshToken: string) =>
   request<{ accessToken: string; refreshToken: string }>('/auth/refresh', {

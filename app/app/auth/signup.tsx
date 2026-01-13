@@ -14,6 +14,7 @@ import { ArrowLeft } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import Input from '@/components/Input';
 import Button from '@/components/Button';
+import { api } from '@/utils/api';
 
 export default function SignUpScreen() {
   const router = useRouter();
@@ -26,7 +27,9 @@ export default function SignUpScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
 
-  const handleNext = () => {
+  const [loading, setLoading] = useState(false);
+
+  const handleNext = async () => {
     if (!name || !email || !phone || !password || !confirmPassword) {
       setError('Please fill in all fields');
       return;
@@ -43,11 +46,22 @@ export default function SignUpScreen() {
     }
 
     setError('');
-    // Pass data to onboarding via params or context. For simplicity, we use params.
-    router.push({
-      pathname: '/auth/onboarding',
-      params: { name, email, phone, password },
-    });
+    setLoading(true);
+
+    try {
+       // Send OTP first
+       await api.login(phone); // Using renamed apiLogin -> apiSendOtp under hood or directly call apiSendOtp if I exported it separately
+       // Actually I exported `apiSendOtp`. `api.login` maps to `apiSendOtp` in my previous edit
+       
+       router.push({
+        pathname: '/auth/otp',
+        params: { name, email, phone, password, isSignup: 'true' },
+      });
+    } catch (err: any) {
+      setError(err.message || 'Failed to send OTP. Please check phone number.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
