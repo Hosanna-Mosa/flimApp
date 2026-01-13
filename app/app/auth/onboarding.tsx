@@ -26,7 +26,7 @@ export default function OnboardingScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { colors } = useTheme();
-  const { setAuth } = useAuth();
+  const { auth, setAuth } = useAuth();
 
   const [step, setStep] = useState(1);
   const [avatar, setAvatar] = useState<string | null>(null);
@@ -81,22 +81,41 @@ export default function OnboardingScreen() {
       if (selectedRoles.length === 0) return;
       setStep(3);
     } else {
-      // Register
+      // Finalize Profile (Register or Update)
       setLoading(true);
       try {
-        const { name, phone, email, password } = params;
-        const payload = {
-          name: name as string,
-          phone: phone as string,
-          email: email as string,
-          password: password as string,
-          roles: selectedRoles,
-          industries: selectedIndustries
-        };
+        let accessToken = auth?.token;
+        let refreshToken = auth?.refreshToken;
+        let user = auth?.user;
 
-        // 1. Register User
-        const response = await api.register(payload);
-        const { accessToken, refreshToken, user } = response;
+        // If not authenticated (should not happen if coming from OTP, but handle just in case or if registration flow changes)
+        if (!accessToken) {
+            // Register logic fallback (legacy)
+            const { name, phone, email, password } = params;
+            const payload = {
+            name: name as string,
+            phone: phone as string,
+            email: email as string,
+            password: password as string,
+            roles: selectedRoles,
+            industries: selectedIndustries
+            };
+
+            const response = await api.register(payload);
+            accessToken = response.accessToken;
+            refreshToken = response.refreshToken;
+            user = response.user;
+        } else {
+           // User is already authenticated (via OTP), just update profile
+           await api.updateMe({
+             roles: selectedRoles,
+             industries: selectedIndustries
+           }, accessToken);
+           
+           // Update local user object
+           (user as any).roles = selectedRoles;
+           (user as any).industries = selectedIndustries;
+        }
 
         // 2. Upload Avatar if selected
         let finalAvatarUrl = '';
@@ -109,7 +128,7 @@ export default function OnboardingScreen() {
               const uploadResult = await uploadMediaToCloudinary(
                 { uri: avatar },
                 'image',
-                accessToken
+                accessToken // use the token we have
               );
               finalAvatarUrl = uploadResult.url;
             } catch (uploadError) {
@@ -122,22 +141,25 @@ export default function OnboardingScreen() {
             try {
               await api.updateMe({ avatar: finalAvatarUrl }, accessToken);
               // Update local user object to include the new avatar
-              (user as any).avatar = finalAvatarUrl;
+              if (user) (user as any).avatar = finalAvatarUrl;
             } catch (updateError) {
               console.error('Failed to update profile with avatar:', updateError);
             }
           }
         }
 
-        setAuth({
-          token: accessToken,
-          refreshToken: refreshToken,
-          user: user as any,
-        });
+        // Update Auth Context
+        if (accessToken && user) {
+            setAuth({
+            token: accessToken,
+            refreshToken: refreshToken || '', // Refresh token might not be needed if just updating? but good to keep
+            user: user as any,
+            });
+        }
 
         router.replace('/home');
       } catch (err: any) {
-        Alert.alert('Registration Failed', err.message || 'Something went wrong');
+        Alert.alert('Setup Failed', err.message || 'Something went wrong');
       } finally {
         setLoading(false);
       }
