@@ -28,15 +28,29 @@ const start = async () => {
     logger.warn('Social features will fall back to direct database operations');
   }
 
+  const allowedOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+    : ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:8081', 'http://localhost:19000', 'http://localhost:19006'];
+
   const server = http.createServer(app);
   const io = new Server(server, {
-    cors: { origin: '*', methods: ['GET', 'POST'] },
+    cors: {
+      origin: (origin, callback) => {
+        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      },
+      methods: ['GET', 'POST'],
+      credentials: true
+    },
   });
-  
+
   // Set IO instance for global usage
   const { setIo } = require('./utils/socketStore');
   setIo(io);
-  
+
   registerChatHandlers(io);
   registerCommunityHandlers(io);
 
@@ -47,7 +61,7 @@ const start = async () => {
   // Graceful shutdown
   const shutdown = async () => {
     logger.info('Shutting down gracefully...');
-    
+
     try {
       // Close server
       server.close(() => {
