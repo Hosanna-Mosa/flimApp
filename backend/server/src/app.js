@@ -6,6 +6,8 @@ const apiLogger = require('./middlewares/apiLogger.middleware');
 const errorHandler = require('./middlewares/error.middleware');
 
 const authRoutes = require('./routes/auth.routes');
+const authV1Routes = require('./routes/v1/auth.routes');
+
 const userRoutes = require('./routes/user.routes');
 const postRoutes = require('./routes/post.routes');
 const communityRoutes = require('./routes/community.routes');
@@ -42,7 +44,9 @@ app.use(require('./middlewares/requestLogger.middleware'));
 
 app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
 
+app.use('/auth', authV1Routes);
 app.use('/auth', authRoutes);
+
 app.use('/users', userRoutes);
 app.use('/posts', postRoutes);
 app.use('/media', mediaRoutes);
