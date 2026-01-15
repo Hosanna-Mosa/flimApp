@@ -77,7 +77,7 @@
       ]
     ],
     "extra": {
-      "apiUrl": "http://10.230.163.150:8000",
+      "apiUrl": "https://api.filmyconnect24.com",
       "router": {},
       "expo-navigation-bar": {
         "position": "absolute",
