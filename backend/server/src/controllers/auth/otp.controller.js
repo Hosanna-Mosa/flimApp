@@ -10,10 +10,23 @@ const bcrypt = require('bcryptjs');
  */
 const sendOtp = async (req, res, next) => {
   try {
-    const { phone } = req.body;
+    let { phone } = req.body;
 
     if (!phone) {
       return fail(res, 'Phone number is required', 400);
+    }
+
+    // Normalize phone number
+    phone = phone.replace(/\s+/g, '').replace(/-/g, '');
+    
+    // Default to India (+91) if 10 digits provided without country code
+    // This is specific to the "Filmy" context (Indian film industry)
+    if (/^\d{10}$/.test(phone)) {
+      phone = `+91${phone}`;
+    } else if (!phone.startsWith('+')) {
+       // If it doesn't start with +, assume it might be missing it but try to respect what user sent if it's not exactly 10 digits
+       // beneficial to ensure it starts with + for Twilio
+       phone = `+${phone}`;
     }
 
     const verification = await client.verify.v2
@@ -40,10 +53,18 @@ const sendOtp = async (req, res, next) => {
  */
 const verifyOtp = async (req, res, next) => {
   try {
-    const { phone, otp } = req.body;
+    let { phone, otp } = req.body;
 
     if (!phone || !otp) {
       return fail(res, 'Phone and OTP are required', 400);
+    }
+
+    // Normalize phone number (must match sendOtp logic)
+    phone = phone.replace(/\s+/g, '').replace(/-/g, '');
+    if (/^\d{10}$/.test(phone)) {
+      phone = `+91${phone}`;
+    } else if (!phone.startsWith('+')) {
+      phone = `+${phone}`;
     }
 
     let verificationCheck;
