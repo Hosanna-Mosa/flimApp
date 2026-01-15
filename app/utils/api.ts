@@ -1,14 +1,13 @@
 // Support Expo environment variables without requiring @types/node
 
-import Constants from 'expo-constants';
+// Get API URL ONLY from environment variable (.env file)
+const API_BASE = ((globalThis as any)?.process?.env?.EXPO_PUBLIC_API_URL as string) ||
+  (typeof process !== 'undefined' && process.env?.EXPO_PUBLIC_API_URL) ||
+  'http://localhost:4000';
 
-const API_BASE_URL =
-  Constants.expoConfig?.extra?.apiUrl ?? Constants.manifest?.extra?.apiUrl;
-
-const API_BASE = API_BASE_URL
-  ? API_BASE_URL
-  : ((globalThis as any)?.process?.env?.EXPO_PUBLIC_API_URL as string) ||
-  'http://10.18.107.42:8000';
+if (!API_BASE || API_BASE === 'http://localhost:4000') {
+  console.warn('[API] EXPO_PUBLIC_API_URL not set in .env file. Using fallback:', API_BASE);
+}
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
 interface RequestOptions {

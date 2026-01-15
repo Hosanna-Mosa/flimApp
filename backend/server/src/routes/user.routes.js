@@ -16,24 +16,24 @@ router.put(
   validate(
     Joi.object({
       body: Joi.object({
-        name: Joi.string(),
-        email: Joi.string().email().lowercase(),
-        phone: Joi.string(),
-        avatar: Joi.string(),
-        bio: Joi.string().max(500),
-        roles: Joi.array().items(Joi.string()),
-        industries: Joi.array().items(Joi.string()),
-        experience: Joi.number(),
-        location: Joi.string(),
+        name: Joi.string().optional().allow('', null),
+        email: Joi.string().email().lowercase().optional().allow('', null),
+        phone: Joi.string().optional().allow('', null),
+        avatar: Joi.string().optional().allow('', null),
+        bio: Joi.string().max(500).optional().allow('', null),
+        roles: Joi.array().items(Joi.string()).optional(),
+        industries: Joi.array().items(Joi.string()).optional(),
+        experience: Joi.number().optional().allow(null),
+        location: Joi.string().optional().allow('', null),
         portfolio: Joi.array().items(
           Joi.object({
             title: Joi.string(),
             type: Joi.string(),
             url: Joi.string(),
           })
-        ),
-        accountType: Joi.string().valid('public', 'private', 'business'),
-      }),
+        ).optional(),
+        accountType: Joi.string().valid('public', 'private', 'business').optional(),
+      }).min(1), // At least one field must be provided
     })
   ),
   userController.updateMe

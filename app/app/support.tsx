@@ -18,7 +18,10 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Upload, X, Send } from 'lucide-react-native';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
+// Get API URL ONLY from environment variable (.env file)
+const API_URL = ((globalThis as any)?.process?.env?.EXPO_PUBLIC_API_URL as string) ||
+  (typeof process !== 'undefined' && process.env?.EXPO_PUBLIC_API_URL) ||
+  'http://localhost:4000';
 
 export default function SupportScreen() {
     const router = useRouter();

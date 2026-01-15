@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,8 +11,9 @@ import Button from '@/components/Button';
 export default function IndustrySelectionScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { updateUserIndustries } = useAuth();
+  const { updateUserIndustries, user } = useAuth();
   const [selectedIndustries, setSelectedIndustries] = useState<Industry[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const handleToggleIndustry = (industryId: string) => {
     const industry = industryId as Industry;
@@ -24,8 +25,24 @@ export default function IndustrySelectionScreen() {
   };
 
   const handleContinue = async () => {
-    await updateUserIndustries(selectedIndustries);
-    router.replace('/home');
+    if (selectedIndustries.length === 0) {
+      Alert.alert('Selection Required', 'Please select at least one industry to continue.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await updateUserIndustries(selectedIndustries);
+      router.replace('/home');
+    } catch (error: any) {
+      console.error('Failed to update industries:', error);
+      Alert.alert(
+        'Setup Failed',
+        error.message || 'Failed to save your industry preferences. Please try again.'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -69,6 +86,7 @@ export default function IndustrySelectionScreen() {
           onPress={handleContinue}
           size="large"
           disabled={selectedIndustries.length === 0}
+          loading={loading}
         />
       </View>
     </View>

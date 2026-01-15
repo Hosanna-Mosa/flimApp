@@ -5,7 +5,6 @@ import React, {
   useState,
 } from 'react';
 import { io, Socket } from 'socket.io-client';
-import Constants from 'expo-constants';
 import { useAuth } from './AuthContext';
 
 /**
@@ -13,14 +12,10 @@ import { useAuth } from './AuthContext';
  *  Socket Instance (SINGLE SOURCE OF TRUTH)
  * ------------------------------------------------------
  */
-// Get the API URL from app config (same as API calls)
-const API_BASE_URL =
-  Constants.expoConfig?.extra?.apiUrl ?? Constants.manifest?.extra?.apiUrl;
-
-const SOCKET_URL = API_BASE_URL
-  ? API_BASE_URL
-  : ((globalThis as any)?.process?.env?.EXPO_PUBLIC_API_URL as string) ||
-    'http://192.168.1.3:8000';
+// Get API URL ONLY from environment variable (.env file)
+const SOCKET_URL = ((globalThis as any)?.process?.env?.EXPO_PUBLIC_API_URL as string) ||
+  (typeof process !== 'undefined' && process.env?.EXPO_PUBLIC_API_URL) ||
+  'http://localhost:4000';
 
 console.log('[SOCKET] Connecting to:', SOCKET_URL);
 

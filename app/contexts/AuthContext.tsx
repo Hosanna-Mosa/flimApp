@@ -160,11 +160,21 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   }, [authState.token]);
 
   const updateUserRoles = async (roles: UserRole[]) => {
-    await updateProfile({ roles });
+    // Include user's existing name to avoid validation errors
+    const updates: Partial<User> = { roles };
+    if (authState.user?.name) {
+      updates.name = authState.user.name;
+    }
+    await updateProfile(updates);
   };
 
   const updateUserIndustries = async (industries: Industry[]) => {
-    await updateProfile({ industries });
+    // Include user's existing name to avoid validation errors
+    const updates: Partial<User> = { industries };
+    if (authState.user?.name) {
+      updates.name = authState.user.name;
+    }
+    await updateProfile(updates);
   };
 
   const setAuth = async (data: {
