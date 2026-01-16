@@ -14,7 +14,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import Input from '@/components/Input';
 import Button from '@/components/Button';
-import { api } from '@/utils/api';
+import api from '@/utils/api';
 
 export default function SignInScreen() {
   const router = useRouter();

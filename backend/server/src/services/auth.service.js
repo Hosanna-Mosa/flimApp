@@ -8,23 +8,121 @@ const {
 const mailService = require('./mail.service');
 
 const OTP_CODE = '123456';
+const checkAvailability = async ({ username, email, phone, password }) => {
+  const conflicts = [];
+  
+  // Check username
+  if (username) {
+    const user = await User.findOne({ username });
+    if (user) conflicts.push('username');
+  }
+  
+  // Check email
+  if (email) {
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await User.findOne({ email: normalizedEmail });
+    if (user) conflicts.push('email');
+  }
+  
+  // Check phone
+  if (phone) {
+    const user = await User.findOne({ phone });
+    if (user) conflicts.push('phone');
+  }
+  
+  // Check password - verify if email or phone already has this password
+  // Note: We check if the email/phone exists AND has a password set
+  if (password) {
+    if (email) {
+      const normalizedEmail = email.trim().toLowerCase();
+      const user = await User.findOne({ email: normalizedEmail });
+      if (user && user.password) {
+        // Check if the provided password matches the existing password
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (isMatch) {
+          conflicts.push('password');
+        }
+      }
+    }
+    if (phone) {
+      const user = await User.findOne({ phone });
+      if (user && user.password) {
+        // Check if the provided password matches the existing password
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (isMatch) {
+          conflicts.push('password');
+        }
+      }
+    }
+  }
+  
+  if (conflicts.length > 0) {
+    return { 
+      available: false, 
+      fields: conflicts,
+      message: `The following ${conflicts.length === 1 ? 'field is' : 'fields are'} already registered: ${conflicts.join(', ')}`
+    };
+  }
+  
+  return { available: true };
+};
 
-const register = async ({ name, phone, email, password, roles, industries }) => {
-  const existingUser = await User.findOne({ phone });
-  if (existingUser) {
-    const err = new Error('Phone number already registered');
-    err.status = 409;
-    throw err;
+const register = async ({ name, username, phone, email, password, roles, industries }) => {
+  // Comprehensive check for all fields before registration
+  const conflicts = [];
+  
+  // Check phone
+  const existingPhone = await User.findOne({ phone });
+  if (existingPhone) {
+    conflicts.push('phone');
   }
 
+  // Check email
   if (email) {
     const normalizedEmail = email.trim().toLowerCase();
     const existingEmail = await User.findOne({ email: normalizedEmail });
     if (existingEmail) {
-      const err = new Error('Email already registered');
-      err.status = 409;
-      throw err;
+      conflicts.push('email');
     }
+  }
+
+  // Check password - verify if email or phone already has this password
+  if (password) {
+    if (email) {
+      const normalizedEmail = email.trim().toLowerCase();
+      const user = await User.findOne({ email: normalizedEmail });
+      if (user && user.password) {
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (isMatch) {
+          conflicts.push('password');
+        }
+      }
+    }
+    if (phone) {
+      const user = await User.findOne({ phone });
+      if (user && user.password) {
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (isMatch) {
+          conflicts.push('password');
+        }
+      }
+    }
+  }
+
+  // If any conflicts found, throw error with details
+  if (conflicts.length > 0) {
+    const fieldMessages = {
+      phone: 'Phone number',
+      email: 'Email',
+      password: 'Password'
+    };
+    const conflictMessages = conflicts.map(field => fieldMessages[field] || field);
+    const err = new Error(
+      `Registration failed. The following ${conflicts.length === 1 ? 'field is' : 'fields are'} already registered: ${conflictMessages.join(', ')}`
+    );
+    err.status = 409;
+    err.conflicts = conflicts;
+    throw err;
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -33,6 +131,7 @@ const register = async ({ name, phone, email, password, roles, industries }) => 
 
   const user = await User.create({
     name,
+    username,
     phone,
     email: finalEmail,
     password: hashedPassword,
@@ -121,12 +220,14 @@ const verifyOtp = async ({ identifier, otp }) => {
     const hashed = await bcrypt.hash(identifier, 10);
     user = await User.create({
       name: 'New User',
+      username: `user_${identifier.slice(-4)}`,
       email: identifier.includes('@') ? identifier : `${identifier}@film.app`,
       phone: identifier,
       password: hashed,
       roles: ['actor'],
       industries: ['bollywood'],
     });
+    console.log(`[Auth Service] Created new user: ${user.name}, username: ${user.username}`);
   }
 
   user.lastLoginAt = new Date();
@@ -276,6 +377,7 @@ module.exports = {
   verifyPassword,
   changePassword,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  checkAvailability
 };
 

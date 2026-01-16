@@ -23,7 +23,7 @@ export default function OtpScreen() {
   const { setAuth } = useAuth();
   const params = useLocalSearchParams();
 
-  const { phone, name, email, password } = params;
+  const { phone, name, username, email, password } = params;
 
   const [otp, setOtp] = useState('');
   const [error, setError] = useState('');
@@ -36,22 +36,23 @@ export default function OtpScreen() {
     }
 
     if (!phone) {
-       setError('Phone number invalid');
-       return;
+      setError('Phone number invalid');
+      return;
     }
 
     setError('');
     setLoading(true);
 
     try {
-      const details = name && email && password ? { 
-        name: name as string, 
-        email: email as string, 
-        password: password as string 
+      const details = name && email && password ? {
+        name: name as string,
+        username: username as string,
+        email: email as string,
+        password: password as string
       } : undefined;
 
       const response = await apiVerifyOtp(phone as string, otp, details);
-      
+
       setAuth({
         token: response.accessToken,
         refreshToken: response.refreshToken,
@@ -60,7 +61,10 @@ export default function OtpScreen() {
 
       // Redirect based on flow
       if (params.isSignup === 'true') {
-        router.replace('/auth/onboarding');
+        router.replace({
+          pathname: '/auth/onboarding',
+          params: { name, username, email, phone, password },
+        });
       } else {
         router.replace('/home');
       }

@@ -22,27 +22,28 @@ class FeedService {
     try {
       const { algorithm = 'hybrid', timeRange = 36500 } = options;
 
-      // Try to get cached feed first
-      // Try to get cached feed first
-      const cachedFeed = await cacheService.getUserFeed(userId, page, limit);
-      if (cachedFeed && cachedFeed.length > 0) {
-        // Fetch full post data
-        const posts = await Post.find({ _id: { $in: cachedFeed } })
-          .populate('author', 'name avatar isVerified roles')
-          .lean();
+      // Try to get cached feed first (only use cache for page > 0 to ensure fresh data on first load)
+      if (page > 0) {
+        const cachedFeed = await cacheService.getUserFeed(userId, page, limit);
+        if (cachedFeed && cachedFeed.length > 0) {
+          // Fetch full post data
+          const posts = await Post.find({ _id: { $in: cachedFeed } })
+            .populate('author', 'name avatar isVerified roles')
+            .lean();
 
-        // Maintain cache order
-        const orderedPosts = cachedFeed.map(id =>
-          posts.find(p => p._id.toString() === id)
-        ).filter(Boolean);
+          // Maintain cache order
+          const orderedPosts = cachedFeed.map(id =>
+            posts.find(p => p._id.toString() === id)
+          ).filter(Boolean);
 
-        const enrichedPosts = await this.enrichPosts(orderedPosts, userId);
+          const enrichedPosts = await this.enrichPosts(orderedPosts, userId);
 
-        return {
-          success: true,
-          data: enrichedPosts,
-          source: 'cache',
-        };
+          return {
+            success: true,
+            data: enrichedPosts,
+            source: 'cache',
+          };
+        }
       }
 
       // Generate fresh feed
@@ -67,11 +68,21 @@ class FeedService {
 
       const enrichedPosts = await this.enrichPosts(paginatedPosts, userId);
 
-      // Cache the feed (store post IDs only)
+      // Cache invalidation and caching logic
       if (page === 0) {
+        // Always invalidate cache for page 0 to ensure fresh data
+        await cacheService.invalidateUserFeed(userId);
+        logger.info(`[Feed] Cache invalidated for user ${userId} (page 0)`);
+        
+        // Cache the fresh feed (store post IDs only)
         const postIds = feedPosts.slice(0, 100).map(p => p._id.toString());
         await cacheService.setUserFeed(userId, postIds);
+        logger.info(`[Feed] Cached ${postIds.length} post IDs for user ${userId}`);
       }
+
+      // Log the enriched posts for debugging
+      const enrichedAuthors = [...new Set(enrichedPosts.map(p => p.author?.name || 'Unknown').filter(Boolean))];
+      logger.info(`[Feed] Returning ${enrichedPosts.length} enriched posts from ${enrichedAuthors.length} authors:`, enrichedAuthors.slice(0, 5));
 
       return {
         success: true,
@@ -100,7 +111,15 @@ class FeedService {
 
     // Filter out posts where author is null/missing (e.g. deleted users)
     const validPosts = posts.filter(p => p.author && p.author._id);
-    if (validPosts.length === 0) return [];
+    
+    if (validPosts.length === 0) {
+      logger.warn(`[Feed] enrichPosts: No valid posts after filtering (input: ${posts.length})`);
+      return [];
+    }
+
+    // Log unique authors before enrichment
+    const authorsBefore = [...new Set(validPosts.map(p => p.author?.name || 'Unknown'))];
+    logger.info(`[Feed] enrichPosts: Enriching ${validPosts.length} posts from ${authorsBefore.length} authors:`, authorsBefore.slice(0, 5));
 
     const postIds = validPosts.map(p => p._id);
     const authorIds = [...new Set(validPosts.map(p => p.author._id))];
@@ -122,7 +141,7 @@ class FeedService {
     const followedUserIds = new Set(userFollows.map(follow => follow.following.toString()));
     const savedPostIds = new Set((userData?.savedPosts || []).map(id => id.toString()));
 
-    return validPosts.map(post => ({
+    const enriched = validPosts.map(post => ({
       ...post,
       isLiked: likedPostIds.has(post._id.toString()),
       isSaved: savedPostIds.has(post._id.toString()),
@@ -131,6 +150,12 @@ class FeedService {
         isFollowing: followedUserIds.has(post.author._id.toString())
       }
     }));
+
+    // Log unique authors after enrichment
+    const authorsAfter = [...new Set(enriched.map(p => p.author?.name || 'Unknown'))];
+    logger.info(`[Feed] enrichPosts: Enriched ${enriched.length} posts from ${authorsAfter.length} authors:`, authorsAfter.slice(0, 5));
+
+    return enriched;
   }
 
   /**
@@ -173,7 +198,10 @@ class FeedService {
       cutoffDate.setDate(cutoffDate.getDate() - timeRange);
 
       const posts = await Post.find({
-        author: { $in: followingIds, $ne: userId }, // Exclude user's own posts
+        $and: [
+          { author: { $in: followingIds } },
+          { author: { $ne: userId } } // Exclude user's own posts
+        ],
         isActive: true,
         visibility: { $in: ['public', 'followers'] },
         createdAt: { $gte: cutoffDate },
@@ -260,7 +288,8 @@ class FeedService {
         status: 'accepted',
       }).select('following').lean();
 
-      const followingIds = following.map(f => f.following);
+      const followingIds = following.map(f => f.following.toString());
+      logger.info(`[Feed] User ${userId} follows ${followingIds.length} users`);
 
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - timeRange);
@@ -269,25 +298,66 @@ class FeedService {
       const privateUsers = await User.find({ accountType: 'private' }).select('_id').lean();
       const privateUserIds = privateUsers.map(u => u._id.toString());
 
-      // Global Feed: Show all public posts (excluding private accounts) + posts from users I follow
-      const posts = await Post.find({
-        author: { $ne: userId }, // Exclude user's own posts
-        isActive: true,
-        createdAt: { $gte: cutoffDate },
-        $or: [
-          {
-            visibility: 'public',
-            // Exclude posts from private accounts (they should only be visible to followers)
-            author: { $nin: privateUserIds }
-          },
-          { author: { $in: followingIds } } // Show posts from people I follow (including private/followers-only)
-        ]
-      })
+      // Build query conditions - ensure we get ALL public posts from ALL users (except self and private accounts)
+      // PLUS posts from users we follow (regardless of visibility)
+      let queryConditions;
+
+      // If user follows someone, show their posts + all public posts
+      // If user follows no one, show all public posts
+      if (followingIds.length > 0) {
+        // Show: (public posts from non-private accounts) OR (posts from users I follow)
+        // Use $and to ensure author is not self in both conditions
+        queryConditions = {
+          isActive: true,
+          createdAt: { $gte: cutoffDate },
+          author: { $ne: userId }, // Exclude user's own posts
+          $or: [
+            {
+              visibility: 'public',
+              author: { $nin: privateUserIds }
+            },
+            { 
+              author: { $in: followingIds }
+            }
+          ]
+        };
+      } else {
+        // No follows - show all public posts (excluding private accounts and self)
+        queryConditions = {
+          isActive: true,
+          createdAt: { $gte: cutoffDate },
+          visibility: 'public',
+          author: { 
+            $ne: userId,
+            $nin: privateUserIds 
+          }
+        };
+      }
+
+      logger.info(`[Feed] Query conditions for user ${userId}:`, JSON.stringify(queryConditions, null, 2));
+      logger.info(`[Feed] Following ${followingIds.length} users, Private accounts: ${privateUserIds.length}`);
+
+      const posts = await Post.find(queryConditions)
         .populate('author', 'name avatar isVerified roles accountType')
+        .sort({ createdAt: -1 }) // Get most recent first, then we'll score them
+        .limit(500) // Get more posts to score and filter
         .lean();
 
+      // Filter out posts with null/missing authors (deleted users)
+      const validPosts = posts.filter(p => p.author && p.author._id);
+      
+      logger.info(`[Feed] Found ${posts.length} total posts, ${validPosts.length} with valid authors`);
+      
+      // Log unique authors for debugging
+      const uniqueAuthors = [...new Set(validPosts.map(p => {
+        const authorId = p.author?._id?.toString();
+        const authorName = p.author?.name || 'Unknown';
+        return `${authorName} (${authorId})`;
+      }))];
+      logger.info(`[Feed] Posts from ${uniqueAuthors.length} unique authors:`, uniqueAuthors.slice(0, 10));
+
       // Calculate score for each post
-      const scoredPosts = posts.map(post => {
+      const scoredPosts = validPosts.map(post => {
         const score = this.calculateFeedScore(post, user);
         return { ...post, feedScore: score };
       });
@@ -295,7 +365,10 @@ class FeedService {
       // Sort by score
       scoredPosts.sort((a, b) => b.feedScore - a.feedScore);
 
-      return scoredPosts.slice(0, 100);
+      const result = scoredPosts.slice(0, 100);
+      logger.info(`[Feed] Returning ${result.length} posts after scoring and limiting`);
+      
+      return result;
     } catch (error) {
       logger.error('Error getting hybrid feed:', error);
       throw error;

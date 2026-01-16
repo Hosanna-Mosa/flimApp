@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { api } from '@/utils/api';
+import api from '@/utils/api';
 import { CommunityGroup } from '@/types';
 import { Image as ImageIcon, BarChart2, X, ChevronDown, Plus } from 'lucide-react-native';
 

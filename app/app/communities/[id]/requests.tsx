@@ -13,7 +13,7 @@ import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { Image } from 'expo-image';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { api } from '@/utils/api';
+import api from '@/utils/api';
 import { Check, X } from 'lucide-react-native';
 
 export default function JoinRequestsScreen() {

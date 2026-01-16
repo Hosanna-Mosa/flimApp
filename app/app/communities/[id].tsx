@@ -14,7 +14,7 @@ import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { Image } from 'expo-image';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { api } from '@/utils/api';
+import api from '@/utils/api';
 import { Community } from '@/types';
 import CommunityGroupCard from '@/components/communities/CommunityGroupCard';
 import { MoreHorizontal, Plus, ShieldCheck } from 'lucide-react-native';

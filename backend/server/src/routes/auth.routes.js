@@ -130,6 +130,15 @@ router.post(
   ),
   authController.resetPassword
 );
+router.get(
+  '/check-availability',
+  authController.checkAvailability
+);
+
+router.post(
+  '/check-availability',
+  authController.checkAvailability
+);
 
 module.exports = router;
 
