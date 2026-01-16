@@ -52,7 +52,7 @@ app.use('/auth', authRoutes);
 app.use('/users', userRoutes);
 app.use('/posts', postRoutes);
 app.use('/media', mediaRoutes);
-app.use('/communities', communityRoutes);
+app.use('/api/communities', communityRoutes);
 app.use('/messages', messageRoutes);
 app.use('/notifications', notificationRoutes);
 app.use('/api', likeRoutes);         // /api/posts/:id/like, etc.
