@@ -21,7 +21,9 @@ const deleteMessage = async (req, res, next) => {
 
 const getConversations = async (req, res, next) => {
   try {
-    const conversations = await messageService.getConversations(req.user.id, req.query.q);
+    // Support both 'q' and 'search' query parameters for compatibility
+    const searchQuery = req.query.search || req.query.q || '';
+    const conversations = await messageService.getConversations(req.user.id, searchQuery);
     return success(res, conversations);
   } catch (err) {
     return next(err);
@@ -61,5 +63,41 @@ const markAsRead = async (req, res, next) => {
   }
 };
 
-module.exports = { getConversation, deleteMessage, getConversations, getUnreadCount, markAsRead };
+const sendMessage = async (req, res, next) => {
+  try {
+    const { recipientId, content } = req.body;
+    
+    if (!recipientId || !content) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'recipientId and content are required' 
+      });
+    }
+
+    const message = await messageService.createMessage({
+      senderId: req.user.id,
+      recipientId,
+      content: content.trim()
+    });
+
+    // Populate sender and recipient for response
+    await message.populate('sender', 'name avatar isVerified');
+    await message.populate('recipient', 'name avatar isVerified');
+
+    // Emit socket event for real-time updates
+    const io = req.app.get('io');
+    if (io) {
+      // Notify recipient
+      io.to(recipientId).emit('receive_message', message);
+      // Confirm to sender
+      io.to(req.user.id).emit('message_sent', message);
+    }
+
+    return success(res, message);
+  } catch (err) {
+    return next(err);
+  }
+};
+
+module.exports = { getConversation, deleteMessage, getConversations, getUnreadCount, markAsRead, sendMessage };
 

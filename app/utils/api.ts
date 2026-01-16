@@ -173,6 +173,8 @@ export const apiGetConversations = (token: string, query?: string) => {
   const url = query ? `/messages?search=${encodeURIComponent(query)}` : '/messages';
   return request(url, { token });
 };
+export const apiSendMessage = (recipientId: string, content: string, token: string) =>
+  request('/messages', { method: 'POST', body: { recipientId, content }, token });
 export const apiConversation = (userId: string, token: string) => request(`/messages/${userId}`, { token });
 export const apiMarkConversationRead = (userId: string, token: string) =>
   request(`/messages/${userId}/read`, { method: 'POST', token });
@@ -394,6 +396,7 @@ export const api = {
 
   // Messages
   getConversations: (t: string, query?: string) => unwrap(apiGetConversations(t, query)),
+  sendMessage: (recipientId: string, content: string, t: string) => unwrap(apiSendMessage(recipientId, content, t)),
   conversation: (userId: string, t: string) => unwrap(apiConversation(userId, t)),
   markConversationRead: (userId: string, t: string) => unwrap(apiMarkConversationRead(userId, t)),
   deleteMessage: (id: string, t: string) => unwrap(apiDeleteMessage(id, t)),

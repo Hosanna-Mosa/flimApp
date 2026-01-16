@@ -6,6 +6,7 @@ const router = express.Router();
 
 router.get('/', auth, messageController.getConversations);
 router.get('/unread-count', auth, messageController.getUnreadCount);
+router.post('/', auth, messageController.sendMessage);
 router.get('/:userId', auth, messageController.getConversation);
 router.post('/:userId/read', auth, messageController.markAsRead);
 router.delete('/:id', auth, messageController.deleteMessage);
