@@ -17,6 +17,7 @@ router.put(
     Joi.object({
       body: Joi.object({
         name: Joi.string(),
+        username: Joi.string().alphanum().min(3).max(30),
         email: Joi.string().email().lowercase(),
         phone: Joi.string(),
         avatar: Joi.string(),

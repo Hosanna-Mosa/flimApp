@@ -6,7 +6,7 @@ const getMe = async (userId) => User.findById(userId).select('-password -refresh
 const updateMe = async (userId, payload) => {
   // Check for duplicate email if email is being updated
   if (payload.email) {
-    const existingUser = await User.findOne({ 
+    const existingUser = await User.findOne({
       email: payload.email.toLowerCase(),
       _id: { $ne: userId }
     });
@@ -19,12 +19,25 @@ const updateMe = async (userId, payload) => {
 
   // Check for duplicate phone if phone is being updated
   if (payload.phone) {
-    const existingUser = await User.findOne({ 
+    const existingUser = await User.findOne({
       phone: payload.phone,
       _id: { $ne: userId }
     });
     if (existingUser) {
       const err = new Error('Phone number already in use');
+      err.status = 409;
+      throw err;
+    }
+  }
+
+  // Check for duplicate username if username is being updated
+  if (payload.username) {
+    const existingUser = await User.findOne({
+      username: payload.username.trim(),
+      _id: { $ne: userId }
+    });
+    if (existingUser) {
+      const err = new Error('Username already in use');
       err.status = 409;
       throw err;
     }
@@ -42,7 +55,7 @@ const updateMe = async (userId, payload) => {
 
 const getById = async (id, viewerId = null) => {
   const user = await User.findById(id).select('-password -refreshTokens').lean();
-  
+
   if (!user) {
     return null;
   }
@@ -88,7 +101,7 @@ const getById = async (id, viewerId = null) => {
 
 const search = async ({ q, roles, industries }, currentUserId) => {
   console.log('[User Service] Search params - q:', q, 'roles:', roles, 'industries:', industries);
-  
+
   // If no search query and no filters, return empty
   if (!q && (!roles || roles.length === 0) && (!industries || industries.length === 0)) {
     return [];
@@ -98,7 +111,7 @@ const search = async ({ q, roles, industries }, currentUserId) => {
     _id: { $ne: currentUserId } // Exclude current user
   };
   let hasFilters = false;
-  
+
   // Build filter query for roles and industries (these are AND conditions)
   if (roles) {
     const rolesArray = Array.isArray(roles) ? roles : [roles];
@@ -107,7 +120,7 @@ const search = async ({ q, roles, industries }, currentUserId) => {
       hasFilters = true;
     }
   }
-  
+
   if (industries) {
     const industriesArray = Array.isArray(industries) ? industries : [industries];
     if (industriesArray.length > 0) {
@@ -126,7 +139,7 @@ const search = async ({ q, roles, industries }, currentUserId) => {
       { industries: { $regex: q, $options: 'i' } },
       { bio: { $regex: q, $options: 'i' } },
     ];
-    
+
     if (hasFilters) {
       // Combine filters (AND) with text search (OR)
       query = {
@@ -142,15 +155,15 @@ const search = async ({ q, roles, industries }, currentUserId) => {
   console.log('[User Service] MongoDB query:', JSON.stringify(query));
   const results = await User.find(query).select('name avatar roles industries location bio isVerified isOnline');
   console.log('[User Service] Found users:', results.length);
-  
+
   // Score and sort results by relevance
   if (results.length > 0) {
     const searchLower = q ? q.toLowerCase() : '';
-    
+
     const scoredResults = results.map(user => {
       let score = 0;
       const userObj = user.toObject();
-      
+
       // If text query exists, apply text-based scoring
       if (q && searchLower) {
         // Priority 1: Name match (highest score)
@@ -168,7 +181,7 @@ const search = async ({ q, roles, industries }, currentUserId) => {
             score += 300;
           }
         }
-        
+
         // Priority 2: Roles match
         if (userObj.roles && Array.isArray(userObj.roles)) {
           userObj.roles.forEach(role => {
@@ -177,7 +190,7 @@ const search = async ({ q, roles, industries }, currentUserId) => {
             }
           });
         }
-        
+
         // Priority 3: Industries match
         if (userObj.industries && Array.isArray(userObj.industries)) {
           userObj.industries.forEach(industry => {
@@ -186,13 +199,13 @@ const search = async ({ q, roles, industries }, currentUserId) => {
             }
           });
         }
-        
+
         // Priority 4: Bio match (lowest score)
         if (userObj.bio && userObj.bio.toLowerCase().includes(searchLower)) {
           score += 50;
         }
       }
-      
+
       // Boost score for users matching the selected filters
       // This ensures filtered users appear prominently even without text query
       if (roles) {
@@ -205,7 +218,7 @@ const search = async ({ q, roles, industries }, currentUserId) => {
           });
         }
       }
-      
+
       if (industries) {
         const industriesArray = Array.isArray(industries) ? industries : [industries];
         if (userObj.industries && Array.isArray(userObj.industries)) {
@@ -216,23 +229,23 @@ const search = async ({ q, roles, industries }, currentUserId) => {
           });
         }
       }
-      
+
       return { ...userObj, _relevanceScore: score };
     });
-    
+
     // Sort by relevance score (highest first)
     scoredResults.sort((a, b) => b._relevanceScore - a._relevanceScore);
-    
-    console.log('[User Service] Top 5 scores:', scoredResults.slice(0, 5).map(r => ({ 
-      name: r.name, 
+
+    console.log('[User Service] Top 5 scores:', scoredResults.slice(0, 5).map(r => ({
+      name: r.name,
       score: r._relevanceScore,
       roles: r.roles?.slice(0, 2),
       industries: r.industries?.slice(0, 2)
     })));
-    
+
     return scoredResults;
   }
-  
+
   return results;
 };
 

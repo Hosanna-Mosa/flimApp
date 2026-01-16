@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Stack } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
-import { api } from '@/utils/api';
+import api from '@/utils/api';
 import { Community } from '@/types';
 import CommunityCard from '@/components/communities/CommunityCard';
 import { useAuth } from '@/contexts/AuthContext';

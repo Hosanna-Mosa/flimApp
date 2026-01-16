@@ -18,15 +18,15 @@ const sendOtp = async (req, res, next) => {
 
     // Normalize phone number
     phone = phone.replace(/\s+/g, '').replace(/-/g, '');
-    
+
     // Default to India (+91) if 10 digits provided without country code
     // This is specific to the "Filmy" context (Indian film industry)
     if (/^\d{10}$/.test(phone)) {
       phone = `+91${phone}`;
     } else if (!phone.startsWith('+')) {
-       // If it doesn't start with +, assume it might be missing it but try to respect what user sent if it's not exactly 10 digits
-       // beneficial to ensure it starts with + for Twilio
-       phone = `+${phone}`;
+      // If it doesn't start with +, assume it might be missing it but try to respect what user sent if it's not exactly 10 digits
+      // beneficial to ensure it starts with + for Twilio
+      phone = `+${phone}`;
     }
 
     const verification = await client.verify.v2
@@ -89,18 +89,19 @@ const verifyOtp = async (req, res, next) => {
     if (!user) {
       // Logic for new user registration during OTP verification
       // Check if registration details are provided
-      const { name, email, password } = req.body;
-      
+      const { name, username, email, password } = req.body;
+
       let finalPassword = password;
       if (!finalPassword) {
-         // Fallback if no password provided (e.g. login flow with just OTP), create random/hash
-         finalPassword = await bcrypt.hash(phone + Date.now(), 10);
+        // Fallback if no password provided (e.g. login flow with just OTP), create random/hash
+        finalPassword = await bcrypt.hash(phone + Date.now(), 10);
       } else {
-         finalPassword = await bcrypt.hash(password, 10);
+        finalPassword = await bcrypt.hash(password, 10);
       }
 
       user = await User.create({
         name: name || 'New User',
+        username,
         phone,
         email: email || `${phone.replace('+', '')}@flim.app`,
         password: finalPassword,
@@ -108,18 +109,18 @@ const verifyOtp = async (req, res, next) => {
         industries: ['bollywood'], // Default industry
         isVerified: true, // Phone verified
       });
-      console.log(`[Auth] New user created for phone: ${phone}`);
+      console.log(`[Auth] New user created for phone: ${phone}, name: ${user.name}, username: ${username}`);
     } else {
-       // Existing user - ensure isVerified matches reality if we just did OTP
-       if (!user.isVerified) {
-         user.isVerified = true;
-         await user.save();
-       }
+      // Existing user - ensure isVerified matches reality if we just did OTP
+      if (!user.isVerified) {
+        user.isVerified = true;
+        await user.save();
+      }
     }
 
     // Update login info
     user.lastLoginAt = new Date();
-    
+
     // Generate Tokens
     const payload = { sub: user.id, roles: user.roles };
     const accessToken = generateAccessToken(payload);
@@ -134,6 +135,7 @@ const verifyOtp = async (req, res, next) => {
       user: {
         id: user._id,
         name: user.name,
+        username: user.username,
         phone: user.phone,
         email: user.email,
         roles: user.roles,

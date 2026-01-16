@@ -14,7 +14,7 @@ import {
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { api } from '@/utils/api';
+import api from '@/utils/api';
 import { Save } from 'lucide-react-native';
 
 export default function CreateGroupScreen() {

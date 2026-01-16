@@ -15,7 +15,7 @@ import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSocket } from '@/contexts/SocketContext';
-import { api } from '@/utils/api';
+import api from '@/utils/api';
 import { CommunityGroup, CommunityPost } from '@/types';
 import { MessageBubble, ChatInput } from '@/components/communities/ChatComponents';
 import { MoreVertical } from 'lucide-react-native';

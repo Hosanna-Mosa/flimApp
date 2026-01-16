@@ -1,4 +1,5 @@
 const notificationService = require('../services/notification.service');
+const Notification = require('../models/Notification.model');
 const { success } = require('../utils/response');
 
 const list = async (req, res, next) => {
@@ -34,24 +35,24 @@ const registerToken = async (req, res, next) => {
   console.log(`[PUSH][REGISTER] 📥 Incoming token registration request at ${timestamp}`);
   console.log('[PUSH][REGISTER] User ID:', req.user?.id || 'UNKNOWN');
   console.log('[PUSH][REGISTER] Request body:', JSON.stringify(req.body));
-  
+
   try {
     const { token } = req.body;
-    
+
     if (!token) {
       console.error('[PUSH][REGISTER] ❌ Token missing in request body');
       throw new Error('Token is required');
     }
-    
+
     console.log('[PUSH][REGISTER] Token received:', token);
     console.log('[PUSH][REGISTER] Calling registerPushToken service...');
-    
+
     const result = await notificationService.registerPushToken(req.user.id, token);
-    
+
     console.log('[PUSH][REGISTER] ✅ Token registration successful');
     console.log('[PUSH][REGISTER] Result:', JSON.stringify(result));
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    
+
     return success(res, result);
   } catch (err) {
     console.error('[PUSH][REGISTER] ❌ Token registration failed');
@@ -62,6 +63,15 @@ const registerToken = async (req, res, next) => {
   }
 };
 
-module.exports = { list, markRead, registerToken ,markAllAsRead};
+const getUnreadCount = async (req, res, next) => {
+  try {
+    const count = await Notification.countDocuments({ user: req.user.id, isRead: false });
+    return success(res, { count });
+  } catch (err) {
+    return next(err);
+  }
+};
+
+module.exports = { list, markRead, registerToken, markAllAsRead, getUnreadCount };
 
 

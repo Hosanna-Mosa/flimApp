@@ -118,20 +118,25 @@ export default function ProfileScreen() {
         setStats(userInfo.stats);
       }
 
-      // Update posts
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const postsArray = (postsData as any)?.data || [];
+      // Update posts - handle potential nested data object or direct array
+      let postsArray: any[] = [];
+      if (Array.isArray(postsData)) {
+        postsArray = postsData;
+      } else if (postsData && Array.isArray((postsData as any).data)) {
+        postsArray = (postsData as any).data;
+      }
+
       setPosts(postsArray);
 
-      // If no stats from API, use post count
+      // If no stats from API, use post count from the array we just got
       if (!userInfo?.stats) {
         setStats(prev => ({
           ...prev,
           postsCount: postsArray.length,
         }));
       }
-    } catch (error) {
-      // console.error('[Profile] Error loading:', error);
+    } catch (error: any) {
+      console.error('[Profile] Error loading profile data:', error);
       Alert.alert('Error', 'Failed to load profile data');
     } finally {
       if (showLoading) setLoading(false);
@@ -156,9 +161,9 @@ export default function ProfileScreen() {
     }, [loadUserData, refreshUser])
   );
 
-  const filteredPosts = selectedFilter === 'all'
-    ? posts
-    : posts.filter((post) => post.type === selectedFilter);
+  const filteredPosts = Array.isArray(posts)
+    ? (selectedFilter === 'all' ? posts : posts.filter((post) => post.type === selectedFilter))
+    : [];
 
   const filters = [
     { id: 'all' as const, label: 'All', icon: Grid3x3 },
@@ -220,151 +225,151 @@ export default function ProfileScreen() {
               style={styles.avatar}
               contentFit="cover"
             />
-          <View style={styles.nameContainer}>
-            <Text style={[styles.name, { color: colors.text }]}>
-              {user.name || 'Your Name'}
-            </Text>
-            {user.isVerified && (
-              <BadgeCheck size={24} color="#FFFFFF" fill={colors.primary} />
-            )}
-          </View>
-          <View style={styles.rolesContainer}>
-            {user.roles?.map((role, idx) => (
-              <View
-                key={idx}
-                style={[styles.roleBadge, { backgroundColor: colors.surface }]}
-              >
-                <Text style={[styles.roleText, { color: colors.text }]}>
-                  {role}
-                </Text>
-              </View>
-            ))}
-          </View>
-          <Text style={[styles.bio, { color: colors.textSecondary }]}>
-            {user.bio || 'Add a bio to tell others about yourself'}
-          </Text>
-
-          <View style={styles.info}>
-            {user.location && (
-              <View style={styles.infoRow}>
-                <MapPin size={16} color={colors.textSecondary} />
-                <Text
-                  style={[styles.infoText, { color: colors.textSecondary }]}
-                >
-                  {user.location}
-                </Text>
-              </View>
-            )}
-            {user.experience && user.experience > 0 && (
-              <View style={styles.infoRow}>
-                <Briefcase size={16} color={colors.textSecondary} />
-                <Text
-                  style={[styles.infoText, { color: colors.textSecondary }]}
-                >
-                  {user.experience} years experience
-                </Text>
-              </View>
-            )}
-          </View>
-
-          <View style={styles.stats}>
-            <View style={styles.stat}>
-              <Text style={[styles.statValue, { color: colors.text }]}>
-                {loading ? '-' : stats.postsCount || posts.length}
+            <View style={styles.nameContainer}>
+              <Text style={[styles.name, { color: colors.text }]}>
+                {user.name || 'Your Name'}
               </Text>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                Posts
-              </Text>
+              {user.isVerified && (
+                <BadgeCheck size={24} color="#FFFFFF" fill={colors.primary} />
+              )}
             </View>
-            <View
-              style={[styles.statDivider, { backgroundColor: colors.border }]}
-            />
-            <TouchableOpacity
-              style={styles.stat}
-              onPress={() => router.push({ pathname: '/user/network', params: { userId: (user as any)._id || (user as any).id, type: 'followers' } })}
-            >
-              <Text style={[styles.statValue, { color: colors.text }]}>
-                {loading ? '-' : stats.followersCount || 0}
-              </Text>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                Followers
-              </Text>
-            </TouchableOpacity>
-            <View
-              style={[styles.statDivider, { backgroundColor: colors.border }]}
-            />
-            <TouchableOpacity
-              style={styles.stat}
-              onPress={() => router.push({ pathname: '/user/network', params: { userId: (user as any)._id || (user as any).id, type: 'following' } })}
-            >
-              <Text style={[styles.statValue, { color: colors.text }]}>
-                {loading ? '-' : stats.followingCount || 0}
-              </Text>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                Following
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={[styles.filters, { borderBottomColor: colors.border }]}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {filters.map((filter) => {
-              const Icon = filter.icon;
-              return (
-                <TouchableOpacity
-                  key={filter.id}
-                  style={[
-                    styles.filter,
-                    selectedFilter === filter.id && {
-                      borderBottomColor: colors.primary,
-                      borderBottomWidth: 2,
-                    },
-                  ]}
-                  onPress={() => setSelectedFilter(filter.id)}
+            <View style={styles.rolesContainer}>
+              {user.roles?.map((role, idx) => (
+                <View
+                  key={idx}
+                  style={[styles.roleBadge, { backgroundColor: colors.surface }]}
                 >
-                  <Icon
-                    size={20}
-                    color={
-                      selectedFilter === filter.id
-                        ? colors.primary
-                        : colors.textSecondary
-                    }
-                  />
+                  <Text style={[styles.roleText, { color: colors.text }]}>
+                    {role}
+                  </Text>
+                </View>
+              ))}
+            </View>
+            <Text style={[styles.bio, { color: colors.textSecondary }]}>
+              {user.bio || 'Add a bio to tell others about yourself'}
+            </Text>
+
+            <View style={styles.info}>
+              {user.location && (
+                <View style={styles.infoRow}>
+                  <MapPin size={16} color={colors.textSecondary} />
                   <Text
+                    style={[styles.infoText, { color: colors.textSecondary }]}
+                  >
+                    {user.location}
+                  </Text>
+                </View>
+              )}
+              {user.experience && user.experience > 0 && (
+                <View style={styles.infoRow}>
+                  <Briefcase size={16} color={colors.textSecondary} />
+                  <Text
+                    style={[styles.infoText, { color: colors.textSecondary }]}
+                  >
+                    {user.experience} years experience
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            <View style={styles.stats}>
+              <View style={styles.stat}>
+                <Text style={[styles.statValue, { color: colors.text }]}>
+                  {loading ? '-' : stats.postsCount || posts.length}
+                </Text>
+                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+                  Posts
+                </Text>
+              </View>
+              <View
+                style={[styles.statDivider, { backgroundColor: colors.border }]}
+              />
+              <TouchableOpacity
+                style={styles.stat}
+                onPress={() => router.push({ pathname: '/user/network', params: { userId: (user as any)._id || (user as any).id, type: 'followers' } })}
+              >
+                <Text style={[styles.statValue, { color: colors.text }]}>
+                  {loading ? '-' : stats.followersCount || 0}
+                </Text>
+                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+                  Followers
+                </Text>
+              </TouchableOpacity>
+              <View
+                style={[styles.statDivider, { backgroundColor: colors.border }]}
+              />
+              <TouchableOpacity
+                style={styles.stat}
+                onPress={() => router.push({ pathname: '/user/network', params: { userId: (user as any)._id || (user as any).id, type: 'following' } })}
+              >
+                <Text style={[styles.statValue, { color: colors.text }]}>
+                  {loading ? '-' : stats.followingCount || 0}
+                </Text>
+                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+                  Following
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <View style={[styles.filters, { borderBottomColor: colors.border }]}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {filters.map((filter) => {
+                const Icon = filter.icon;
+                return (
+                  <TouchableOpacity
+                    key={filter.id}
                     style={[
-                      styles.filterText,
-                      {
-                        color:
-                          selectedFilter === filter.id
-                            ? colors.primary
-                            : colors.textSecondary,
+                      styles.filter,
+                      selectedFilter === filter.id && {
+                        borderBottomColor: colors.primary,
+                        borderBottomWidth: 2,
                       },
                     ]}
+                    onPress={() => setSelectedFilter(filter.id)}
                   >
-                    {filter.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        </View>
+                    <Icon
+                      size={20}
+                      color={
+                        selectedFilter === filter.id
+                          ? colors.primary
+                          : colors.textSecondary
+                      }
+                    />
+                    <Text
+                      style={[
+                        styles.filterText,
+                        {
+                          color:
+                            selectedFilter === filter.id
+                              ? colors.primary
+                              : colors.textSecondary,
+                        },
+                      ]}
+                    >
+                      {filter.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
 
-        <View style={styles.portfolio}>
-          {filteredPosts.map((post) => (
-            <PostThumbnail
-              key={post._id}
-              post={post}
-              onPress={() => router.push(`/post/${post._id}`)}
-            />
-          ))}
-          {filteredPosts.length === 0 && (
-            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-              No {selectedFilter === 'all' ? 'posts' : selectedFilter} yet
-            </Text>
-          )}
-        </View>
-      </ScrollView>
+          <View style={styles.portfolio}>
+            {filteredPosts.map((post) => (
+              <PostThumbnail
+                key={post._id}
+                post={post}
+                onPress={() => router.push(`/post/${post._id}`)}
+              />
+            ))}
+            {filteredPosts.length === 0 && (
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                No {selectedFilter === 'all' ? 'posts' : selectedFilter} yet
+              </Text>
+            )}
+          </View>
+        </ScrollView>
       )}
     </>
   );

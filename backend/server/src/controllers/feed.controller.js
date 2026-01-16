@@ -12,15 +12,20 @@ const { success, error } = require('../utils/response');
 const getPersonalizedFeed = async (req, res, next) => {
   try {
     const { page = 0, limit = 20, algorithm = 'hybrid', timeRange = 7 } = req.query;
-    
+
     const result = await feedService.getPersonalizedFeed(
       req.user.id,
       parseInt(page),
       parseInt(limit),
       { algorithm, timeRange: parseInt(timeRange) }
     );
-    
-    return success(res, result);
+
+    // Disable HTTP caching to prevent 304 responses that break feed loading
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+
+    return res.status(200).json(result);
   } catch (err) {
     return next(err);
   }
@@ -33,14 +38,14 @@ const getPersonalizedFeed = async (req, res, next) => {
 const getTrendingFeed = async (req, res, next) => {
   try {
     const { page = 0, limit = 20 } = req.query;
-    
+
     const result = await feedService.getTrendingFeed(
       req.user.id,
       parseInt(page),
       parseInt(limit)
     );
-    
-    return success(res, result);
+
+    return res.status(200).json(result);
   } catch (err) {
     return next(err);
   }
@@ -53,14 +58,14 @@ const getTrendingFeed = async (req, res, next) => {
 const getIndustryFeed = async (req, res, next) => {
   try {
     const { page = 0, limit = 20 } = req.query;
-    
+
     const result = await feedService.getIndustryFeed(
       req.params.industry,
       parseInt(page),
       parseInt(limit)
     );
-    
-    return success(res, result);
+
+    return res.status(200).json(result);
   } catch (err) {
     return next(err);
   }
@@ -73,15 +78,15 @@ const getIndustryFeed = async (req, res, next) => {
 const getUserFeed = async (req, res, next) => {
   try {
     const { page = 0, limit = 20 } = req.query;
-    
+
     const result = await feedService.getUserPosts(
       req.params.id,
       req.user?.id, // Viewer ID (may be undefined for public viewing)
       parseInt(page),
       parseInt(limit)
     );
-    
-    return success(res, result);
+
+    return res.status(200).json(result);
   } catch (err) {
     return next(err);
   }
@@ -94,7 +99,7 @@ const getUserFeed = async (req, res, next) => {
 const invalidateFeed = async (req, res, next) => {
   try {
     await feedService.invalidateFeed(req.user.id);
-    
+
     return success(res, {
       success: true,
       message: 'Feed cache invalidated',

@@ -7,7 +7,7 @@ import { ROLES } from '@/constants/roles';
 import { INDUSTRIES } from '@/constants/industries';
 import SelectableCard from '@/components/SelectableCard';
 import Button from '@/components/Button';
-import { api } from '@/utils/api';
+import api from '@/utils/api';
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
 import { Camera } from 'lucide-react-native';
@@ -26,7 +26,7 @@ export default function OnboardingScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { colors } = useTheme();
-  const { auth, setAuth } = useAuth();
+  const { token, refreshToken: authRefreshToken, user: authUser, setAuth } = useAuth();
 
   const [step, setStep] = useState(1);
   const [avatar, setAvatar] = useState<string | null>(null);
@@ -84,42 +84,68 @@ export default function OnboardingScreen() {
       // Finalize Profile (Register or Update)
       setLoading(true);
       try {
-        let accessToken = auth?.token;
-        let refreshToken = auth?.refreshToken;
-        let user = auth?.user;
+        let accessToken = token;
+        let refreshToken = authRefreshToken;
+        let user = authUser;
 
         // If not authenticated (should not happen if coming from OTP, but handle just in case or if registration flow changes)
-        if (!accessToken) {
-            // Register logic fallback (legacy)
-            const { name, phone, email, password } = params;
+        if (!accessToken || !user) {
+            // Register logic fallback (legacy) - only if we truly don't have auth
+            const { name, phone, email, password, username } = params;
+            
+            // Validate required fields before attempting registration
+            if (!name || !phone || !email || !password) {
+              throw new Error('Missing required registration fields. Please start over from signup.');
+            }
+            
             const payload = {
             name: name as string,
             phone: phone as string,
             email: email as string,
             password: password as string,
+            username: username as string,
             roles: selectedRoles,
             industries: selectedIndustries
             };
 
+            // Check availability before registering
+            const check = await api.checkAvailability({ email, phone, password });
+            if (!check.available) {
+              const fieldLabels: Record<string, string> = {
+                email: 'Email',
+                phone: 'Phone number',
+                password: 'Password',
+                username: 'Username'
+              };
+              if (check.fields && Array.isArray(check.fields)) {
+                const conflictMessages = check.fields.map((field: string) => fieldLabels[field] || field);
+                throw new Error(`Registration failed. The following ${conflictMessages.length === 1 ? 'field is' : 'fields are'} already registered: ${conflictMessages.join(', ')}`);
+              } else {
+                throw new Error(check.message || 'One or more fields are already registered.');
+              }
+            }
+
             const response = await api.register(payload);
             accessToken = response.accessToken;
             refreshToken = response.refreshToken;
-            user = response.user;
+            user = response.user as any;
         } else {
            // User is already authenticated (via OTP), just update profile
            await api.updateMe({
              roles: selectedRoles,
              industries: selectedIndustries
-           }, accessToken);
+           }, accessToken!);
            
            // Update local user object
-           (user as any).roles = selectedRoles;
-           (user as any).industries = selectedIndustries;
+           if (user) {
+             (user as any).roles = selectedRoles;
+             (user as any).industries = selectedIndustries;
+           }
         }
 
         // 2. Upload Avatar if selected
         let finalAvatarUrl = '';
-        if (avatar) {
+        if (avatar && accessToken) {
           // Check if it's a remote URL (default avatar) or local file
           if (avatar.startsWith('http')) {
             finalAvatarUrl = avatar;
@@ -159,7 +185,19 @@ export default function OnboardingScreen() {
 
         router.replace('/home');
       } catch (err: any) {
-        Alert.alert('Setup Failed', err.message || 'Something went wrong');
+        // Handle registration errors with conflicts
+        let errorMessage = err.message || 'Something went wrong';
+        if (err.conflicts && Array.isArray(err.conflicts)) {
+          const fieldLabels: Record<string, string> = {
+            email: 'Email',
+            phone: 'Phone number',
+            password: 'Password',
+            username: 'Username'
+          };
+          const conflictMessages = err.conflicts.map((field: string) => fieldLabels[field] || field);
+          errorMessage = `Registration failed. The following ${conflictMessages.length === 1 ? 'field is' : 'fields are'} already registered: ${conflictMessages.join(', ')}`;
+        }
+        Alert.alert('Setup Failed', errorMessage);
       } finally {
         setLoading(false);
       }

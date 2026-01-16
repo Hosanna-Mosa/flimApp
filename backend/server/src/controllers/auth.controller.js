@@ -45,6 +45,10 @@ const register = async (req, res, next) => {
     const result = await authService.register(req.body);
     return success(res, result, 201);
   } catch (err) {
+    // If error has conflicts array, include it in the response
+    if (err.conflicts) {
+      err.message = err.message || 'Registration failed';
+    }
     return next(err);
   }
 };
@@ -101,6 +105,16 @@ const resetPassword = async (req, res, next) => {
     return next(err);
   }
 };
+const checkAvailability = async (req, res, next) => {
+  try {
+    // Support both query params and body for flexibility
+    const params = Object.keys(req.query).length > 0 ? req.query : req.body;
+    const result = await authService.checkAvailability(params);
+    return success(res, result, 200);
+  } catch (err) {
+    return next(err);
+  }
+};
 
 module.exports = {
   login,
@@ -112,6 +126,7 @@ module.exports = {
   verifyPassword,
   changePassword,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  checkAvailability
 };
 
