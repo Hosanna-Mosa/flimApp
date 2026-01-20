@@ -14,6 +14,7 @@ import {
   Settings as SettingsIcon,
   LogOut,
   Info,
+  Flame,
 } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -44,6 +45,13 @@ export default function AccountScreen() {
       label: 'Communities',
       subtitle: 'Join and manage groups',
       onPress: () => router.push('/communities'),
+    },
+    {
+      id: 'trending',
+      icon: Flame,
+      label: 'Trending',
+      subtitle: 'See what\'s popular',
+      onPress: () => router.push('/trending'),
     },
     {
       id: 'wallet',

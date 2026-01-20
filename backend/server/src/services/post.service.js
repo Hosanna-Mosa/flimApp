@@ -11,8 +11,8 @@ const MediaService = require('./media.service');
  */
 const createPost = async (authorId, payload) => {
   // Extract fields from payload root or payload.media (robustness)
-  const { type, caption, industries, roles, mediaUrl, thumbnail } = payload;
-  
+  const { type, caption, industries, roles, mediaUrl, thumbnail, isDonation } = payload;
+
   // Helper to get from root or media object
   const getField = (key) => payload[key] || payload.media?.[key];
 
@@ -25,7 +25,7 @@ const createPost = async (authorId, payload) => {
   const publicId = getField('publicId') || MediaService.extractPublicId(mediaUrl);
 
   // Validate media metadata
-  if (mediaUrl) {
+  if (mediaUrl && type !== 'text') {
     MediaService.validateMediaMetadata({ url: mediaUrl, format, size }, type);
   }
 
@@ -56,6 +56,7 @@ const createPost = async (authorId, payload) => {
     caption,
     industries: industries || [],
     roles: roles || [],
+    isDonation: !!isDonation,
   });
 
   // Calculate initial score
@@ -76,7 +77,7 @@ const createPost = async (authorId, payload) => {
  */
 const deletePost = async (postId, userId) => {
   const post = await Post.findOne({ _id: postId, author: userId });
-  
+
   if (!post) {
     throw new Error('Post not found or unauthorized');
   }
@@ -118,6 +119,21 @@ const getUserPosts = async (userId) => {
 const getTrending = async () => feedService.getTrending();
 
 /**
+ * Get donation posts
+ * @param {number} page - Page number
+ * @param {number} limit - Items per page
+ * @returns {Promise<Post[]>} Donation posts
+ */
+const getDonations = async (page = 0, limit = 20) => {
+  return Post.find({ isDonation: true, isActive: true })
+    .sort({ createdAt: -1 })
+    .skip(page * limit)
+    .limit(limit)
+    .populate('author', 'name avatar isVerified roles')
+    .lean();
+};
+
+/**
  * Get personalized feed
  * @param {Object} user - User object
  * @returns {Promise<Post[]>} Feed posts
@@ -134,16 +150,16 @@ const getPostById = async (postId, userId = null) => {
   const post = await Post.findById(postId)
     .populate('author', 'name avatar isVerified roles bio stats')
     .lean();
-  
+
   if (!post) {
     return null;
   }
-  
+
   // Check if user has liked this post
   if (userId) {
     const Like = require('../models/Like.model');
-    const like = await Like.findOne({ 
-      user: userId, 
+    const like = await Like.findOne({
+      user: userId,
       post: postId
       // Note: Like model doesn't have isActive field
     });
@@ -153,7 +169,7 @@ const getPostById = async (postId, userId = null) => {
     post.isLiked = false;
     console.log(`[PostService] getPostById - No userId provided, setting isLiked to false`);
   }
-  
+
   return post;
 };
 
@@ -166,7 +182,7 @@ const getPostById = async (postId, userId = null) => {
  */
 const updatePost = async (postId, userId, updates) => {
   const post = await Post.findOne({ _id: postId, author: userId });
-  
+
   if (!post) {
     throw new Error('Post not found or unauthorized');
   }
@@ -183,12 +199,13 @@ const updatePost = async (postId, userId, updates) => {
   return post;
 };
 
-module.exports = { 
-  createPost, 
-  deletePost, 
-  getUserPosts, 
-  getTrending, 
-  getFeed, 
+module.exports = {
+  createPost,
+  deletePost,
+  getUserPosts,
+  getTrending,
+  getDonations,
+  getFeed,
   getPostById,
-  updatePost 
+  updatePost
 };

@@ -28,6 +28,7 @@ import {
   Check,
   BadgeCheck,
   Users,
+  HandCoins,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -113,7 +114,7 @@ export default function HomeScreen() {
       }
 
       console.log(`[Home] Extracted ${feedItems.length} feed items`);
-      
+
       // Log unique authors for debugging
       const uniqueAuthors = [...new Set(feedItems.map((p: any) => p.author?._id || p.author?.id || p.userId).filter(Boolean))];
       console.log(`[Home] Posts from ${uniqueAuthors.length} unique authors:`, uniqueAuthors);
@@ -263,10 +264,12 @@ export default function HomeScreen() {
       });
 
       if (isCurrentlyFollowing) {
-        const result = await api.unfollowUser(userId, token || undefined) as any;
+        if (!token) return;
+        const result = await api.unfollowUser(userId, token) as any;
         // console.log('[Home] Unfollowed user:', result);
       } else {
-        const result = await api.followUser(userId, token || undefined) as any;
+        if (!token) return;
+        const result = await api.followUser(userId, token) as any;
         // console.log('[Home] Followed user:', result);
 
         if (result.status === 'pending') {
@@ -317,7 +320,8 @@ export default function HomeScreen() {
 
       // API call
       if (wasLiked) {
-        const result = await api.unlikePost(postId, token || undefined) as any;
+        if (!token) return;
+        const result = await api.unlikePost(postId, token) as any;
         // console.log('[Home] Unliked post:', result);
 
         // Update with real count from server
@@ -325,7 +329,8 @@ export default function HomeScreen() {
           p.id === postId ? { ...p, likes: result.likesCount, isLiked: false } : p
         ));
       } else {
-        const result = await api.likePost(postId, token || undefined) as any;
+        if (!token) return;
+        const result = await api.likePost(postId, token) as any;
         // console.log('[Home] Liked post:', result);
 
         // Update with real count from server
@@ -414,11 +419,11 @@ export default function HomeScreen() {
           headerRight: () => (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 20, paddingRight: 16 }}>
               <TouchableOpacity
-                onPress={() => router.push('/trending')}
+                onPress={() => router.push('/donations')}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 style={{ marginHorizontal: 4 }}
               >
-                <Flame size={24} color={colors.text} />
+                <HandCoins size={24} color={colors.text} />
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => router.push('/notifications')}

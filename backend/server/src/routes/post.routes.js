@@ -13,17 +13,18 @@ router.post(
   validate(
     Joi.object({
       body: Joi.object({
-        type: Joi.string().valid('video', 'audio', 'image', 'script').required(),
-        mediaUrl: Joi.string().uri().required(),
-        thumbnail: Joi.string().uri().optional(),
+        type: Joi.string().valid('video', 'audio', 'image', 'script', 'text').required(),
+        mediaUrl: Joi.string().allow('', null).optional(),
+        thumbnail: Joi.string().allow('', null).optional(),
         duration: Joi.number().optional(),
-        format: Joi.string().optional(),
+        format: Joi.string().allow('', null).optional(),
         size: Joi.number().optional(),
         width: Joi.number().optional(),
         height: Joi.number().optional(),
         caption: Joi.string().max(1000).allow('').optional(),
         industries: Joi.array().items(Joi.string()).optional(),
         roles: Joi.array().items(Joi.string()).optional(),
+        isDonation: Joi.boolean().optional(),
       }).required(),
     })
   ),
@@ -32,6 +33,7 @@ router.post(
 
 router.get('/feed', auth, postController.getFeed);
 router.get('/trending', auth, postController.getTrending);
+router.get('/donations', auth, postController.getDonations);
 router.get('/user/:id', auth, postController.getUserPosts);
 router.get('/:id', auth, postController.getPost);
 router.put(

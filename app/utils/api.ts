@@ -2,7 +2,7 @@
 
 import Constants from 'expo-constants';
 
-const API_BASE = 'http://10.233.236.42:8000';
+const API_BASE = 'http://10.154.136.2:8000';
 
 console.log('[API] Initializing with Base URL:', API_BASE);
 
@@ -54,14 +54,14 @@ const request = async <T>(
         },
         body: body ? JSON.stringify(body) : undefined,
       });
-      
+
       if (!retryRes.ok) {
         const retryJson = await retryRes.json().catch(() => ({}));
         console.error(`[API ERR] 🔴 ${retryRes.status} for ${path}:`, retryJson.message || retryRes.statusText);
         const message = (retryJson && retryJson.message) || retryRes.statusText || 'Request failed';
         throw new Error(message);
       }
-      
+
       const retryJson = await retryRes.json().catch(() => ({}));
       console.log(`[API RESP] ✅ ${retryRes.status} ${path} (after 304 retry)`);
       return retryJson;
@@ -114,9 +114,9 @@ export const apiLoginPassword = (payload: { phone: string; password: string }) =
   request('/auth/login-password', { method: 'POST', body: payload });
 export const apiCheckAvailability = (params: { username?: string; email?: string; phone?: string; password?: string }) => {
   // Use POST to support password checking (more secure than query params)
-  return request('/auth/check-availability', { 
-    method: 'POST', 
-    body: params 
+  return request('/auth/check-availability', {
+    method: 'POST',
+    body: params
   });
 };
 export const apiGetMe = (token?: string) => request('/users/me', { token });
@@ -138,6 +138,8 @@ export const apiGetSavedPosts = (page: number, limit: number, token: string) =>
   request(`/users/me/saved?page=${page}&limit=${limit}`, { token });
 export const apiGetTrendingFeed = (page: number, limit: number, token?: string) =>
   request(`/api/feed/trending?page=${page}&limit=${limit}`, { token });
+export const apiGetDonations = (page: number, limit: number, token?: string) =>
+  request(`/posts/donations?page=${page}&limit=${limit}`, { token });
 
 // Likes
 export const apiLikePost = (id: string, token: string) => request(`/api/posts/${id}/like`, { method: 'POST', token });
@@ -284,6 +286,7 @@ export const api = {
   // Posts
   createPost: (p: any, t: string) => unwrap(request('/posts', { method: 'POST', body: p, token: t })),
   getPosts: (params: any, t?: string) => unwrap(request('/api/feed/trending', { token: t })),
+  getDonations: (page: number, limit: number, t?: string) => unwrap(apiGetDonations(page, limit, t)),
   getPost: (id: string, t?: string) => unwrap(request(`/posts/${id}`, { token: t })),
   updatePost: (id: string, p: any, t: string) => unwrap(request(`/posts/${id}`, { method: 'PUT', body: p, token: t })),
   deletePost: (id: string, t: string) => unwrap(request(`/posts/${id}`, { method: 'DELETE', token: t })),

@@ -47,6 +47,17 @@ const getTrending = async (req, res, next) => {
   }
 };
 
+const getDonations = async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page) || 0;
+    const limit = parseInt(req.query.limit) || 20;
+    const posts = await postService.getDonations(page, limit);
+    return success(res, posts);
+  } catch (err) {
+    return next(err);
+  }
+};
+
 const getUserPosts = async (req, res, next) => {
   try {
     const posts = await postService.getUserPosts(req.params.id);
@@ -77,6 +88,7 @@ module.exports = {
   deletePost,
   getFeed,
   getTrending,
+  getDonations,
   getUserPosts,
   getPost,
   updatePost,

@@ -58,9 +58,9 @@ export default function PostDetailScreen() {
   const { colors } = useTheme();
   const { token, user } = useAuth();
   const insets = useSafeAreaInsets();
-  
+
   // console.log('[PostDetail] Current user:', user ? `${user.name} (${(user as any)._id || user.id})` : 'Not logged in');
-  
+
   const [post, setPost] = useState<any>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,7 +71,7 @@ export default function PostDetailScreen() {
   const [replyTo, setReplyTo] = useState<Comment | null>(null);
   const [hiddenReplies, setHiddenReplies] = useState<Record<string, boolean>>({});
   const commentInputRef = useRef<TextInput>(null);
-  
+
   // Track if this is the initial mount
   const isInitialMount = useRef(true);
 
@@ -89,7 +89,7 @@ export default function PostDetailScreen() {
         isInitialMount.current = false;
         return;
       }
-      
+
       // Refresh on subsequent focuses
       if (id && token) {
         // console.log('[PostDetail] Screen focused - refreshing post data');
@@ -105,17 +105,17 @@ export default function PostDetailScreen() {
         api.getPost(id, token || undefined) as any,
         api.getComments(id, 0, 50, 'recent', token || undefined) as any,
       ]);
-      
+
       // Set post data
       setPost(postData);
-      
+
       // Set like status and count from post data
       setIsLiked(postData.isLiked || false);
       setLikesCount(postData.engagement?.likesCount || 0);
-      
+
       // Set comments
       setComments(commentsData.data || commentsData || []);
-      
+
     } catch (error) {
       console.error('[PostDetail] Error loading:', error);
       Alert.alert('Error', 'Failed to load post');
@@ -127,7 +127,7 @@ export default function PostDetailScreen() {
   const handleLike = async () => {
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      
+
       const wasLiked = isLiked;
       setIsLiked(!wasLiked);
       setLikesCount(prev => wasLiked ? prev - 1 : prev + 1);
@@ -147,18 +147,18 @@ export default function PostDetailScreen() {
 
   const handleAddComment = async () => {
     if (!commentText.trim()) return;
-    
+
     try {
       setSubmitting(true);
       const result = await api.addComment(
-        id, 
-        commentText.trim(), 
-        replyTo?._id, 
+        id,
+        commentText.trim(),
+        replyTo?._id,
         token || undefined
       ) as any;
-      
+
       const newComment = result.data || result;
-      
+
       if (replyTo) {
         // Add as reply to parent
         setComments(prev => {
@@ -178,9 +178,9 @@ export default function PostDetailScreen() {
         // Add as top-level comment
         setComments(prev => [newComment, ...prev]);
       }
-      
+
       setCommentText('');
-      
+
       // Update post comment count
       if (post) {
         setPost({
@@ -191,7 +191,7 @@ export default function PostDetailScreen() {
           },
         });
       }
-      
+
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
       Alert.alert('Error', 'Failed to add comment');
@@ -206,13 +206,13 @@ export default function PostDetailScreen() {
       'Are you sure you want to delete this comment?',
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
+        {
+          text: 'Delete',
           style: 'destructive',
           onPress: async () => {
             try {
               await api.deleteComment(commentId, token || undefined);
-              
+
               if (isReply && parentId) {
                 setComments(prev => prev.map(c => {
                   if (c._id === parentId) {
@@ -227,7 +227,7 @@ export default function PostDetailScreen() {
               } else {
                 setComments(prev => prev.filter(c => c._id !== commentId));
               }
-              
+
               // Update post comment count
               if (post) {
                 setPost({
@@ -238,7 +238,7 @@ export default function PostDetailScreen() {
                   },
                 });
               }
-              
+
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             } catch (error) {
               Alert.alert('Error', 'Failed to delete comment');
@@ -340,8 +340,8 @@ export default function PostDetailScreen() {
     const thumbnailUrl = post.media?.thumbnail || post.thumbnailUrl;
 
     if (post.type === 'video') {
-      const ratio = post.media?.width && post.media?.height ? post.media.width / post.media.height : 16/9;
-      
+      const ratio = post.media?.width && post.media?.height ? post.media.width / post.media.height : 16 / 9;
+
       return (
         <View style={[styles.mediaContainer, { aspectRatio: ratio, minHeight: 250 }]}>
           <Video
@@ -374,42 +374,42 @@ export default function PostDetailScreen() {
 
       return (
         <View style={[styles.audioCard, { backgroundColor: colors.surface }]}>
-           <View style={styles.audioRow}>
-              <TouchableOpacity onPress={toggleAudio} disabled={loadingAudio}>
-                  {loadingAudio ? (
-                      <ActivityIndicator color={colors.primary} />
-                  ) : isPlaying ? (
-                      <Pause size={32} color={colors.primary} fill={colors.primary} />
-                  ) : (
-                      <Play size={32} color={colors.primary} fill={colors.primary} />
-                  )}
-              </TouchableOpacity>
-              
-              <View style={styles.audioProgress}>
-                  <Text style={[styles.timeText, { color: colors.textSecondary }]}>{formatTime(audioPosition)}</Text>
-                  <Slider
-                      style={{ flex: 1, marginHorizontal: 8 }}
-                      minimumValue={0}
-                      maximumValue={audioDuration || 100}
-                      value={audioPosition}
-                      minimumTrackTintColor={colors.primary}
-                      maximumTrackTintColor={colors.border}
-                      thumbTintColor={colors.primary}
-                      onSlidingComplete={handleSeek}
-                      disabled={!sound}
-                  />
-                  <Text style={[styles.timeText, { color: colors.textSecondary }]}>
-                      {audioDuration ? formatTime(audioDuration) : '--:--'}
-                  </Text>
-              </View>
-           </View>
+          <View style={styles.audioRow}>
+            <TouchableOpacity onPress={toggleAudio} disabled={loadingAudio}>
+              {loadingAudio ? (
+                <ActivityIndicator color={colors.primary} />
+              ) : isPlaying ? (
+                <Pause size={32} color={colors.primary} fill={colors.primary} />
+              ) : (
+                <Play size={32} color={colors.primary} fill={colors.primary} />
+              )}
+            </TouchableOpacity>
+
+            <View style={styles.audioProgress}>
+              <Text style={[styles.timeText, { color: colors.textSecondary }]}>{formatTime(audioPosition)}</Text>
+              <Slider
+                style={{ flex: 1, marginHorizontal: 8 }}
+                minimumValue={0}
+                maximumValue={audioDuration || 100}
+                value={audioPosition}
+                minimumTrackTintColor={colors.primary}
+                maximumTrackTintColor={colors.border}
+                thumbTintColor={colors.primary}
+                onSlidingComplete={handleSeek}
+                disabled={!sound}
+              />
+              <Text style={[styles.timeText, { color: colors.textSecondary }]}>
+                {audioDuration ? formatTime(audioDuration) : '--:--'}
+              </Text>
+            </View>
+          </View>
         </View>
       );
     }
 
     if (post.type === 'script') {
       return (
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.scriptCard, { backgroundColor: colors.surface }]}
           onPress={() => {
             WebBrowser.openBrowserAsync(mediaUrl);
@@ -424,6 +424,10 @@ export default function PostDetailScreen() {
           </View>
         </TouchableOpacity>
       );
+    }
+
+    if (post.type === 'text') {
+      return null;
     }
 
     // Image
@@ -442,7 +446,7 @@ export default function PostDetailScreen() {
   const handleShare = async () => {
     try {
       const shareUrl = `https://filmy.app/post/${id}`;
-      const message = post?.caption 
+      const message = post?.caption
         ? `${post.caption}\n\n${shareUrl}`
         : shareUrl;
 
@@ -457,9 +461,9 @@ export default function PostDetailScreen() {
 
   const handleMoreOptions = () => {
     if (!post) return;
-    
+
     const isAuthor = user && ((user as any).id === post.author?._id || (user as any)._id === post.author?._id);
-    
+
     if (isAuthor) {
       Alert.alert(
         'Post Options',
@@ -594,16 +598,16 @@ export default function PostDetailScreen() {
                   </TouchableOpacity>
                 )}
                 {canDelete && (
-                  <TouchableOpacity 
-                    onPress={() => handleDeleteComment(comment._id, isReply, parentId)} 
+                  <TouchableOpacity
+                    onPress={() => handleDeleteComment(comment._id, isReply, parentId)}
                     style={styles.footerAction}
                   >
                     <Text style={[styles.footerActionText, { color: colors.error }]}>Delete</Text>
                   </TouchableOpacity>
                 )}
                 {comment.replies && comment.replies.length > 0 && (
-                  <TouchableOpacity 
-                    onPress={() => toggleHiddenReplies(comment._id)} 
+                  <TouchableOpacity
+                    onPress={() => toggleHiddenReplies(comment._id)}
                     style={styles.footerAction}
                   >
                     <Text style={[styles.footerActionText, { color: colors.primary }]}>
@@ -614,17 +618,17 @@ export default function PostDetailScreen() {
               </View>
             </View>
           </View>
-          
+
           {/* Render Replies */}
           {comment.replies && comment.replies.length > 0 && !hiddenReplies[comment._id] && (
             <View style={styles.repliesContainer}>
               {comment.replies.map(reply => renderComment(reply, true, comment._id))}
             </View>
           )}
-          
+
           {/* Show more replies button if any */}
           {comment.repliesCount && (!comment.replies || comment.replies.length < comment.repliesCount) && (
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.showMoreButton}
               onPress={async () => {
                 try {
@@ -645,8 +649,8 @@ export default function PostDetailScreen() {
               }}
             >
               <Text style={[styles.showMoreText, { color: colors.primary }]}>
-                {hiddenReplies[comment._id] 
-                  ? `Show ${comment.repliesCount} replies` 
+                {hiddenReplies[comment._id]
+                  ? `Show ${comment.repliesCount} replies`
                   : `View ${comment.repliesCount - (comment.replies?.length || 0)} more replies`}
               </Text>
             </TouchableOpacity>
@@ -711,7 +715,7 @@ export default function PostDetailScreen() {
           ),
         }}
       />
-      
+
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Post Header */}
         {/* Post Header */}
@@ -724,8 +728,8 @@ export default function PostDetailScreen() {
                 contentFit="cover"
               />
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.userInfo} 
+            <TouchableOpacity
+              style={styles.userInfo}
               onPress={() => router.push(`/user/${post.author._id}`)}
             >
               <View style={styles.nameContainer}>
@@ -740,7 +744,7 @@ export default function PostDetailScreen() {
                 {post.author.roles?.slice(0, 2).join(' • ')}
               </Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity onPress={handleMoreOptions} style={styles.moreButton}>
               <MoreVertical size={20} color={colors.textSecondary} />
             </TouchableOpacity>
@@ -785,7 +789,7 @@ export default function PostDetailScreen() {
           <Text style={[styles.commentsTitle, { color: colors.text }]}>
             Comments ({post.engagement?.commentsCount || comments.length})
           </Text>
-          
+
           {comments
             .filter((comment) => comment.user && !comment.parentComment) // Filter top-level comments
             .map((comment) => (
@@ -810,9 +814,9 @@ export default function PostDetailScreen() {
 
       {/* Comment Input */}
       <View style={[
-        styles.commentInputContainer, 
-        { 
-          backgroundColor: colors.card, 
+        styles.commentInputContainer,
+        {
+          backgroundColor: colors.card,
           borderTopColor: colors.border,
           paddingBottom: Math.max(insets.bottom, 12)
         }
