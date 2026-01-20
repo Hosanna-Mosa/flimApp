@@ -95,6 +95,8 @@ export default function SettingsScreen() {
           </View>
         </View>
 
+
+
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
             Notifications
@@ -175,7 +177,7 @@ export default function SettingsScreen() {
                     { color: colors.textSecondary },
                   ]}
                 >
-                  {user?.verificationStatus === 'active' 
+                  {user?.verificationStatus === 'active'
                     ? `Active until ${new Date(user.verifiedUntil!).toLocaleDateString()}`
                     : 'Apply for a verified badge'
                   }

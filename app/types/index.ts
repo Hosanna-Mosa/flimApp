@@ -36,7 +36,7 @@ export type Industry =
   | 'bhojpuri'
   | 'marathi';
 
-export type ContentType = 'video' | 'audio' | 'image' | 'script';
+export type ContentType = 'video' | 'audio' | 'image' | 'script' | 'text';
 
 export interface User {
   _id?: string;
@@ -141,7 +141,7 @@ export interface Community {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
-  
+
   // User context
   isMember?: boolean;
   memberRole?: CommunityRole;
@@ -196,7 +196,7 @@ export interface CommunityPost {
   isDeleted: boolean;
   createdAt: string;
   updatedAt: string;
-  
+
   // User context
   isLiked: boolean;
   hasVoted: boolean;

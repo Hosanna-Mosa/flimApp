@@ -23,6 +23,7 @@ import {
     BadgeCheck,
     MessageCircle,
     Clock,
+    Type,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -248,6 +249,7 @@ export default function PublicProfileScreen() {
         { id: 'audio' as ContentType, label: 'Audio', icon: Music },
         { id: 'image' as ContentType, label: 'Images', icon: ImageIcon },
         { id: 'script' as ContentType, label: 'Scripts', icon: FileText },
+        { id: 'text' as ContentType, label: 'Text', icon: Type },
     ];
 
     if (loading) {
@@ -549,11 +551,20 @@ export default function PublicProfileScreen() {
                                 style={styles.portfolioItem}
                                 onPress={() => router.push(`/post/${post._id}`)}
                             >
-                                <Image
-                                    source={{ uri: post.thumbnailUrl || post.mediaUrl }}
-                                    style={styles.portfolioImage}
-                                    contentFit="cover"
-                                />
+                                {post.type === 'text' ? (
+                                    <View style={[styles.portfolioImage, { backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', padding: 8 }]}>
+                                        <Type size={32} color={colors.primary} style={{ marginBottom: 4 }} />
+                                        <Text numberOfLines={3} style={{ color: colors.text, fontSize: 10, textAlign: 'center' }}>
+                                            {post.caption}
+                                        </Text>
+                                    </View>
+                                ) : (
+                                    <Image
+                                        source={{ uri: post.thumbnailUrl || post.mediaUrl }}
+                                        style={styles.portfolioImage}
+                                        contentFit="cover"
+                                    />
+                                )}
                             </TouchableOpacity>
                         ))}
                         {filteredPosts.length === 0 && (

@@ -23,6 +23,7 @@ import {
   Image as ImageIcon,
   BadgeCheck,
   Bookmark,
+  Type,
 } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -57,7 +58,14 @@ function PostThumbnail({ post, onPress }: { post: UserPost; onPress: () => void 
       onPress={onPress}
       activeOpacity={0.8}
     >
-      {!hasError ? (
+      {post.type === 'text' ? (
+        <View style={[styles.placeholderContainer, { backgroundColor: colors.surface, padding: 8 }]}>
+          <Type size={32} color={colors.primary} style={{ marginBottom: 4 }} />
+          <Text numberOfLines={3} style={{ color: colors.text, fontSize: 10, textAlign: 'center' }}>
+            {post.caption}
+          </Text>
+        </View>
+      ) : !hasError ? (
         <Image
           source={{ uri: post.thumbnailUrl || post.mediaUrl }}
           style={styles.portfolioImage}
@@ -171,6 +179,7 @@ export default function ProfileScreen() {
     { id: 'audio' as ContentType, label: 'Audio', icon: Music },
     { id: 'image' as ContentType, label: 'Images', icon: ImageIcon },
     { id: 'script' as ContentType, label: 'Scripts', icon: FileText },
+    { id: 'text' as ContentType, label: 'Text', icon: Type },
   ];
 
   if (!user) {
