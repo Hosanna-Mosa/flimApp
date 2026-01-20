@@ -13,8 +13,11 @@ import { useRouter } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import Input from '@/components/Input';
+import PhoneInput from '@/components/PhoneInput';
 import Button from '@/components/Button';
 import api from '@/utils/api';
+import { CountryCode, Country } from 'react-native-country-picker-modal';
+import { isValidPhoneNumber, parsePhoneNumber } from 'libphonenumber-js';
 
 export default function SignUpScreen() {
   const router = useRouter();
@@ -28,7 +31,16 @@ export default function SignUpScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
 
+  const [countryCode, setCountryCode] = useState<CountryCode>('IN');
+  const [callingCode, setCallingCode] = useState('91');
+  const [pickerVisible, setPickerVisible] = useState(false);
+
   const [loading, setLoading] = useState(false);
+
+  const onSelect = (country: Country) => {
+    setCountryCode(country.cca2);
+    setCallingCode(country.callingCode[0]);
+  };
 
   const handleNext = async () => {
     if (!name || !username || !email || !phone || !password || !confirmPassword) {
@@ -49,9 +61,24 @@ export default function SignUpScreen() {
     setError('');
     setLoading(true);
 
+    const fullPhone = phone.startsWith('+') ? phone : `+${callingCode}${phone.replace(/^0+/, '')}`;
+
+    if (!isValidPhoneNumber(fullPhone)) {
+      setError('Please enter a valid phone number for the selected country');
+      setLoading(false);
+      return;
+    }
+
+    const normalizedPhone = parsePhoneNumber(fullPhone).number;
+
     try {
       // Check uniqueness first - check email, phone, and password
-      const check = await api.checkAvailability({ username, email, phone, password });
+      const check = await api.checkAvailability({ 
+        username, 
+        email, 
+        phone: normalizedPhone, 
+        password 
+      });
       if (!check.available) {
         // Handle multiple conflicting fields
         if (check.fields && Array.isArray(check.fields)) {
@@ -80,11 +107,11 @@ export default function SignUpScreen() {
       }
 
       // Send OTP first
-      await api.login(phone);
+      await api.login(normalizedPhone);
 
       router.push({
         pathname: '/auth/otp',
-        params: { name, username, email, phone, password, isSignup: 'true' },
+        params: { name, username, email, phone: normalizedPhone, password, isSignup: 'true' },
       });
     } catch (err: any) {
       // Handle registration errors with conflicts
@@ -151,12 +178,13 @@ export default function SignUpScreen() {
             onChangeText={setEmail}
           />
 
-          <Input
+          <PhoneInput
             label="Phone Number"
-            placeholder="+91 98765 43210"
-            keyboardType="phone-pad"
             value={phone}
             onChangeText={setPhone}
+            countryCode={countryCode}
+            callingCode={callingCode}
+            onSelectCountry={onSelect}
           />
 
           <Input
@@ -212,5 +240,15 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: 24,
+  },
+  countryPickerWrapper: {
+    paddingLeft: 12,
+    justifyContent: 'center',
+    borderRightWidth: 1,
+    borderRightColor: '#333',
+    marginRight: 8,
+  },
+  countryPickerButton: {
+    marginTop: 0,
   },
 });
