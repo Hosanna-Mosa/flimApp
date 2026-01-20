@@ -19,13 +19,8 @@ const sendOtp = async (req, res, next) => {
     // Normalize phone number
     phone = phone.replace(/\s+/g, '').replace(/-/g, '');
 
-    // Default to India (+91) if 10 digits provided without country code
-    // This is specific to the "Filmy" context (Indian film industry)
-    if (/^\d{10}$/.test(phone)) {
-      phone = `+91${phone}`;
-    } else if (!phone.startsWith('+')) {
-      // If it doesn't start with +, assume it might be missing it but try to respect what user sent if it's not exactly 10 digits
-      // beneficial to ensure it starts with + for Twilio
+    // Ensure it starts with + for Twilio
+    if (!phone.startsWith('+')) {
       phone = `+${phone}`;
     }
 
@@ -61,9 +56,7 @@ const verifyOtp = async (req, res, next) => {
 
     // Normalize phone number (must match sendOtp logic)
     phone = phone.replace(/\s+/g, '').replace(/-/g, '');
-    if (/^\d{10}$/.test(phone)) {
-      phone = `+91${phone}`;
-    } else if (!phone.startsWith('+')) {
+    if (!phone.startsWith('+')) {
       phone = `+${phone}`;
     }
 

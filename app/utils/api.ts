@@ -2,7 +2,7 @@
 
 import Constants from 'expo-constants';
 
-const API_BASE = 'http://10.154.136.2:8000';
+const API_BASE = 'http://192.168.1.3:8000';
 
 console.log('[API] Initializing with Base URL:', API_BASE);
 

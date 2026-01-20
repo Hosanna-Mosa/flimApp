@@ -15,6 +15,7 @@ interface InputProps extends TextInputProps {
   label?: string;
   error?: string;
   containerStyle?: object;
+  renderLeft?: () => React.ReactNode;
 }
 
 export default function Input({
@@ -23,6 +24,7 @@ export default function Input({
   style,
   containerStyle,
   secureTextEntry,
+  renderLeft,
   ...props
 }: InputProps) {
   const { colors } = useTheme();
@@ -44,25 +46,23 @@ export default function Input({
       {label && (
         <Text style={[styles.label, { color: colors.text }]}>{label}</Text>
       )}
-      <View style={styles.inputContainer}>
+      <View style={[styles.inputContainer, { backgroundColor: colors.surface, borderColor: error ? colors.error : colors.border }]}>
+        {renderLeft && renderLeft()}
         <TextInput
           ref={inputRef}
           style={[
             styles.input,
             {
-              backgroundColor: colors.surface,
               color: colors.text,
-              borderColor: error ? colors.error : colors.border,
             },
+            renderLeft && { paddingLeft: 8 },
             style,
           ]}
           placeholderTextColor={colors.textSecondary}
           secureTextEntry={isPassword && !isPasswordVisible}
           {...props}
           {...(isPassword && {
-            // Keep generic props to avoid layout shifts, but allow keyboard to decide layout
             textContentType: 'password',
-            keyboardAppearance: 'dark',
           })}
           keyboardAppearance="dark"
         />
@@ -98,21 +98,21 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+    overflow: 'hidden',
   },
   input: {
-    borderRadius: 12,
+    flex: 1,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
-    borderWidth: 1,
-    paddingRight: 48,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   eyeIcon: {
-    position: 'absolute',
-    right: 16,
-    top: 14,
-    zIndex: 1,
+    paddingRight: 16,
   },
   error: {
     fontSize: 12,

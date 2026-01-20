@@ -13,8 +13,11 @@ import { ArrowLeft } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import Input from '@/components/Input';
+import PhoneInput from '@/components/PhoneInput';
 import Button from '@/components/Button';
 import api from '@/utils/api';
+import { CountryCode, Country } from 'react-native-country-picker-modal';
+import { isValidPhoneNumber, parsePhoneNumber } from 'libphonenumber-js';
 
 export default function SignInScreen() {
   const router = useRouter();
@@ -26,6 +29,14 @@ export default function SignInScreen() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const [countryCode, setCountryCode] = useState<CountryCode>('IN');
+  const [callingCode, setCallingCode] = useState('91');
+
+  const onSelect = (country: Country) => {
+    setCountryCode(country.cca2);
+    setCallingCode(country.callingCode[0]);
+  };
+
   const handleSignIn = async () => {
     if (!phone || !password) {
       setError('Please fill in all fields');
@@ -35,8 +46,18 @@ export default function SignInScreen() {
     setError('');
     setLoading(true);
 
+    const fullPhone = phone.startsWith('+') ? phone : `+${callingCode}${phone.replace(/^0+/, '')}`;
+
+    if (!isValidPhoneNumber(fullPhone)) {
+      setError('Please enter a valid phone number for the selected country');
+      setLoading(false);
+      return;
+    }
+
+    const normalizedPhone = parsePhoneNumber(fullPhone).number;
+
     try {
-      const response = await api.loginPassword({ phone, password });
+      const response = await api.loginPassword({ phone: normalizedPhone, password });
       setAuth({
         token: response.accessToken,
         refreshToken: response.refreshToken,
@@ -72,12 +93,13 @@ export default function SignInScreen() {
         </View>
 
         <View style={styles.form}>
-          <Input
+          <PhoneInput
             label="Phone Number"
-            placeholder="+91 98765 43210"
-            keyboardType="phone-pad"
             value={phone}
             onChangeText={setPhone}
+            countryCode={countryCode}
+            callingCode={callingCode}
+            onSelectCountry={onSelect}
           />
 
           <Input
