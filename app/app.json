@@ -77,7 +77,7 @@
       ]
     ],
     "extra": {
-      "apiUrl": "http://10.233.236.42:8000",
+      "apiUrl": "https://api.zythova.com/api",
       "router": {},
       "expo-navigation-bar": {
         "position": "absolute",
