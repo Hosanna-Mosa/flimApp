@@ -16,7 +16,7 @@ import Input from '@/components/Input';
 import PhoneInput from '@/components/PhoneInput';
 import Button from '@/components/Button';
 import api from '@/utils/api';
-import { CountryCode, Country } from 'react-native-country-picker-modal';
+import { Country } from '@/utils/country';
 import { isValidPhoneNumber, parsePhoneNumber } from 'libphonenumber-js';
 
 export default function SignUpScreen() {
@@ -31,15 +31,15 @@ export default function SignUpScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
 
-  const [countryCode, setCountryCode] = useState<CountryCode>('IN');
+  const [countryCode, setCountryCode] = useState('IN');
   const [callingCode, setCallingCode] = useState('91');
   const [pickerVisible, setPickerVisible] = useState(false);
 
   const [loading, setLoading] = useState(false);
 
   const onSelect = (country: Country) => {
-    setCountryCode(country.cca2);
-    setCallingCode(country.callingCode[0]);
+    setCountryCode(country.code);
+    setCallingCode(country.callingCode.replace('+', ''));
   };
 
   const handleNext = async () => {

@@ -103,6 +103,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     overflow: 'hidden',
+    minHeight: 52,
   },
   input: {
     flex: 1,

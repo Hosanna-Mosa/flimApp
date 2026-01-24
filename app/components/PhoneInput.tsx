@@ -1,29 +1,23 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Platform } from 'react-native';
-import CountryPicker, { CountryCode, Country, DARK_THEME } from 'react-native-country-picker-modal';
+import { View, StyleSheet, TouchableOpacity, Text, Modal, SafeAreaView, Platform } from 'react-native';
 import Input from './Input';
+import CountryPicker from './CountryPicker';
+import { Country } from '@/utils/country';
 import { useTheme } from '@/contexts/ThemeContext';
 import { getExampleNumber, AsYouType } from 'libphonenumber-js';
 import examples from 'libphonenumber-js/examples.mobile.json';
+import { X } from 'lucide-react-native';
 
 interface PhoneInputProps {
   label: string;
   value: string;
   onChangeText: (text: string) => void;
-  countryCode: CountryCode;
+  countryCode: string;
   callingCode: string;
   onSelectCountry: (country: Country) => void;
   error?: string;
   placeholder?: string;
 }
-
-const CUSTOM_DARK_THEME = {
-  ...DARK_THEME,
-  backgroundColor: '#1A1A1A',
-  filterPlaceholderTextColor: '#888',
-  activeOpacity: 0.5,
-  itemHeight: 50,
-};
 
 export default function PhoneInput({
   label,
@@ -36,6 +30,7 @@ export default function PhoneInput({
   placeholder,
 }: PhoneInputProps) {
   const { colors } = useTheme();
+  const [modalVisible, setModalVisible] = useState(false);
 
   // Generate example number for the selected country
   const exampleNumber = React.useMemo(() => {
@@ -55,41 +50,85 @@ export default function PhoneInput({
     onChangeText(formatted);
   };
 
+  const handleSelect = (country: Country) => {
+    onSelectCountry(country);
+    setModalVisible(false);
+  };
+
   return (
-    <Input
-      label={label}
-      placeholder={placeholder || exampleNumber}
-      keyboardType="phone-pad"
-      value={value}
-      onChangeText={handleTextChange}
-      error={error}
-      renderLeft={() => (
-        <View style={[styles.countryPickerWrapper, { borderRightColor: colors.border }]}>
-          <CountryPicker
-            countryCode={countryCode}
-            withFilter
-            withFlag
-            withCallingCode
-            withAlphaFilter
-            withCallingCodeButton
-            onSelect={onSelectCountry}
-            theme={CUSTOM_DARK_THEME}
-            containerButtonStyle={styles.countryPickerButton}
+    <>
+      <Input
+        label={label}
+        placeholder={placeholder || exampleNumber}
+        keyboardType="phone-pad"
+        value={value}
+        onChangeText={handleTextChange}
+        error={error}
+        renderLeft={() => (
+          <TouchableOpacity
+            style={[styles.countryPickerButton, { borderRightColor: colors.border }]}
+            onPress={() => setModalVisible(true)}
+          >
+            <Text style={[styles.countryCodeText, { color: colors.primary }]}>+{callingCode}</Text>
+          </TouchableOpacity>
+        )}
+      />
+
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.background }]}>
+          <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Select Country</Text>
+            <TouchableOpacity 
+              onPress={() => setModalVisible(false)}
+              style={styles.closeButton}
+            >
+              <X size={24} color={colors.text} />
+            </TouchableOpacity>
+          </View>
+          <CountryPicker 
+            onSelect={handleSelect} 
+            selectedCountryCode={countryCode} 
           />
-        </View>
-      )}
-    />
+        </SafeAreaView>
+      </Modal>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  countryPickerWrapper: {
-    paddingLeft: 12,
+  countryPickerButton: {
+    paddingLeft: 16,
+    paddingRight: 12,
     justifyContent: 'center',
     borderRightWidth: 1,
     marginRight: 8,
+    alignSelf: 'stretch',
   },
-  countryPickerButton: {
-    marginTop: 0,
+  countryCodeText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalContainer: {
+    flex: 1,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderBottomWidth: 0.5,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  closeButton: {
+    padding: 4,
   },
 });
