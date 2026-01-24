@@ -21,7 +21,7 @@ interface CountryPickerProps {
 
 /**
  * A custom Country Picker component that fetches data from REST Countries API.
- * Replaces react-native-country-picker-modal with no native dependencies.
+ * Built with NO native dependencies for cross-platform compatibility.
  */
 export default function CountryPicker({ onSelect, selectedCountryCode }: CountryPickerProps) {
   const { colors } = useTheme();
