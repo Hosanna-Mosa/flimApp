@@ -3,12 +3,17 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "packageManager": "npm@10.8.2",
+  "private": true,
+
   "scripts": {
     "start": "expo start --tunnel",
     "start-web": "expo start --web --tunnel",
     "start-web-dev": "DEBUG=expo* expo start --web --tunnel",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "android": "expo run:android",
+    "ios": "expo run:ios"
   },
+
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
     "@nkzw/create-context-hook": "^1.1.0",
@@ -18,6 +23,7 @@
     "@stardazed/streams-text-encoding": "^1.0.2",
     "@tanstack/react-query": "^5.90.12",
     "@ungap/structured-clone": "^1.3.0",
+
     "expo": "~54.0.27",
     "expo-av": "~16.0.8",
     "expo-blur": "~15.0.8",
@@ -41,11 +47,14 @@
     "expo-symbols": "~1.0.8",
     "expo-system-ui": "~6.0.9",
     "expo-web-browser": "~15.0.10",
+
     "libphonenumber-js": "^1.12.34",
     "lucide-react-native": "^0.562.0",
+
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-native": "0.81.5",
+
     "react-native-country-picker-modal": "^2.0.0",
     "react-native-gesture-handler": "~2.28.0",
     "react-native-maps": "1.20.1",
@@ -55,10 +64,12 @@
     "react-native-web": "^0.21.0",
     "react-native-webview": "13.15.0",
     "react-native-worklets": "0.5.1",
+
     "socket.io-client": "^4.8.3",
     "zod": "^4.3.5",
     "zustand": "^5.0.2"
   },
+
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@expo/ngrok": "^4.1.0",
@@ -67,5 +78,10 @@
     "eslint-config-expo": "~10.0.0",
     "typescript": "~5.9.2"
   },
-  "private": true
+
+  "overrides": {
+    "@teovilla/react-native-web-maps": {
+      "expo-location": "~19.0.8"
+    }
+  }
 }
