@@ -49,7 +49,14 @@ export default function NotificationsScreen() {
     try {
       if (showLoadingState) setLoading(true);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const data: any = await apiNotifications(token);
+      let data: any = await apiNotifications(token);
+
+      if (data && data.success && Array.isArray(data.data)) {
+        data = data.data;
+      } else if (data && data.data && Array.isArray(data.data)) {
+        data = data.data;
+      }
+
       if (Array.isArray(data)) {
         // Filter out 'message' type notifications as requested
         const items = data

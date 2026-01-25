@@ -138,10 +138,14 @@ export default function PublicProfileScreen() {
     };
 
     useEffect(() => {
-        const subscription = DeviceEventEmitter.addListener('user_follow_changed', ({ userId, following }) => {
+        const subscription = DeviceEventEmitter.addListener('user_follow_changed', ({ userId, following, status }) => {
             if (userId === id) {
                 setIsFollowing(following);
-                setFollowStatus(following ? 'accepted' : null);
+                if (status !== undefined) {
+                    setFollowStatus(status);
+                } else {
+                    setFollowStatus(following ? 'accepted' : null);
+                }
             }
         });
 
@@ -169,7 +173,7 @@ export default function PublicProfileScreen() {
                 // console.log('[UserProfile] Unfollow result:', JSON.stringify(result));
                 setIsFollowing(false);
                 setFollowStatus(null);
-                DeviceEventEmitter.emit('user_follow_changed', { userId: id, following: false });
+                DeviceEventEmitter.emit('user_follow_changed', { userId: id, following: false, status: null });
 
                 // Update follower count only if it was accepted (not pending)
                 if (wasFollowing && user) {
@@ -192,12 +196,12 @@ export default function PublicProfileScreen() {
                     setFollowStatus('pending');
                     setIsFollowing(false);
                     Alert.alert('Follow Request Sent', 'This account is private. Your request is pending approval.');
-                    DeviceEventEmitter.emit('user_follow_changed', { userId: id, following: false });
+                    DeviceEventEmitter.emit('user_follow_changed', { userId: id, following: false, status: 'pending' });
                 } else {
                     // Public account - immediately followed
                     setIsFollowing(true);
                     setFollowStatus('accepted');
-                    DeviceEventEmitter.emit('user_follow_changed', { userId: id, following: true });
+                    DeviceEventEmitter.emit('user_follow_changed', { userId: id, following: true, status: 'accepted' });
 
                     // Optimistically update follower count
                     if (user) {

@@ -50,7 +50,13 @@ export default function MessagesScreen() {
 
       try {
         if (!refreshing) setLoading(true);
-        const data: any = await apiGetConversations(token, query);
+        let data: any = await apiGetConversations(token, query);
+
+        if (data && data.success && Array.isArray(data.data)) {
+          data = data.data;
+        } else if (data && data.data && Array.isArray(data.data)) {
+          data = data.data;
+        }
 
         if (Array.isArray(data)) {
           const formatted: ChatItem[] = data.map((item: any) => ({

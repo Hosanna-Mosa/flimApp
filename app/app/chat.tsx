@@ -154,6 +154,7 @@ export default function ChatScreen() {
           senderId: sender,
           message: message.content,
           timestamp: new Date(message.createdAt || Date.now()).toLocaleTimeString('en-US', {
+            hour: '2-digit',
             minute: '2-digit',
           }),
           status: 'delivered', // Incoming is implicitly delivered/read
@@ -358,7 +359,9 @@ export default function ChatScreen() {
           renderItem={({ item: message }) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const currentUserId = user?.id || (user as any)?._id;
-            const isMe = String(message.senderId) === String(currentUserId);
+            // Fallback: If sender is NOT the peer (userId), then it is me.
+            const isMe = String(message.senderId) !== String(userId);
+
             return (
               <TouchableOpacity
                 key={message.id}
