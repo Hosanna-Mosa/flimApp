@@ -10,13 +10,30 @@ const createMessage = async ({ senderId, recipientId, content }) => {
   });
 };
 
-const getConversation = async (userId, peerId) =>
-  Message.find({
+const getConversation = async (userId, peerId) => {
+  // Convert to ObjectId to ensure proper matching
+  const userObjectId = mongoose.Types.ObjectId.isValid(userId) 
+    ? new mongoose.Types.ObjectId(userId) 
+    : userId;
+  const peerObjectId = mongoose.Types.ObjectId.isValid(peerId) 
+    ? new mongoose.Types.ObjectId(peerId) 
+    : peerId;
+  
+  console.log(`[MessageService] getConversation: userId=${userObjectId}, peerId=${peerObjectId}`);
+  
+  const messages = await Message.find({
     $or: [
-      { sender: userId, recipient: peerId },
-      { sender: peerId, recipient: userId },
+      { sender: userObjectId, recipient: peerObjectId },
+      { sender: peerObjectId, recipient: userObjectId },
     ],
-  }).sort({ createdAt: 1 });
+  })
+    .populate('sender', 'name avatar isVerified')
+    .populate('recipient', 'name avatar isVerified')
+    .sort({ createdAt: 1 });
+  
+  console.log(`[MessageService] Found ${messages.length} messages`);
+  return messages;
+};
 
 const deleteMessage = async (messageId, userId) =>
   Message.findOneAndDelete({ _id: messageId, sender: userId });
