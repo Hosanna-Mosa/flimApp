@@ -54,7 +54,12 @@ const registerChatHandlers = (io) => {
           content,
         });
         
+        // Populate sender and recipient before emitting (same as REST API)
+        await message.populate('sender', 'name avatar isVerified');
+        await message.populate('recipient', 'name avatar isVerified');
+        
         console.log('[SOCKET][MESSAGE] Message created in database');
+        console.log('[SOCKET][MESSAGE] Message ID:', message._id);
         console.log('[SOCKET][MESSAGE] Checking recipient online status...');
 
         const roomClients = io.sockets.adapter.rooms.get(recipientId);
@@ -75,8 +80,11 @@ const registerChatHandlers = (io) => {
            console.log('[SOCKET][MESSAGE] ✅ Recipient is ONLINE - push notification NOT needed');
         }
 
+        // Emit to recipient
         io.to(recipientId).emit('receive_message', message);
+        // Emit to sender for confirmation
         socket.emit('message_sent', message);
+        console.log('[SOCKET][MESSAGE] ✅ Emitted message_sent to sender, receive_message to recipient');
       } catch (error) {
         console.error('[SOCKET][MESSAGE] ❌ Error in send_message:', error);
       }

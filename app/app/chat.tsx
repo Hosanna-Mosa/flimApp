@@ -66,15 +66,29 @@ export default function ChatScreen() {
     }
   }, [userId, token]);
 
-  // 1. Fetch History
   // 1. Fetch History & Mark Read
   useEffect(() => {
     if (userId && token) {
       const loadMessages = async () => {
         try {
+          console.log('[CHAT] Loading messages for userId:', userId);
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const history: any = await apiConversation(userId, token);
-          if (Array.isArray(history)) {
+          const response: any = await apiConversation(userId, token);
+          console.log('[CHAT] API Response:', response);
+          
+          // Handle both wrapped and unwrapped responses
+          let history: any[] = [];
+          if (response && response.success && Array.isArray(response.data)) {
+            history = response.data;
+          } else if (Array.isArray(response)) {
+            history = response;
+          } else if (response && response.data && Array.isArray(response.data)) {
+            history = response.data;
+          }
+          
+          console.log('[CHAT] Extracted messages:', history.length);
+          
+          if (history.length > 0) {
             const formatted = history.map((msg: any) => {
               const sender = (msg.sender && typeof msg.sender === 'object') ? msg.sender._id : msg.sender;
               return {
@@ -88,10 +102,15 @@ export default function ChatScreen() {
                 status: msg.status || 'sent', // Default to sent if missing
               };
             });
+            console.log('[CHAT] Formatted', formatted.length, 'messages');
             setMessages(formatted);
+          } else {
+            console.log('[CHAT] No messages found');
+            setMessages([]);
           }
         } catch (e) {
           console.error('[Chat] Error loading history:', e);
+          setMessages([]);
         }
       };
 
@@ -164,14 +183,21 @@ export default function ChatScreen() {
     };
 
     const handleMessageSent = (message: any) => {
+      console.log('[CHAT] message_sent received:', message);
       setMessages((prev) => {
-        const exists = prev.some(m => m.id === (message._id || message.id));
-        if (exists) return prev;
+        // Remove optimistic message if exists (by content match or temp ID)
+        const filtered = prev.filter(m => !m.id.startsWith('temp-') || m.message !== message.content);
+        
+        const exists = filtered.some(m => m.id === (message._id || message.id));
+        if (exists) {
+          console.log('[CHAT] Message already exists, skipping');
+          return filtered;
+        }
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const sender = (message.sender && typeof message.sender === 'object') ? message.sender._id : (message.sender || message.senderId);
 
-        return [...prev, {
+        const newMessage = {
           id: message._id || message.id || Date.now().toString(),
           senderId: sender,
           message: message.content,
@@ -179,9 +205,17 @@ export default function ChatScreen() {
             hour: '2-digit',
             minute: '2-digit',
           }),
-          status: 'sent',
-        }];
+          status: message.status || 'sent',
+        };
+
+        console.log('[CHAT] Adding new message to state:', newMessage);
+        return [...filtered, newMessage];
       });
+      
+      // Scroll to bottom after adding message
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
     };
 
     socket.on('receive_message', handleReceiveMessage);
@@ -213,7 +247,7 @@ export default function ChatScreen() {
 
     if (!socket.connected) {
       console.log('[CHAT] Socket not connected. Cannot send.');
-      // socket.connect(); // Removed manual connect
+      Alert.alert('Connection Error', 'Socket not connected. Please wait a moment and try again.');
       return;
     }
 
@@ -226,11 +260,36 @@ export default function ChatScreen() {
     console.log('[SEND] Button clicked');
     console.log('[SEND] Payload:', payload);
     console.log('[SEND] Socket connected:', socket.connected);
+    console.log('[SEND] Current messages count:', messages.length);
 
+    // Clear input immediately for better UX
+    setInputMessage('');
+
+    // Emit message
     socket.emit('send_message', payload);
     console.log('[SEND] socket.emit(send_message) called');
-
-    setInputMessage('');
+    
+    // Add optimistic message immediately (will be replaced by message_sent event)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const currentUserId = user?.id || (user as any)?._id;
+    const tempId = `temp-${Date.now()}`;
+    const optimisticMessage: ChatMessage = {
+      id: tempId,
+      senderId: currentUserId,
+      message: content,
+      timestamp: new Date().toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+      status: 'sent',
+    };
+    
+    setMessages((prev) => [...prev, optimisticMessage]);
+    
+    // Scroll to bottom
+    setTimeout(() => {
+      flatListRef.current?.scrollToEnd({ animated: true });
+    }, 100);
   };
 
   const handleDeleteMessage = (messageId: string) => {
