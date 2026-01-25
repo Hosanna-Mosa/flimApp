@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Animated,
   Share,
+  DeviceEventEmitter,
 } from 'react-native';
 import { useRouter, Stack, useFocusEffect } from 'expo-router';
 import { Image } from 'expo-image';
@@ -77,12 +78,19 @@ export default function HomeScreen() {
       // Fetch a large number of following users to build the local source of truth
       const result = await api.getFollowing(userId, 0, 1000, token);
 
-      if ((result as any).data && Array.isArray((result as any).data)) {
+      let followingData = [];
+      if (Array.isArray(result)) {
+        followingData = result;
+      } else if (result && (result as any).data && Array.isArray((result as any).data)) {
+        followingData = (result as any).data;
+      }
+
+      if (followingData.length > 0 || Array.isArray(result)) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const rawIds = (result as any).data.map((u: any) => u._id || u.id);
+        const rawIds = followingData.map((u: any) => u._id || u.id);
         const ids = new Set<string>(rawIds);
         setFollowingIds(ids);
-        // console.log('[Home] Following IDs refreshed:', Array.from(ids).length);
+        console.log('[Home] Following IDs refreshed:', Array.from(ids).length);
       }
     } catch (error) {
       // console.error('[Home] Error fetching following list:', error);
@@ -129,7 +137,6 @@ export default function HomeScreen() {
             avatar: p.author?.avatar || 'https://via.placeholder.com/150',
             isVerified: p.author?.isVerified || false,
             roles: p.author?.roles || [],
-            isFollowing: p.author?.isFollowing || false,
           },
           type: p.type || 'image',
           mediaUrl: p.mediaUrl || p.media?.url,
@@ -144,6 +151,21 @@ export default function HomeScreen() {
         }));
 
         setHasMore(mappedPosts.length === 20);
+
+        // Update followingIds from feed items to ensure consistency
+        const followedUsersInFeed = mappedPosts
+          .filter((p: any) => p.user.isFollowing)
+          .map((p: any) => p.user.id);
+        
+        if (followedUsersInFeed.length > 0) {
+          setFollowingIds(prev => {
+            const next = new Set(prev);
+            followedUsersInFeed.forEach((id: string) => {
+              if (id) next.add(id);
+            });
+            return next;
+          });
+        }
 
         if (append) {
           setPosts(prev => [...prev, ...mappedPosts]);
@@ -211,6 +233,8 @@ export default function HomeScreen() {
   // Refresh feed when screen comes into focus (to update comment counts, etc.)
   useFocusEffect(
     useCallback(() => {
+      // Re-fetch following list ensuring current source of truth
+      fetchFollowingList();
       // Only reload if we already have posts (not initial load)
       if (token) {
         // We can check if we have posts, but we shouldn't depend on posts.length
@@ -226,6 +250,22 @@ export default function HomeScreen() {
       loadData();
     }
   }, [token, authLoading, user]);
+
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener('user_follow_changed', ({ userId, following }) => {
+      setFollowingIds(prev => {
+        const next = new Set(prev);
+        if (following) {
+          next.add(userId);
+        } else {
+          next.delete(userId);
+        }
+        return next;
+      });
+    });
+
+    return () => subscription.remove();
+  }, []);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -267,6 +307,7 @@ export default function HomeScreen() {
         if (!token) return;
         const result = await api.unfollowUser(userId, token) as any;
         // console.log('[Home] Unfollowed user:', result);
+        DeviceEventEmitter.emit('user_follow_changed', { userId, following: false });
       } else {
         if (!token) return;
         const result = await api.followUser(userId, token) as any;
@@ -279,9 +320,18 @@ export default function HomeScreen() {
             next.delete(userId);
             return next;
           });
+          DeviceEventEmitter.emit('user_follow_changed', { userId, following: false });
+        } else {
+          DeviceEventEmitter.emit('user_follow_changed', { userId, following: true });
         }
       }
-    } catch (error) {
+    } catch (error: any) {
+      if (error?.message?.includes('Already following this user')) {
+        // We are already following, so the optimistic state (following) is actually correct.
+        DeviceEventEmitter.emit('user_follow_changed', { userId, following: true });
+        return;
+      }
+      
       setFollowingIds(prev => {
         const next = new Set(prev);
         if (followingIds.has(userId)) {
@@ -292,7 +342,7 @@ export default function HomeScreen() {
         return next;
       });
       // console.error('[Home] Follow error:', error);
-      Alert.alert('Error', 'Failed to update follow status');
+      Alert.alert('Error', error?.message || 'Failed to update follow status');
     }
   };
 
@@ -413,11 +463,12 @@ export default function HomeScreen() {
       <Stack.Screen
         options={{
           headerShown: true,
-          headerTitle: 'Filmy',
+          headerTitle: 'FilmyConnect',
+          headerTitleAlign: 'left',
           headerStyle: { backgroundColor: colors.background },
           headerTintColor: colors.text,
           headerRight: () => (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 20, paddingRight: 16 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingRight: 8 }}>
               <TouchableOpacity
                 onPress={() => router.push('/donations')}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -512,6 +563,7 @@ export default function HomeScreen() {
           style={[styles.container, { backgroundColor: colors.background }]}
           data={posts}
           keyExtractor={(item) => item.id}
+          extraData={followingIds}
           renderItem={({ item }) => (
             <FeedPost
               post={item}

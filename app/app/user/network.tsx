@@ -33,9 +33,20 @@ export default function UserNetworkScreen() {
                 ? api.getFollowing(userId, pageNum, 20, token || undefined, query)
                 : api.getFollowers(userId, pageNum, 20, token || undefined, query));
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const data = (response as any).data || [];
-            const pagination = (response as any).pagination;
+            // console.log(`[Network] API Response for ${type}:`, JSON.stringify(response).substring(0, 100));
+
+            // Handle unwrapped response (array) or legacy structure (object with data field)
+            let data = [];
+            if (Array.isArray(response)) {
+                data = response;
+            } else if (response && (response as any).data) {
+                // Check for double nesting: response.data.data
+                if (Array.isArray((response as any).data)) {
+                    data = (response as any).data;
+                } else if ((response as any).data.data && Array.isArray((response as any).data.data)) {
+                    data = (response as any).data.data;
+                }
+            }
 
             if (shouldRefresh || pageNum === 0) {
                 setUsers(data);
@@ -43,10 +54,12 @@ export default function UserNetworkScreen() {
                 setUsers(prev => [...prev, ...data]);
             }
 
+            console.log(`[Network] Loaded ${data.length} ${type} for user ${userId}`);
+
             setHasMore(data.length === 20);
             setPage(pageNum);
-        } catch (error) {
-            // console.error('Error loading network:', error);
+        } catch (error: any) {
+            console.error('[Network] Error loading network data:', error?.message || error);
         } finally {
             setLoading(false);
             setRefreshing(false);

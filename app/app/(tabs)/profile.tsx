@@ -242,6 +242,9 @@ export default function ProfileScreen() {
                 <BadgeCheck size={24} color="#FFFFFF" fill={colors.primary} />
               )}
             </View>
+            <Text style={[styles.username, { color: colors.textSecondary }]}>
+              @{user.username || 'username'}
+            </Text>
             <View style={styles.rolesContainer}>
               {user.roles?.map((role, idx) => (
                 <View
@@ -411,6 +414,11 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 24,
     fontWeight: '700',
+  },
+  username: {
+    fontSize: 16,
+    marginBottom: 12,
+    fontWeight: '500',
   },
   rolesContainer: {
     flexDirection: 'row',

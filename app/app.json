@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Filmy",
-    "slug": "filmy",
+    "name": "FilmyConnect",
+    "slug": "filmyconnect",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -76,7 +76,7 @@
       ]
     ],
     "extra": {
-      "apiUrl": "https://api.filmyconnect24.com",
+      "apiUrl": "http://192.168.1.3:8000",
       "router": {},
       "expo-navigation-bar": {
         "position": "absolute",

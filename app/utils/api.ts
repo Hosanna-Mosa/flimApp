@@ -73,13 +73,17 @@ const request = async <T>(
     if (!res.ok) {
       console.error(`[API ERR] 🔴 ${res.status} for ${path}:`, json.message || res.statusText);
       const message = (json && json.message) || res.statusText || 'Request failed';
-      throw new Error(message);
+      const error = new Error(message);
+      (error as any).logged = true;
+      throw error;
     }
 
     console.log(`[API RESP] ✅ ${res.status} ${path}`);
     return json;
   } catch (error: any) {
-    console.error(`[API FATAL] 💥 Error calling ${path}:`, error.message);
+    if (!error.logged) {
+      console.error(`[API FATAL] 💥 Error calling ${path}:`, error.message);
+    }
     throw error;
   }
 };
@@ -242,11 +246,15 @@ export const apiVotePoll = (id: string, postId: string, optionIndex: number, tok
 // Verification
 export const apiGetVerificationStatus = (token?: string) => request('/verification/status', { token });
 export const apiSubmitVerificationRequest = (payload: any, token: string) =>
-  request('/verification/submit', { method: 'POST', body: payload, token });
+  request('/verification/request', { method: 'POST', body: payload, token });
 export const apiCreateSubscriptionOrder = (planId: string, token?: string) =>
-  request('/subscription/create-order', { method: 'POST', body: { planId }, token });
+  request('/subscriptions/create-order', { method: 'POST', body: { planId }, token });
 export const apiVerifySubscriptionPayment = (payload: any, token?: string) =>
-  request('/subscription/verify-payment', { method: 'POST', body: payload, token });
+  request('/subscriptions/verify-payment', { method: 'POST', body: payload, token });
+
+// Support
+export const apiCreateSupportRequest = (payload: any, token: string) =>
+  request('/support', { method: 'POST', body: payload, token });
 
 /**
  * ─────────────────────────────────────────────────────────────────────────────
@@ -309,7 +317,7 @@ export const api = {
     }
     return unwrap(request(`/api/posts/${id}/comments`, { method: 'POST', body, token: t }));
   },
-  deleteComment: (pId: string, cId: string, t: string) => unwrap(request(`/api/comments/${cId}`, { method: 'DELETE', token: t })),
+  deleteComment: (cId: string, t: string) => unwrap(request(`/api/comments/${cId}`, { method: 'DELETE', token: t })),
   sharePost: (id: string, text: string, t: string) => unwrap(request(`/api/posts/${id}/share`, { method: 'POST', body: { caption: text, shareType: 'repost' }, token: t })),
   toggleSavePost: (id: string, t: string) => unwrap(request(`/posts/${id}/save`, { method: 'POST', token: t })),
   getSavedPosts: (page: number, limit: number, t: string) => unwrap(apiGetSavedPosts(page, limit, t)),
@@ -321,13 +329,13 @@ export const api = {
   getFollowStatus: (id: string, t?: string) => unwrap(apiGetFollowStatus(id, t)),
   acceptFollowRequest: (userId: string, t: string) => unwrap(apiAcceptFollowRequest(userId, t)),
   rejectFollowRequest: (userId: string, t: string) => unwrap(apiRejectFollowRequest(userId, t)),
-  getFollowers: (id: string, p: any, l: any, t: any) => {
-    const token = typeof p === 'string' ? p : (typeof l === 'string' ? l : t);
-    return unwrap(request(`/api/users/${id}/followers`, { token }));
+  getFollowers: (id: string, page: number, limit: number, token?: string, query?: string) => {
+    const url = `/api/users/${id}/followers?page=${page}&limit=${limit}${query ? `&q=${encodeURIComponent(query)}` : ''}`;
+    return unwrap(request(url, { token }));
   },
-  getFollowing: (id: string, p: any, l: any, t: any) => {
-    const token = typeof p === 'string' ? p : (typeof l === 'string' ? l : t);
-    return unwrap(request(`/api/users/${id}/following`, { token }));
+  getFollowing: (id: string, page: number, limit: number, token?: string, query?: string) => {
+    const url = `/api/users/${id}/following?page=${page}&limit=${limit}${query ? `&q=${encodeURIComponent(query)}` : ''}`;
+    return unwrap(request(url, { token }));
   },
 
   // Notifications
@@ -410,6 +418,9 @@ export const api = {
   submitVerificationRequest: (payload: any, t: string) => unwrap(apiSubmitVerificationRequest(payload, t)),
   apiCreateSubscriptionOrder: (planId: string, t?: string) => unwrap(apiCreateSubscriptionOrder(planId, t)),
   apiVerifySubscriptionPayment: (payload: any, t?: string) => unwrap(apiVerifySubscriptionPayment(payload, t)),
+
+  // Support
+  createSupportRequest: (payload: any, t: string) => unwrap(apiCreateSupportRequest(payload, t)),
 };
 
 // Default export

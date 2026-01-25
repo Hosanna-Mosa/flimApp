@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Share,
+  Modal,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack, useFocusEffect } from 'expo-router';
 import { Image } from 'expo-image';
@@ -26,6 +27,7 @@ import {
   Pause,
   Play,
   FileText,
+  X,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import * as WebBrowser from 'expo-web-browser';
@@ -35,6 +37,8 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/utils/api';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Input from '@/components/Input';
+import Button from '@/components/Button';
 
 interface Comment {
   _id: string;
@@ -71,6 +75,11 @@ export default function PostDetailScreen() {
   const [replyTo, setReplyTo] = useState<Comment | null>(null);
   const [hiddenReplies, setHiddenReplies] = useState<Record<string, boolean>>({});
   const commentInputRef = useRef<TextInput>(null);
+  
+  // Edit Caption State
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [editedCaption, setEditedCaption] = useState('');
+  const [isUpdatingCaption, setIsUpdatingCaption] = useState(false);
 
   // Track if this is the initial mount
   const isInitialMount = useRef(true);
@@ -133,9 +142,9 @@ export default function PostDetailScreen() {
       setLikesCount(prev => wasLiked ? prev - 1 : prev + 1);
 
       if (wasLiked) {
-        await api.unlikePost(id, token || undefined);
+        await api.unlikePost(id, token!);
       } else {
-        await api.likePost(id, token || undefined);
+        await api.likePost(id, token!);
       }
     } catch (error) {
       // Revert on error
@@ -210,8 +219,9 @@ export default function PostDetailScreen() {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
+            if (!token) return;
             try {
-              await api.deleteComment(commentId, token || undefined);
+              await api.deleteComment(commentId, token);
 
               if (isReply && parentId) {
                 setComments(prev => prev.map(c => {
@@ -504,34 +514,28 @@ export default function PostDetailScreen() {
   };
 
   const handleEditCaption = () => {
-    Alert.prompt(
-      'Edit Caption',
-      'Update your post caption',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Update',
-          onPress: async (newCaption: string | undefined) => {
-            if (newCaption === undefined) return;
-            try {
-              setLoading(true);
-              await api.updatePost(id, { caption: newCaption }, token || undefined);
-              setPost({ ...post, caption: newCaption });
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            } catch (error) {
-              Alert.alert('Error', 'Failed to update caption');
-            } finally {
-              setLoading(false);
-            }
-          },
-        },
-      ],
-      'plain-text',
-      post.caption
-    );
+    setEditedCaption(post.caption || '');
+    setIsEditModalVisible(true);
+  };
+
+  const handleUpdateCaption = async () => {
+    if (editedCaption.trim() === post.caption) {
+      setIsEditModalVisible(false);
+      return;
+    }
+
+    try {
+      setIsUpdatingCaption(true);
+      if (!token) return;
+      await api.updatePost(id, { caption: editedCaption.trim() }, token);
+      setPost({ ...post, caption: editedCaption.trim() });
+      setIsEditModalVisible(false);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to update caption');
+    } finally {
+      setIsUpdatingCaption(false);
+    }
   };
 
   const confirmDelete = () => {
@@ -547,9 +551,10 @@ export default function PostDetailScreen() {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
+            if (!token) return;
             try {
               setLoading(true);
-              await api.deletePost(id, token || undefined);
+              await api.deletePost(id, token);
               router.back();
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             } catch (error) {
@@ -846,6 +851,53 @@ export default function PostDetailScreen() {
           )}
         </TouchableOpacity>
       </View>
+
+      {/* Edit Caption Modal */}
+      <Modal
+        visible={isEditModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsEditModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Edit Caption</Text>
+              <TouchableOpacity onPress={() => setIsEditModalVisible(false)}>
+                <X size={24} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.modalBody}>
+              <Input
+                placeholder="Write a caption..."
+                value={editedCaption}
+                onChangeText={setEditedCaption}
+                multiline
+                numberOfLines={4}
+                autoFocus
+              />
+            </View>
+
+            <View style={styles.modalFooter}>
+              <Button
+                title="Cancel"
+                onPress={() => setIsEditModalVisible(false)}
+                variant="outline"
+                style={{ flex: 1 }}
+                disabled={isUpdatingCaption}
+              />
+              <Button
+                title="Update"
+                onPress={handleUpdateCaption}
+                loading={isUpdatingCaption}
+                style={{ flex: 1 }}
+                disabled={!editedCaption.trim() || isUpdatingCaption}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -861,6 +913,41 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    borderRadius: 20,
+    width: '100%',
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.05)',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  modalBody: {
+    padding: 20,
+  },
+  modalFooter: {
+    flexDirection: 'row',
+    gap: 12,
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.05)',
   },
   postHeader: {
     flexDirection: 'row',

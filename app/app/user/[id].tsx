@@ -7,6 +7,7 @@ import {
     TouchableOpacity,
     ActivityIndicator,
     Alert,
+    DeviceEventEmitter,
 } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
@@ -35,6 +36,7 @@ import { ProfileSkeleton } from '@/components/skeletons/ProfileSkeleton';
 interface UserProfile {
     _id: string;
     name: string;
+    username?: string;
     avatar: string;
     bio?: string;
     roles: string[];
@@ -135,8 +137,22 @@ export default function PublicProfileScreen() {
         }
     };
 
+    useEffect(() => {
+        const subscription = DeviceEventEmitter.addListener('user_follow_changed', ({ userId, following }) => {
+            if (userId === id) {
+                setIsFollowing(following);
+                setFollowStatus(following ? 'accepted' : null);
+            }
+        });
+
+        return () => subscription.remove();
+    }, [id]);
+
     const toggleFollow = async () => {
-        if (!user) return;
+        if (!user || !token) {
+            Alert.alert('Error', 'You must be logged in to follow users');
+            return;
+        }
 
         try {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -149,10 +165,11 @@ export default function PublicProfileScreen() {
 
             if (wasFollowing || wasPending) {
                 // Unfollow or cancel request
-                result = await api.unfollowUser(id, token || undefined);
+                result = await api.unfollowUser(id, token);
                 // console.log('[UserProfile] Unfollow result:', JSON.stringify(result));
                 setIsFollowing(false);
                 setFollowStatus(null);
+                DeviceEventEmitter.emit('user_follow_changed', { userId: id, following: false });
 
                 // Update follower count only if it was accepted (not pending)
                 if (wasFollowing && user) {
@@ -167,7 +184,7 @@ export default function PublicProfileScreen() {
                 }
             } else {
                 // Follow or send request
-                result = await api.followUser(id, token || undefined);
+                result = await api.followUser(id, token);
                 // console.log('[UserProfile] Follow result:', JSON.stringify(result));
 
                 if (result.status === 'pending') {
@@ -175,10 +192,12 @@ export default function PublicProfileScreen() {
                     setFollowStatus('pending');
                     setIsFollowing(false);
                     Alert.alert('Follow Request Sent', 'This account is private. Your request is pending approval.');
+                    DeviceEventEmitter.emit('user_follow_changed', { userId: id, following: false });
                 } else {
                     // Public account - immediately followed
                     setIsFollowing(true);
                     setFollowStatus('accepted');
+                    DeviceEventEmitter.emit('user_follow_changed', { userId: id, following: true });
 
                     // Optimistically update follower count
                     if (user) {
@@ -210,6 +229,13 @@ export default function PublicProfileScreen() {
             }
         } catch (error: any) {
             // console.error('[UserProfile] Follow error:', error);
+
+            if (error?.message?.includes('Already following this user')) {
+                setIsFollowing(true);
+                setFollowStatus('accepted');
+                DeviceEventEmitter.emit('user_follow_changed', { userId: id, following: true });
+                return;
+            }
 
             // Refresh follow status on error
             try {
@@ -314,6 +340,9 @@ export default function PublicProfileScreen() {
                             <BadgeCheck size={24} color="#FFFFFF" fill="#0095F6" />
                         )}
                     </View>
+                    <Text style={[styles.username, { color: colors.textSecondary }]}>
+                        @{user.username || 'username'}
+                    </Text>
 
                     {!hasLimitedData && (
                         <>
@@ -615,6 +644,11 @@ const styles = StyleSheet.create({
     name: {
         fontSize: 24,
         fontWeight: '700',
+    },
+    username: {
+        fontSize: 16,
+        marginBottom: 12,
+        fontWeight: '500',
     },
     rolesContainer: {
         flexDirection: 'row',
