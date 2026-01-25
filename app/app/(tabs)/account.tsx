@@ -67,14 +67,7 @@ export default function AccountScreen() {
       label: 'Settings',
       subtitle: 'App preferences',
       onPress: () => router.push('/settings'),
-    },
-    {
-      id: 'support',
-      icon: Info,
-      label: 'Support',
-      subtitle: 'Contact support',
-      onPress: () => router.push('/support'),
-    },
+    }
   ];
 
 

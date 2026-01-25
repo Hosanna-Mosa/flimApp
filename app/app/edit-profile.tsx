@@ -22,6 +22,7 @@ export default function EditProfileScreen() {
   const { colors } = useTheme();
   const { user, updateProfile } = useAuth();
   const [name, setName] = useState<string>(user?.name || '');
+  const [username, setUsername] = useState<string>(user?.username || '');
   const [bio, setBio] = useState<string>(user?.bio || '');
   const [location, setLocation] = useState<string>(user?.location || '');
   const [experience, setExperience] = useState<string>(
@@ -61,6 +62,7 @@ export default function EditProfileScreen() {
       // Prepare update payload
       const updates = {
         name,
+        username,
         bio,
         location,
         experience: parseInt(experience) || 0,
@@ -132,6 +134,14 @@ export default function EditProfileScreen() {
             placeholder="Your name"
             value={name}
             onChangeText={setName}
+          />
+
+          <Input
+            label="Username"
+            placeholder="Choose a unique username"
+            value={username}
+            onChangeText={setUsername}
+            autoCapitalize="none"
           />
 
           <Input

@@ -143,7 +143,7 @@ export default function VerificationScreen() {
         currency: order.currency,
         key: order.keyId,
         amount: order.amount,
-        name: 'Filmy App',
+        name: 'FilmyConnect',
         order_id: order.orderId,
         prefill: {
           email: user?.email,
@@ -271,11 +271,16 @@ export default function VerificationScreen() {
         });
       }
 
+      if (!token) {
+        Alert.alert('Error', 'Session expired. Please log in again.');
+        return;
+      }
+
       await api.submitVerificationRequest({
         verificationType,
         reason,
         documents: uploadedDocs,
-      }, token || undefined);
+      }, token);
 
       Alert.alert('Success', 'Verification request submitted successfully!', [
         { text: 'OK', onPress: () => fetchStatus() }

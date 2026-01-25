@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
+  DeviceEventEmitter,
 } from 'react-native';
 import { Stack, useFocusEffect, useRouter } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -143,6 +144,8 @@ export default function NotificationsScreen() {
       // Remove the notification after accepting
       setNotifications((prev) => prev.filter((n) => n.id !== notification.id));
       refreshUnreadCount();
+      // Emitting this in case it affects UI, though strictly it's "They follow Me"
+      DeviceEventEmitter.emit('user_follow_changed', { userId, following: false }); // User is no longer "Requested"
     } catch (error) {
       console.error('Failed to accept follow request:', error);
     } finally {

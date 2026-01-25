@@ -17,8 +17,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Upload, X, Send } from 'lucide-react-native';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
+import api from '@/utils/api';
 
 export default function SupportScreen() {
     const router = useRouter();
@@ -59,6 +58,11 @@ export default function SupportScreen() {
             return;
         }
 
+        if (!token) {
+            Alert.alert('Error', 'You must be logged in to submit a support request');
+            return;
+        }
+
         setIsLoading(true);
 
         try {
@@ -67,26 +71,13 @@ export default function SupportScreen() {
                 imageUrl: imageBase64 ? 'data:image/jpeg;base64,' + imageBase64 : null,
             };
 
-            const response = await fetch(API_URL + '/support', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token,
-                },
-                body: JSON.stringify(payload),
-            });
+            await api.createSupportRequest(payload, token);
 
-            const data = await response.json();
-
-            if (response.ok) {
-                Alert.alert(
-                    'Success',
-                    'Your support request has been submitted successfully.',
-                    [{ text: 'OK', onPress: () => router.back() }]
-                );
-            } else {
-                throw new Error(data.message || 'Failed to submit support request');
-            }
+            Alert.alert(
+                'Success',
+                'Your support request has been submitted successfully.',
+                [{ text: 'OK', onPress: () => router.back() }]
+            );
         } catch (error: any) {
             console.error('Support submission error:', error);
             Alert.alert('Error', error.message || 'Something went wrong. Please try again.');

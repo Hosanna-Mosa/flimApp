@@ -89,6 +89,7 @@ UserSchema.virtual('publicProfile').get(function () {
   return {
     id: this._id,
     name: this.name,
+    username: this.username,
     avatar: this.avatar,
     bio: this.bio,
     roles: this.roles,
