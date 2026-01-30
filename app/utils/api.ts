@@ -1,6 +1,7 @@
 // Support Expo environment variables without requiring @types/node
 
 import Constants from 'expo-constants';
+import { DeviceEventEmitter } from 'react-native';
 
 const API_BASE = Constants.expoConfig?.extra?.apiUrl ;
 
@@ -71,6 +72,11 @@ const request = async <T>(
     const json = await res.json().catch(() => ({}));
 
     if (!res.ok) {
+      if (res.status === 401) {
+        console.log('[API] 🔴 401 Unauthorized - Emitting session expired event');
+        DeviceEventEmitter.emit('auth_session_expired');
+      }
+
       console.error(`[API ERR] 🔴 ${res.status} for ${path}:`, json.message || res.statusText);
       const message = (json && json.message) || res.statusText || 'Request failed';
       const error = new Error(message);

@@ -4,7 +4,7 @@
     "slug": "filmy",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/icon_new.jpg",
     "scheme": "myapp",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#000000",
@@ -26,7 +26,7 @@
       "package": "app.rork.filmy",
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/icon_new.jpg",
         "backgroundColor": "#000000"
       },
       "softwareKeyboardLayoutMode": "resize",
@@ -76,7 +76,7 @@
       ]
     ],
     "extra": {
-      "apiUrl": "https://api.filmyconnect24.com",
+      "apiUrl": "http://10.236.247.2:8000",
       "router": {},
       "expo-navigation-bar": {
         "position": "absolute",

@@ -52,7 +52,7 @@ export default function CreateDonationScreen() {
 
     const handleUpload = async () => {
         if (!caption.trim() && !media) {
-            Alert.alert('Error', 'Please add some content to your donation request');
+            Alert.alert('Error', 'Please add some content to your crowd fund request');
             return;
         }
 
@@ -124,7 +124,7 @@ export default function CreateDonationScreen() {
                 industries: [],
             }, token!);
 
-            Alert.alert('Success', 'Donation request posted!', [
+            Alert.alert('Success', 'Crowd Fund request posted!', [
                 { text: 'OK', onPress: () => router.back() }
             ]);
         } catch (error: any) {
@@ -172,7 +172,7 @@ export default function CreateDonationScreen() {
             <Stack.Screen
                 options={{
                     headerShown: true,
-                    headerTitle: 'Ask for Donation',
+                    headerTitle: 'Ask for Crowd Funding',
                     headerStyle: { backgroundColor: colors.background },
                     headerTintColor: colors.text,
                     headerLeft: () => (

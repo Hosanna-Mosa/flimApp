@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import createContextHook from '@nkzw/create-context-hook';
 import { useEffect, useState, useCallback } from 'react';
-import { Platform, PermissionsAndroid } from 'react-native';
+import { Platform, PermissionsAndroid, DeviceEventEmitter } from 'react-native';
 import { User, UserRole, Industry } from '@/types';
 import api from '@/utils/api';
 
@@ -21,7 +21,7 @@ Notifications.setNotificationHandler({
     console.log('[PUSH][FOREGROUND] Title:', notification.request.content.title);
     console.log('[PUSH][FOREGROUND] Body:', notification.request.content.body);
     console.log('[PUSH][FOREGROUND] Data:', JSON.stringify(notification.request.content.data));
-    
+
     return {
       shouldShowBanner: true, // ✅ iOS banner
       shouldShowList: true,   // ✅ iOS notification center
@@ -98,7 +98,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
   const _updateUser = async (updatedUser: User) => {
     await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
-    
+
     const hasRoles = updatedUser.roles && updatedUser.roles.length > 0;
     const hasIndustries = updatedUser.industries && updatedUser.industries.length > 0;
     const onboardingCompleted = hasRoles && hasIndustries;
@@ -209,6 +209,17 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   };
 
   useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener('auth_session_expired', () => {
+      console.log('[AuthContext] Session expired event received, logging out...');
+      logout();
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
+  useEffect(() => {
     const loadAuthState = async () => {
       try {
         const userJson = await AsyncStorage.getItem('user');
@@ -217,24 +228,37 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         const onboardingComplete = await AsyncStorage.getItem('onboarding_complete');
 
         if (userJson && token) {
-          const user = JSON.parse(userJson);
-          const hasRoles = user.roles && user.roles.length > 0;
-          const hasIndustries = user.industries && user.industries.length > 0;
+          // ─── Verify Token with Backend ─────────────────────────────────────
+          try {
+            console.log('[AuthContext] Verifying token...');
+            const verifiedUser = await api.getMe(token) as User;
+            console.log('[AuthContext] Token verified for:', verifiedUser.name);
 
-          setAuthState({
-            user,
-            token,
-            refreshToken,
-            isAuthenticated: true,
-            isLoading: false,
-            hasCompletedOnboarding: onboardingComplete === 'true' || (hasRoles && hasIndustries),
-          });
+            // Update local user data with fresh data from server
+            const user = verifiedUser;
+            const hasRoles = user.roles && user.roles.length > 0;
+            const hasIndustries = user.industries && user.industries.length > 0;
 
-          registerPushToken(token);
+            setAuthState({
+              user,
+              token,
+              refreshToken,
+              isAuthenticated: true,
+              isLoading: false,
+              hasCompletedOnboarding: onboardingComplete === 'true' || (hasRoles && hasIndustries),
+            });
+
+            registerPushToken(token);
+          } catch (error) {
+            console.error('[AuthContext] Token verification failed:', error);
+            // Token is invalid/expired -> Clear auth state
+            await logout();
+          }
         } else {
           setAuthState(prev => ({ ...prev, isLoading: false }));
         }
       } catch (err) {
+        console.error('[AuthContext] Error loading auth state:', err);
         setAuthState(prev => ({ ...prev, isLoading: false }));
       }
     };

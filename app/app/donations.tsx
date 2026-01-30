@@ -79,7 +79,7 @@ export default function DonationsScreen() {
             <Stack.Screen
                 options={{
                     headerShown: true,
-                    headerTitle: 'Donations',
+                    headerTitle: 'Crowd Fund',
                     headerStyle: { backgroundColor: colors.background },
                     headerTintColor: colors.text,
                 }}
@@ -113,7 +113,7 @@ export default function DonationsScreen() {
                 ) : posts.length === 0 ? (
                     <View style={styles.emptyState}>
                         <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                            No donation requests yet. Be the first!
+                            No crowd fund requests yet. Be the first!
                         </Text>
                     </View>
                 ) : (
