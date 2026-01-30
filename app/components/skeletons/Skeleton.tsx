@@ -9,7 +9,7 @@ interface SkeletonProps {
   borderRadius?: number;
 }
 
-export const Skeleton = ({ width, height, style, borderRadius = 4 }: SkeletonProps) => {
+export const Skeleton = ({ width, height, style, borderRadius = 4, backgroundColor }: SkeletonProps & { backgroundColor?: string }) => {
   const { colors } = useTheme();
   const opacity = useRef(new Animated.Value(0.3)).current;
 
@@ -41,7 +41,7 @@ export const Skeleton = ({ width, height, style, borderRadius = 4 }: SkeletonPro
           width: width as any,
           height: height as any,
           borderRadius,
-          backgroundColor: colors.border, 
+          backgroundColor: backgroundColor || colors.border,
           opacity,
         },
         style,

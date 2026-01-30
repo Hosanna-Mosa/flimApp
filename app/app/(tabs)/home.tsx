@@ -156,7 +156,7 @@ export default function HomeScreen() {
         const followedUsersInFeed = mappedPosts
           .filter((p: any) => p.user.isFollowing)
           .map((p: any) => p.user.id);
-        
+
         if (followedUsersInFeed.length > 0) {
           setFollowingIds(prev => {
             const next = new Set(prev);
@@ -331,7 +331,7 @@ export default function HomeScreen() {
         DeviceEventEmitter.emit('user_follow_changed', { userId, following: true });
         return;
       }
-      
+
       setFollowingIds(prev => {
         const next = new Set(prev);
         if (followingIds.has(userId)) {
@@ -547,7 +547,7 @@ export default function HomeScreen() {
         }}
       />
       {loading && page === 0 ? (
-        <View style={{ flex: 1, paddingTop: 10 }}>
+        <View style={{ flex: 1, paddingTop: 10, backgroundColor: colors.background }}>
           {[1, 2, 3].map((i) => (
             <FeedSkeleton key={i} />
           ))}
