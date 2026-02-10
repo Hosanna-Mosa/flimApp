@@ -1,13 +1,21 @@
 const mongoose = require('mongoose');
 const Message = require('../models/Message.model');
+const { encryptMessage, decryptMessage } = require('../utils/messageCrypto');
 
 const createMessage = async ({ senderId, recipientId, content }) => {
-  return Message.create({
+  const message = await Message.create({
     sender: senderId,
     recipient: recipientId,
-    content,
+    content: encryptMessage(content),
     isRead: false
   });
+
+  // Return decrypted content to callers without mutating DB storage.
+  if (message && message.content) {
+    message.content = decryptMessage(message.content);
+  }
+
+  return message;
 };
 
 const getConversation = async (userId, peerId) => {
@@ -32,6 +40,13 @@ const getConversation = async (userId, peerId) => {
     .sort({ createdAt: 1 });
   
   console.log(`[MessageService] Found ${messages.length} messages`);
+
+  for (const message of messages) {
+    if (message && message.content) {
+      message.content = decryptMessage(message.content);
+    }
+  }
+
   return messages;
 };
 
@@ -40,7 +55,7 @@ const deleteMessage = async (messageId, userId) =>
 
 const getConversations = async (userId, searchQuery = '') => {
   const userObjectId = new mongoose.Types.ObjectId(userId);
-  return Message.aggregate([
+  const conversations = await Message.aggregate([
     {
       $match: {
         $or: [{ sender: userObjectId }, { recipient: userObjectId }],
@@ -103,6 +118,14 @@ const getConversations = async (userId, searchQuery = '') => {
     },
     { $sort: { 'lastMessage.createdAt': -1 } },
   ]);
+
+  for (const convo of conversations) {
+    if (convo?.lastMessage?.content) {
+      convo.lastMessage.content = decryptMessage(convo.lastMessage.content);
+    }
+  }
+
+  return conversations;
 };
 
 const getUnreadCount = async (userId) => {
