@@ -23,7 +23,7 @@
       }
     },
     "android": {
-      "package": "app.rork.filmy",
+      "package": "FilmyConnect",
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon_new.jpg",
@@ -76,7 +76,7 @@
       ]
     ],
     "extra": {
-      "apiUrl": "http://10.218.223.150:8000",
+      "apiUrl": "http://https://api.filmyconnect24.com",
       "router": {},
       "expo-navigation-bar": {
         "position": "absolute",
