@@ -30,6 +30,11 @@ const updateMe = async (userId, payload) => {
     }
   }
 
+  // Handle empty username (don't update if empty string)
+  if (payload.username === '') {
+    delete payload.username;
+  }
+
   // Check for duplicate username if username is being updated
   if (payload.username) {
     const existingUser = await User.findOne({

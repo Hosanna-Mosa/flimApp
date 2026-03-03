@@ -17,20 +17,20 @@ router.put(
     Joi.object({
       body: Joi.object({
         name: Joi.string(),
-        username: Joi.string().alphanum().min(3).max(30),
+        username: Joi.string().alphanum().min(3).max(30).allow(''),
         email: Joi.string().email().lowercase(),
         phone: Joi.string(),
-        avatar: Joi.string(),
-        bio: Joi.string().max(500),
+        avatar: Joi.string().allow(''),
+        bio: Joi.string().max(500).allow(''),
         roles: Joi.array().items(Joi.string()),
         industries: Joi.array().items(Joi.string()),
         experience: Joi.number(),
-        location: Joi.string(),
+        location: Joi.string().allow(''),
         portfolio: Joi.array().items(
           Joi.object({
-            title: Joi.string(),
-            type: Joi.string(),
-            url: Joi.string(),
+            title: Joi.string().allow(''),
+            type: Joi.string().allow(''),
+            url: Joi.string().allow(''),
           })
         ),
         accountType: Joi.string().valid('public', 'private', 'business'),

@@ -76,7 +76,7 @@
       ]
     ],
     "extra": {
-      "apiUrl": "http://https://api.filmyconnect24.com",
+      "apiUrl": "https://api.filmyconnect24.com",
       "router": {},
       "expo-navigation-bar": {
         "position": "absolute",
