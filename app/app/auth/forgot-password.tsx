@@ -80,6 +80,7 @@ export default function ForgotPasswordScreen() {
                         keyboardType="email-address"
                         autoCapitalize="none"
                         error={error}
+                        editable={!loading}
                     />
 
                     <Button

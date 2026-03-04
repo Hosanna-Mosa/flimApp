@@ -17,6 +17,7 @@ export default function LoginScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const [phone, setPhone] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
 
   const handleContinue = () => {
@@ -25,7 +26,12 @@ export default function LoginScreen() {
       return;
     }
     setError('');
-    router.push(`/otp?phone=${phone}`);
+    setLoading(true);
+    // Add a slight delay to show the loading animation for a smoother transition
+    setTimeout(() => {
+      router.push(`/otp?phone=${phone}`);
+      setLoading(false);
+    }, 500);
   };
 
   return (
@@ -55,9 +61,10 @@ export default function LoginScreen() {
             value={phone}
             onChangeText={setPhone}
             error={error}
+            editable={!loading}
           />
 
-          <Button title="Continue" onPress={handleContinue} size="large" />
+          <Button title="Continue" onPress={handleContinue} size="large" loading={loading} />
 
           <Text style={[styles.terms, { color: colors.textSecondary }]}>
             By continuing, you agree to our Terms of Service and Privacy Policy

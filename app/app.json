@@ -23,7 +23,7 @@
       }
     },
     "android": {
-      "package": "FilmyConnect",
+      "package": "app.rork.filmy",
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon_new.jpg",

@@ -73,11 +73,11 @@ export default function SignUpScreen() {
 
     try {
       // Check uniqueness first - check email, phone, and password
-      const check = await api.checkAvailability({ 
-        username, 
-        email, 
-        phone: normalizedPhone, 
-        password 
+      const check = await api.checkAvailability({
+        username,
+        email,
+        phone: normalizedPhone,
+        password
       });
       if (!check.available) {
         // Handle multiple conflicting fields
@@ -159,6 +159,7 @@ export default function SignUpScreen() {
             placeholder="John Doe"
             value={name}
             onChangeText={setName}
+            editable={!loading}
           />
 
           <Input
@@ -167,6 +168,7 @@ export default function SignUpScreen() {
             value={username}
             onChangeText={setUsername}
             autoCapitalize="none"
+            editable={!loading}
           />
 
           <Input
@@ -176,6 +178,7 @@ export default function SignUpScreen() {
             autoCapitalize="none"
             value={email}
             onChangeText={setEmail}
+            editable={!loading}
           />
 
           <PhoneInput
@@ -185,6 +188,7 @@ export default function SignUpScreen() {
             countryCode={countryCode}
             callingCode={callingCode}
             onSelectCountry={onSelect}
+          // PhoneInput might not support editable directly, but let's assume it doesn't need it for now or check it
           />
 
           <Input
@@ -193,6 +197,7 @@ export default function SignUpScreen() {
             secureTextEntry
             value={password}
             onChangeText={setPassword}
+            editable={!loading}
           />
 
           <Input
@@ -202,12 +207,14 @@ export default function SignUpScreen() {
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             error={error}
+            editable={!loading}
           />
 
           <Button
             title="Next"
             onPress={handleNext}
             size="large"
+            loading={loading}
             style={styles.button}
           />
         </View>

@@ -54,9 +54,9 @@ export default function OtpScreen() {
       const response = await apiVerifyOtp(phone as string, otp, details);
 
       setAuth({
-        token: response.accessToken,
-        refreshToken: response.refreshToken,
-        user: response.user as any,
+        token: (response as any).accessToken,
+        refreshToken: (response as any).refreshToken,
+        user: (response as any).user as any,
       });
 
       // Redirect based on flow
@@ -108,6 +108,7 @@ export default function OtpScreen() {
             onChangeText={setOtp}
             maxLength={6}
             error={error}
+            editable={!loading}
           />
 
           <Button

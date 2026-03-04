@@ -109,6 +109,7 @@ export default function SignInScreen() {
             value={password}
             onChangeText={setPassword}
             error={error}
+            editable={!loading}
           />
 
           <TouchableOpacity
