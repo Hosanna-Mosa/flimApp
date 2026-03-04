@@ -88,28 +88,58 @@ export default function OnboardingScreen() {
         let refreshToken = authRefreshToken;
         let user = authUser;
 
-        // If not authenticated (should not happen if coming from OTP, but handle just in case or if registration flow changes)
+        // If not authenticated (should not happen normally after OTP, but handle just in case)
         if (!accessToken || !user) {
-            // Register logic fallback (legacy) - only if we truly don't have auth
-            const { name, phone, email, password, username } = params;
-            
+          console.log('[Onboarding] Not authenticated, checking registration params...');
+          const { name, phone, email, password, username } = params;
+
+          // Check if we can just log in instead of registering if user was already created during OTP
+          if (phone && password) {
+            try {
+              console.log('[Onboarding] Attempting login fallback for existing user...');
+              const loginResult = await api.loginPassword({
+                phone: phone as string,
+                password: password as string
+              });
+              accessToken = loginResult.accessToken;
+              refreshToken = loginResult.refreshToken;
+              user = loginResult.user as any;
+              console.log('[Onboarding] Login fallback successful');
+
+              // Update Auth Context since we were missing it
+              setAuth({
+                token: accessToken!,
+                refreshToken: refreshToken || '',
+                user: user as any
+              });
+            } catch (loginErr) {
+              console.error('[Onboarding] Login fallback failed:', loginErr);
+            }
+          }
+
+          // If still no token, only then try to register
+          if (!accessToken || !user) {
             // Validate required fields before attempting registration
             if (!name || !phone || !email || !password) {
               throw new Error('Missing required registration fields. Please start over from signup.');
             }
-            
+
             const payload = {
-            name: name as string,
-            phone: phone as string,
-            email: email as string,
-            password: password as string,
-            username: username as string,
-            roles: selectedRoles,
-            industries: selectedIndustries
+              name: name as string,
+              phone: phone as string,
+              email: email as string,
+              password: password as string,
+              username: username as string,
+              roles: selectedRoles,
+              industries: selectedIndustries
             };
 
             // Check availability before registering
-            const check = await api.checkAvailability({ email, phone, password });
+            const check = await api.checkAvailability({
+              email: email as string,
+              phone: phone as string,
+              password: password as string
+            });
             if (!check.available) {
               const fieldLabels: Record<string, string> = {
                 email: 'Email',
@@ -129,18 +159,19 @@ export default function OnboardingScreen() {
             accessToken = response.accessToken;
             refreshToken = response.refreshToken;
             user = response.user as any;
+          }
         } else {
-           // User is already authenticated (via OTP), just update profile
-           await api.updateMe({
-             roles: selectedRoles,
-             industries: selectedIndustries
-           }, accessToken!);
-           
-           // Update local user object
-           if (user) {
-             (user as any).roles = selectedRoles;
-             (user as any).industries = selectedIndustries;
-           }
+          // User is already authenticated (via OTP), just update profile
+          await api.updateMe({
+            roles: selectedRoles,
+            industries: selectedIndustries
+          }, accessToken!);
+
+          // Update local user object
+          if (user) {
+            (user as any).roles = selectedRoles;
+            (user as any).industries = selectedIndustries;
+          }
         }
 
         // 2. Upload Avatar if selected
@@ -176,11 +207,11 @@ export default function OnboardingScreen() {
 
         // Update Auth Context
         if (accessToken && user) {
-            setAuth({
+          setAuth({
             token: accessToken,
             refreshToken: refreshToken || '', // Refresh token might not be needed if just updating? but good to keep
             user: user as any,
-            });
+          });
         }
 
         router.replace('/home');
@@ -226,7 +257,7 @@ export default function OnboardingScreen() {
         <View style={styles.listContainer}>
           {step === 1 ? (
             <View style={styles.avatarContainer}>
-              <TouchableOpacity onPress={handlePickImage} style={styles.avatarWrapper}>
+              <TouchableOpacity onPress={handlePickImage} style={styles.avatarWrapper} disabled={loading}>
                 {avatar ? (
                   <Image source={{ uri: avatar }} style={styles.avatar} contentFit="cover" />
                 ) : (
@@ -249,6 +280,7 @@ export default function OnboardingScreen() {
                     <TouchableOpacity
                       key={index}
                       onPress={() => setAvatar(uri)}
+                      disabled={loading}
                       style={[
                         styles.defaultAvatarItem,
                         avatar === uri && { borderColor: colors.primary, borderWidth: 2 }

@@ -3,7 +3,7 @@
 import Constants from 'expo-constants';
 import { DeviceEventEmitter } from 'react-native';
 
-const API_BASE = Constants.expoConfig?.extra?.apiUrl ;
+const API_BASE = Constants.expoConfig?.extra?.apiUrl;
 
 
 console.log('[API] Initializing with Base URL:', API_BASE);
@@ -72,7 +72,7 @@ const request = async <T>(
     const json = await res.json().catch(() => ({}));
 
     if (!res.ok) {
-      if (res.status === 401) {
+      if (res.status === 401 && !path.includes('/auth/send-otp') && !path.includes('/auth/verify-otp') && !path.includes('/auth/login')) {
         console.log('[API] 🔴 401 Unauthorized - Emitting session expired event');
         DeviceEventEmitter.emit('auth_session_expired');
       }
