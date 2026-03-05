@@ -34,6 +34,10 @@ const sendOtp = async (req, res, next) => {
   } catch (error) {
     console.error('[Twilio Error] Send OTP:', error);
 
+    // Twilio's 401 "Authenticate" error means credentials in .env are likely invalid/expired.
+    // We map this to 500 to prevent the frontend from thinking the user's session expired and logging them out.
+    if (error.status === 401) {
+      return fail(res, 'Sms service authentication failed. Please contact support to check Twilio credentials.', 500);
     // ✅ DEVELOPER BYPASS: If Twilio credentials fail in dev, allow moving forward
     const isDev = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV || process.env.NODE_ENV === 'undefined';
     if (isDev && (error.status === 401 || error.code === 20003 || error.message?.includes('Authenticate'))) {
@@ -48,6 +52,7 @@ const sendOtp = async (req, res, next) => {
     if (error.code === 60200 || error.code === 21211) {
       return fail(res, 'Invalid phone number format. Please use E.164 format (e.g. +1234567890)', 400);
     }
+
     return next(error);
   }
 };

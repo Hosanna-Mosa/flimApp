@@ -16,21 +16,21 @@ router.put(
   validate(
     Joi.object({
       body: Joi.object({
-        name: Joi.string(),
-        username: Joi.string().alphanum().min(3).max(30).allow(''),
-        email: Joi.string().email().lowercase(),
-        phone: Joi.string(),
-        avatar: Joi.string().allow(''),
-        bio: Joi.string().max(500).allow(''),
+        name: Joi.string().allow('', null),
+        username: Joi.string().alphanum().min(3).max(30).allow('', null),
+        email: Joi.string().email().lowercase().allow('', null),
+        phone: Joi.string().allow('', null),
+        avatar: Joi.string().allow('', null),
+        bio: Joi.string().max(500).allow('', null),
         roles: Joi.array().items(Joi.string()),
         industries: Joi.array().items(Joi.string()),
         experience: Joi.number(),
-        location: Joi.string().allow(''),
+        location: Joi.string().allow('', null),
         portfolio: Joi.array().items(
           Joi.object({
-            title: Joi.string().allow(''),
-            type: Joi.string().allow(''),
-            url: Joi.string().allow(''),
+            title: Joi.string().allow('', null),
+            type: Joi.string().allow('', null),
+            url: Joi.string().allow('', null),
           })
         ),
         accountType: Joi.string().valid('public', 'private', 'business'),

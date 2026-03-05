@@ -154,12 +154,12 @@ export default function OnboardingScreen() {
                 throw new Error(check.message || 'One or more fields are already registered.');
               }
             }
-
-            const response = await api.register(payload);
-            accessToken = response.accessToken;
-            refreshToken = response.refreshToken;
-            user = response.user as any;
           }
+
+          const response = await api.register(payload);
+          accessToken = response.accessToken;
+          refreshToken = response.refreshToken;
+          user = response.user as any;
         } else {
           // User is already authenticated (via OTP), just update profile
           await api.updateMe({
@@ -207,10 +207,17 @@ export default function OnboardingScreen() {
 
         // Update Auth Context
         if (accessToken && user) {
-          setAuth({
+          const updatedUser = {
+            ...user,
+            roles: (user as any).roles || selectedRoles,
+            industries: (user as any).industries || selectedIndustries,
+            avatar: (user as any).avatar || finalAvatarUrl
+          };
+
+          await setAuth({
             token: accessToken,
-            refreshToken: refreshToken || '', // Refresh token might not be needed if just updating? but good to keep
-            user: user as any,
+            refreshToken: refreshToken || '',
+            user: updatedUser as any,
           });
         }
 

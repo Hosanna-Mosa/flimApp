@@ -19,6 +19,7 @@ export default function SettingsScreen() {
   const { user, updateProfile } = useAuth();
   const [isUpdatingPrivate, setIsUpdatingPrivate] = useState(false);
 
+  const [isTogglingPrivate, setIsTogglingPrivate] = React.useState(false);
   const togglePrivateAccount = async () => {
     if (!user || isUpdatingPrivate) return;
 
@@ -28,6 +29,7 @@ export default function SettingsScreen() {
     const newAccountType = currentAccountType === 'private' ? 'public' : 'private';
 
     try {
+      setIsTogglingPrivate(true);
       await updateProfile({ accountType: newAccountType });
     } catch (error) {
       console.error('Failed to update account type:', error);
@@ -257,6 +259,7 @@ export default function SettingsScreen() {
                     ? colors.primary
                     : colors.surface,
                 },
+                isTogglingPrivate && { opacity: 0.5 }
               ]}
               onPress={togglePrivateAccount}
               disabled={isUpdatingPrivate}
