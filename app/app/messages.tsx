@@ -16,7 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { apiGetConversations } from '@/utils/api';
+import api from '@/utils/api';
 import { getAvatarUrl } from '@/utils/avatar';
 import { MessageSkeleton } from '@/components/skeletons/MessageSkeleton';
 
@@ -50,13 +50,9 @@ export default function MessagesScreen() {
 
       try {
         if (!refreshing) setLoading(true);
-        let data: any = await apiGetConversations(token, query);
-
-        if (data && data.success && Array.isArray(data.data)) {
-          data = data.data;
-        } else if (data && data.data && Array.isArray(data.data)) {
-          data = data.data;
-        }
+        // Using the api wrapper handles response unwrapping
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const data: any = await api.getConversations(token, query);
 
         if (Array.isArray(data)) {
           const formatted: ChatItem[] = data.map((item: any) => ({

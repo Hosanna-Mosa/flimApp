@@ -17,7 +17,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSocket } from '@/contexts/SocketContext';
 import { useNotifications } from '@/contexts/NotificationContext';
-import { apiNotifications, apiMarkAllNotificationsRead, apiAcceptFollowRequest, apiRejectFollowRequest } from '@/utils/api';
+import api from '@/utils/api';
 import { NotificationSkeleton } from '@/components/skeletons/NotificationSkeleton';
 
 type NotificationItem = {
@@ -48,14 +48,9 @@ export default function NotificationsScreen() {
     if (!token) return;
     try {
       if (showLoadingState) setLoading(true);
+      // Using the api wrapper handles response unwrapping
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let data: any = await apiNotifications(token);
-
-      if (data && data.success && Array.isArray(data.data)) {
-        data = data.data;
-      } else if (data && data.data && Array.isArray(data.data)) {
-        data = data.data;
-      }
+      const data: any = await api.getNotifications(token);
 
       if (Array.isArray(data)) {
         // Filter out 'message' type notifications as requested
@@ -92,7 +87,7 @@ export default function NotificationsScreen() {
         if (!token) return;
         try {
           // Mark all notifications as read on backend
-          await apiMarkAllNotificationsRead(token);
+          await api.markAllNotificationsRead(token);
           // Reset the badge count to 0
           refreshUnreadCount();
           // Update local state to show all as read
@@ -147,7 +142,7 @@ export default function NotificationsScreen() {
 
     setProcessingRequest(notification.id);
     try {
-      await apiAcceptFollowRequest(userId, token);
+      await api.acceptFollowRequest(userId, token);
       // Remove the notification after accepting
       setNotifications((prev) => prev.filter((n) => n.id !== notification.id));
       refreshUnreadCount();
@@ -166,7 +161,7 @@ export default function NotificationsScreen() {
 
     setProcessingRequest(notification.id);
     try {
-      await apiRejectFollowRequest(userId, token);
+      await api.rejectFollowRequest(userId, token);
       // Remove the notification after rejecting
       setNotifications((prev) => prev.filter((n) => n.id !== notification.id));
       refreshUnreadCount();

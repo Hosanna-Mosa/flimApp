@@ -12,7 +12,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 import Input from '@/components/Input';
 import Button from '@/components/Button';
-import { apiResetPassword } from '@/utils/api';
+import api from '@/utils/api';
 
 export default function ResetPasswordScreen() {
     const router = useRouter();
@@ -39,7 +39,7 @@ export default function ResetPasswordScreen() {
         setError('');
 
         try {
-            await apiResetPassword(email, otp, newPassword);
+            await api.resetPassword(email, otp, newPassword);
             Alert.alert('Success', 'Password reset successfully. Please login with new password.', [
                 { text: 'OK', onPress: () => router.dismissAll() } // Or navigate to signin
             ]);

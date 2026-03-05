@@ -15,7 +15,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import Input from '@/components/Input';
 import Button from '@/components/Button';
-import { apiVerifyOtp } from '@/utils/api';
+import api from '@/utils/api';
 
 export default function OtpScreen() {
   const router = useRouter();
@@ -51,7 +51,7 @@ export default function OtpScreen() {
         password: password as string
       } : undefined;
 
-      const response = await apiVerifyOtp(phone as string, otp, details);
+      const response = await api.verifyOtp(phone as string, otp, details);
 
       setAuth({
         token: (response as any).accessToken,

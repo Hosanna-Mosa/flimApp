@@ -172,6 +172,17 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     token: string;
     refreshToken: string;
   }) => {
+    console.log('[AuthContext] setAuth called with:', { 
+      hasUser: !!data.user, 
+      hasToken: !!data.token, 
+      hasRefreshToken: !!data.refreshToken 
+    });
+
+    if (!data.user) {
+      console.error('[AuthContext] setAuth: user data is missing!', data);
+      return;
+    }
+
     await AsyncStorage.setItem('user', JSON.stringify(data.user));
     await AsyncStorage.setItem('token', data.token);
     await AsyncStorage.setItem('refreshToken', data.refreshToken);

@@ -5,7 +5,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Platform } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { apiGetTrendingFeed } from '@/utils/api';
+import api from '@/utils/api';
 import { Image } from 'expo-image';
 import { Play, Music, FileText, Film, Flame } from 'lucide-react-native';
 import { TrendingSkeleton } from '@/components/skeletons/TrendingSkeleton';
@@ -22,11 +22,12 @@ export default function TrendingScreen() {
 
   const fetchTrendingPosts = async () => {
     try {
-      const response = await apiGetTrendingFeed(0, 20, token || undefined) as any;
-      if (response && response.data) {
+      // Using the api wrapper handles response unwrapping
+      const data = await api.getTrendingFeed(0, 20, token || undefined) as any[];
+      if (Array.isArray(data)) {
         // Map backend posts to local structure if needed, or use as is
         // Currently the UI expects: id, thumbnail/mediaUrl, caption, type, likes
-        const mappedPosts = response.data.map((post: any) => ({
+        const mappedPosts = data.map((post: any) => ({
           id: post._id,
           thumbnailUrl: post.thumbnailUrl,
           mediaUrl: post.mediaUrl,
