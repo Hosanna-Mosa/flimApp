@@ -90,15 +90,15 @@ export default function OnboardingScreen() {
 
         // If not authenticated (should not happen if coming from OTP, but handle just in case or if registration flow changes)
         if (!accessToken || !user) {
-            // Register logic fallback (legacy) - only if we truly don't have auth
-            const { name, phone, email, password, username } = params;
-            
-            // Validate required fields before attempting registration
-            if (!name || !phone || !email || !password) {
-              throw new Error('Missing required registration fields. Please start over from signup.');
-            }
-            
-            const payload = {
+          // Register logic fallback (legacy) - only if we truly don't have auth
+          const { name, phone, email, password, username } = params;
+
+          // Validate required fields before attempting registration
+          if (!name || !phone || !email || !password) {
+            throw new Error('Missing required registration fields. Please start over from signup.');
+          }
+
+          const payload = {
             name: name as string,
             phone: phone as string,
             email: email as string,
@@ -106,41 +106,41 @@ export default function OnboardingScreen() {
             username: username as string,
             roles: selectedRoles,
             industries: selectedIndustries
+          };
+
+          // Check availability before registering
+          const check = await api.checkAvailability({ email, phone, password });
+          if (!check.available) {
+            const fieldLabels: Record<string, string> = {
+              email: 'Email',
+              phone: 'Phone number',
+              password: 'Password',
+              username: 'Username'
             };
-
-            // Check availability before registering
-            const check = await api.checkAvailability({ email, phone, password });
-            if (!check.available) {
-              const fieldLabels: Record<string, string> = {
-                email: 'Email',
-                phone: 'Phone number',
-                password: 'Password',
-                username: 'Username'
-              };
-              if (check.fields && Array.isArray(check.fields)) {
-                const conflictMessages = check.fields.map((field: string) => fieldLabels[field] || field);
-                throw new Error(`Registration failed. The following ${conflictMessages.length === 1 ? 'field is' : 'fields are'} already registered: ${conflictMessages.join(', ')}`);
-              } else {
-                throw new Error(check.message || 'One or more fields are already registered.');
-              }
+            if (check.fields && Array.isArray(check.fields)) {
+              const conflictMessages = check.fields.map((field: string) => fieldLabels[field] || field);
+              throw new Error(`Registration failed. The following ${conflictMessages.length === 1 ? 'field is' : 'fields are'} already registered: ${conflictMessages.join(', ')}`);
+            } else {
+              throw new Error(check.message || 'One or more fields are already registered.');
             }
+          }
 
-            const response = await api.register(payload);
-            accessToken = response.accessToken;
-            refreshToken = response.refreshToken;
-            user = response.user as any;
+          const response = await api.register(payload);
+          accessToken = response.accessToken;
+          refreshToken = response.refreshToken;
+          user = response.user as any;
         } else {
-           // User is already authenticated (via OTP), just update profile
-           await api.updateMe({
-             roles: selectedRoles,
-             industries: selectedIndustries
-           }, accessToken!);
-           
-           // Update local user object
-           if (user) {
-             (user as any).roles = selectedRoles;
-             (user as any).industries = selectedIndustries;
-           }
+          // User is already authenticated (via OTP), just update profile
+          await api.updateMe({
+            roles: selectedRoles,
+            industries: selectedIndustries
+          }, accessToken!);
+
+          // Update local user object
+          if (user) {
+            (user as any).roles = selectedRoles;
+            (user as any).industries = selectedIndustries;
+          }
         }
 
         // 2. Upload Avatar if selected
@@ -176,11 +176,18 @@ export default function OnboardingScreen() {
 
         // Update Auth Context
         if (accessToken && user) {
-            setAuth({
+          const updatedUser = {
+            ...user,
+            roles: (user as any).roles || selectedRoles,
+            industries: (user as any).industries || selectedIndustries,
+            avatar: (user as any).avatar || finalAvatarUrl
+          };
+
+          await setAuth({
             token: accessToken,
-            refreshToken: refreshToken || '', // Refresh token might not be needed if just updating? but good to keep
-            user: user as any,
-            });
+            refreshToken: refreshToken || '',
+            user: updatedUser as any,
+          });
         }
 
         router.replace('/home');

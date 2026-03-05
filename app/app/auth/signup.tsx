@@ -73,11 +73,11 @@ export default function SignUpScreen() {
 
     try {
       // Check uniqueness first - check email, phone, and password
-      const check = await api.checkAvailability({ 
-        username, 
-        email, 
-        phone: normalizedPhone, 
-        password 
+      const check = await api.checkAvailability({
+        username,
+        email,
+        phone: normalizedPhone,
+        password
       });
       if (!check.available) {
         // Handle multiple conflicting fields
@@ -208,6 +208,7 @@ export default function SignUpScreen() {
             title="Next"
             onPress={handleNext}
             size="large"
+            loading={loading}
             style={styles.button}
           />
         </View>

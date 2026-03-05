@@ -53,10 +53,11 @@ export default function OtpScreen() {
 
       const response = await apiVerifyOtp(phone as string, otp, details);
 
-      setAuth({
-        token: response.accessToken,
-        refreshToken: response.refreshToken,
-        user: response.user as any,
+      const responseValue = response as any;
+      await setAuth({
+        token: responseValue.accessToken,
+        refreshToken: responseValue.refreshToken,
+        user: responseValue.user as any,
       });
 
       // Redirect based on flow

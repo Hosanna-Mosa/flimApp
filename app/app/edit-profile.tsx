@@ -20,7 +20,7 @@ import Button from '@/components/Button';
 export default function EditProfileScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, token } = useAuth();
   const [name, setName] = useState<string>(user?.name || '');
   const [username, setUsername] = useState<string>(user?.username || '');
   const [bio, setBio] = useState<string>(user?.bio || '');
@@ -58,7 +58,27 @@ export default function EditProfileScreen() {
   const handleSave = async () => {
     try {
       setSaving(true);
-      
+
+      let finalAvatarUrl = avatar;
+
+      // If avatar has changed and is a local file, upload it
+      if (avatar && avatar !== user?.avatar && !avatar.startsWith('http')) {
+        try {
+          const { uploadMediaToCloudinary } = require('@/utils/media');
+          const uploadResult = await uploadMediaToCloudinary(
+            { uri: avatar },
+            'image',
+            token || ''
+          );
+          if (uploadResult && uploadResult.url) {
+            finalAvatarUrl = uploadResult.url;
+          }
+        } catch (uploadError: any) {
+          console.error('Avatar upload failed:', uploadError);
+          // Optional: Ask user if they want to continue without avatar or stop
+        }
+      }
+
       // Prepare update payload
       const updates = {
         name,
@@ -66,27 +86,24 @@ export default function EditProfileScreen() {
         bio,
         location,
         experience: parseInt(experience) || 0,
-        avatar,
+        avatar: finalAvatarUrl,
       };
-      
+
       // console.log('[EditProfile] Saving updates:', updates);
-      
+
       // Call updateProfile which now calls the backend
       await updateProfile(updates);
-      
+
       Alert.alert('Success', 'Profile updated successfully!', [
         {
           text: 'OK',
           onPress: () => router.back(),
         },
       ]);
-    } catch (error) {
-      // console.error('[EditProfile] Error saving:', error);
-      Alert.alert(
-        'Error',
-        'Failed to update profile. Please try again.',
-        [{ text: 'OK' }]
-      );
+    } catch (error: any) {
+      console.error('[EditProfile] Error saving:', error);
+      const message = error.message || 'Failed to update profile. Please try again.';
+      Alert.alert('Error', message, [{ text: 'OK' }]);
     } finally {
       setSaving(false);
     }
