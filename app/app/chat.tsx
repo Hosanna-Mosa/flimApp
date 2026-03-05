@@ -17,7 +17,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSocket } from '@/contexts/SocketContext';
-import { apiConversation, apiDeleteMessage, apiGetUser } from '@/utils/api';
+import api from '@/utils/api';
 import { getAvatarUrl } from '@/utils/avatar';
 
 interface ChatMessage {
@@ -51,7 +51,7 @@ export default function ChatScreen() {
       const loadUserData = async () => {
         try {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const userData: any = await apiGetUser(userId, token);
+          const userData: any = await api.getUser(userId, token);
           if (userData) {
             setUserAvatar(userData.avatar || '');
             if (userData.name) {
@@ -72,20 +72,9 @@ export default function ChatScreen() {
       const loadMessages = async () => {
         try {
           console.log('[CHAT] Loading messages for userId:', userId);
+          // Using the api wrapper handles response unwrapping (e.g. res.data.data or res.data)
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const response: any = await apiConversation(userId, token);
-          console.log('[CHAT] API Response:', response);
-
-          // Handle both wrapped and unwrapped responses
-          let history: any[] = [];
-          if (response && response.success && Array.isArray(response.data)) {
-            history = response.data;
-          } else if (Array.isArray(response)) {
-            history = response;
-          } else if (response && response.data && Array.isArray(response.data)) {
-            history = response.data;
-          }
-
+          const history: any[] = await api.conversation(userId, token) || [];
           console.log('[CHAT] Extracted messages:', history.length);
 
           if (history.length > 0) {
@@ -116,7 +105,6 @@ export default function ChatScreen() {
 
       const markRead = async () => {
         try {
-          const api = require('@/utils/api').default; // Dynamic require to avoid cycles if any
           await api.markConversationRead(userId, token);
           // We should also refresh the global badge
           // But MessageContext polls, so it should update automatically in 5s
@@ -302,7 +290,7 @@ export default function ChatScreen() {
         onPress: async () => {
           try {
             if (!token) return;
-            await apiDeleteMessage(messageId, token);
+            await api.deleteMessage(messageId, token);
             setMessages((prev) => prev.filter((m) => m.id !== messageId));
           } catch (error) {
             console.error('Failed to delete message:', error);

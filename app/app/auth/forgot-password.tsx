@@ -14,7 +14,7 @@ import { ArrowLeft } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import Input from '@/components/Input';
 import Button from '@/components/Button';
-import { apiForgotPassword } from '@/utils/api';
+import api from '@/utils/api';
 
 export default function ForgotPasswordScreen() {
     const router = useRouter();
@@ -34,7 +34,7 @@ export default function ForgotPasswordScreen() {
         setError('');
 
         try {
-            await apiForgotPassword(email);
+            await api.forgotPassword(email);
             Alert.alert('Success', 'OTP sent to your email');
             router.push({
                 pathname: '/auth/reset-password',

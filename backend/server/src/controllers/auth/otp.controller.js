@@ -37,15 +37,16 @@ const sendOtp = async (req, res, next) => {
     // Twilio's 401 "Authenticate" error means credentials in .env are likely invalid/expired.
     // We map this to 500 to prevent the frontend from thinking the user's session expired and logging them out.
     if (error.status === 401) {
+      // ✅ DEVELOPER BYPASS: If Twilio credentials fail in dev, allow moving forward
+      const isDev = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV || process.env.NODE_ENV === 'undefined';
+      if (isDev && (error.code === 20003 || error.message?.includes('Authenticate'))) {
+        console.warn('⚠️ [DEV WARNING] Twilio auth failed. Using fallback OTP bypass: 123456');
+        return success(res, {
+          message: 'OTP sent (Bypass Mode)',
+          note: 'Twilio auth failed, use 123456'
+        });
+      }
       return fail(res, 'Sms service authentication failed. Please contact support to check Twilio credentials.', 500);
-    // ✅ DEVELOPER BYPASS: If Twilio credentials fail in dev, allow moving forward
-    const isDev = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV || process.env.NODE_ENV === 'undefined';
-    if (isDev && (error.status === 401 || error.code === 20003 || error.message?.includes('Authenticate'))) {
-      console.warn('⚠️ [DEV WARNING] Twilio auth failed. Using fallback OTP bypass: 123456');
-      return success(res, {
-        message: 'OTP sent (Bypass Mode)',
-        note: 'Twilio auth failed, use 123456'
-      });
     }
 
     // Handle specific Twilio errors
@@ -149,6 +150,9 @@ const verifyOtp = async (req, res, next) => {
     user.refreshTokens = user.refreshTokens || [];
     user.refreshTokens.push(refreshToken);
     await user.save();
+
+    console.log(`[Auth Success] OTP verified for ${phone}. Tokens generated.`);
+    console.log(`[DEBUG] Response user id: ${user._id}`);
 
     return success(res, {
       user: {

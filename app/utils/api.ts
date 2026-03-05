@@ -276,6 +276,8 @@ export const api = {
   checkAvailability: (params: { username?: string; email?: string; phone?: string; password?: string }) => unwrap(apiCheckAvailability(params)),
   register: (p: any) => unwrap(apiRegister(p)),
   logout: (ref: string, tok?: string) => request('/auth/logout', { method: 'POST', body: { refreshToken: ref }, token: tok }),
+  forgotPassword: (email: string) => unwrap(apiForgotPassword(email)),
+  resetPassword: (email: string, otp: string, pass: string) => unwrap(apiResetPassword(email, otp, pass)),
 
   // Users
   me: (t?: string) => unwrap(apiGetMe(t)),
