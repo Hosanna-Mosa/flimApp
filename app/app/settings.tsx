@@ -1,5 +1,12 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { Moon, Sun, Bell, Shield, Lock, ChevronRight, User, BadgeCheck, Info } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -10,11 +17,13 @@ export default function SettingsScreen() {
   const router = useRouter();
   const { colors, changeTheme, isDark } = useTheme();
   const { user, updateProfile } = useAuth();
+  const [isUpdatingPrivate, setIsUpdatingPrivate] = useState(false);
 
   const [isTogglingPrivate, setIsTogglingPrivate] = React.useState(false);
   const togglePrivateAccount = async () => {
-    if (!user || isTogglingPrivate) return;
+    if (!user || isUpdatingPrivate) return;
 
+    setIsUpdatingPrivate(true);
     // Map between frontend isPrivate and backend accountType
     const currentAccountType = (user as any).accountType || (user.isPrivate ? 'private' : 'public');
     const newAccountType = currentAccountType === 'private' ? 'public' : 'private';
@@ -25,7 +34,7 @@ export default function SettingsScreen() {
     } catch (error) {
       console.error('Failed to update account type:', error);
     } finally {
-      setIsTogglingPrivate(false);
+      setIsUpdatingPrivate(false);
     }
   };
 
@@ -253,24 +262,23 @@ export default function SettingsScreen() {
                 isTogglingPrivate && { opacity: 0.5 }
               ]}
               onPress={togglePrivateAccount}
-              disabled={isTogglingPrivate}
+              disabled={isUpdatingPrivate}
             >
-              <View
-                style={[
-                  styles.toggleThumb,
-                  {
-                    backgroundColor: ((user as any)?.accountType === 'private' || user?.isPrivate)
-                      ? '#000000'
-                      : colors.border,
-                  },
-                  ((user as any)?.accountType === 'private' || user?.isPrivate) && styles.toggleThumbActive,
-                  { alignItems: 'center', justifyContent: 'center' }
-                ]}
-              >
-                {isTogglingPrivate && (
-                  <ActivityIndicator size="small" color={((user as any)?.accountType === 'private' || user?.isPrivate) ? '#000000' : colors.primary} />
-                )}
-              </View>
+              {isUpdatingPrivate ? (
+                <ActivityIndicator size="small" color={((user as any)?.accountType === 'private' || user?.isPrivate) ? '#000000' : colors.primary} />
+              ) : (
+                <View
+                  style={[
+                    styles.toggleThumb,
+                    {
+                      backgroundColor: ((user as any)?.accountType === 'private' || user?.isPrivate)
+                        ? '#000000'
+                        : colors.border,
+                    },
+                    ((user as any)?.accountType === 'private' || user?.isPrivate) && styles.toggleThumbActive,
+                  ]}
+                />
+              )}
             </TouchableOpacity>
           </View>
 

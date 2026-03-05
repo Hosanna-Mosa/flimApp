@@ -75,7 +75,7 @@ export default function ChatScreen() {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const response: any = await apiConversation(userId, token);
           console.log('[CHAT] API Response:', response);
-          
+
           // Handle both wrapped and unwrapped responses
           let history: any[] = [];
           if (response && response.success && Array.isArray(response.data)) {
@@ -85,9 +85,9 @@ export default function ChatScreen() {
           } else if (response && response.data && Array.isArray(response.data)) {
             history = response.data;
           }
-          
+
           console.log('[CHAT] Extracted messages:', history.length);
-          
+
           if (history.length > 0) {
             const formatted = history.map((msg: any) => {
               const sender = (msg.sender && typeof msg.sender === 'object') ? msg.sender._id : msg.sender;
@@ -188,7 +188,7 @@ export default function ChatScreen() {
       setMessages((prev) => {
         // Remove optimistic message if exists (by content match or temp ID)
         const filtered = prev.filter(m => !m.id.startsWith('temp-') || m.message !== message.content);
-        
+
         const exists = filtered.some(m => m.id === (message._id || message.id));
         if (exists) {
           console.log('[CHAT] Message already exists, skipping');
@@ -212,7 +212,7 @@ export default function ChatScreen() {
         console.log('[CHAT] Adding new message to state:', newMessage);
         return [...filtered, newMessage];
       });
-      
+
       // Scroll to bottom after adding message
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
@@ -269,7 +269,7 @@ export default function ChatScreen() {
     // Emit message
     socket.emit('send_message', payload);
     console.log('[SEND] socket.emit(send_message) called');
-    
+
     // Add optimistic message immediately (will be replaced by message_sent event)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const currentUserId = user?.id || (user as any)?._id;
@@ -284,9 +284,9 @@ export default function ChatScreen() {
       }),
       status: 'sent',
     };
-    
+
     setMessages((prev) => [...prev, optimisticMessage]);
-    
+
     // Scroll to bottom
     setTimeout(() => {
       flatListRef.current?.scrollToEnd({ animated: true });
@@ -334,7 +334,7 @@ export default function ChatScreen() {
             activeOpacity={0.7}
           >
             <Image
-              source={{ 
+              source={{
                 uri: getAvatarUrl(userAvatar, userId, userName, 40)
               }}
               style={styles.headerAvatar}
@@ -346,10 +346,11 @@ export default function ChatScreen() {
       </View>
       <KeyboardAvoidingView
         style={[styles.container, { backgroundColor: colors.background }]}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 50 + insets.top : 0}
       >
         <FlatList
+          style={{ flex: 1 }}
           ref={flatListRef}
           data={messages}
           keyExtractor={(item) => item.id}

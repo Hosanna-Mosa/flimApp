@@ -88,40 +88,71 @@ export default function OnboardingScreen() {
         let refreshToken = authRefreshToken;
         let user = authUser;
 
-        // If not authenticated (should not happen if coming from OTP, but handle just in case or if registration flow changes)
+        // If not authenticated (should not happen normally after OTP, but handle just in case)
         if (!accessToken || !user) {
-          // Register logic fallback (legacy) - only if we truly don't have auth
+          console.log('[Onboarding] Not authenticated, checking registration params...');
           const { name, phone, email, password, username } = params;
 
-          // Validate required fields before attempting registration
-          if (!name || !phone || !email || !password) {
-            throw new Error('Missing required registration fields. Please start over from signup.');
+          // Check if we can just log in instead of registering if user was already created during OTP
+          if (phone && password) {
+            try {
+              console.log('[Onboarding] Attempting login fallback for existing user...');
+              const loginResult = await api.loginPassword({
+                phone: phone as string,
+                password: password as string
+              });
+              accessToken = loginResult.accessToken;
+              refreshToken = loginResult.refreshToken;
+              user = loginResult.user as any;
+              console.log('[Onboarding] Login fallback successful');
+
+              // Update Auth Context since we were missing it
+              setAuth({
+                token: accessToken!,
+                refreshToken: refreshToken || '',
+                user: user as any
+              });
+            } catch (loginErr) {
+              console.error('[Onboarding] Login fallback failed:', loginErr);
+            }
           }
 
-          const payload = {
-            name: name as string,
-            phone: phone as string,
-            email: email as string,
-            password: password as string,
-            username: username as string,
-            roles: selectedRoles,
-            industries: selectedIndustries
-          };
+          // If still no token, only then try to register
+          if (!accessToken || !user) {
+            // Validate required fields before attempting registration
+            if (!name || !phone || !email || !password) {
+              throw new Error('Missing required registration fields. Please start over from signup.');
+            }
 
-          // Check availability before registering
-          const check = await api.checkAvailability({ email, phone, password });
-          if (!check.available) {
-            const fieldLabels: Record<string, string> = {
-              email: 'Email',
-              phone: 'Phone number',
-              password: 'Password',
-              username: 'Username'
+            const payload = {
+              name: name as string,
+              phone: phone as string,
+              email: email as string,
+              password: password as string,
+              username: username as string,
+              roles: selectedRoles,
+              industries: selectedIndustries
             };
-            if (check.fields && Array.isArray(check.fields)) {
-              const conflictMessages = check.fields.map((field: string) => fieldLabels[field] || field);
-              throw new Error(`Registration failed. The following ${conflictMessages.length === 1 ? 'field is' : 'fields are'} already registered: ${conflictMessages.join(', ')}`);
-            } else {
-              throw new Error(check.message || 'One or more fields are already registered.');
+
+            // Check availability before registering
+            const check = await api.checkAvailability({
+              email: email as string,
+              phone: phone as string,
+              password: password as string
+            });
+            if (!check.available) {
+              const fieldLabels: Record<string, string> = {
+                email: 'Email',
+                phone: 'Phone number',
+                password: 'Password',
+                username: 'Username'
+              };
+              if (check.fields && Array.isArray(check.fields)) {
+                const conflictMessages = check.fields.map((field: string) => fieldLabels[field] || field);
+                throw new Error(`Registration failed. The following ${conflictMessages.length === 1 ? 'field is' : 'fields are'} already registered: ${conflictMessages.join(', ')}`);
+              } else {
+                throw new Error(check.message || 'One or more fields are already registered.');
+              }
             }
           }
 
@@ -233,7 +264,7 @@ export default function OnboardingScreen() {
         <View style={styles.listContainer}>
           {step === 1 ? (
             <View style={styles.avatarContainer}>
-              <TouchableOpacity onPress={handlePickImage} style={styles.avatarWrapper}>
+              <TouchableOpacity onPress={handlePickImage} style={styles.avatarWrapper} disabled={loading}>
                 {avatar ? (
                   <Image source={{ uri: avatar }} style={styles.avatar} contentFit="cover" />
                 ) : (
@@ -256,6 +287,7 @@ export default function OnboardingScreen() {
                     <TouchableOpacity
                       key={index}
                       onPress={() => setAvatar(uri)}
+                      disabled={loading}
                       style={[
                         styles.defaultAvatarItem,
                         avatar === uri && { borderColor: colors.primary, borderWidth: 2 }

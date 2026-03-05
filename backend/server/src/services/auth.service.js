@@ -9,72 +9,66 @@ const mailService = require('./mail.service');
 
 const OTP_CODE = '123456';
 const checkAvailability = async ({ username, email, phone, password }) => {
-  const conflicts = [];
-  
+  const conflicts = new Set();
+
   // Check username
   if (username) {
     const user = await User.findOne({ username });
-    if (user) conflicts.push('username');
+    if (user) conflicts.add('username');
   }
-  
+
   // Check email
   if (email) {
     const normalizedEmail = email.trim().toLowerCase();
     const user = await User.findOne({ email: normalizedEmail });
-    if (user) conflicts.push('email');
+    if (user) conflicts.add('email');
   }
-  
+
   // Check phone
   if (phone) {
     const user = await User.findOne({ phone });
-    if (user) conflicts.push('phone');
+    if (user) conflicts.add('phone');
   }
-  
+
   // Check password - verify if email or phone already has this password
-  // Note: We check if the email/phone exists AND has a password set
   if (password) {
     if (email) {
       const normalizedEmail = email.trim().toLowerCase();
       const user = await User.findOne({ email: normalizedEmail });
       if (user && user.password) {
-        // Check if the provided password matches the existing password
         const isMatch = await bcrypt.compare(password, user.password);
-        if (isMatch) {
-          conflicts.push('password');
-        }
+        if (isMatch) conflicts.add('password');
       }
     }
     if (phone) {
       const user = await User.findOne({ phone });
       if (user && user.password) {
-        // Check if the provided password matches the existing password
         const isMatch = await bcrypt.compare(password, user.password);
-        if (isMatch) {
-          conflicts.push('password');
-        }
+        if (isMatch) conflicts.add('password');
       }
     }
   }
-  
-  if (conflicts.length > 0) {
-    return { 
-      available: false, 
-      fields: conflicts,
-      message: `The following ${conflicts.length === 1 ? 'field is' : 'fields are'} already registered: ${conflicts.join(', ')}`
+
+  const conflictArray = Array.from(conflicts);
+  if (conflictArray.length > 0) {
+    return {
+      available: false,
+      fields: conflictArray,
+      message: `The following ${conflictArray.length === 1 ? 'field is' : 'fields are'} already registered: ${conflictArray.join(', ')}`
     };
   }
-  
+
   return { available: true };
 };
 
 const register = async ({ name, username, phone, email, password, roles, industries }) => {
   // Comprehensive check for all fields before registration
-  const conflicts = [];
+  const conflictsSet = new Set();
   
   // Check phone
   const existingPhone = await User.findOne({ phone });
   if (existingPhone) {
-    conflicts.push('phone');
+    conflictsSet.add('phone');
   }
 
   // Check email
@@ -82,7 +76,7 @@ const register = async ({ name, username, phone, email, password, roles, industr
     const normalizedEmail = email.trim().toLowerCase();
     const existingEmail = await User.findOne({ email: normalizedEmail });
     if (existingEmail) {
-      conflicts.push('email');
+      conflictsSet.add('email');
     }
   }
 
@@ -94,7 +88,7 @@ const register = async ({ name, username, phone, email, password, roles, industr
       if (user && user.password) {
         const isMatch = await bcrypt.compare(password, user.password);
         if (isMatch) {
-          conflicts.push('password');
+          conflictsSet.add('password');
         }
       }
     }
@@ -103,12 +97,13 @@ const register = async ({ name, username, phone, email, password, roles, industr
       if (user && user.password) {
         const isMatch = await bcrypt.compare(password, user.password);
         if (isMatch) {
-          conflicts.push('password');
+          conflictsSet.add('password');
         }
       }
     }
   }
 
+  const conflicts = Array.from(conflictsSet);
   // If any conflicts found, throw error with details
   if (conflicts.length > 0) {
     const fieldMessages = {

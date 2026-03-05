@@ -76,6 +76,7 @@ export default function ResetPasswordScreen() {
                         onChangeText={setOtp}
                         keyboardType="number-pad"
                         maxLength={6}
+                        editable={!loading}
                     />
 
                     <Input
@@ -84,6 +85,7 @@ export default function ResetPasswordScreen() {
                         secureTextEntry
                         value={newPassword}
                         onChangeText={setNewPassword}
+                        editable={!loading}
                     />
 
                     <Text style={{ color: colors.error, textAlign: 'center' }}>{error}</Text>
