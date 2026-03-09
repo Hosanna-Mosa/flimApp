@@ -3,13 +3,15 @@ const User = require('../models/User.model');
 const Notification = require('../models/Notification.model');
 const { getIo } = require('../utils/socketStore');
 
-const expo = new Expo();
+const expo = new Expo({
+  useFcmV1: true
+});
 
 const registerPushToken = async (userId, token) => {
   console.log('[PUSH][SERVICE] Validating Expo push token...');
   console.log('[PUSH][SERVICE] Token format:', token);
   
-  if (!Expo.isExpoPushToken(token)) {
+  if (!Expo.isExpoPushToken(token) && !token.startsWith("ExponentPushToken")) {
     console.error('[PUSH][SERVICE] ❌ Invalid Expo push token format:', token);
     throw new Error('Invalid Expo push token');
   }
@@ -26,15 +28,22 @@ const registerPushToken = async (userId, token) => {
   console.log('[PUSH][SERVICE] ✅ User found');
   console.log('[PUSH][SERVICE] Existing tokens count:', user.pushTokens?.length || 0);
 
-  // Add token if not exists
-  if (!user.pushTokens.includes(token)) {
-    user.pushTokens.push(token);
-    await user.save();
-    console.log('[PUSH][SERVICE] ✅ New token added and saved to database');
-    console.log('[PUSH][SERVICE] Total tokens for user:', user.pushTokens.length);
-  } else {
-    console.log('[PUSH][SERVICE] ℹ️  Token already exists - no update needed');
-  }
+  // // Add token if not exists
+  // if (!user.pushTokens.includes(token)) {
+  //   user.pushTokens.push(token);
+  //   await user.save();
+  //   console.log('[PUSH][SERVICE] ✅ New token added and saved to database');
+  //   console.log('[PUSH][SERVICE] Total tokens for user:', user.pushTokens.length);
+  // } else {
+  //   console.log('[PUSH][SERVICE] ℹ️  Token already exists - no update needed');
+  // }
+
+  // Replace all previous tokens with the current device token
+  user.pushTokens = [token];
+  await user.save();
+
+  console.log('[PUSH][SERVICE] ✅ Token registered for this device only');
+  console.log('[PUSH][SERVICE] Total tokens for user:', user.pushTokens.length);
   
   return { success: true };
 };
@@ -66,7 +75,7 @@ const sendPushNotifications = async (userId, title, body, data = {}) => {
 
     const messages = [];
     for (const token of user.pushTokens) {
-      if (!Expo.isExpoPushToken(token)) {
+      if (!Expo.isExpoPushToken(token) && !token.startsWith("ExponentPushToken")) {
         console.error('[PUSH][SEND] ❌ Invalid token format (skipping):', token);
         continue;
       }
