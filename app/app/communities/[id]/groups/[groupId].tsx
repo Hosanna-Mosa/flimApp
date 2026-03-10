@@ -137,7 +137,7 @@ export default function GroupChatScreen() {
         groupId: groupId!,
         content: text,
         type: 'text'
-      }, token || undefined) as CommunityPost;
+      }, token || '') as CommunityPost;
 
       // Optimistic update - add message immediately to UI
       setPosts(prev => {
@@ -214,7 +214,7 @@ export default function GroupChatScreen() {
 
   const handleVote = async (postId: string, idx: number) => {
     try {
-      await api.votePoll(id!, postId, idx, token || undefined);
+      await api.votePoll(id!, postId, idx, token || '');
       // Reload or update locally? Ideally socket handles poll update too.
       loadData();
     } catch (e) { // console.error(e); 
@@ -238,7 +238,7 @@ export default function GroupChatScreen() {
               style: 'destructive',
               onPress: async () => {
                 try {
-                  await api.deleteGroup(id!, groupId!, token || undefined);
+                  await api.deleteGroup(id!, groupId!, token || '');
                   router.back();
                 } catch (e) { Alert.alert('Error', 'Failed to delete group'); }
               }
@@ -252,7 +252,7 @@ export default function GroupChatScreen() {
         style: 'destructive' as const,
         onPress: async () => {
           try {
-            await api.leaveGroup(id!, groupId!, token || undefined);
+            await api.leaveGroup(id!, groupId!, token || '');
             router.back();
           } catch (e) { // console.error(e); 
           }
@@ -295,7 +295,7 @@ export default function GroupChatScreen() {
 
     try {
       setSending(true);
-      await api.joinGroup(id!, groupId!, token || undefined);
+      await api.joinGroup(id!, groupId!, token || '');
       Alert.alert('Success', 'You have joined the group!');
       
       // Optimistically update local state so button disappears immediately
@@ -323,7 +323,7 @@ export default function GroupChatScreen() {
         style: 'destructive',
         onPress: async () => {
           try {
-            await api.deleteCommunityPost(id!, post._id, token || undefined);
+            await api.deleteCommunityPost(id!, post._id, token || '');
             setPosts(prev => prev.filter(p => p._id !== post._id));
           } catch (error: any) {
             Alert.alert('Error', 'Failed to delete message');
@@ -360,7 +360,7 @@ export default function GroupChatScreen() {
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
         <FlatList
