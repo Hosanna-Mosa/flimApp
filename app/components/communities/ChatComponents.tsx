@@ -231,7 +231,7 @@ export const ChatInput = ({ onSend, loading, disabled, onAttachment }: any) => {
         <Plus size={24} color={colors.textSecondary} />
       </TouchableOpacity>
       
-      <View style={[styles.inputWrapper, { backgroundColor: colors.card }]}>
+      <View style={[styles.inputWrapper, { backgroundColor: 'transparent' }]}>
         <TextInput
           style={[styles.input, { color: colors.text }]}
           placeholder="Message..."
@@ -244,14 +244,14 @@ export const ChatInput = ({ onSend, loading, disabled, onAttachment }: any) => {
       </View>
 
       <TouchableOpacity 
-        style={[styles.sendButton, { backgroundColor: text.trim() ? colors.primary : colors.border }]} 
+        style={[styles.sendButton, { backgroundColor: 'transparent' }]} 
         onPress={handleSend}
         disabled={!text.trim() || disabled || loading}
       >
         {loading ? (
-          <ActivityIndicator size="small" color="#fff" />
+          <ActivityIndicator size="small" color={colors.primary} />
         ) : (
-          <SendIcon size={20} color="#fff" />
+          <SendIcon size={24} color={text.trim() ? colors.primary : colors.textSecondary} />
         )}
       </TouchableOpacity>
     </View>
@@ -339,7 +339,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     padding: 10,
     borderTopWidth: 1,
-    paddingBottom: Platform.OS === 'ios' ? 24 : 10, // simple safe area approximation
+    paddingBottom: Platform.OS === 'ios' ? 24 : 24, // simple safe area approximation
   },
   attachButton: {
     padding: 10,

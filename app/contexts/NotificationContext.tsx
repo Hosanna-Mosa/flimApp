@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 import { useSocket } from './SocketContext';
-import { apiNotifications } from '@/utils/api';
+import api from '@/utils/api';
 
 interface NotificationContextType {
   unreadCount: number;
@@ -21,13 +21,16 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const refreshUnreadCount = async () => {
     if (!token) return;
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const data: any = await apiNotifications(token);
-      if (Array.isArray(data)) {
-        // Show only unread notifications count
-        const count = data.filter((n: any) => !n.isRead).length;
-        // console.log('[NotificationContext] Unread count updated:', count);
-        setUnreadCount(count);
+      const data: any = await api.getNotificationUnreadCount(token);
+      if (data && typeof data.count === 'number') {
+        setUnreadCount(data.count);
+      } else {
+        // Fallback: get all notifications and manually count
+        const allData: any = await api.getNotifications(token);
+        if (Array.isArray(allData)) {
+          const count = allData.filter((n: any) => !n.isRead).length;
+          setUnreadCount(count);
+        }
       }
     } catch (error) {
       // console.error('[NotificationContext] Failed to fetch unread count:', error);

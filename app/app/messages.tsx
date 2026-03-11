@@ -219,10 +219,14 @@ export default function MessagesScreen() {
                   {chat.unreadCount > 0 && (
                     <View
                       style={[
-                        styles.unreadDot,
+                        styles.unreadBadge,
                         { backgroundColor: colors.primary },
                       ]}
-                    />
+                    >
+                      <Text style={styles.unreadCountText}>
+                        {chat.unreadCount > 9 ? '9+' : chat.unreadCount}
+                      </Text>
+                    </View>
                   )}
                 </View>
               </View>
@@ -318,11 +322,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  unreadDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+  unreadBadge: {
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
     marginLeft: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+  },
+
+  unreadCountText: {
+    color: '#000',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
 
   emptyState: {

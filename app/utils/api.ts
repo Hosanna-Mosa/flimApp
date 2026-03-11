@@ -420,6 +420,7 @@ export const api = {
   conversation: (userId: string, t: string) => unwrap(apiConversation(userId, t)),
   markConversationRead: (userId: string, t: string) => unwrap(apiMarkConversationRead(userId, t)),
   deleteMessage: (id: string, t: string) => unwrap(apiDeleteMessage(id, t)),
+  getUnreadMessageCount: (t: string) => unwrap(apiGetUnreadMessageCount(t)),
 
   // Verification
   getVerificationStatus: (t?: string) => unwrap(apiGetVerificationStatus(t)),

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 import { useSocket } from './SocketContext';
-import { apiGetUnreadMessageCount } from '@/utils/api';
+import api from '@/utils/api';
 
 interface MessageContextType {
     unreadCount: number;
@@ -20,13 +20,12 @@ export const MessageProvider = ({ children }: { children: ReactNode }) => {
 
     const refreshUnreadCount = async () => {
         if (!token) return;
-        try {
-            const response = await apiGetUnreadMessageCount(token);
-            if (response && typeof response.count === 'number') {
-                // console.log('[MessageContext] Unread count updated:', response.count);
-                setUnreadCount(response.count);
-            }
-        } catch (error) {
+    try {
+      const data: any = await api.getUnreadMessageCount(token);
+      if (data && typeof data.count === 'number') {
+        setUnreadCount(data.count);
+      }
+    } catch (error) {
             // console.error('[MessageContext] Failed to fetch unread count:', error);
         }
     };
