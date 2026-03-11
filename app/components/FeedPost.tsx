@@ -17,7 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import { Post } from '@/types';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useVideo } from '@/contexts/VideoContext';
+import { useMedia } from '@/contexts/MediaContext';
 
 interface FeedPostProps {
   post: Post;
@@ -64,7 +64,7 @@ export default function FeedPost({
   const [audioDuration, setAudioDuration] = useState(0);
   const [loadingAudio, setLoadingAudio] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const { isMuted, toggleMute } = useVideo();
+  const { isMuted, toggleMute } = useMedia();
 
   useEffect(() => {
     return () => {
@@ -92,10 +92,10 @@ export default function FeedPost({
   // Handle auto-pause when not active and autoplay when active
   useEffect(() => {
     if (!isActive) {
-      if (videoStatus?.isPlaying && videoRef.current) {
+      if (videoRef.current) {
         videoRef.current.pauseAsync();
       }
-      if (isPlaying && sound) {
+      if (sound) {
         sound.pauseAsync();
         setIsPlaying(false);
       }
@@ -103,7 +103,7 @@ export default function FeedPost({
       // Autoplay video when it becomes active
       videoRef.current.playAsync();
     }
-  }, [isActive, videoStatus?.isPlaying, isPlaying, sound, post.type]);
+  }, [isActive, post.type, sound]);
 
   const toggleAudio = async () => {
     try {
@@ -507,15 +507,19 @@ export default function FeedPost({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
-    borderBottomWidth: 1,
+    marginBottom: 8,
+    borderBottomWidth: 0.5,
   },
   header: {
     padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   userInfo: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
   },
   avatar: {
     width: 40,
@@ -530,9 +534,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   followBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   mediaContainer: {
     width: '100%',
@@ -559,7 +565,7 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: 'row',
     padding: 12,
-    borderTopWidth: 1,
+    paddingTop: 8,
   },
   actionBtn: {
     flexDirection: 'row',

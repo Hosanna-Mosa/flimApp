@@ -11,7 +11,8 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 import { SocketProvider } from '@/contexts/SocketContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { MessageProvider } from '@/contexts/MessageContext';
-import { VideoProvider } from '@/contexts/VideoContext';
+import { MediaProvider } from '@/contexts/MediaContext';
+import { Audio } from 'expo-av';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -86,18 +87,18 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
-          <VideoProvider>
-            <SocketProvider>
-              <NotificationProvider>
-                <MessageProvider>
+          <SocketProvider>
+            <NotificationProvider>
+              <MessageProvider>
+                <MediaProvider>
                   <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#000000' }}>
                     <StatusBar style="light" backgroundColor="#000000" />
                     <RootLayoutNav />
                   </GestureHandlerRootView>
-                </MessageProvider>
-              </NotificationProvider>
-            </SocketProvider>
-          </VideoProvider>
+                </MediaProvider>
+              </MessageProvider>
+            </NotificationProvider>
+          </SocketProvider>
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>
