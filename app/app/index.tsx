@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Film } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -53,10 +52,22 @@ export default function SplashScreen() {
           },
         ]}
       >
-        <Film size={80} color={colors.primary} strokeWidth={1.5} />
-        <Text style={[styles.title, { color: colors.text, fontFamily: 'Geometric415Black' }]}>FILMYCONNECT</Text>
+        <Animated.Image 
+          source={require('../assets/images/logo.png')} 
+          style={{ width: 100, height: 100, resizeMode: 'contain' }} 
+        />
+ 
+        <Text
+                      style={{
+                        fontFamily: 'Geometric415Black',
+                        fontSize: 32,
+                        color: colors.text,
+                      }}
+                    >
+                      FILMYCONNECT
+                    </Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-          Where Cinema Meets Community
+          24 CRAFTS
         </Text>
       </Animated.View>
     </View>

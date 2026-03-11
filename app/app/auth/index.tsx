@@ -22,12 +22,15 @@ export default function LandingScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
         <View style={styles.header}>
-          <Film size={80} color={colors.primary} strokeWidth={1.5} />
+          <Animated.Image 
+          source={require('../../assets/images/logo.png')} 
+          style={{ width: 100, height: 100, resizeMode: 'contain' }} 
+        />
           <Text style={[styles.title, { color: colors.text, fontFamily: 'Geometric415Black', textTransform: 'uppercase' }]}>
             FILMYCONNECT
           </Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            Join the community of professionals
+            24 CRAFTS
           </Text>
         </View>
 
