@@ -52,7 +52,7 @@ export default function JoinRequestsScreen() {
 
   const handleApprove = async (userId: string) => {
     try {
-      await api.approveJoinRequest(id!, userId, token || undefined);
+      await api.approveJoinRequest(id!, userId, token || '');
       loadData(); // Refresh list
     } catch (error) {
       Alert.alert('Error', 'Failed to approve request');
@@ -61,7 +61,7 @@ export default function JoinRequestsScreen() {
 
   const handleReject = async (userId: string) => {
     try {
-      await api.rejectJoinRequest(id!, userId, token || undefined);
+      await api.rejectJoinRequest(id!, userId, token || '');
       loadData(); // Refresh list
     } catch (error) {
       Alert.alert('Error', 'Failed to reject request');
@@ -70,9 +70,19 @@ export default function JoinRequestsScreen() {
 
   if (loading && !refreshing) {
     return (
-      <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <Stack.Screen 
+          options={{ 
+            title: 'Join Requests',
+            headerStyle: { backgroundColor: colors.background },
+            headerTintColor: colors.text,
+            headerShadowVisible: false
+          }} 
+        />
+        <View style={[styles.center, { backgroundColor: colors.background }]}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      </SafeAreaView>
     );
   }
 

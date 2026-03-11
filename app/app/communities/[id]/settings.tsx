@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   ScrollView,
   Alert,
@@ -11,6 +10,7 @@ import {
   ActivityIndicator,
   Switch
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -66,7 +66,7 @@ export default function CommunitySettingsScreen() {
         name,
         description,
         privacy
-      }, token || undefined);
+      }, token || '');
       Alert.alert('Success', 'Community settings updated');
       router.back();
     } catch (error) {
@@ -88,7 +88,7 @@ export default function CommunitySettingsScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await api.deleteCommunity(id!, token || undefined);
+              await api.deleteCommunity(id!, token || '');
               router.replace('/communities');
             } catch (error) {
               console.error(error);
@@ -102,9 +102,19 @@ export default function CommunitySettingsScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <ActivityIndicator color={colors.primary} />
-      </View>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom', 'left', 'right']}>
+        <Stack.Screen
+          options={{
+            title: 'Settings',
+            headerStyle: { backgroundColor: colors.background },
+            headerTintColor: colors.text,
+            headerShadowVisible: false,
+          }}
+        />
+        <View style={[styles.center, { backgroundColor: colors.background }]}>
+          <ActivityIndicator color={colors.primary} />
+        </View>
+      </SafeAreaView>
     );
   }
 

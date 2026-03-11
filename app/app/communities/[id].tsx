@@ -73,7 +73,7 @@ export default function CommunityDetailScreen() {
   const handleJoinGroup = async (groupId: string) => {
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      await api.joinGroup(id!, groupId, token || undefined);
+      await api.joinGroup(id!, groupId, token || '');
       Alert.alert('Success', 'You have joined the group!');
       setJoinedGroups(prev => [...prev, groupId]);
       handleRefresh();
@@ -87,7 +87,7 @@ export default function CommunityDetailScreen() {
     if (!id) return;
     try {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      const res = await api.joinCommunity(id, token || undefined) as any;
+      const res = await api.joinCommunity(id, token || '') as any;
       
       const status = res?.status;
       if (status === 'pending') {
@@ -127,7 +127,7 @@ export default function CommunityDetailScreen() {
               text: 'Leave',
               style: 'destructive',
               onPress: async () => {
-                await api.leaveCommunity(id!, token || undefined);
+                await api.leaveCommunity(id!, token || '');
                 router.replace('/communities');
               }
             }
@@ -203,9 +203,20 @@ export default function CommunityDetailScreen() {
 
   if (loading && !refreshing) {
     return (
-      <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom', 'left', 'right']}>
+        <Stack.Screen
+          options={{
+            headerShown: true,
+            title: '',
+            headerStyle: { backgroundColor: colors.background },
+            headerTintColor: colors.text,
+            headerShadowVisible: false,
+          }}
+        />
+        <View style={[styles.center, { backgroundColor: colors.background }]}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      </SafeAreaView>
     );
   }
 

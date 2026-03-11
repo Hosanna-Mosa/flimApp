@@ -3,12 +3,12 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   FlatList,
   ActivityIndicator,
   TouchableOpacity,
   Alert
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { Image } from 'expo-image';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -108,7 +108,7 @@ export default function CommunityMembersScreen() {
   const updateRole = async (userId: string, role: 'admin' | 'moderator' | 'member') => {
     try {
       if (!id) return;
-      await api.updateMemberRole(id, userId, role, token || undefined);
+      await api.updateMemberRole(id, userId, role, token || '');
       loadMembers(0, true); // Refresh list
     } catch (error) {
       Alert.alert('Error', 'Failed to update role');
@@ -118,7 +118,7 @@ export default function CommunityMembersScreen() {
   const removeMember = async (userId: string) => {
     try {
       if (!id) return;
-      await api.removeMember(id, userId, token || undefined);
+      await api.removeMember(id, userId, token || '');
       loadMembers(0, true); // Refresh list
     } catch (error) {
       Alert.alert('Error', 'Failed to remove member');
@@ -127,9 +127,19 @@ export default function CommunityMembersScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <ActivityIndicator color={colors.primary} />
-      </View>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={["bottom", "left", "right"]}>
+        <Stack.Screen 
+          options={{ 
+            title: 'Members',
+            headerStyle: { backgroundColor: colors.background },
+            headerTintColor: colors.text,
+            headerShadowVisible: false
+          }} 
+        />
+        <View style={[styles.center, { backgroundColor: colors.background }]}>
+          <ActivityIndicator color={colors.primary} />
+        </View>
+      </SafeAreaView>
     );
   }
 
