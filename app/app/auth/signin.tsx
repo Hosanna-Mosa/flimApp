@@ -89,7 +89,9 @@ export default function SignInScreen() {
           >
             <ArrowLeft size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={[styles.title, { color: colors.text }]}>Sign In</Text>
+          <Text style={[styles.title, { color: colors.text, fontFamily: 'Geometric415Black', textTransform: 'uppercase' }]}>
+            FILMYCONNECT
+          </Text>
         </View>
 
         <View style={styles.form}>
@@ -151,7 +153,6 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: '700',
   },
   form: {
     gap: 16,

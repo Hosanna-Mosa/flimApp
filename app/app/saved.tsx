@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { FeedSkeleton } from '@/components/skeletons/FeedSkeleton';
 import {
   View,
@@ -20,18 +20,38 @@ import { useAuth } from '@/contexts/AuthContext';
 import api from '@/utils/api';
 import { Post } from '@/types';
 import FeedPost from '@/components/FeedPost';
+import CommentsSheet from '@/components/CommentsSheet';
 
 export default function SavedPostsScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { token } = useAuth();
-  
+
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [activePostId, setActivePostId] = useState<string | null>(null);
+
+  // Comments State
+  const [commentPostId, setCommentPostId] = useState<string | null>(null);
+  const [commentPostOwnerId, setCommentPostOwnerId] = useState<string | undefined>(undefined);
+  const [isCommentSheetVisible, setCommentSheetVisible] = useState(false);
+
+  const viewabilityConfig = useRef({
+    itemVisiblePercentThreshold: 50,
+  }).current;
+
+  const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
+    if (viewableItems.length > 0) {
+      const mostVisibleItem = viewableItems[0];
+      if (mostVisibleItem) {
+        setActivePostId(mostVisibleItem.item.id);
+      }
+    }
+  }).current;
 
   const fetchSavedPosts = useCallback(async (pageNumber = 0, append = false) => {
     if (!token) return;
@@ -96,7 +116,7 @@ export default function SavedPostsScreen() {
   const handleLike = async (postId: string) => {
     // Basic like implementation similar to Home
     // For simplicity, we just toggle local state here
-    setPosts(prev => prev.map(p => 
+    setPosts(prev => prev.map(p =>
       p.id === postId ? { ...p, isLiked: !p.isLiked, likes: p.isLiked ? p.likes - 1 : p.likes + 1 } : p
     ));
     // Actually call API if needed, but usually users just want to see saved stuff
@@ -121,6 +141,31 @@ export default function SavedPostsScreen() {
     await Share.share({ message: post.caption ? `${post.caption}\n\n${shareUrl}` : shareUrl });
   };
 
+  const handleComment = (postId: string) => {
+    const post = posts.find(p => p.id === postId);
+    setCommentPostId(postId);
+    setCommentPostOwnerId(post?.user?.id || (post?.user as any)?._id);
+    setCommentSheetVisible(true);
+  };
+
+  const handleCommentAdded = (postId: string) => {
+    setPosts(prev => prev.map(p => {
+      if (String(p.id) === String(postId)) {
+        return { ...p, comments: (p.comments || 0) + 1 };
+      }
+      return p;
+    }));
+  };
+
+  const handleCommentDeleted = (postId: string, count: number = 1) => {
+    setPosts(prev => prev.map(p => {
+      if (String(p.id) === String(postId)) {
+        return { ...p, comments: Math.max(0, (p.comments || 0) - count) };
+      }
+      return p;
+    }));
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar style="light" />
@@ -142,7 +187,7 @@ export default function SavedPostsScreen() {
 
       {loading && page === 0 ? (
         <View style={{ flex: 1, paddingTop: 10 }}>
-           {[1, 2, 3].map(i => <FeedSkeleton key={i} />)}
+          {[1, 2, 3].map(i => <FeedSkeleton key={i} />)}
         </View>
       ) : posts.length === 0 ? (
         <View style={styles.center}>
@@ -158,13 +203,14 @@ export default function SavedPostsScreen() {
             <FeedPost
               post={item}
               isFollowing={true} // Usually safe to assume or skip follow logic in saved
-              onFollow={() => {}}
+              onFollow={() => { }}
               onLike={handleLike}
-              onComment={(id) => router.push(`/post/${id}`)}
+              onComment={handleComment}
               onShare={handleShare}
               onSave={handleSave}
               primaryColor={colors.primary}
               borderColor={colors.border}
+              isActive={activePostId === item.id}
             />
           )}
           refreshControl={
@@ -172,6 +218,8 @@ export default function SavedPostsScreen() {
           }
           onEndReached={loadMore}
           onEndReachedThreshold={0.5}
+          viewabilityConfig={viewabilityConfig}
+          onViewableItemsChanged={onViewableItemsChanged}
           contentContainerStyle={{ paddingBottom: 100 }}
           ListFooterComponent={
             loadingMore ? (
@@ -182,6 +230,15 @@ export default function SavedPostsScreen() {
           }
         />
       )}
+
+      <CommentsSheet
+        postId={commentPostId}
+        postOwnerId={commentPostOwnerId}
+        isVisible={isCommentSheetVisible}
+        onClose={() => setCommentSheetVisible(false)}
+        onCommentAdded={handleCommentAdded}
+        onCommentDeleted={handleCommentDeleted}
+      />
     </View>
   );
 }

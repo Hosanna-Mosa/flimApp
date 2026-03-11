@@ -75,7 +75,7 @@ export default function PostDetailScreen() {
   const [replyTo, setReplyTo] = useState<Comment | null>(null);
   const [hiddenReplies, setHiddenReplies] = useState<Record<string, boolean>>({});
   const commentInputRef = useRef<TextInput>(null);
-  
+
   // Edit Caption State
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [editedCaption, setEditedCaption] = useState('');
@@ -223,6 +223,15 @@ export default function PostDetailScreen() {
             try {
               await api.deleteComment(commentId, token);
 
+              // Calculate how many total comments are removed (1 + children)
+              let removedCount = 1;
+              if (!isReply) {
+                const targetComment = comments.find(c => c._id === commentId);
+                if (targetComment) {
+                  removedCount = 1 + (targetComment.repliesCount || 0);
+                }
+              }
+
               if (isReply && parentId) {
                 setComments(prev => prev.map(c => {
                   if (c._id === parentId) {
@@ -244,7 +253,7 @@ export default function PostDetailScreen() {
                   ...post,
                   engagement: {
                     ...post.engagement,
-                    commentsCount: Math.max(0, (post.engagement?.commentsCount || 0) - 1),
+                    commentsCount: Math.max(0, (post.engagement?.commentsCount || 0) - removedCount),
                   },
                 });
               }
@@ -574,22 +583,26 @@ export default function PostDetailScreen() {
 
     return (
       <View style={[styles.commentItem, isReply && styles.replyItem]}>
-        <Image
-          source={{ uri: comment.user?.avatar || '' }}
-          style={isReply ? styles.replyAvatar : styles.commentAvatar}
-          contentFit="cover"
-        />
+        <TouchableOpacity onPress={() => router.push(`/user/${comment.user._id}`)}>
+          <Image
+            source={{ uri: comment.user?.avatar || '' }}
+            style={isReply ? styles.replyAvatar : styles.commentAvatar}
+            contentFit="cover"
+          />
+        </TouchableOpacity>
         <View style={styles.commentContent}>
           <View style={styles.commentHeader}>
             <View style={{ flex: 1 }}>
-              <View style={styles.commentNameRow}>
-                <Text style={[styles.commentUserName, { color: colors.text }]}>
-                  {comment.user?.name || 'Unknown User'}
-                </Text>
-                {comment.user?.isVerified && (
-                  <BadgeCheck size={12} color="#FFFFFF" fill={colors.primary} />
-                )}
-              </View>
+              <TouchableOpacity onPress={() => router.push(`/user/${comment.user._id}`)}>
+                <View style={styles.commentNameRow}>
+                  <Text style={[styles.commentUserName, { color: colors.text }]}>
+                    {comment.user?.name || 'Unknown User'}
+                  </Text>
+                  {comment.user?.isVerified && (
+                    <BadgeCheck size={12} color="#FFFFFF" fill={colors.primary} />
+                  )}
+                </View>
+              </TouchableOpacity>
               <Text style={[styles.commentText, { color: colors.text }]}>
                 {comment.content}
               </Text>
@@ -867,7 +880,7 @@ export default function PostDetailScreen() {
                 <X size={24} color={colors.text} />
               </TouchableOpacity>
             </View>
-            
+
             <View style={styles.modalBody}>
               <Input
                 placeholder="Write a caption..."

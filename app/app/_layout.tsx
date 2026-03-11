@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
+import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -10,6 +11,7 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 import { SocketProvider } from '@/contexts/SocketContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { MessageProvider } from '@/contexts/MessageContext';
+import { VideoProvider } from '@/contexts/VideoContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -48,6 +50,20 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
+  const [loaded, error] = useFonts({
+    'Geometric415Black': require('../assets/fonts/Geometric415BlackBT.ttf'),
+  });
+
+  useEffect(() => {
+    if (error) throw error;
+  }, [error]);
+
+  useEffect(() => {
+    if (loaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [loaded]);
+
   useEffect(() => {
     SystemUI.setBackgroundColorAsync('#000000');
     const setNavBar = async () => {
@@ -60,23 +76,28 @@ export default function RootLayout() {
       }
     };
     setNavBar();
-    SplashScreen.hideAsync();
   }, []);
+
+  if (!loaded) {
+    return null;
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
-          <SocketProvider>
-            <NotificationProvider>
-              <MessageProvider>
-                <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#000000' }}>
-                  <StatusBar style="light" backgroundColor="#000000" />
-                  <RootLayoutNav />
-                </GestureHandlerRootView>
-              </MessageProvider>
-            </NotificationProvider>
-          </SocketProvider>
+          <VideoProvider>
+            <SocketProvider>
+              <NotificationProvider>
+                <MessageProvider>
+                  <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#000000' }}>
+                    <StatusBar style="light" backgroundColor="#000000" />
+                    <RootLayoutNav />
+                  </GestureHandlerRootView>
+                </MessageProvider>
+              </NotificationProvider>
+            </SocketProvider>
+          </VideoProvider>
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>
