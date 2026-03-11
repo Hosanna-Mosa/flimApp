@@ -4,7 +4,7 @@
     "slug": "filmy",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon_new.jpg",
+    "icon": "./assets/images/icon_new.jpeg",
     "scheme": "myapp",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#000000",
@@ -26,7 +26,7 @@
       "package": "app.rork.filmy",
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/icon_new.jpg",
+        "foregroundImage": "./assets/images/icon_new.jpeg",
         "backgroundColor": "#000000"
       },
       "softwareKeyboardLayoutMode": "resize",
@@ -47,13 +47,13 @@
       ]
     },
     "notification": {
-      "icon": "./assets/images/icon.png",
+      "icon": "./assets/images/icon.jpeg",
       "color": "#ffffff"
     },
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.jpeg"
     },
     "plugins": [
       "expo-router",
@@ -76,7 +76,7 @@
       ]
     ],
     "extra": {
-      "apiUrl": "http://10.174.132.2:8000",
+      "apiUrl": "http://192.168.1.13:8000",
       "router": {},
       "expo-navigation-bar": {
         "position": "absolute",
