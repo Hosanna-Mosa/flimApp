@@ -12,13 +12,14 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ChevronLeft, MoreVertical, Send, Plus } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSocket } from '@/contexts/SocketContext';
 import api from '@/utils/api';
 import { CommunityGroup, CommunityPost } from '@/types';
 import { MessageBubble, ChatInput } from '@/components/communities/ChatComponents';
-import { MoreVertical } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { uploadMediaToCloudinary } from '@/utils/media';
 
@@ -28,6 +29,7 @@ export default function GroupChatScreen() {
   const { colors } = useTheme();
   const { token, user } = useAuth();
   const { socket } = useSocket();
+  const insets = useSafeAreaInsets();
 
   const [group, setGroup] = useState<CommunityGroup | null>(null);
   const [role, setRole] = useState<string>('member');
@@ -265,30 +267,31 @@ export default function GroupChatScreen() {
   // Check write permissions
   const canSend = group && (!group.isAnnouncementOnly || role === 'admin' || role === 'owner');
 
-  useEffect(() => {
-    if (group) {
-      // console.log('🔍 Group Permission Debug:', {
-      //   groupName: group.name,
-      //   groupType: group.type,
-      //   isAnnouncementOnly: group.isAnnouncementOnly, // This is the key field
-      //   myRole: role,
-      //   canISend: canSend,
-      //   rawGroup: JSON.stringify(group) // Inspect the full object
-      // });
-    }
-  }, [group, role, canSend]);
+  const isAdminOrOwner = role === 'admin' || role === 'owner';
+  const isMember = group?.isMember === true || isAdminOrOwner;
 
   if (loading) {
     return (
-      <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View style={{ paddingTop: insets.top, backgroundColor: colors.background }}>
+          <View style={[styles.header, { borderBottomColor: colors.border }]}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+              <ChevronLeft size={24} color={colors.text} />
+            </TouchableOpacity>
+            <View style={styles.headerContent}>
+              <Text style={[styles.headerTitle, { color: colors.text }]}>Loading...</Text>
+            </View>
+          </View>
+        </View>
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
       </View>
     );
   }
 
   // Check if user is effectively a member (implicit or explicit)
-  const isAdminOrOwner = role === 'admin' || role === 'owner';
-  const isMember = group?.isMember === true || isAdminOrOwner;
 
   const handleJoinGroup = async () => {
     if (isMember) return; // Prevent re-joining
@@ -343,27 +346,33 @@ export default function GroupChatScreen() {
   const showJoin = group && !isMember;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom', 'left', 'right']}>
-      <Stack.Screen
-        options={{
-          title: group?.name || 'Group',
-          headerStyle: { backgroundColor: colors.background },
-          headerTintColor: colors.text,
-          headerShadowVisible: false,
-          headerRight: () => (
-            <TouchableOpacity onPress={handleMenu}>
-              <MoreVertical color={colors.text} size={24} />
-            </TouchableOpacity>
-          )
-        }}
-      />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Stack.Screen options={{ headerShown: false }} />
+      
+      {/* Custom Header like in chat.tsx */}
+      <View style={{ paddingTop: insets.top, backgroundColor: colors.background }}>
+        <View style={[styles.header, { borderBottomColor: colors.border }]}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <ChevronLeft size={24} color={colors.text} />
+          </TouchableOpacity>
+          <View style={styles.headerContent}>
+            <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
+              {group?.name || 'Group'}
+            </Text>
+          </View>
+          <TouchableOpacity onPress={handleMenu} style={styles.menuButton}>
+            <MoreVertical size={22} color={colors.text} />
+          </TouchableOpacity>
+        </View>
+      </View>
 
       <KeyboardAvoidingView
-        style={{ flex: 1 }}
+        style={[styles.container, { backgroundColor: colors.background }]}
         behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 54 + insets.top : 0}
       >
         <FlatList
+          style={{ flex: 1 }}
           data={posts}
           keyExtractor={(item) => item._id}
           renderItem={({ item }) => (
@@ -391,7 +400,15 @@ export default function GroupChatScreen() {
         />
 
         {showJoin ? (
-          <View style={[styles.footerMessage, { backgroundColor: colors.card }]}>
+          <View 
+            style={[
+              styles.footerMessage, 
+              { 
+                backgroundColor: colors.background, 
+                paddingBottom: Math.max(insets.bottom, 20) 
+              }
+            ]}
+          >
             <Text style={{ color: colors.text, marginBottom: 8, textAlign: 'center' }}>
               You are not a member of this group.
             </Text>
@@ -414,14 +431,22 @@ export default function GroupChatScreen() {
             onAttachment={handleAttachment}
           />
         ) : (
-          <View style={[styles.footerMessage, { backgroundColor: colors.card }]}>
+          <View 
+            style={[
+              styles.footerMessage, 
+              { 
+                backgroundColor: colors.background,
+                paddingBottom: Math.max(insets.bottom, 20)
+              }
+            ]}
+          >
             <Text style={{ color: colors.textSecondary }}>
               {!group ? 'Group not found' : 'Only admins can send messages.'}
             </Text>
           </View>
         )}
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -453,11 +478,32 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontStyle: 'italic'
   },
+  header: {
+    height: 54,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+  },
+  backButton: {
+    marginRight: 12,
+  },
+  headerContent: {
+    flex: 1,
+  },
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+  },
+  menuButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+  },
   footerMessage: {
-    padding: 16,
+    padding: 20,
     alignItems: 'center',
     borderTopWidth: 1,
-    borderColor: 'rgba(0,0,0,0.1)'
+    borderColor: 'rgba(0,0,0,0.1)',
   },
   joinButton: {
     paddingHorizontal: 24,

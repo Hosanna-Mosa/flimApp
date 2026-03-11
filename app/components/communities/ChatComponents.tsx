@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator,
 import { Image } from 'expo-image';
 import { Send as SendIcon, Plus, Download, Check, X } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as MediaLibrary from 'expo-media-library';
 
@@ -213,6 +214,7 @@ export const MessageBubble = ({ message, isMe, onVote, onLongPress }: any) => {
 
 export const ChatInput = ({ onSend, loading, disabled, onAttachment }: any) => {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const [text, setText] = useState('');
 
   const handleSend = () => {
@@ -222,7 +224,15 @@ export const ChatInput = ({ onSend, loading, disabled, onAttachment }: any) => {
   };
 
   return (
-    <View style={[styles.inputContainer, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
+    <View style={[
+      styles.inputContainer, 
+      { 
+        backgroundColor: colors.background, 
+        borderTopColor: colors.border,
+        paddingBottom: Platform.OS === 'ios' ? Math.max(insets.bottom, 20) : (insets.bottom || 12),
+        paddingTop: 12
+      }
+    ]}>
       <TouchableOpacity 
         style={styles.attachButton} 
         disabled={disabled}
@@ -251,7 +261,7 @@ export const ChatInput = ({ onSend, loading, disabled, onAttachment }: any) => {
         {loading ? (
           <ActivityIndicator size="small" color={colors.primary} />
         ) : (
-          <SendIcon size={24} color={text.trim() ? colors.primary : colors.textSecondary} />
+          <SendIcon size={20} color={text.trim() ? colors.primary : colors.textSecondary} />
         )}
       </TouchableOpacity>
     </View>
@@ -336,10 +346,9 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
-    padding: 10,
+    paddingHorizontal: 12,
+    gap: 12,
     borderTopWidth: 1,
-    paddingBottom: Platform.OS === 'ios' ? 24 : 24, // simple safe area approximation
   },
   attachButton: {
     padding: 10,
