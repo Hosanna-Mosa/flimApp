@@ -28,12 +28,15 @@ import {
   Play,
   FileText,
   X,
+  Volume2,
+  VolumeX,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import * as WebBrowser from 'expo-web-browser';
 import { Video, ResizeMode, Audio } from 'expo-av';
 import Slider from '@react-native-community/slider';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useMedia } from '@/contexts/MediaContext';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/utils/api';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -58,6 +61,7 @@ interface Comment {
 
 export default function PostDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { isMuted, toggleMute } = useMedia();
   const router = useRouter();
   const { colors } = useTheme();
   const { token, user } = useAuth();
@@ -75,6 +79,22 @@ export default function PostDetailScreen() {
   const [replyTo, setReplyTo] = useState<Comment | null>(null);
   const [hiddenReplies, setHiddenReplies] = useState<Record<string, boolean>>({});
   const commentInputRef = useRef<TextInput>(null);
+
+  const [sound, setSound] = useState<any>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioPosition, setAudioPosition] = useState(0);
+  const [audioDuration, setAudioDuration] = useState(0);
+  const [loadingAudio, setLoadingAudio] = useState(false);
+  const videoRef = useRef<any>(null);
+  const [videoStatus, setVideoStatus] = useState<any>(null);
+
+  useEffect(() => {
+    return () => {
+      if (sound) {
+        sound.unloadAsync();
+      }
+    };
+  }, [sound]);
 
   // Edit Caption State
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
@@ -104,7 +124,18 @@ export default function PostDetailScreen() {
         // console.log('[PostDetail] Screen focused - refreshing post data');
         loadPostAndComments();
       }
-    }, [id, token])
+
+      return () => {
+        // Pause media when navigating away
+        if (videoRef.current) {
+          videoRef.current.pauseAsync();
+        }
+        if (sound) {
+          sound.pauseAsync();
+          setIsPlaying(false);
+        }
+      };
+    }, [id, token, sound])
   );
 
   const loadPostAndComments = async () => {
@@ -223,15 +254,6 @@ export default function PostDetailScreen() {
             try {
               await api.deleteComment(commentId, token);
 
-              // Calculate how many total comments are removed (1 + children)
-              let removedCount = 1;
-              if (!isReply) {
-                const targetComment = comments.find(c => c._id === commentId);
-                if (targetComment) {
-                  removedCount = 1 + (targetComment.repliesCount || 0);
-                }
-              }
-
               if (isReply && parentId) {
                 setComments(prev => prev.map(c => {
                   if (c._id === parentId) {
@@ -253,7 +275,7 @@ export default function PostDetailScreen() {
                   ...post,
                   engagement: {
                     ...post.engagement,
-                    commentsCount: Math.max(0, (post.engagement?.commentsCount || 0) - removedCount),
+                    commentsCount: Math.max(0, (post.engagement?.commentsCount || 0) - 1),
                   },
                 });
               }
@@ -280,21 +302,6 @@ export default function PostDetailScreen() {
     }));
   };
 
-  const [sound, setSound] = useState<any>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [audioPosition, setAudioPosition] = useState(0);
-  const [audioDuration, setAudioDuration] = useState(0);
-  const [loadingAudio, setLoadingAudio] = useState(false);
-  const videoRef = useRef<any>(null);
-  const [videoStatus, setVideoStatus] = useState<any>(null);
-
-  useEffect(() => {
-    return () => {
-      if (sound) {
-        sound.unloadAsync();
-      }
-    };
-  }, [sound]);
 
   const toggleAudio = async () => {
     try {
@@ -359,22 +366,44 @@ export default function PostDetailScreen() {
     const thumbnailUrl = post.media?.thumbnail || post.thumbnailUrl;
 
     if (post.type === 'video') {
-      const ratio = post.media?.width && post.media?.height ? post.media.width / post.media.height : 16 / 9;
+      const defaultRatio = 16 / 9;
+      let ratio = defaultRatio;
+
+      if (post.media?.width && post.media?.height && post.media.height > 0) {
+        const calculatedRatio = post.media.width / post.media.height;
+        if (isFinite(calculatedRatio) && calculatedRatio > 0) {
+          ratio = calculatedRatio;
+        }
+      }
 
       return (
-        <View style={[styles.mediaContainer, { aspectRatio: ratio, minHeight: 250 }]}>
+        <View style={[styles.mediaContainer, { aspectRatio: ratio, minHeight: 200 }]}>
           <Video
             ref={videoRef}
-            style={styles.media}
+            style={[styles.media, { minHeight: 200 }]}
             source={{ uri: mediaUrl }}
-            useNativeControls
+            useNativeControls={false}
             resizeMode={ResizeMode.CONTAIN}
             isLooping
+            isMuted={isMuted}
             posterSource={thumbnailUrl ? { uri: thumbnailUrl } : undefined}
             usePoster={!!thumbnailUrl}
             onPlaybackStatusUpdate={(status: any) => setVideoStatus(status)}
             onError={(e: string) => console.log('Video Playback Error:', e)}
           />
+          <TouchableOpacity
+            style={styles.muteButton}
+            onPress={toggleMute}
+          >
+            {isMuted ? (
+              <VolumeX size={20} color="#fff" />
+            ) : (
+              <Volume2 size={20} color="#fff" />
+            )}
+          </TouchableOpacity>
+          {videoStatus?.isPlaying && (
+            <TouchableOpacity style={styles.fullOverlay} onPress={toggleVideo} />
+          )}
           {!videoStatus?.isPlaying && (
             <TouchableOpacity style={styles.centerPlayButton} onPress={toggleVideo}>
               <Play size={40} color="#fff" fill="#fff" />
@@ -999,15 +1028,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  centerPlayButton: {
-    position: 'absolute',
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   moreButton: {
     padding: 8,
   },
@@ -1207,5 +1227,32 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  muteButton: {
+    position: 'absolute',
+    bottom: 16,
+    right: 16,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    padding: 10,
+    borderRadius: 24,
+    zIndex: 20,
+  },
+  fullOverlay: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    zIndex: 5,
+  },
+  centerPlayButton: {
+    position: 'absolute',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
   },
 });

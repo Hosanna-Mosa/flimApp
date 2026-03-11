@@ -40,7 +40,6 @@ import FeedPost from '@/components/FeedPost';
 import { FeedSkeleton } from '@/components/skeletons/FeedSkeleton';
 import api from '@/utils/api';
 import { Post, User } from '@/types';
-import CommentsSheet from '@/components/CommentsSheet';
 
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
@@ -65,11 +64,6 @@ export default function HomeScreen() {
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [activePostId, setActivePostId] = useState<string | null>(null);
-
-  // Comments State
-  const [commentPostId, setCommentPostId] = useState<string | null>(null);
-  const [commentPostOwnerId, setCommentPostOwnerId] = useState<string | undefined>(undefined);
-  const [isCommentSheetVisible, setCommentSheetVisible] = useState(false);
 
   const viewabilityConfig = useRef({
     itemVisiblePercentThreshold: 50,
@@ -381,7 +375,7 @@ export default function HomeScreen() {
 
       // Optimistic update
       setPosts(prevPosts => prevPosts.map((p) =>
-        String(p.id) === String(postId)
+        p.id === postId
           ? {
             ...p,
             isLiked: !p.isLiked,
@@ -398,7 +392,7 @@ export default function HomeScreen() {
 
         // Update with real count from server
         setPosts(prevPosts => prevPosts.map((p) =>
-          String(p.id) === String(postId) ? { ...p, likes: result.likesCount, isLiked: false } : p
+          p.id === postId ? { ...p, likes: result.likesCount, isLiked: false } : p
         ));
       } else {
         if (!token) return;
@@ -407,12 +401,12 @@ export default function HomeScreen() {
 
         // Update with real count from server
         setPosts(prevPosts => prevPosts.map((p) =>
-          String(p.id) === String(postId) ? { ...p, likes: result.likesCount, isLiked: true } : p
+          p.id === postId ? { ...p, likes: result.likesCount, isLiked: true } : p
         ));
       }
     } catch (error) {
       setPosts(prevPosts => prevPosts.map((p) => {
-        if (String(p.id) === String(postId)) {
+        if (p.id === postId) {
           return {
             ...p,
             isLiked: !p.isLiked,
@@ -426,30 +420,8 @@ export default function HomeScreen() {
   };
 
   const handleComment = (postId: string) => {
-    const post = posts.find(p => p.id === postId);
-    setCommentPostId(postId);
-    setCommentPostOwnerId(post?.user?.id || (post?.user as any)?._id);
-    setCommentSheetVisible(true);
+    router.push(`/post/${postId}`);
   };
-
-  const handleCommentAdded = useCallback((postId: string) => {
-    // Optionally update the comment count in the local state
-    setPosts(prev => prev.map(p => {
-      if (String(p.id) === String(postId)) {
-        return { ...p, comments: (p.comments || 0) + 1 };
-      }
-      return p;
-    }));
-  }, []);
-
-  const handleCommentDeleted = useCallback((postId: string, count: number = 1) => {
-    setPosts(prev => prev.map(p => {
-      if (String(p.id) === String(postId)) {
-        return { ...p, comments: Math.max(0, (p.comments || 0) - count) };
-      }
-      return p;
-    }));
-  }, []);
 
   const handleShare = async (postId: string) => {
     try {
@@ -653,15 +625,6 @@ export default function HomeScreen() {
           }
         />
       )}
-
-      <CommentsSheet
-        postId={commentPostId}
-        postOwnerId={commentPostOwnerId}
-        isVisible={isCommentSheetVisible}
-        onClose={() => setCommentSheetVisible(false)}
-        onCommentAdded={handleCommentAdded}
-        onCommentDeleted={handleCommentDeleted}
-      />
     </>
   );
 }

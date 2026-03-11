@@ -20,7 +20,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import api from '@/utils/api';
 import { Post } from '@/types';
 import FeedPost from '@/components/FeedPost';
-import CommentsSheet from '@/components/CommentsSheet';
 
 export default function SavedPostsScreen() {
   const router = useRouter();
@@ -34,11 +33,6 @@ export default function SavedPostsScreen() {
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [activePostId, setActivePostId] = useState<string | null>(null);
-
-  // Comments State
-  const [commentPostId, setCommentPostId] = useState<string | null>(null);
-  const [commentPostOwnerId, setCommentPostOwnerId] = useState<string | undefined>(undefined);
-  const [isCommentSheetVisible, setCommentSheetVisible] = useState(false);
 
   const viewabilityConfig = useRef({
     itemVisiblePercentThreshold: 50,
@@ -141,31 +135,6 @@ export default function SavedPostsScreen() {
     await Share.share({ message: post.caption ? `${post.caption}\n\n${shareUrl}` : shareUrl });
   };
 
-  const handleComment = (postId: string) => {
-    const post = posts.find(p => p.id === postId);
-    setCommentPostId(postId);
-    setCommentPostOwnerId(post?.user?.id || (post?.user as any)?._id);
-    setCommentSheetVisible(true);
-  };
-
-  const handleCommentAdded = (postId: string) => {
-    setPosts(prev => prev.map(p => {
-      if (String(p.id) === String(postId)) {
-        return { ...p, comments: (p.comments || 0) + 1 };
-      }
-      return p;
-    }));
-  };
-
-  const handleCommentDeleted = (postId: string, count: number = 1) => {
-    setPosts(prev => prev.map(p => {
-      if (String(p.id) === String(postId)) {
-        return { ...p, comments: Math.max(0, (p.comments || 0) - count) };
-      }
-      return p;
-    }));
-  };
-
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar style="light" />
@@ -205,7 +174,7 @@ export default function SavedPostsScreen() {
               isFollowing={true} // Usually safe to assume or skip follow logic in saved
               onFollow={() => { }}
               onLike={handleLike}
-              onComment={handleComment}
+              onComment={(id) => router.push(`/post/${id}`)}
               onShare={handleShare}
               onSave={handleSave}
               primaryColor={colors.primary}
@@ -230,15 +199,6 @@ export default function SavedPostsScreen() {
           }
         />
       )}
-
-      <CommentsSheet
-        postId={commentPostId}
-        postOwnerId={commentPostOwnerId}
-        isVisible={isCommentSheetVisible}
-        onClose={() => setCommentSheetVisible(false)}
-        onCommentAdded={handleCommentAdded}
-        onCommentDeleted={handleCommentDeleted}
-      />
     </View>
   );
 }
