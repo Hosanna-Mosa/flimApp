@@ -40,6 +40,7 @@ import FeedPost from '@/components/FeedPost';
 import { FeedSkeleton } from '@/components/skeletons/FeedSkeleton';
 import api from '@/utils/api';
 import { Post, User } from '@/types';
+import CommentsSheet from '@/components/CommentsSheet';
 
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
@@ -63,6 +64,27 @@ export default function HomeScreen() {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [activePostId, setActivePostId] = useState<string | null>(null);
+
+  // Comments State
+  const [commentPostId, setCommentPostId] = useState<string | null>(null);
+  const [commentPostOwnerId, setCommentPostOwnerId] = useState<string | undefined>(undefined);
+  const [isCommentSheetVisible, setCommentSheetVisible] = useState(false);
+
+  const viewabilityConfig = useRef({
+    itemVisiblePercentThreshold: 50,
+  }).current;
+
+  const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
+    if (viewableItems.length > 0) {
+      // Find the item with the highest visibility or just the first one in the list of viewable items
+      // Usually the first item in viewableItems is the one we want to consider "active"
+      const mostVisibleItem = viewableItems[0];
+      if (mostVisibleItem) {
+        setActivePostId(mostVisibleItem.item.id);
+      }
+    }
+  }).current;
 
   // Fetch following list - Memoized for useFocusEffect
   const fetchFollowingList = useCallback(async () => {
@@ -359,7 +381,7 @@ export default function HomeScreen() {
 
       // Optimistic update
       setPosts(prevPosts => prevPosts.map((p) =>
-        p.id === postId
+        String(p.id) === String(postId)
           ? {
             ...p,
             isLiked: !p.isLiked,
@@ -376,7 +398,7 @@ export default function HomeScreen() {
 
         // Update with real count from server
         setPosts(prevPosts => prevPosts.map((p) =>
-          p.id === postId ? { ...p, likes: result.likesCount, isLiked: false } : p
+          String(p.id) === String(postId) ? { ...p, likes: result.likesCount, isLiked: false } : p
         ));
       } else {
         if (!token) return;
@@ -385,12 +407,12 @@ export default function HomeScreen() {
 
         // Update with real count from server
         setPosts(prevPosts => prevPosts.map((p) =>
-          p.id === postId ? { ...p, likes: result.likesCount, isLiked: true } : p
+          String(p.id) === String(postId) ? { ...p, likes: result.likesCount, isLiked: true } : p
         ));
       }
     } catch (error) {
       setPosts(prevPosts => prevPosts.map((p) => {
-        if (p.id === postId) {
+        if (String(p.id) === String(postId)) {
           return {
             ...p,
             isLiked: !p.isLiked,
@@ -404,8 +426,30 @@ export default function HomeScreen() {
   };
 
   const handleComment = (postId: string) => {
-    router.push(`/post/${postId}`);
+    const post = posts.find(p => p.id === postId);
+    setCommentPostId(postId);
+    setCommentPostOwnerId(post?.user?.id || (post?.user as any)?._id);
+    setCommentSheetVisible(true);
   };
+
+  const handleCommentAdded = useCallback((postId: string) => {
+    // Optionally update the comment count in the local state
+    setPosts(prev => prev.map(p => {
+      if (String(p.id) === String(postId)) {
+        return { ...p, comments: (p.comments || 0) + 1 };
+      }
+      return p;
+    }));
+  }, []);
+
+  const handleCommentDeleted = useCallback((postId: string, count: number = 1) => {
+    setPosts(prev => prev.map(p => {
+      if (String(p.id) === String(postId)) {
+        return { ...p, comments: Math.max(0, (p.comments || 0) - count) };
+      }
+      return p;
+    }));
+  }, []);
 
   const handleShare = async (postId: string) => {
     try {
@@ -463,7 +507,17 @@ export default function HomeScreen() {
       <Stack.Screen
         options={{
           headerShown: true,
-          headerTitle: 'FilmyConnect',
+          headerTitle: () => (
+            <Text
+              style={{
+                fontFamily: 'Geometric415Black',
+                fontSize: 24,
+                color: colors.text,
+              }}
+            >
+              FILMYCONNECT
+            </Text>
+          ),
           headerTitleAlign: 'left',
           headerStyle: { backgroundColor: colors.background },
           headerTintColor: colors.text,
@@ -575,6 +629,7 @@ export default function HomeScreen() {
               onSave={handleSave}
               primaryColor={colors.primary}
               borderColor={colors.border}
+              isActive={activePostId === item.id}
             />
           )}
           showsVerticalScrollIndicator={false}
@@ -587,6 +642,8 @@ export default function HomeScreen() {
           }
           onEndReached={loadMore}
           onEndReachedThreshold={0.5}
+          viewabilityConfig={viewabilityConfig}
+          onViewableItemsChanged={onViewableItemsChanged}
           ListFooterComponent={
             loadingMore ? (
               <View style={{ padding: 20, alignItems: 'center' }}>
@@ -596,6 +653,15 @@ export default function HomeScreen() {
           }
         />
       )}
+
+      <CommentsSheet
+        postId={commentPostId}
+        postOwnerId={commentPostOwnerId}
+        isVisible={isCommentSheetVisible}
+        onClose={() => setCommentSheetVisible(false)}
+        onCommentAdded={handleCommentAdded}
+        onCommentDeleted={handleCommentDeleted}
+      />
     </>
   );
 }

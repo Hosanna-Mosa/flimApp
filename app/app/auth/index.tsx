@@ -23,7 +23,9 @@ export default function LandingScreen() {
       <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
         <View style={styles.header}>
           <Film size={80} color={colors.primary} strokeWidth={1.5} />
-          <Text style={[styles.title, { color: colors.text }]}>FilmConnect</Text>
+          <Text style={[styles.title, { color: colors.text, fontFamily: 'Geometric415Black', textTransform: 'uppercase' }]}>
+            FILMYCONNECT
+          </Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             Join the community of professionals
           </Text>
@@ -66,7 +68,6 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 36,
-    fontWeight: '700',
   },
   subtitle: {
     fontSize: 18,

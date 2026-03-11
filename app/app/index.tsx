@@ -54,7 +54,7 @@ export default function SplashScreen() {
         ]}
       >
         <Film size={80} color={colors.primary} strokeWidth={1.5} />
-        <Text style={[styles.title, { color: colors.text }]}>FilmConnect</Text>
+        <Text style={[styles.title, { color: colors.text, fontFamily: 'Geometric415Black' }]}>FILMYCONNECT</Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
           Where Cinema Meets Community
         </Text>

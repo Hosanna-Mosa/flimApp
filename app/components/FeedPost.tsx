@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Dimensions, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { Video, ResizeMode, Audio } from 'expo-av';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import Slider from '@react-native-community/slider';
 import {
   Play,
@@ -10,11 +10,14 @@ import {
   FileText,
   BadgeCheck,
   Bookmark,
+  Volume2,
+  VolumeX,
 } from 'lucide-react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import { Post } from '@/types';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useVideo } from '@/contexts/VideoContext';
 
 interface FeedPostProps {
   post: Post;
@@ -26,6 +29,7 @@ interface FeedPostProps {
   onSave?: (postId: string) => void;
   primaryColor: string;
   borderColor: string;
+  isActive: boolean;
 }
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -46,6 +50,7 @@ export default function FeedPost({
   onSave,
   primaryColor,
   borderColor,
+  isActive,
 }: FeedPostProps) {
   const router = useRouter();
   const { colors } = useTheme();
@@ -59,6 +64,7 @@ export default function FeedPost({
   const [audioDuration, setAudioDuration] = useState(0);
   const [loadingAudio, setLoadingAudio] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const { isMuted, toggleMute } = useVideo();
 
   useEffect(() => {
     return () => {
@@ -67,6 +73,37 @@ export default function FeedPost({
       }
     };
   }, [sound]);
+
+  // Handle auto-pause when screen is blurred (e.g. tab switch)
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        if (videoStatus?.isPlaying && videoRef.current) {
+          videoRef.current.pauseAsync();
+        }
+        if (isPlaying && sound) {
+          sound.pauseAsync();
+          setIsPlaying(false);
+        }
+      };
+    }, [videoStatus?.isPlaying, isPlaying, sound])
+  );
+
+  // Handle auto-pause when not active and autoplay when active
+  useEffect(() => {
+    if (!isActive) {
+      if (videoStatus?.isPlaying && videoRef.current) {
+        videoRef.current.pauseAsync();
+      }
+      if (isPlaying && sound) {
+        sound.pauseAsync();
+        setIsPlaying(false);
+      }
+    } else if (isActive && post.type === 'video' && videoRef.current) {
+      // Autoplay video when it becomes active
+      videoRef.current.playAsync();
+    }
+  }, [isActive, videoStatus?.isPlaying, isPlaying, sound, post.type]);
 
   const toggleAudio = async () => {
     try {
@@ -188,6 +225,7 @@ export default function FeedPost({
             useNativeControls={false}
             resizeMode={ResizeMode.CONTAIN}
             isLooping
+            isMuted={isMuted}
             posterSource={thumbnailUrl ? { uri: thumbnailUrl } : undefined}
             usePoster={!!thumbnailUrl}
             onPlaybackStatusUpdate={status => setVideoStatus(status)}
@@ -199,6 +237,16 @@ export default function FeedPost({
               // });
             }}
           />
+          <TouchableOpacity
+            style={styles.muteButton}
+            onPress={toggleMute}
+          >
+            {isMuted ? (
+              <VolumeX size={18} color="#fff" />
+            ) : (
+              <Volume2 size={18} color="#fff" />
+            )}
+          </TouchableOpacity>
           {(!videoStatus?.isPlaying || videoStatus?.didJustFinish) && (
             <TouchableOpacity style={styles.centerOverlay} onPress={toggleVideo}>
               <View style={[styles.playButtonCircle, { backgroundColor: 'rgba(0,0,0,0.6)' }]}>
@@ -378,34 +426,34 @@ export default function FeedPost({
       {/* Header */}
       {post.user && (
         <View style={styles.header}>
-          <View style={styles.userInfo}>
+          <TouchableOpacity
+            style={styles.userInfo}
+            onPress={() => router.push({ pathname: '/user/[id]', params: { id: post.user.id } })}
+          >
             <Image source={{ uri: post.user.avatar }} style={styles.avatar} contentFit="cover" />
             <View style={{ marginLeft: 12, flex: 1 }}>
-              <TouchableOpacity onPress={() => router.push({ pathname: '/user/[id]', params: { id: post.user.id } })}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                  <Text style={[styles.userName, { color: colors.text }]}>{post.user.name}</Text>
-                  {post.user.isVerified && <BadgeCheck size={16} color="#FFFFFF" fill="#0095F6" />}
-                </View>
-              </TouchableOpacity>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Text style={[styles.userName, { color: colors.text }]}>{post.user.name}</Text>
+                {post.user.isVerified && <BadgeCheck size={16} color="#FFFFFF" fill="#0095F6" />}
+              </View>
               <Text style={[styles.role, { color: colors.textSecondary }]}>{post.user.roles?.[0] || 'Member'}</Text>
             </View>
+          </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.followBtn, { backgroundColor: isFollowing ? 'transparent' : '#0095F6', borderColor: isFollowing ? borderColor : '#0095F6', borderWidth: 1 }]}
-              onPress={() => onFollow(post.user.id)}
-            >
-              <Text style={{ color: isFollowing ? colors.text : '#fff', fontSize: 12, fontWeight: '600' }}>
-                {isFollowing ? 'Following' : 'Follow'}
-              </Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            style={[styles.followBtn, { backgroundColor: isFollowing ? 'transparent' : '#0095F6', borderColor: isFollowing ? borderColor : '#0095F6', borderWidth: 1 }]}
+            onPress={() => onFollow(post.user.id)}
+          >
+            <Text style={{ color: isFollowing ? colors.text : '#fff', fontSize: 12, fontWeight: '600' }}>
+              {isFollowing ? 'Following' : 'Follow'}
+            </Text>
+          </TouchableOpacity>
         </View>
       )}
 
       {/* Content */}
       {(() => {
         const mediaUrl = post.media?.url || post.mediaUrl;
-        // Only render media if there's actually media to show
         if (mediaUrl || post.type === 'audio') {
           return (
             <View style={{ width: '100%' }}>
@@ -413,7 +461,6 @@ export default function FeedPost({
             </View>
           );
         }
-        // For posts without media, don't render empty container
         return null;
       })()}
 
@@ -660,5 +707,14 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
-  }
+  },
+  muteButton: {
+    position: 'absolute',
+    bottom: 12,
+    right: 12,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    padding: 8,
+    borderRadius: 20,
+    zIndex: 20,
+  },
 });

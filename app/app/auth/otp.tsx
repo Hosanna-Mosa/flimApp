@@ -93,7 +93,9 @@ export default function OtpScreen() {
           >
             <ArrowLeft size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={[styles.title, { color: colors.text }]}>Verification</Text>
+          <Text style={[styles.title, { color: colors.text, fontFamily: 'Geometric415Black', textTransform: 'uppercase' }]}>
+            FILMYCONNECT
+          </Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             Enter the OTP sent to {phone}
           </Text>
@@ -141,7 +143,6 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: '700',
     marginBottom: 8,
   },
   subtitle: {
