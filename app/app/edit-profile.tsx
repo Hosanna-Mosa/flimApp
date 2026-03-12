@@ -82,7 +82,7 @@ export default function EditProfileScreen() {
       // Prepare update payload
       const updates = {
         name,
-        username,
+        username: username.toLowerCase().trim().replace(/[^a-zA-Z0-9._]/g, ''),
         bio,
         location,
         experience: parseInt(experience) || 0,
@@ -157,7 +157,11 @@ export default function EditProfileScreen() {
             label="Username"
             placeholder="Choose a unique username"
             value={username}
-            onChangeText={setUsername}
+            onChangeText={(text) => {
+              // Only allow alphanumeric, underscores and periods
+              const sanitized = text.replace(/[^a-zA-Z0-9._]/g, '');
+              setUsername(sanitized.toLowerCase());
+            }}
             autoCapitalize="none"
           />
 
