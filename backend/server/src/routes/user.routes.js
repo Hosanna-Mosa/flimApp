@@ -17,7 +17,16 @@ router.put(
     Joi.object({
       body: Joi.object({
         name: Joi.string().allow('', null),
-        username: Joi.string().alphanum().min(3).max(30).allow('', null),
+        username: Joi.string()
+          .allow('', null)
+          .empty('')
+          .pattern(/^[a-zA-Z0-9._]+$/)
+          .min(3)
+          .max(30)
+          .messages({
+            'string.pattern.base': 'Username can only contain letters, numbers, underscores, and periods',
+            'string.min': 'Username must be at least 3 characters long',
+          }),
         email: Joi.string().email().lowercase().allow('', null),
         phone: Joi.string().allow('', null),
         avatar: Joi.string().allow('', null),
