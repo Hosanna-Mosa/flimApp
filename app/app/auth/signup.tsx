@@ -134,8 +134,9 @@ export default function SignUpScreen() {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={[styles.container, { backgroundColor: '#000000' }]}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
     >
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -232,6 +233,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     padding: 24,
+    paddingBottom: 40,
   },
   header: {
     marginBottom: 40,
@@ -244,10 +246,9 @@ const styles = StyleSheet.create({
     fontSize: 28,
   },
   form: {
-    gap: 16,
   },
   button: {
-    marginTop: 24,
+    marginTop: 12,
   },
   countryPickerWrapper: {
     paddingLeft: 12,

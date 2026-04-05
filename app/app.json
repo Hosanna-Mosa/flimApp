@@ -9,12 +9,12 @@
     "userInterfaceStyle": "dark",
     "backgroundColor": "#000000",
     "splash": {
-      "image": "./assets/images/splash.png",
+      "image": "./assets/images/splash_new.png",
       "resizeMode": "contain",
       "backgroundColor": "#000000"
     },
     "ios": {
-      "supportsTablet": false,
+      "supportsTablet": false,          
       "bundleIdentifier": "app.rork.filmy",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Allow $(PRODUCT_NAME) to access your photos",
