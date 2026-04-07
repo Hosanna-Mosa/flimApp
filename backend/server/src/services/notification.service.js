@@ -173,6 +173,16 @@ const markRead = async (userId, id) =>
   Notification.findOneAndUpdate({ _id: id, user: userId }, { isRead: true }, { new: true });
 
 const createNotification = async ({ user, actor, title, body, type, metadata }) => {
+  // For certain types like follow requests, we want only ONE active notification
+  // to avoid duplicates if the user Rapid Clicks or toggles follow.
+  if (type === 'follow_request' || type === 'follow') {
+    await Notification.deleteMany({
+      user,
+      actor,
+      type: { $in: ['follow_request', 'follow'] }
+    });
+  }
+
   const notification = await Notification.create({
     user,
     actor,
@@ -194,10 +204,14 @@ const createNotification = async ({ user, actor, title, body, type, metadata }) 
   return notification;
 };
 
+const deleteNotification = async (query) => {
+  return Notification.deleteMany(query);
+};
+
 const markAllAsRead = async (userId) =>
   Notification.updateMany({ user: userId, isRead: false }, { isRead: true });
 
-module.exports = {registerPushToken , sendPushNotifications ,listNotifications, markRead, createNotification, markAllAsRead };
+module.exports = {registerPushToken, sendPushNotifications, listNotifications, markRead, createNotification, deleteNotification, markAllAsRead };
 
 
 

@@ -309,6 +309,19 @@ class QueueService {
     }
   }
 
+  async addNotificationRemovalJob(data) {
+    try {
+      await queues.notification.add('remove-notification', data, {
+        priority: 1, // High priority
+      });
+      logger.info(`Notification removal job queued for user ${data.userId}`);
+      return true;
+    } catch (error) {
+      logger.error('Error adding notification removal job:', error);
+      return false;
+    }
+  }
+
   /**
    * Queue Management
    */

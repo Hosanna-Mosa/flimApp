@@ -254,7 +254,7 @@ export const apiGetVerificationStatus = (token?: string) => request('/verificati
 export const apiSubmitVerificationRequest = (payload: any, token: string) =>
   request('/verification/request', { method: 'POST', body: payload, token });
 export const apiCreateSubscriptionOrder = (planId: string, token?: string) =>
-  request('/subscriptions/create-order', { method: 'POST', body: { planId }, token });
+  request('/subscriptions/create-order', { method: 'POST', body: { planType: planId }, token });
 export const apiVerifySubscriptionPayment = (payload: any, token?: string) =>
   request('/subscriptions/verify-payment', { method: 'POST', body: payload, token });
 

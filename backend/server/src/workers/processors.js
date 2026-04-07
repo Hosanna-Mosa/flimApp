@@ -212,6 +212,25 @@ queues.notification.process('send-notification', async (job) => {
   }
 });
 
+queues.notification.process('remove-notification', async (job) => {
+  const { userId, type, actorId, followerId } = job.data;
+  const actionUserId = actorId || followerId;
+  logger.info(`Processing notification removal: ${type} for user ${userId} by ${actionUserId}`);
+
+  try {
+    const result = await notificationService.deleteNotification({
+      user: userId,
+      actor: actionUserId,
+      type: type
+    });
+    
+    return { success: true, deletedCount: result.deletedCount };
+  } catch (error) {
+    logger.error('Notification removal failed:', error);
+    throw error;
+  }
+});
+
 /**
  * Event Handlers
  */
