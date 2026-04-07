@@ -181,6 +181,13 @@ class FollowService {
         logger.warn('[Unfollow] Cache update failed (non-critical):', cacheError.message);
       }
 
+      // Cleanup notifications
+      queueService.addNotificationRemovalJob({
+        userId: followingId,
+        type: 'follow_request',
+        followerId: followerId
+      }).catch(err => logger.error('Failed to queue notification removal:', err));
+
       return {
         success: true,
         message: 'User unfollowed successfully',
@@ -237,6 +244,13 @@ class FollowService {
         acceptedBy: userId, // Keep for backward compatibility
       }).catch(err => logger.error('Notification job failed', err));
 
+      // Cleanup original follow request notification from current user's history
+      queueService.addNotificationRemovalJob({
+        userId: userId,
+        type: 'follow_request',
+        followerId: followerId
+      }).catch(err => logger.error('Failed to queue notification removal:', err));
+
       logger.info(`User ${userId} accepted follow request from ${followerId}`);
 
       return {
@@ -281,6 +295,13 @@ class FollowService {
         logger.error('Failed to queue rejection notification:', notifError);
         // Don't fail the request if notification fails
       }
+
+      // Cleanup original follow request notification from current user's history
+      queueService.addNotificationRemovalJob({
+        userId: userId,
+        type: 'follow_request',
+        followerId: followerId
+      }).catch(err => logger.error('Failed to queue notification removal:', err));
 
       return {
         success: true,

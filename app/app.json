@@ -76,7 +76,7 @@
       ]
     ],
     "extra": {
-      "apiUrl": "http://10.192.9.42:8000",
+      "apiUrl": "http://192.168.1.20:8000",
       "router": {},
       "expo-navigation-bar": {
         "position": "absolute",

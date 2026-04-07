@@ -65,7 +65,7 @@ export default function FeedPost({
   const [audioDuration, setAudioDuration] = useState(0);
   const [loadingAudio, setLoadingAudio] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const { isMuted, toggleMute } = useMedia();
+  const { isMuted, toggleMute, currentPlayingAudioId, setCurrentPlayingAudioId } = useMedia();
 
   useEffect(() => {
     return () => {
@@ -74,6 +74,14 @@ export default function FeedPost({
       }
     };
   }, [sound]);
+
+  // Pause if another audio starts playing
+  useEffect(() => {
+    if (currentPlayingAudioId !== post.id && isPlaying && sound) {
+      sound.pauseAsync();
+      setIsPlaying(false);
+    }
+  }, [currentPlayingAudioId, isPlaying, sound, post.id]);
 
   // Handle auto-pause when screen is blurred (e.g. tab switch)
   useFocusEffect(
@@ -112,12 +120,17 @@ export default function FeedPost({
         if (isPlaying) {
           await sound.pauseAsync();
           setIsPlaying(false);
+          if (currentPlayingAudioId === post.id) {
+            setCurrentPlayingAudioId(null);
+          }
         } else {
+          setCurrentPlayingAudioId(post.id);
           await sound.playAsync();
           setIsPlaying(true);
         }
       } else {
         setLoadingAudio(true);
+        setCurrentPlayingAudioId(post.id);
         const mediaUrl = post.media?.url || post.mediaUrl;
         if (!mediaUrl) {
           setLoadingAudio(false);
@@ -136,6 +149,9 @@ export default function FeedPost({
                 setIsPlaying(false);
                 setAudioPosition(0);
                 newSound.setPositionAsync(0);
+                // Can't use setCurrentPlayingAudioId directly here without adding it to dependencies,
+                // but we can just use a generic closure. Actually, we can use the context setter.
+                setCurrentPlayingAudioId(null);
               }
             }
           }
