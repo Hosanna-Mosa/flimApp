@@ -338,7 +338,7 @@ class FeedService {
       logger.info(`[Feed] Following ${followingIds.length} users, Private accounts: ${privateUserIds.length}`);
 
       const posts = await Post.find(queryConditions)
-        .populate('author', 'name avatar isVerified roles accountType')
+        .populate('author', 'name avatar isVerified roles accountType isBoosted')
         .sort({ createdAt: -1 }) // Get most recent first, then we'll score them
         .limit(500) // Get more posts to score and filter
         .lean();
@@ -401,17 +401,18 @@ class FeedService {
       relevanceScore = matchingIndustries / Math.max(user.industries.length, 1);
     }
 
-    // Verified author boost
+    // Boosted author boost (Major priority)
+    const boostedBoost = post.author?.isBoosted ? 1000 : 0;
     const verifiedBoost = post.author?.isVerified ? 1.2 : 1.0;
 
     // Weighted combination
-    const finalScore = (
+    const scoreBase = (
       (engagementScore * 0.4) +
       (recencyScore * 0.4) +
       (relevanceScore * 0.2)
     ) * verifiedBoost;
 
-    return finalScore;
+    return scoreBase + boostedBoost;
   }
 
   /**

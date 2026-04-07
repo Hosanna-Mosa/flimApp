@@ -72,6 +72,12 @@ class MediaService {
       process.env.CLOUDINARY_API_SECRET
     );
 
+    console.log('[MediaService] Generating signature for:', type, 'Config:', {
+      cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+      apiKey: process.env.CLOUDINARY_API_KEY ? 'Present' : 'Missing',
+      apiSecret: process.env.CLOUDINARY_API_SECRET ? 'Present' : 'Missing'
+    });
+
     return {
       signature,
       timestamp,

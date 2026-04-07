@@ -24,6 +24,7 @@ import {
   BadgeCheck,
   Bookmark,
   Type,
+  Zap,
 } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -241,7 +242,15 @@ export default function ProfileScreen() {
               {user.isVerified && (
                 <BadgeCheck size={24} color="#FFFFFF" fill={colors.primary} />
               )}
+              {user.isBoosted && (
+                <Zap size={22} color="#000" fill="#FFD700" style={{ marginLeft: 4 }} />
+              )}
             </View>
+            {user.isBoosted && (
+              <View style={[styles.boostBadge, { backgroundColor: '#FFD700' }]}>
+                <Text style={styles.boostText}>PROFILE BOOST ACTIVE 🚀</Text>
+              </View>
+            )}
             <Text style={[styles.username, { color: colors.textSecondary }]}>
               @{user.username || 'username'}
             </Text>
@@ -516,5 +525,25 @@ const styles = StyleSheet.create({
     padding: 40,
     fontSize: 14,
     width: '100%',
+  },
+  boostBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 20,
+    marginTop: 4,
+    marginBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  boostText: {
+    color: '#000',
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 1,
   },
 });
