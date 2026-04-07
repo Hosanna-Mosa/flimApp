@@ -15,6 +15,7 @@ import {
   LogOut,
   Info,
   Flame,
+  Zap,
 } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -57,9 +58,15 @@ export default function AccountScreen() {
       id: 'wallet',
       icon: Wallet,
       label: 'Wallet',
-      subtitle: 'Payments & earnings (Coming Soon)',
-      onPress: () =>
-        Alert.alert('Coming Soon', 'Wallet feature will be available soon!'),
+      subtitle: 'Payments & earnings',
+      onPress: () => router.push('/wallet'),
+    },
+    {
+      id: 'boost',
+      icon: Zap,
+      label: 'Profile Boost',
+      subtitle: 'Priority feed placement',
+      onPress: () => router.push('/boost'),
     },
     {
       id: 'settings',

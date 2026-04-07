@@ -254,5 +254,23 @@ const search = async ({ q, roles, industries }, currentUserId) => {
   return results;
 };
 
-module.exports = { getMe, updateMe, getById, search };
+const boostProfile = async (userId, planId) => {
+  const user = await User.findById(userId);
+  if (!user) throw new Error('User not found');
+
+  let days = 1;
+  if (planId === 'PRO_BOOST') days = 3;
+  if (planId === 'ULTRA_BOOST') days = 7;
+
+  const boostedUntil = new Date();
+  boostedUntil.setDate(boostedUntil.getDate() + days);
+
+  user.isBoosted = true;
+  user.boostedUntil = boostedUntil;
+  
+  await user.save();
+  return user;
+};
+
+module.exports = { getMe, updateMe, getById, search, boostProfile };
 

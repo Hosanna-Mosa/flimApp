@@ -42,5 +42,15 @@ const search = async (req, res, next) => {
   }
 };
 
-module.exports = { getMe, updateMe, getById, search };
+const boostProfile = async (req, res, next) => {
+  try {
+    const { planId } = req.body;
+    const user = await userService.boostProfile(req.user.id, planId);
+    return success(res, user);
+  } catch (err) {
+    return next(err);
+  }
+};
+
+module.exports = { getMe, updateMe, getById, search, boostProfile };
 

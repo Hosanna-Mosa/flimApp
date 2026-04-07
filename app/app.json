@@ -14,7 +14,7 @@
       "backgroundColor": "#000000"
     },
     "ios": {
-      "supportsTablet": false,          
+      "supportsTablet": false,
       "bundleIdentifier": "app.rork.filmy",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Allow $(PRODUCT_NAME) to access your photos",
@@ -76,7 +76,7 @@
       ]
     ],
     "extra": {
-      "apiUrl": "https://api.filmyconnect24.com",
+      "apiUrl": "http://10.192.9.42:8000",
       "router": {},
       "expo-navigation-bar": {
         "position": "absolute",

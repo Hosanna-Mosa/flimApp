@@ -3,7 +3,9 @@ const logger = require('./logger');
 
 const connectDB = async (uri) => {
   try {
-    const dbcon = await mongoose.connect(uri);
+    const dbcon = await mongoose.connect(uri, {
+      family: 4
+    });
     logger.info(`MongoDB connected :${dbcon.connection.host}`);
   } catch (err) {
     logger.error(`MongoDB connection error: ${err.message}`);

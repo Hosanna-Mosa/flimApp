@@ -62,6 +62,9 @@ export const uploadMediaToCloudinary = async (
       formData.append('timestamp', timestamp.toString());
       formData.append('folder', folder);
     }
+
+    // Always append cloud_name for explicit account identification
+    formData.append('cloud_name', cloudName);
     
     // 3. Upload using XMLHttpRequest for progress tracking
     return new Promise((resolve, reject) => {
@@ -81,6 +84,7 @@ export const uploadMediaToCloudinary = async (
       }
 
       const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`;
+      console.log('[Media] Uploading to:', uploadUrl, 'Type:', type, 'mimeType:', mimeType);
 
       xhr.open('POST', uploadUrl);
 
