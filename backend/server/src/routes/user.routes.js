@@ -66,5 +66,7 @@ router.get(
   userController.search
 );
 
+router.post('/boost', auth, userController.boostProfile);
+
 module.exports = router;
 

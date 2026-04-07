@@ -14,7 +14,7 @@
       "backgroundColor": "#000000"
     },
     "ios": {
-      "supportsTablet": false,          
+      "supportsTablet": false,
       "bundleIdentifier": "app.rork.filmy",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Allow $(PRODUCT_NAME) to access your photos",

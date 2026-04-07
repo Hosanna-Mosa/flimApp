@@ -430,6 +430,25 @@ export const api = {
 
   // Support
   createSupportRequest: (payload: any, t: string) => unwrap(apiCreateSupportRequest(payload, t)),
+
+  // Wallet
+  getWalletBalance: (t?: string) => unwrap(request('/wallet/balance', { token: t })),
+  createWalletOrder: (amount: number, t?: string) => unwrap(request('/wallet/deposit/create', { method: 'POST', body: { amount }, token: t })),
+  verifyWalletPayment: (payload: any, t?: string) => unwrap(request('/wallet/deposit/verify', { method: 'POST', body: payload, token: t })),
+  withdrawWallet: async (amount: number, token?: string) => {
+    return request<any>('/wallet/withdraw', {
+      method: 'POST',
+      body: { amount },
+      token,
+    });
+  },
+  boostProfile: async (planId: string, token?: string) => {
+    return request<any>('/users/boost', {
+      method: 'POST',
+      body: { planId },
+      token,
+    });
+  },
 };
 
 // Default export

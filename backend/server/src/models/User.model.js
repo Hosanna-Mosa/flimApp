@@ -72,6 +72,11 @@ const UserSchema = new Schema(
     // Password Reset
     resetPasswordOtp: { type: String },
     resetPasswordExpires: { type: Date },
+
+    // Wallet & Boost
+    walletBalance: { type: Number, default: 0 },
+    isBoosted: { type: Boolean, default: false },
+    boostedUntil: { type: Date },
   },
   { timestamps: true }
 );

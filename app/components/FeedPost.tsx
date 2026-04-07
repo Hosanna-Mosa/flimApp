@@ -12,6 +12,7 @@ import {
   Bookmark,
   Volume2,
   VolumeX,
+  Zap,
 } from 'lucide-react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
@@ -451,6 +452,12 @@ export default function FeedPost({
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                 <Text style={[styles.userName, { color: colors.text }]}>{post.user.name}</Text>
                 {post.user.isVerified && <BadgeCheck size={16} color="#FFFFFF" fill="#0095F6" />}
+                {post.user.isBoosted && (
+                  <View style={[styles.boostedBadge, { backgroundColor: colors.primary }]}>
+                    <Zap size={10} color="#000" fill="#000" />
+                    <Text style={styles.boostedText}>BOOSTED</Text>
+                  </View>
+                )}
               </View>
               <Text style={[styles.role, { color: colors.textSecondary }]}>{post.user.roles?.[0] || 'Member'}</Text>
             </View>
@@ -738,5 +745,19 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 20,
     zIndex: 20,
+  },
+  boostedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginLeft: 4,
+    gap: 2,
+  },
+  boostedText: {
+    fontSize: 8,
+    fontWeight: 'bold',
+    color: '#000',
   },
 });
