@@ -10,7 +10,8 @@ import LoginPage from "@/pages/LoginPage";
 import VerificationRequestsPage from "@/pages/VerificationRequestsPage";
 import VerificationDetailPage from "@/pages/VerificationDetailPage";
 import UsersPage from "@/pages/Users";
-import SubscriptionsPage from "@/pages/SubscriptionsPage";
+import ExpertBoostHub from "@/pages/ExpertBoostHub";
+import UserDetailPage from "@/pages/UserDetailPage";
 import AuditLogsPage from "@/pages/AuditLogsPage";
 import NotFound from "@/pages/NotFound";
 
@@ -40,8 +41,11 @@ const App = () => (
             >
               <Route path="/requests" element={<VerificationRequestsPage />} />
               <Route path="/requests/:id" element={<VerificationDetailPage />} />
-              <Route path="/subscriptions" element={<SubscriptionsPage />} />
+              <Route path="/management-hub" element={<ExpertBoostHub />} />
+              <Route path="/subscriptions" element={<Navigate to="/management-hub" replace />} />
+              <Route path="/boost-subscriptions" element={<Navigate to="/management-hub" replace />} />
               <Route path="/users" element={<UsersPage />} />
+              <Route path="/users/:id" element={<UserDetailPage />} />
               <Route path="/logs" element={<AuditLogsPage />} />
             </Route>
 

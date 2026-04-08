@@ -19,6 +19,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { SuspendModal } from '@/components/SuspendModal';
 import { toast } from 'sonner';
+import { usersApi } from '@/services/api';
+import { useNavigate } from 'react-router-dom';
+import { UserAvatar } from '@/components/UserAvatar';
 
 interface User {
     _id: string;
@@ -27,6 +30,10 @@ interface User {
     phone: string;
     roles: string[];
     status: 'active' | 'suspended' | 'banned';
+    walletBalance: number;
+    isBoosted: boolean;
+    boostedUntil: string;
+    avatar: string | null;
     createdAt: string;
 }
 
@@ -40,6 +47,7 @@ export default function Users() {
     const [search, setSearch] = useState('');
     const [role, setRole] = useState('all');
     const [status, setStatus] = useState('all');
+    const navigate = useNavigate();
 
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [isSuspendModalOpen, setIsSuspendModalOpen] = useState(false);
@@ -48,24 +56,17 @@ export default function Users() {
     const fetchUsers = async () => {
         setLoading(true);
         try {
-            const params = new URLSearchParams({
-                page: page.toString(),
-                limit: '10',
-            });
-            if (search) params.append('search', search);
-            if (role && role !== 'all') params.append('role', role);
-            if (status && status !== 'all') params.append('status', status);
+            const params: any = {
+                page: page,
+                limit: 10,
+            };
+            if (search) params.search = search;
+            if (role && role !== 'all') params.role = role;
+            if (status && status !== 'all') params.status = status;
 
-            // Assuming API base URL is set in environment or proxy
-            const res = await fetch(`http://localhost:8000/admin/users?${params}`); // Adjust URL as needed
-            const data = await res.json();
-
-            if (data.success) {
-                setUsers(data.data.users);
-                setTotalPages(data.data.pagination.pages);
-            } else {
-                toast.error('Failed to fetch users');
-            }
+            const response = await usersApi.getAll(params);
+            setUsers(response.data);
+            setTotalPages(response.totalPages);
         } catch (error) {
             toast.error('Error fetching users');
         } finally {
@@ -92,20 +93,10 @@ export default function Users() {
         if (!selectedUser) return;
         setActionLoading(true);
         try {
-            const res = await fetch(`http://localhost:8000/admin/users/${selectedUser._id}/suspend`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data),
-            });
-            const result = await res.json();
-
-            if (result.success) {
-                toast.success(`User ${data.status} successfully`);
-                setIsSuspendModalOpen(false);
-                fetchUsers(); // Refresh list
-            } else {
-                toast.error(result.message || 'Action failed');
-            }
+            await usersApi.suspend(selectedUser._id, data);
+            toast.success(`User ${data.status} successfully`);
+            setIsSuspendModalOpen(false);
+            fetchUsers(); // Refresh list
         } catch (error) {
             toast.error('Error performing action');
         } finally {
@@ -117,17 +108,9 @@ export default function Users() {
         if (!confirm('Are you sure you want to reactivate this user?')) return;
 
         try {
-            const res = await fetch(`http://localhost:8000/admin/users/${userId}/unsuspend`, {
-                method: 'PUT',
-            });
-            const result = await res.json();
-
-            if (result.success) {
-                toast.success('User reactivated successfully');
-                fetchUsers();
-            } else {
-                toast.error(result.message);
-            }
+            await usersApi.unsuspend(userId);
+            toast.success('User reactivated successfully');
+            fetchUsers();
         } catch (error) {
             toast.error('Error reactivating user');
         }
@@ -181,9 +164,10 @@ export default function Users() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Name</TableHead>
-                            <TableHead>Email</TableHead>
-                            <TableHead>Phone</TableHead>
+                            <TableHead>User</TableHead>
+                            <TableHead>Contact</TableHead>
+                            <TableHead>Wallet</TableHead>
+                            <TableHead>Boost</TableHead>
                             <TableHead>Roles</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
@@ -201,18 +185,47 @@ export default function Users() {
                         ) : (
                             users.map((user) => (
                                 <TableRow key={user._id}>
-                                    <TableCell className="font-medium">{user.name}</TableCell>
-                                    <TableCell>{user.email}</TableCell>
-                                    <TableCell>{user.phone}</TableCell>
                                     <TableCell>
-                                        {user.roles.map(r => (
-                                            <Badge key={r} variant="outline" className="mr-1 capitalize">
-                                                {r}
-                                            </Badge>
-                                        ))}
+                                        <div 
+                                            className="flex items-center gap-3 cursor-pointer group"
+                                            onClick={() => navigate(`/users/${user._id}`)}
+                                        >
+                                            <UserAvatar user={user} size="sm" />
+                                            <div className="flex flex-col">
+                                                <span className="font-medium group-hover:text-primary transition-colors">{user.name}</span>
+                                                <span className="text-xs text-muted-foreground font-mono">{user._id.slice(-6)}</span>
+                                            </div>
+                                        </div>
                                     </TableCell>
                                     <TableCell>
-                                        <Badge variant={user.status === 'active' ? 'default' : 'destructive'} className="capitalize">
+                                        <div className="flex flex-col text-xs">
+                                            <span>{user.email}</span>
+                                            <span className="text-muted-foreground">{user.phone}</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <span className="font-bold text-primary">₹{user.walletBalance?.toLocaleString('en-IN') || 0}</span>
+                                    </TableCell>
+                                    <TableCell>
+                                        {user.isBoosted ? (
+                                            <Badge className="bg-yellow-500 hover:bg-yellow-600 text-black border-none gap-1">
+                                                <span className="animate-pulse">⚡</span> Boosted
+                                            </Badge>
+                                        ) : (
+                                            <span className="text-muted-foreground text-xs italic">Normal</span>
+                                        )}
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex flex-wrap gap-1">
+                                            {user.roles.map(r => (
+                                                <Badge key={r} variant="outline" className="capitalize text-[10px] px-1.5 h-5">
+                                                    {r}
+                                                </Badge>
+                                            ))}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge variant={user.status === 'active' ? 'default' : 'destructive'} className="capitalize h-5 text-[10px]">
                                             {user.status}
                                         </Badge>
                                     </TableCell>

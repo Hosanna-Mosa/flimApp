@@ -172,4 +172,48 @@ export const verificationApi = {
   },
 };
 
+// Users API
+export const usersApi = {
+  getAll: async (params: any): Promise<PaginatedResponse<any>> => {
+    const response = await api.get('/admin/users', { params });
+    return response.data;
+  },
+  getById: async (id: string): Promise<any> => {
+    const response = await api.get(`/admin/users/${id}`);
+    return response.data;
+  },
+  updateWallet: async (id: string, data: { amount: number, type: string, description?: string }): Promise<void> => {
+    await api.put(`/admin/users/${id}/wallet`, data);
+  },
+  suspend: async (id: string, data: any): Promise<void> => {
+    await api.put(`/admin/users/${id}/suspend`, data);
+  },
+  unsuspend: async (id: string): Promise<void> => {
+    await api.put(`/admin/users/${id}/unsuspend`);
+  },
+};
+
+// Stats API
+export const statsApi = {
+  getBoostStats: async (): Promise<{ count: number, users: any[] }> => {
+    const response = await api.get('/admin/stats/boost');
+    return response.data;
+  },
+
+  getWalletStats: async (
+    page: number = 1,
+    limit: number = 10,
+    search?: string
+  ): Promise<PaginatedResponse<any> & { platformTotal: number }> => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+    if (search) params.append('search', search);
+
+    const response = await api.get(`/admin/stats/wallet?${params.toString()}`);
+    return response.data;
+  },
+};
+
 export default api;
