@@ -106,7 +106,7 @@ export default function HomeScreen() {
         const rawIds = followingData.map((u: any) => u._id || u.id);
         const ids = new Set<string>(rawIds);
         setFollowingIds(ids);
-        console.log('[Home] Following IDs refreshed:', Array.from(ids).length);
+
       }
     } catch (error) {
       // console.error('[Home] Error fetching following list:', error);
@@ -117,15 +117,10 @@ export default function HomeScreen() {
     if (!token) return;
 
     try {
-      console.log(`[Home] Loading feed page ${pageNumber}...`);
+
       const result = await api.getFeed(pageNumber, 20, 'hybrid', 36500, token) as any;
 
-      console.log(`[Home] Feed API response:`, {
-        isArray: Array.isArray(result),
-        hasData: !!(result && result.data),
-        resultType: typeof result,
-        resultKeys: result ? Object.keys(result) : [],
-      });
+
 
       // ... existing mapping logic ...
       let feedItems = [];
@@ -137,11 +132,11 @@ export default function HomeScreen() {
         feedItems = result.data.data;
       }
 
-      console.log(`[Home] Extracted ${feedItems.length} feed items`);
+
 
       // Log unique authors for debugging
       const uniqueAuthors = [...new Set(feedItems.map((p: any) => p.author?._id || p.author?.id || p.userId).filter(Boolean))];
-      console.log(`[Home] Posts from ${uniqueAuthors.length} unique authors:`, uniqueAuthors);
+
 
       if (feedItems.length > 0) {
         const mappedPosts = feedItems.map((p: any) => ({
@@ -189,7 +184,7 @@ export default function HomeScreen() {
           setPosts(mappedPosts);
         }
       } else {
-        console.log(`[Home] No feed items found. Result:`, result);
+
         if (!append) setPosts([]);
         setHasMore(false);
       }

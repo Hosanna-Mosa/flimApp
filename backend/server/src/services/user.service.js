@@ -1,5 +1,12 @@
 const User = require('../models/User.model');
 const Follow = require('../models/Follow.model');
+const Wallet = require('../models/Wallet.model');
+
+const BOOST_PLAN_DETAILS = {
+  BASIC_BOOST: { price: 299, days: 1, label: 'Standard Boost' },
+  PRO_BOOST: { price: 799, days: 3, label: 'Pro Boost' },
+  ULTRA_BOOST: { price: 1499, days: 7, label: 'Ultra Boost' },
+};
 
 const getMe = async (userId) => User.findById(userId).select('-password -refreshTokens');
 
@@ -255,21 +262,65 @@ const search = async ({ q, roles, industries }, currentUserId) => {
 };
 
 const boostProfile = async (userId, planId) => {
-  const user = await User.findById(userId);
-  if (!user) throw new Error('User not found');
+  const plan = BOOST_PLAN_DETAILS[planId];
+  if (!plan) throw new Error('Invalid boost plan selected');
 
-  let days = 1;
-  if (planId === 'PRO_BOOST') days = 3;
-  if (planId === 'ULTRA_BOOST') days = 7;
+  // 1. Atomic balance deduction to prevent race conditions
+  const updatedUser = await User.findOneAndUpdate(
+    { 
+      _id: userId, 
+      walletBalance: { $gte: plan.price } 
+    },
+    { 
+      $inc: { walletBalance: -plan.price }
+    },
+    { new: true }
+  );
 
-  const boostedUntil = new Date();
-  boostedUntil.setDate(boostedUntil.getDate() + days);
+  if (!updatedUser) {
+    // If update failed, check if it was due to balance or missing user
+    const checkUser = await User.findById(userId);
+    if (!checkUser) throw new Error('User not found');
+    
+    const err = new Error('Insufficient wallet balance. Please add funds to your vault.');
+    err.status = 402;
+    throw err;
+  }
 
-  user.isBoosted = true;
-  user.boostedUntil = boostedUntil;
+  // 2. Calculate expiration (EXTEND if already active)
+  const now = new Date();
+  const baseDate = (updatedUser.boostedUntil && updatedUser.boostedUntil > now)
+    ? updatedUser.boostedUntil
+    : now;
+
+  const newBoostedUntil = new Date(baseDate.getTime());
+  newBoostedUntil.setDate(newBoostedUntil.getDate() + plan.days);
+
+  updatedUser.isBoosted = true;
+  updatedUser.boostedUntil = newBoostedUntil;
+  updatedUser.isBoostExpiringNotified = false;
   
-  await user.save();
-  return user;
+  // 3. Sync with Wallet model and record transaction
+  let wallet = await Wallet.findOne({ user: userId });
+  if (!wallet) {
+    wallet = new Wallet({ user: userId, balance: updatedUser.walletBalance });
+  } else {
+    wallet.balance = updatedUser.walletBalance;
+  }
+
+  wallet.transactions.push({
+    type: 'debit',
+    amount: plan.price,
+    description: `Profile Boost: ${plan.label} (${plan.days} days)${baseDate > now ? ' - Extension' : ''}`,
+    reference: `boost_${Date.now()}`
+  });
+
+  await Promise.all([
+    updatedUser.save(),
+    wallet.save()
+  ]);
+
+  return updatedUser;
 };
 
 module.exports = { getMe, updateMe, getById, search, boostProfile };

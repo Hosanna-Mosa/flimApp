@@ -71,11 +71,11 @@ export default function ChatScreen() {
     if (userId && token) {
       const loadMessages = async () => {
         try {
-          console.log('[CHAT] Loading messages for userId:', userId);
+
           // Using the api wrapper handles response unwrapping (e.g. res.data.data or res.data)
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const history: any[] = await api.conversation(userId, token) || [];
-          console.log('[CHAT] Extracted messages:', history.length);
+
 
           if (history.length > 0) {
             const formatted = history.map((msg: any) => {
@@ -91,10 +91,10 @@ export default function ChatScreen() {
                 status: msg.status || 'sent', // Default to sent if missing
               };
             });
-            console.log('[CHAT] Formatted', formatted.length, 'messages');
+
             setMessages(formatted);
           } else {
-            console.log('[CHAT] No messages found');
+
             setMessages([]);
           }
         } catch (e) {
@@ -121,9 +121,7 @@ export default function ChatScreen() {
 
   // 2. Socket Listeners
   useEffect(() => {
-    console.log('[CHAT] Screen opened');
-    console.log('[CHAT] Socket connected:', socket?.connected);
-    console.log('[CHAT] Socket ID:', socket?.id);
+
 
     if (!socket) return;
 
@@ -172,14 +170,14 @@ export default function ChatScreen() {
     };
 
     const handleMessageSent = (message: any) => {
-      console.log('[CHAT] message_sent received:', message);
+
       setMessages((prev) => {
         // Remove optimistic message if exists (by content match or temp ID)
         const filtered = prev.filter(m => !m.id.startsWith('temp-') || m.message !== message.content);
 
         const exists = filtered.some(m => m.id === (message._id || message.id));
         if (exists) {
-          console.log('[CHAT] Message already exists, skipping');
+
           return filtered;
         }
 
@@ -197,7 +195,7 @@ export default function ChatScreen() {
           status: message.status || 'sent',
         };
 
-        console.log('[CHAT] Adding new message to state:', newMessage);
+
         return [...filtered, newMessage];
       });
 
@@ -235,7 +233,7 @@ export default function ChatScreen() {
     }
 
     if (!socket.connected) {
-      console.log('[CHAT] Socket not connected. Cannot send.');
+
       Alert.alert('Connection Error', 'Socket not connected. Please wait a moment and try again.');
       return;
     }
@@ -246,17 +244,14 @@ export default function ChatScreen() {
       content: content,
     };
 
-    console.log('[SEND] Button clicked');
-    console.log('[SEND] Payload:', payload);
-    console.log('[SEND] Socket connected:', socket.connected);
-    console.log('[SEND] Current messages count:', messages.length);
+
 
     // Clear input immediately for better UX
     setInputMessage('');
 
     // Emit message
     socket.emit('send_message', payload);
-    console.log('[SEND] socket.emit(send_message) called');
+
 
     // Add optimistic message immediately (will be replaced by message_sent event)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

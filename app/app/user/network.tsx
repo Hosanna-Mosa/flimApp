@@ -54,7 +54,7 @@ export default function UserNetworkScreen() {
                 setUsers(prev => [...prev, ...data]);
             }
 
-            console.log(`[Network] Loaded ${data.length} ${type} for user ${userId}`);
+
 
             setHasMore(data.length === 20);
             setPage(pageNum);

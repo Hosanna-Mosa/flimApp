@@ -6,7 +6,7 @@ import { DeviceEventEmitter } from 'react-native';
 const API_BASE = Constants.expoConfig?.extra?.apiUrl;
 
 
-console.log('[API] Initializing with Base URL:', API_BASE);
+
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
@@ -28,7 +28,7 @@ const request = async <T>(
   { method = 'GET', body, token, headers }: RequestOptions = {}
 ): Promise<T> => {
   const fullUrl = `${API_BASE}${path.startsWith('/') ? path : '/' + path}`;
-  console.log(`[API CALL] 🚀 ${method} ${fullUrl}`);
+
 
   try {
     const res = await fetch(fullUrl, {
@@ -44,7 +44,7 @@ const request = async <T>(
 
     // Handle 304 Not Modified responses - they have no body, so we need to retry without cache
     if (res.status === 304) {
-      console.log(`[API RESP] ⚠️ 304 Not Modified for ${path}, retrying without cache...`);
+
       // Retry the request with cache-busting headers
       const retryRes = await fetch(fullUrl, {
         method,
@@ -65,7 +65,7 @@ const request = async <T>(
       }
 
       const retryJson = await retryRes.json().catch(() => ({}));
-      console.log(`[API RESP] ✅ ${retryRes.status} ${path} (after 304 retry)`);
+
       return retryJson;
     }
 
@@ -84,7 +84,7 @@ const request = async <T>(
       throw error;
     }
 
-    console.log(`[API RESP] ✅ ${res.status} ${path}`);
+
     return json;
   } catch (error: any) {
     if (!error.logged) {

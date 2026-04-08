@@ -97,43 +97,107 @@ const User = require('../models/User.model');
 const Subscription = require('../models/Subscription.model');
 
 queues.subscription.process('check-expiry', async (job) => {
-  logger.info('Running subscription expiry check...');
+  logger.info('Running subscription and boost expiry check...');
   try {
     const now = new Date();
-    
-    // Find all active subscriptions that have expired
+    let totalExpiredSubscriptions = 0;
+    let totalExpiredBoosts = 0;
+
+    // --- Part 1: Handle Verified Badge Subscriptions ---
     const expiredSubscriptions = await Subscription.find({
       status: 'ACTIVE',
       endDate: { $lt: now }
     });
 
-    if (expiredSubscriptions.length === 0) {
-      return { success: true, expiredCount: 0 };
+    if (expiredSubscriptions.length > 0) {
+      const userIdsWithExpiredSubs = expiredSubscriptions.map(sub => sub.user);
+      
+      // Update memberships status
+      await Subscription.updateMany(
+        { _id: { $in: expiredSubscriptions.map(sub => sub._id) } },
+        { $set: { status: 'EXPIRED' } }
+      );
+
+      // Remove badges from users
+      await User.updateMany(
+        { _id: { $in: userIdsWithExpiredSubs } },
+        { 
+          $set: { 
+            isVerified: false, 
+            verificationStatus: 'none' 
+          } 
+        }
+      );
+      totalExpiredSubscriptions = expiredSubscriptions.length;
+      logger.info(`Expired ${totalExpiredSubscriptions} subscriptions and removed badges.`);
     }
 
-    const userIds = expiredSubscriptions.map(sub => sub.user);
+    // --- Part 2: Handle Profile Boosts ---
+    // Find users whose boost has expired
+    const expiredBoostUsers = await User.find({
+      isBoosted: true,
+      boostedUntil: { $lt: now }
+    }).select('_id');
 
-    // Update subscriptions to EXPIRED
-    await Subscription.updateMany(
-      { _id: { $in: expiredSubscriptions.map(sub => sub._id) } },
-      { $set: { status: 'EXPIRED' } }
-    );
+    if (expiredBoostUsers.length > 0) {
+      const boostUserIds = expiredBoostUsers.map(u => u._id);
+      
+      await User.updateMany(
+        { _id: { $in: boostUserIds } },
+        { 
+          $set: { 
+            isBoosted: false,
+            isBoostExpiringNotified: false 
+          } 
+        }
+      );
+      totalExpiredBoosts = expiredBoostUsers.length;
+      logger.info(`Expired ${totalExpiredBoosts} profile boosts.`);
 
-    // Remove badges from users
-    await User.updateMany(
-      { _id: { $in: userIds } },
-      { 
-        $set: { 
-          isVerified: false, 
-          verificationStatus: 'none' 
-        } 
+      // Notify users that boost has expired
+      for (const userId of boostUserIds) {
+        queueService.addNotificationJob({
+          userId,
+          type: 'boost_expired',
+        });
       }
-    );
+    }
 
-    logger.info(`Removed badges from ${userIds.length} users with expired subscriptions`);
-    return { success: true, expiredCount: userIds.length };
+    // --- Part 3: Notify about upcoming boost expiration (in < 1 hour) ---
+    const soonToExpireBoosts = await User.find({
+      isBoosted: true,
+      isBoostExpiringNotified: false,
+      boostedUntil: { 
+        $gt: now, 
+        $lt: new Date(now.getTime() + 60 * 60 * 1000) // Less than 1 hour away
+      }
+    }).select('_id');
+
+    if (soonToExpireBoosts.length > 0) {
+      const soonIds = soonToExpireBoosts.map(u => u._id);
+      
+      await User.updateMany(
+        { _id: { $in: soonIds } },
+        { $set: { isBoostExpiringNotified: true } }
+      );
+
+      for (const userId of soonIds) {
+        queueService.addNotificationJob({
+          userId,
+          type: 'boost_expiring',
+        });
+      }
+      logger.info(`Sent ${soonIds.length} boost expiration warnings.`);
+    }
+
+    return { 
+      success: true, 
+      expiredSubscriptions: totalExpiredSubscriptions,
+      expiredBoosts: totalExpiredBoosts,
+      notifiedSoonToExpire: soonToExpireBoosts.length
+    };
   } catch (error) {
-    logger.error('Subscription expiry check failed:', error);
+    logger.error('Subscription/Boost expiry check failed:', error);
     throw error;
   }
 });
@@ -145,14 +209,20 @@ queues.notification.process('send-notification', async (job) => {
   try {
     const { userId, type, actorId, followerId, acceptedBy } = data;
 
+    // For system notifications, skip actor lookup
+    const isSystemType = ['boost_expiring', 'boost_expired'].includes(type);
+    
     // Determine who performed the action (prioritize actorId for navigation)
     const actionUserId = actorId || acceptedBy || followerId;
 
     // Don't notify if user triggered action on themselves
-    if (actionUserId === userId) return { success: true, skipped: true };
+    if (!isSystemType && actionUserId === userId) return { success: true, skipped: true };
 
-    const actor = await User.findById(actionUserId).select('name');
-    const actorName = actor ? actor.name : 'Someone';
+    let actorName = 'Someone';
+    if (!isSystemType && actionUserId) {
+      const actor = await User.findById(actionUserId).select('name');
+      actorName = actor ? actor.name : 'Someone';
+    }
 
     let title = 'New Notification';
     let body = 'You have a new notification';
@@ -189,6 +259,14 @@ queues.notification.process('send-notification', async (job) => {
       case 'message':
         title = 'New Message';
         body = `${actorName} sent you a message`;
+        break;
+      case 'boost_expiring':
+        title = 'Boost Ending Soon ⚡️';
+        body = 'Your profile boost is ending in less than 1 hour. Extend it now to keep your priority placement!';
+        break;
+      case 'boost_expired':
+        title = 'Boost Expired 🏁';
+        body = 'Your profile boost has expired. Your visibility in the feed will return to normal levels.';
         break;
     }
 
