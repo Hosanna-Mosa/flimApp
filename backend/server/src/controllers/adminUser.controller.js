@@ -31,13 +31,11 @@ const getAllUsers = async (req, res, next) => {
         const total = await User.countDocuments(query);
 
         return success(res, {
-            users,
-            pagination: {
-                total,
-                page: parseInt(page),
-                limit: parseInt(limit),
-                pages: Math.ceil(total / limit),
-            },
+            data: users,
+            total,
+            page: parseInt(page),
+            limit: parseInt(limit),
+            totalPages: Math.ceil(total / limit),
         });
     } catch (err) {
         next(err);
@@ -101,8 +99,61 @@ const unsuspendUser = async (req, res, next) => {
     }
 };
 
+const getUserById = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const user = await User.findById(id).select('-password');
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        return success(res, user);
+    } catch (err) {
+        next(err);
+    }
+};
+
+const updateWallet = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { amount, type, description } = req.body; // type: 'credit' or 'debit'
+
+        const user = await User.findById(id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const change = type === 'credit' ? parseFloat(amount) : -parseFloat(amount);
+        user.walletBalance = (user.walletBalance || 0) + change;
+        await user.save();
+
+        // Also update Wallet model
+        const Wallet = require('../models/Wallet.model');
+        let wallet = await Wallet.findOne({ user: id });
+        if (!wallet) {
+            wallet = new Wallet({ user: id, balance: user.walletBalance });
+        } else {
+            wallet.balance = user.walletBalance;
+        }
+
+        wallet.transactions.push({
+            type,
+            amount: parseFloat(amount),
+            description: description || `Admin adjustment: ${type}`,
+            reference: `admin_${Date.now()}`
+        });
+
+        await wallet.save();
+
+        return success(res, { balance: user.walletBalance, transactions: wallet.transactions });
+    } catch (err) {
+        next(err);
+    }
+};
+
 module.exports = {
     getAllUsers,
+    getUserById,
+    updateWallet,
     suspendUser,
     unsuspendUser,
 };

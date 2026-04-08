@@ -63,6 +63,7 @@ app.use('/api/feed', feedRoutes);    // /api/feed, /api/feed/trending, etc.
 app.use('/admin/auth', adminAuthRoutes);
 app.use('/admin/verification', adminVerificationRoutes);
 app.use('/admin/users', require('./routes/adminUser.routes'));
+app.use('/admin/stats', require('./routes/adminStats.routes'));
 
 app.use('/verification', verificationRoutes);
 app.use('/support', supportRoutes);

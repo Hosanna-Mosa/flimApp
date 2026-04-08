@@ -7,6 +7,8 @@ import {
   Menu,
   X,
   CreditCard,
+  Zap,
+  ShieldCheck,
   Users as UsersIcon
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
@@ -16,8 +18,8 @@ import { cn } from '@/lib/utils';
 
 const navigation = [
   { name: 'Verification Requests', href: '/requests', icon: ClipboardList },
-  { name: 'Subscription Users', href: '/subscriptions', icon: CreditCard },
-  { name: 'Users', href: '/users', icon: UsersIcon },
+  { name: 'Management Hub', href: '/management-hub', icon: ShieldCheck },
+  { name: 'Users / Wallet', href: '/users', icon: UsersIcon },
   { name: 'Audit Logs', href: '/logs', icon: History },
 ];
 
@@ -46,9 +48,11 @@ export function AdminLayout() {
         <div className="flex h-full flex-col">
           {/* Logo */}
           <div className="flex h-16 items-center justify-between border-b border-border px-6">
-            <div className="flex items-center gap-2">
-              <BadgeCheck className="h-7 w-7 text-primary" />
-              <span className="font-semibold text-lg text-foreground">Flimy Verify</span>
+            <div className="flex items-center gap-2 mb-8 px-2">
+              <div className="h-8 w-8 rounded-lg overflow-hidden border border-border bg-white p-0.5">
+                <img src="/icon_new.jpeg" alt="Flimy Logo" className="h-full w-full object-contain" />
+              </div>
+              <span className="font-bold text-xl text-foreground tracking-tight">Flimy Verify</span>
             </div>
             <button
               className="lg:hidden text-muted-foreground hover:text-foreground"
