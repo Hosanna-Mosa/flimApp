@@ -77,6 +77,7 @@ const UserSchema = new Schema(
     walletBalance: { type: Number, default: 0 },
     isBoosted: { type: Boolean, default: false },
     boostedUntil: { type: Date },
+    isBoostExpiringNotified: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

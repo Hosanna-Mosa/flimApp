@@ -28,6 +28,7 @@ import Input from '@/components/Input';
 import Button from '@/components/Button';
 import { uploadMediaToCloudinary } from '@/utils/media';
 import api from '@/utils/api';
+import RazorpayCheckout from '@/components/RazorpayCheckout';
 
 const VERIFICATION_TYPES = [
   { label: 'Content Creator', value: 'CREATOR' },
@@ -61,6 +62,8 @@ export default function VerificationScreen() {
   // Step 2: Plans State
   const [selectedPlan, setSelectedPlan] = useState<'1_MONTH' | '3_MONTHS' | '6_MONTHS' | '9_MONTHS' | null>(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [razorpayModalVisible, setRazorpayModalVisible] = useState(false);
+  const [razorpayOptions, setRazorpayOptions] = useState<any>(null);
 
   // Form State
   const [verificationType, setVerificationType] = useState('CREATOR');
@@ -133,72 +136,74 @@ export default function VerificationScreen() {
       // Step 1: Create Order on Backend
       const order = await api.apiCreateSubscriptionOrder(planId, token || undefined);
       
-      // Step 2: In a real app, this would open the Razorpay Native Modal.
-      // Since we can't do that here, we'll simulate a successful payment for now.
-      // If you are using react-native-razorpay, the code would be:
-      /*
-      var options = {
-        description: 'Verification Badge Subscription',
-        image: 'https://i.imgur.com/3g7Y69t.png',
-        currency: order.currency,
+      // Step 2: Prepare options for checkout
+      const options = {
         key: order.keyId,
-        amount: order.amount,
-        name: 'FilmyConnect',
         order_id: order.orderId,
+        name: 'FilmyConnect',
+        description: `Verification Badge - ${planId}`,
         prefill: {
-          email: user?.email,
-          contact: user?.phone,
-          name: user?.name
+          email: user?.email || '',
+          contact: user?.phone || '',
+          name: user?.name || ''
         },
-        theme: {color: colors.primary}
-      }
-      RazorpayCheckout.open(options).then(async (data) => {
-        await api.apiVerifySubscriptionPayment({
-          razorpay_order_id: data.razorpay_order_id,
-          razorpay_payment_id: data.razorpay_payment_id,
-          razorpay_signature: data.razorpay_signature
-        }, token);
-        fetchStatus();
-      })
-      */
-      
-      // For this demo/setup, we will just show an alert or proceed if you want to skip actual Razorpay UI.
-      Alert.alert(
-        'Payment Demo', 
-        `In a real build, we would open Razorpay checkout for ${planId} plan (${PLANS.find(p => p.id === planId)?.price}). Proceed with simulated success?`,
-        [
-          { text: 'Cancel', style: 'cancel', onPress: () => setIsProcessingPayment(false) },
-          { 
-            text: 'Success', 
-            onPress: async () => {
-              try {
-                // We simulate the callback from Razorpay
-                // We actually call the backend with a special 'simulated_success' signature 
-                // which the backend will accept ONLY in development mode.
-                await api.apiVerifySubscriptionPayment({
-                  razorpay_order_id: order.orderId,
-                  razorpay_payment_id: `pay_simulated_${Date.now()}`,
-                  razorpay_signature: 'simulated_success'
-                }, token || undefined);
-
-                Alert.alert('Success', 'Payment simulated and verified in database!');
-                fetchStatus();
-                // refreshUser to update global auth state
-                await refreshUser();
-              } catch (e: any) {
-                Alert.alert('Error', e.message || 'Payment verification failed');
-              } finally {
-                setIsProcessingPayment(false);
+        theme: { color: colors.primary },
+        retry: { enabled: true, max_count: 3 },
+        config: {
+          display: {
+            blocks: {
+              upi: {
+                name: 'UPI',
+                instruments: [{ method: 'upi' }]
               }
-            }
+            },
+            sequence: ['block.upi', 'block.card', 'block.netbanking'],
+            preferences: { show_default_blocks: true }
           }
-        ]
-      );
+        },
+        _internal: {
+          integration: 'reactjs',
+          platform: 'mobile_app'
+        }
+      };
+
+      setRazorpayOptions(options);
+      setRazorpayModalVisible(true);
+      setIsProcessingPayment(false);
 
     } catch (error: any) {
+      console.error('[Verification] Payment initiation failed:', error);
       Alert.alert('Error', error.message || 'Failed to initiate payment');
       setIsProcessingPayment(false);
     }
+  };
+
+  const handlePaymentSuccess = async (response: any) => {
+    console.log('[Verification] Payment success, verifying...');
+    setRazorpayModalVisible(false);
+    try {
+      setIsProcessingPayment(true);
+      await api.apiVerifySubscriptionPayment({
+        razorpay_order_id: response.razorpay_order_id,
+        razorpay_payment_id: response.razorpay_payment_id,
+        razorpay_signature: response.razorpay_signature
+      }, token || undefined);
+
+      Alert.alert('Success', 'Verification badge activated successfully!');
+      fetchStatus();
+      await refreshUser();
+    } catch (e: any) {
+      console.error('[Verification] Verification failed:', e);
+      Alert.alert('Error', e.message || 'Payment verification failed');
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
+
+  const handlePaymentFailure = (error: any) => {
+    console.error('[Verification] Payment failed:', error);
+    setRazorpayModalVisible(false);
+    Alert.alert('Payment Failed', error.description || 'Transaction could not be completed');
   };
 
   const handleAddDocument = async () => {
@@ -558,6 +563,14 @@ export default function VerificationScreen() {
           </View>
         </View>
       </Modal>
+
+      <RazorpayCheckout
+        visible={razorpayModalVisible}
+        options={razorpayOptions}
+        onSuccess={handlePaymentSuccess}
+        onFailure={handlePaymentFailure}
+        onClose={() => setRazorpayModalVisible(false)}
+      />
     </>
   );
 }

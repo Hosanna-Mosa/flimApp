@@ -22,7 +22,7 @@ const SOCKET_URL = API_BASE_URL
   : ((globalThis as any)?.process?.env?.EXPO_PUBLIC_API_URL as string) ||
     'http://192.168.1.3:8000';
 
-console.log('[SOCKET] Connecting to:', SOCKET_URL);
+
 
 export const socket: Socket = io(SOCKET_URL, {
   path: '/socket.io',
@@ -80,7 +80,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
 
     // Connect only once (controlled)
     if (!socket.connected) {
-      console.log('[SOCKET] Connecting with token...');
+
       socket.connect();
     }
   }, [token]);
@@ -92,7 +92,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
    */
   useEffect(() => {
     const onConnect = () => {
-      console.log('[SOCKET] connected:', socket.id);
+
       setIsConnected(true);
 
       // Join user room after connect
@@ -102,12 +102,12 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
     };
 
     const onDisconnect = (reason: string) => {
-      console.log('[SOCKET] disconnected:', reason);
+
       setIsConnected(false);
     };
 
     const onConnectError = (err: Error) => {
-      console.log('[SOCKET] connect_error:', err.message);
+
     };
 
     const onReceiveMessage = (message: any) => {

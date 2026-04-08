@@ -11,6 +11,7 @@ import {
   Modal,
   TextInput,
   Platform,
+  Linking,
 } from 'react-native';
 import { Stack, useRouter, useFocusEffect } from 'expo-router';
 import {
@@ -22,12 +23,14 @@ import {
   TrendingUp,
   CreditCard,
   ChevronRight,
+  X,
 } from 'lucide-react-native';
-import RazorpayCheckout from 'react-native-razorpay';
+
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/utils/api';
 import Button from '@/components/Button';
+import RazorpayCheckout from '@/components/RazorpayCheckout';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function WalletScreen() {
@@ -83,9 +86,15 @@ export default function WalletScreen() {
     setWithdrawModalVisible(true);
   };
 
+  const [razorpayModalVisible, setRazorpayModalVisible] = useState(false);
+  const [razorpayOptions, setRazorpayOptions] = useState<any>(null);
+
   const executeDeposit = async () => {
     const amount = parseFloat(depositAmount);
+    console.log('[Razorpay] Initiating deposit for amount:', amount);
+    
     if (isNaN(amount) || amount <= 0) {
+      console.error('[Razorpay] Invalid deposit amount:', depositAmount);
       Alert.alert('Invalid Amount', 'Please enter a valid amount.');
       return;
     }
@@ -95,32 +104,89 @@ export default function WalletScreen() {
     try {
       setIsProcessing(true);
 
-      // Step 1: Create the intent on backend
+      // Step 1: Create the intent on backend (returns real Razorpay Order ID)
+      console.log('[Razorpay] Step 1: Creating order on backend...');
       const order = await api.createWalletOrder(amount, token || undefined);
+      console.log('[Razorpay] Order created successfully:', order.id);
 
-      // Step 2: Directly verify with simulation (as requested)
-      await api.verifyWalletPayment({
-        razorpay_order_id: order.id,
-        razorpay_payment_id: `pay_direct_${Date.now()}`,
-        razorpay_signature: 'simulated_success',
-        amount: amount
-      }, token || undefined);
+      // Step 2: Prepare the options for the WebView checkout
+      const options = {
+        key: order.keyId,
+        order_id: order.id,
+        name: 'FilmyApp',
+        description: 'Wallet Deposit',
+        prefill: {
+          email: user?.email || '',
+          contact: user?.phone || '',
+          name: user?.name || ''
+        },
+        theme: { color: colors.primary },
+        retry: { enabled: true, max_count: 3 },
+        config: {
+          display: {
+            blocks: {
+              upi: {
+                name: 'UPI',
+                instruments: [{ method: 'upi' }]
+              }
+            },
+            sequence: ['block.upi', 'block.card', 'block.netbanking'],
+            preferences: { show_default_blocks: true }
+          }
+        },
+        _internal: {
+          integration: 'reactjs',
+          platform: 'mobile_app'
+        }
+      };
 
-      // Step 3: Refresh and Success UI
-      await refreshUser();
+      console.log('[Razorpay] Step 2: Opening WebView with options:', JSON.stringify(options, null, 2));
+      setRazorpayOptions(options);
+      setRazorpayModalVisible(true);
       setIsProcessing(false);
 
-      Alert.alert('Transaction Successful', `₹${amount} has been deposited into your wallet.`);
-
-      router.push({
-        pathname: '/wallet/success',
-        params: { amount: amount, type: 'deposit' }
-      });
-
     } catch (error: any) {
+      console.error('[Razorpay] Step 1 Failed - Order creation error:', error);
       Alert.alert('Error', error.status === 404 ? 'User profile not found. Try logging out and back in' : (error.message || 'Failed to process transaction'));
       setIsProcessing(false);
     }
+  };
+
+
+
+  const handlePaymentSuccess = async (response: any) => {
+    console.log('[Razorpay] Payment successful, verifying...');
+    setRazorpayModalVisible(false);
+    
+    try {
+      setIsProcessing(true);
+      await api.verifyWalletPayment({
+        razorpay_order_id: response.razorpay_order_id,
+        razorpay_payment_id: response.razorpay_payment_id,
+        razorpay_signature: response.razorpay_signature,
+        amount: parseFloat(depositAmount)
+      }, token || undefined);
+      
+      await refreshUser();
+      setIsProcessing(false);
+
+      router.push({
+        pathname: '/wallet/success',
+        params: { amount: depositAmount, type: 'deposit' }
+      });
+    } catch (err: any) {
+      console.error('[Razorpay] Verification failed:', err);
+      Alert.alert('Verification Failed', err.message || 'Failed to verify payment');
+      setIsProcessing(false);
+    }
+  };
+
+  const handlePaymentFailure = (error: any) => {
+    console.error('[Razorpay] Payment failed:', error);
+    setRazorpayModalVisible(false);
+    const errorMsg = error.description || 'Transaction could not be completed';
+    const errorCode = error.code ? ` (${error.code})` : '';
+    Alert.alert('Payment Failed', errorMsg + errorCode);
   };
 
   const executeWithdraw = async () => {
@@ -219,6 +285,14 @@ export default function WalletScreen() {
           </View>
         </View>
       </Modal>
+
+      <RazorpayCheckout
+        visible={razorpayModalVisible}
+        options={razorpayOptions}
+        onSuccess={handlePaymentSuccess}
+        onFailure={handlePaymentFailure}
+        onClose={() => setRazorpayModalVisible(false)}
+      />
 
       {/* Withdraw Amount Modal */}
       <Modal
@@ -568,4 +642,5 @@ const styles = StyleSheet.create({
   modalButton: {
     height: 56,
   },
+
 });

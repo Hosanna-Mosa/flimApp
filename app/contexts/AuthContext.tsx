@@ -17,10 +17,7 @@ import Constants from 'expo-constants';
  */
 Notifications.setNotificationHandler({
   handleNotification: async (notification) => {
-    console.log('[PUSH][FOREGROUND] 📬 Notification received while app is open');
-    console.log('[PUSH][FOREGROUND] Title:', notification.request.content.title);
-    console.log('[PUSH][FOREGROUND] Body:', notification.request.content.body);
-    console.log('[PUSH][FOREGROUND] Data:', JSON.stringify(notification.request.content.data));
+
 
     return {
       shouldShowBanner: true, // ✅ iOS banner
@@ -129,7 +126,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     // This is likely a mock or simplified login for the OTP flow in this app
     // In a real app, this would call an API and get a token
     // For now, we'll mock it if it's expected to be here
-    console.log('Login called for:', phone);
+
     // Since otp.tsx calls login and then redirects to /role-selection,
     // we need to make sure isAuthenticated becomes true.
     // However, without a real API response here, we're guessing.
@@ -172,11 +169,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     token: string;
     refreshToken: string;
   }) => {
-    console.log('[AuthContext] setAuth called with:', { 
-      hasUser: !!data.user, 
-      hasToken: !!data.token, 
-      hasRefreshToken: !!data.refreshToken 
-    });
+
 
     if (!data.user) {
       console.error('[AuthContext] setAuth: user data is missing!', data);
@@ -221,7 +214,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener('auth_session_expired', () => {
-      console.log('[AuthContext] Session expired event received, logging out...');
+
       logout();
     });
 
@@ -241,9 +234,9 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         if (userJson && token) {
           // ─── Verify Token with Backend ─────────────────────────────────────
           try {
-            console.log('[AuthContext] Verifying token...');
+
             const verifiedUser = await api.getMe(token) as User;
-            console.log('[AuthContext] Token verified for:', verifiedUser.name);
+
 
             // Update local user data with fresh data from server
             const user = verifiedUser;

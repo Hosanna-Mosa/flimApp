@@ -90,13 +90,13 @@ export default function OnboardingScreen() {
 
         // If not authenticated (should not happen normally after OTP, but handle just in case)
         if (!accessToken || !user) {
-          console.log('[Onboarding] Not authenticated, checking registration params...');
+
           const { name, phone, email, password, username } = params;
 
           // Check if we can just log in instead of registering if user was already created during OTP
           if (phone && password) {
             try {
-              console.log('[Onboarding] Attempting login fallback for existing user...');
+
               const loginResult = await api.loginPassword({
                 phone: phone as string,
                 password: password as string
@@ -104,7 +104,7 @@ export default function OnboardingScreen() {
               accessToken = loginResult.accessToken;
               refreshToken = loginResult.refreshToken;
               user = loginResult.user as any;
-              console.log('[Onboarding] Login fallback successful');
+
 
               // Update Auth Context since we were missing it
               setAuth({
