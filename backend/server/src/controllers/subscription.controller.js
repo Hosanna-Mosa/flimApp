@@ -10,7 +10,7 @@ const razorpay = new Razorpay({
 });
 
 const PLAN_PRICES = {
-  '1_MONTH': 499,
+  '1_MONTH': 150,
   '3_MONTHS': 1299,
   '6_MONTHS': 2199,
   '9_MONTHS': 2999,

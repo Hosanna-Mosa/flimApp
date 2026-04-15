@@ -21,6 +21,12 @@ import {
   XCircle,
   HelpCircle,
   ChevronDown,
+  Shield,
+  Briefcase,
+  Link2,
+  FilePlus,
+  Info,
+  LucideIcon,
 } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -38,11 +44,18 @@ const VERIFICATION_TYPES = [
   { label: 'Journalist', value: 'JOURNALIST' },
 ];
 
-const DOCUMENT_TYPES = [
-  { label: 'ID Document (Govt ID)', value: 'ID_DOCUMENT' },
-  { label: 'Proof of Work (Credits, Portfolio)', value: 'PROOF_OF_WORK' },
-  { label: 'Social Media Link (Public profile)', value: 'SOCIAL_LINK' },
-  { label: 'Other Documentation', value: 'OTHER' },
+interface DocTypeOption {
+  label: string;
+  value: string;
+  icon: LucideIcon;
+  desc: string;
+}
+
+const DOCUMENT_TYPES: DocTypeOption[] = [
+  { label: 'Govt ID', value: 'ID_DOCUMENT', icon: Shield, desc: 'Passport, Pan, Aadhar' },
+  { label: 'Portfolio', value: 'PROOF_OF_WORK', icon: Briefcase, desc: 'Credits, Proof of Work' },
+  { label: 'Social Link', value: 'SOCIAL_LINK', icon: Link2, desc: 'Public Presence' },
+  { label: 'Other', value: 'OTHER', icon: FilePlus, desc: 'Additional docs' },
 ];
 
 interface DocumentItem {
@@ -58,9 +71,9 @@ export default function VerificationScreen() {
 
   const [status, setStatus] = useState<'LOADING' | 'NONE' | 'PENDING_DOCS' | 'APPROVED_DOCS' | 'ACTIVE' | 'REJECTED'>('LOADING');
   const [requestData, setRequestData] = useState<any>(null);
-  
+
   // Step 2: Plans State
-  const [selectedPlan, setSelectedPlan] = useState<'1_MONTH' | '3_MONTHS' | '6_MONTHS' | '9_MONTHS' | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<'1_MONTH' | null>('1_MONTH');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [razorpayModalVisible, setRazorpayModalVisible] = useState(false);
   const [razorpayOptions, setRazorpayOptions] = useState<any>(null);
@@ -81,23 +94,23 @@ export default function VerificationScreen() {
   useFocusEffect(
     useCallback(() => {
       fetchStatus();
-    }, [])
+    }, [fetchStatus])
   );
 
-  const fetchStatus = async () => {
+  const fetchStatus = useCallback(async () => {
     try {
       setStatus('LOADING');
       // Always refresh user to get latest status
       const updatedUser = await refreshUser();
-      
+
       const vStatus = updatedUser?.verificationStatus || user?.verificationStatus || 'none';
-      
+
       if (vStatus === 'none') {
         setStatus('NONE');
       } else if (vStatus === 'pending_docs') {
         const response = await api.getVerificationStatus(token || undefined) as any;
         setRequestData(response);
-        
+
         // Fallback: even if user.verificationStatus is still 'pending_docs', 
         // if the request itself is APPROVED, move to stage 3.
         if (response && response.status === 'APPROVED') {
@@ -120,26 +133,31 @@ export default function VerificationScreen() {
       console.error('Failed to fetch verification status:', error);
       setStatus('NONE');
     }
-  };
+  }, [refreshUser, token, user]);
 
   const PLANS = [
-    { id: '1_MONTH', label: '1 Month', price: '₹499', description: 'Perfect for starters' },
-    { id: '3_MONTHS', label: '3 Months', price: '₹1299', description: 'Most popular choice', popular: true },
-    { id: '6_MONTHS', label: '6 Months', price: '₹2199', description: 'Best value for professionals' },
-    { id: '9_MONTHS', label: '9 Months', price: '₹2999', description: 'The power creator package' },
+    { id: '1_MONTH', label: '1 Month', price: '₹150', description: 'Monthly verification badge' },
   ] as const;
 
-  const handlePayment = async (planId: '1_MONTH' | '3_MONTHS' | '6_MONTHS' | '9_MONTHS') => {
+  const handlePayment = async (planId: '1_MONTH') => {
+    console.log('[Verification] handlePayment start for plan:', planId);
     try {
       setIsProcessingPayment(true);
-      
+
       // Step 1: Create Order on Backend
       const order = await api.apiCreateSubscriptionOrder(planId, token || undefined);
-      
+      console.log('[Verification] Created order on backend:', order);
+
+      if (!order || !order.orderId) {
+        throw new Error('Invalid order response from server');
+      }
+
       // Step 2: Prepare options for checkout
       const options = {
         key: order.keyId,
         order_id: order.orderId,
+        amount: order.amount,
+        currency: order.currency || 'INR',
         name: 'FilmyConnect',
         description: `Verification Badge - ${planId}`,
         prefill: {
@@ -167,13 +185,14 @@ export default function VerificationScreen() {
         }
       };
 
+      console.log('[Verification] Opening Razorpay with options:', JSON.stringify(options, null, 2));
       setRazorpayOptions(options);
       setRazorpayModalVisible(true);
       setIsProcessingPayment(false);
 
     } catch (error: any) {
       console.error('[Verification] Payment initiation failed:', error);
-      Alert.alert('Error', error.message || 'Failed to initiate payment');
+      Alert.alert('Payment Error', error.message || 'Failed to initiate payment');
       setIsProcessingPayment(false);
     }
   };
@@ -257,15 +276,15 @@ export default function VerificationScreen() {
         // Determine type for Cloudinary
         const isImage = doc.uri.match(/\.(jpg|jpeg|png|webp)$/i);
         const cloudinaryType = isImage ? 'image' : 'script';
-        
+
         const uploadResult = await uploadMediaToCloudinary(
           { uri: doc.uri, name: doc.name },
           cloudinaryType,
           token!,
           (percent) => {
-             // Basic progress tracking for multiple files
-             const overallProgress = Math.round(((i * 100) + percent) / totalDocs);
-             setUploadProgress(overallProgress);
+            // Basic progress tracking for multiple files
+            const overallProgress = Math.round(((i * 100) + percent) / totalDocs);
+            setUploadProgress(overallProgress);
           }
         );
 
@@ -305,35 +324,31 @@ export default function VerificationScreen() {
     );
   }
 
-  if (status === 'PENDING_DOCS') {
-    return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Stack.Screen options={{ headerTitle: 'Verification Status' }} />
+  const renderContent = () => {
+    if (status === 'PENDING_DOCS') {
+      return (
         <View style={styles.statusCard}>
           <Clock size={64} color={colors.primary} />
           <Text style={[styles.statusTitle, { color: colors.text }]}>Documents Under Review</Text>
           <Text style={[styles.statusDesc, { color: colors.textSecondary }]}>
-            Your verification request is currently being reviewed by our team. 
+            Your verification request is currently being reviewed by our team.
             We'll notify you once a decision is made. Then you can pick a plan.
           </Text>
           <View style={[styles.infoBox, { backgroundColor: colors.surface }]}>
-             <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Submitted on:</Text>
-             <Text style={[styles.infoValue, { color: colors.text }]}>
-               {requestData ? new Date(requestData.createdAt).toLocaleDateString() : 'Loading...'}
-             </Text>
-             <Text style={[styles.infoLabel, { color: colors.textSecondary, marginTop: 8 }]}>Type:</Text>
-             <Text style={[styles.infoValue, { color: colors.text }]}>{requestData?.verificationType}</Text>
+            <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Submitted on:</Text>
+            <Text style={[styles.infoValue, { color: colors.text }]}>
+              {requestData ? new Date(requestData.createdAt).toLocaleDateString() : 'Loading...'}
+            </Text>
+            <Text style={[styles.infoLabel, { color: colors.textSecondary, marginTop: 8 }]}>Type:</Text>
+            <Text style={[styles.infoValue, { color: colors.text }]}>{requestData?.verificationType}</Text>
           </View>
           <Button title="Back to Settings" onPress={() => router.back()} variant="outline" style={{ marginTop: 24, width: '100%' }} />
         </View>
-      </View>
-    );
-  }
+      );
+    }
 
-  if (status === 'APPROVED_DOCS') {
-    return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Stack.Screen options={{ headerTitle: 'Select a Plan' }} />
+    if (status === 'APPROVED_DOCS') {
+      return (
         <ScrollView contentContainerStyle={styles.planContainer}>
           <View style={styles.planHeader}>
             <CheckCircle2 size={48} color="#4CAF50" />
@@ -367,26 +382,23 @@ export default function VerificationScreen() {
           </View>
 
           <View style={styles.planFooter}>
-             <Button 
-               title={isProcessingPayment ? "Processing..." : "Pay Now with Razorpay"} 
-               onPress={() => selectedPlan && handlePayment(selectedPlan)} 
-               disabled={!selectedPlan || isProcessingPayment}
-               loading={isProcessingPayment}
-               size="large"
-             />
-             <Text style={[styles.secureText, { color: colors.textSecondary }]}>
-               Secure payment via Razorpay. Badge activated instantly.
-             </Text>
+            <Button
+              title={isProcessingPayment ? "Processing..." : "Pay Now with Razorpay"}
+              onPress={() => selectedPlan && handlePayment(selectedPlan)}
+              disabled={!selectedPlan || isProcessingPayment}
+              loading={isProcessingPayment}
+              size="large"
+            />
+            <Text style={[styles.secureText, { color: colors.textSecondary }]}>
+              Secure payment via Razorpay. Badge activated instantly.
+            </Text>
           </View>
         </ScrollView>
-      </View>
-    );
-  }
+      );
+    }
 
-  if (status === 'ACTIVE') {
-    return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Stack.Screen options={{ headerTitle: 'Verification Status' }} />
+    if (status === 'ACTIVE') {
+      return (
         <View style={styles.statusCard}>
           <CheckCircle2 size={64} color="#4CAF50" />
           <Text style={[styles.statusTitle, { color: colors.text }]}>You're Verified!</Text>
@@ -396,20 +408,10 @@ export default function VerificationScreen() {
           <BadgeCheck size={100} color="#FFFFFF" fill={colors.primary} style={{ marginTop: 20 }} />
           <Button title="Go to Profile" onPress={() => router.push('/profile')} style={{ marginTop: 32, width: '100%' }} />
         </View>
-      </View>
-    );
-  }
+      );
+    }
 
-  return (
-    <>
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerTitle: 'Apply for Verification',
-          headerStyle: { backgroundColor: colors.background },
-          headerTintColor: colors.text,
-        }}
-      />
+    return (
       <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.content}>
           <View style={styles.intro}>
@@ -427,7 +429,7 @@ export default function VerificationScreen() {
                 <Text style={[styles.rejectionTitle, { color: colors.error }]}>Request Declined</Text>
               </View>
               <Text style={[styles.rejectionReason, { color: colors.text }]}>
-                Reason: {requestData.adminNotes || 'Doesn\'t meet requirements at this time.'}
+                Reason: {requestData?.adminNotes || 'Doesn\'t meet requirements at this time.'}
               </Text>
               <Text style={[styles.rejectionText, { color: colors.textSecondary }]}>
                 You can apply again after ensuring all requirements are met.
@@ -437,7 +439,7 @@ export default function VerificationScreen() {
 
           <View style={styles.form}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>1. Professional Category</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.pickerTrigger, { backgroundColor: colors.card, borderColor: colors.border }]}
               onPress={() => setShowTypePicker(true)}
             >
@@ -460,7 +462,7 @@ export default function VerificationScreen() {
 
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>3. Supporting Documents</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.addBtn, { backgroundColor: colors.primary }]}
                 onPress={() => setShowDocTypePicker(true)}
               >
@@ -506,59 +508,152 @@ export default function VerificationScreen() {
           </View>
         </View>
       </ScrollView>
+    );
+  };
+
+  if (status === 'LOADING') {
+    return (
+      <View style={[styles.container, styles.center, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  return (
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Stack.Screen
+        options={{
+          headerTitle: status === 'APPROVED_DOCS' ? 'Select a Plan' :
+            status === 'PENDING_DOCS' || status === 'ACTIVE' ? 'Verification Status' :
+              'Apply for Verification',
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.text,
+        }}
+      />
+
+      {renderContent()}
 
       {/* Type Picker Modal */}
-      <Modal visible={showTypePicker} transparent animationType="fade">
+      <Modal visible={showTypePicker} transparent animationType="slide" onRequestClose={() => setShowTypePicker(false)}>
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Select Category</Text>
-            {VERIFICATION_TYPES.map((type) => (
-              <TouchableOpacity 
-                key={type.value}
-                style={[styles.modalOption, { borderBottomColor: colors.border }]}
-                onPress={() => {
-                  setVerificationType(type.value);
-                  setShowTypePicker(false);
-                }}
-              >
-                <Text style={[styles.modalOptionText, { color: colors.text }]}>{type.label}</Text>
-              </TouchableOpacity>
-            ))}
-            <Button title="Cancel" onPress={() => setShowTypePicker(false)} variant="outline" style={{ marginTop: 16 }} />
+          <TouchableOpacity
+            style={styles.modalDismissArea}
+            activeOpacity={1}
+            onPress={() => setShowTypePicker(false)}
+          />
+          <View style={[styles.bottomSheet, { backgroundColor: colors.surface }]}>
+            <View style={[styles.dragHandle, { backgroundColor: colors.border }]} />
+
+            <View style={styles.sheetHeader}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Apply for Category</Text>
+              <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
+                Choose the professional category that best describes you
+              </Text>
+            </View>
+
+            <View style={styles.docTypeGrid}>
+              {VERIFICATION_TYPES.map((type) => {
+                const isSelected = verificationType === type.value;
+                return (
+                  <TouchableOpacity
+                    key={type.value}
+                    style={[
+                      styles.docTypeCard,
+                      { backgroundColor: colors.card, borderColor: isSelected ? colors.primary : colors.border },
+                      isSelected && { borderWidth: 2 }
+                    ]}
+                    onPress={() => {
+                      setVerificationType(type.value);
+                      setShowTypePicker(false);
+                    }}
+                  >
+                    <View style={[styles.iconCircle, { backgroundColor: isSelected ? `${colors.primary}20` : colors.background }]}>
+                      <BadgeCheck size={20} color={isSelected ? colors.primary : colors.textSecondary} />
+                    </View>
+                    <View style={styles.docTypeInfo}>
+                      <Text style={[styles.docTypeLabel, { color: isSelected ? colors.primary : colors.text }]}>{type.label}</Text>
+                    </View>
+                    <View style={[styles.radio, { borderColor: isSelected ? colors.primary : colors.border }]}>
+                      {isSelected && <View style={[styles.radioInner, { backgroundColor: colors.primary }]} />}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+            <Button title="Cancel" onPress={() => setShowTypePicker(false)} variant="outline" />
           </View>
         </View>
       </Modal>
 
       {/* Doc Type Selection Modal */}
-      <Modal visible={showDocTypePicker} transparent animationType="slide">
+      <Modal visible={showDocTypePicker} transparent animationType="slide" onRequestClose={() => setShowDocTypePicker(false)}>
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.background, paddingBottom: 40 }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Add Document</Text>
-            <Input
-              label="Document Name (e.g. Passport, Portfolio)"
-              value={tempDocName}
-              onChangeText={setTempDocName}
-              placeholder="Optional name..."
-            />
-            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Document Type</Text>
-            <View style={styles.typeGrid}>
-               {DOCUMENT_TYPES.map((type) => (
-                 <TouchableOpacity 
-                   key={type.value}
-                   style={[
-                     styles.typeOption, 
-                     { borderColor: colors.border },
-                     tempDocType === type.value && { backgroundColor: `${colors.primary}20`, borderColor: colors.primary }
-                   ]}
-                   onPress={() => setTempDocType(type.value)}
-                 >
-                   <Text style={[styles.typeOptionText, { color: colors.text }]}>{type.label}</Text>
-                 </TouchableOpacity>
-               ))}
+          <TouchableOpacity
+            style={styles.modalDismissArea}
+            activeOpacity={1}
+            onPress={() => setShowDocTypePicker(false)}
+          />
+          <View style={[styles.bottomSheet, { backgroundColor: colors.surface }]}>
+            <View style={[styles.dragHandle, { backgroundColor: colors.border }]} />
+
+            <View style={styles.sheetHeader}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Add Document</Text>
+              <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
+                Choose the type of document you want to upload
+              </Text>
             </View>
-            <View style={{ flexDirection: 'row', gap: 12, marginTop: 24 }}>
-                <Button title="Cancel" onPress={() => setShowDocTypePicker(false)} variant="outline" style={{ flex: 1 }} />
-                <Button title="Choose File" onPress={handleAddDocument} style={{ flex: 1 }} />
+
+            <View style={styles.docTypeGrid}>
+              {DOCUMENT_TYPES.map((type) => {
+                const Icon = type.icon;
+                const isSelected = tempDocType === type.value;
+                return (
+                  <TouchableOpacity
+                    key={type.value}
+                    style={[
+                      styles.docTypeCard,
+                      { backgroundColor: colors.card, borderColor: isSelected ? colors.primary : colors.border },
+                      isSelected && { borderWidth: 2 }
+                    ]}
+                    onPress={() => setTempDocType(type.value)}
+                  >
+                    <View style={[styles.iconCircle, { backgroundColor: isSelected ? `${colors.primary}20` : colors.background }]}>
+                      <Icon size={20} color={isSelected ? colors.primary : colors.textSecondary} />
+                    </View>
+                    <View style={styles.docTypeInfo}>
+                      <Text style={[styles.docTypeLabel, { color: isSelected ? colors.primary : colors.text }]}>{type.label}</Text>
+                      <Text style={[styles.docTypeDesc, { color: colors.textSecondary }]}>{type.desc}</Text>
+                    </View>
+                    <View style={[styles.radio, { borderColor: isSelected ? colors.primary : colors.border }]}>
+                      {isSelected && <View style={[styles.radioInner, { backgroundColor: colors.primary }]} />}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            <View style={styles.nameInputContainer}>
+              <Input
+                label="Document Name (Optional)"
+                value={tempDocName}
+                onChangeText={setTempDocName}
+                placeholder="e.g. My Portfolio.pdf"
+                style={{ backgroundColor: colors.background }}
+              />
+            </View>
+
+            <View style={styles.sheetActionRow}>
+              <Button
+                title="Cancel"
+                onPress={() => setShowDocTypePicker(false)}
+                variant="outline"
+                style={{ flex: 1 }}
+              />
+              <Button
+                title="Continue to Upload"
+                onPress={handleAddDocument}
+                style={{ flex: 1.5 }}
+              />
             </View>
           </View>
         </View>
@@ -571,7 +666,7 @@ export default function VerificationScreen() {
         onFailure={handlePaymentFailure}
         onClose={() => setRazorpayModalVisible(false)}
       />
-    </>
+    </View>
   );
 }
 
@@ -582,14 +677,14 @@ const styles = StyleSheet.create({
   intro: { alignItems: 'center', marginBottom: 32 },
   title: { fontSize: 28, fontWeight: 'bold', marginTop: 12 },
   subtitle: { fontSize: 14, textAlign: 'center', marginTop: 8, lineHeight: 20 },
-  
+
   statusCard: { flex: 1, padding: 40, alignItems: 'center', justifyContent: 'center' },
   statusTitle: { fontSize: 24, fontWeight: 'bold', marginTop: 24 },
   statusDesc: { fontSize: 16, textAlign: 'center', marginTop: 12, lineHeight: 24 },
   infoBox: { width: '100%', padding: 20, borderRadius: 16, marginTop: 32 },
   infoLabel: { fontSize: 12, textTransform: 'uppercase', fontWeight: 'bold' },
   infoValue: { fontSize: 16, fontWeight: '600', marginTop: 4 },
-  
+
   rejectionCard: { padding: 16, borderRadius: 12, borderWidth: 1, marginBottom: 24 },
   rejectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
   rejectionTitle: { fontWeight: 'bold', fontSize: 16 },
@@ -600,7 +695,7 @@ const styles = StyleSheet.create({
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 24 },
   sectionTitle: { fontSize: 16, fontWeight: 'bold' },
   sectionSubtitle: { fontSize: 12, marginTop: 4, marginBottom: 12 },
-  
+
   pickerTrigger: {
     height: 52,
     borderRadius: 12,
@@ -611,7 +706,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginTop: 8,
   },
-  
+
   addBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -621,24 +716,92 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   addBtnText: { color: '#000', fontWeight: 'bold', fontSize: 13 },
-  
+
   docList: { gap: 12 },
   emptyDocs: { height: 100, borderStyle: 'dashed', borderWidth: 1, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   docItem: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 12, borderWidth: 1 },
   docInfo: { flex: 1, marginLeft: 12 },
   docName: { fontWeight: '600', fontSize: 14 },
   docType: { fontSize: 11, marginTop: 2 },
-  
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 },
-  modalContent: { padding: 24, borderRadius: 24 },
-  modalTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 20 },
-  modalOption: { paddingVertical: 16, borderBottomWidth: 1 },
-  modalOptionText: { fontSize: 16 },
-  
+
   inputLabel: { fontSize: 14, fontWeight: '600', marginBottom: 8, marginTop: 16 },
-  typeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  typeOption: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, borderWidth: 1 },
-  typeOptionText: { fontSize: 12, fontWeight: '500' },
+
+  modalDismissArea: { flex: 1 },
+  bottomSheet: {
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    padding: 24,
+    paddingBottom: 40,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 20,
+  },
+  dragHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 20,
+  },
+  sheetHeader: {
+    marginBottom: 24,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    marginTop: 4,
+  },
+  docTypeGrid: {
+    gap: 12,
+    marginBottom: 24,
+  },
+  docTypeCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  iconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  docTypeInfo: {
+    flex: 1,
+    marginLeft: 16,
+  },
+  docTypeLabel: {
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
+  docTypeDesc: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  radio: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radioInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  nameInputContainer: {
+    marginBottom: 24,
+  },
+  sheetActionRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
 
   planContainer: { padding: 20 },
   planHeader: { alignItems: 'center', marginBottom: 32 },
@@ -646,13 +809,13 @@ const styles = StyleSheet.create({
   planSubtitle: { fontSize: 15, textAlign: 'center', marginTop: 8, lineHeight: 22 },
   planGrid: { gap: 16 },
   planCard: { padding: 20, borderRadius: 20, borderWidth: 1, position: 'relative', overflow: 'hidden' },
-  popularBadge: { 
-    position: 'absolute', 
-    top: 0, 
-    right: 0, 
-    paddingHorizontal: 12, 
-    paddingVertical: 4, 
-    borderBottomLeftRadius: 12 
+  popularBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderBottomLeftRadius: 12
   },
   popularText: { color: '#000', fontSize: 10, fontWeight: '900' },
   planLabel: { fontSize: 18, fontWeight: 'bold' },

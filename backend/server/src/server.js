@@ -30,7 +30,15 @@ const start = async () => {
 
   const server = http.createServer(app);
   const io = new Server(server, {
-    cors: { origin: '*', methods: ['GET', 'POST'] },
+    cors: { 
+      origin: process.env.NODE_ENV === 'development' ? '*' : [
+        'https://filmyconnect24.com',
+        'https://admin.filmyconnect24.com',
+        'https://api.filmyconnect24.com'
+      ], 
+      methods: ['GET', 'POST'],
+      credentials: true
+    },
   });
   
   // Set IO instance for global usage
