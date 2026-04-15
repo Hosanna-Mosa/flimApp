@@ -9,7 +9,7 @@ import {
 } from '@/types';
 
 // API base URL - configure for production
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.flimy.app';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.filmyconnect24.com';
 
 // Create axios instance
 const api: AxiosInstance = axios.create({

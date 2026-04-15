@@ -107,7 +107,7 @@ export default function ExpertBoostHub() {
                               <UserAvatar user={sub.user} size="md" />
                               <div className="flex flex-col">
                                 <p className="font-bold text-foreground">{sub.user.name}</p>
-                                <p className="text-xs text-muted-foreground font-mono">{sub.user.id.slice(-8)}</p>
+                                <p className="text-xs text-muted-foreground font-mono">{(sub.user.id || sub.user._id || '').toString().slice(-8)}</p>
                               </div>
                             </div>
                           </TableCell>
@@ -170,7 +170,7 @@ export default function ExpertBoostHub() {
                               <UserAvatar user={user} size="md" />
                               <div className="flex flex-col">
                                 <p className="font-bold text-foreground">{user.name}</p>
-                                <p className="text-xs text-muted-foreground font-mono">{user._id.slice(-8)}</p>
+                                <p className="text-xs text-muted-foreground font-mono">{(user._id || user.id || '').toString().slice(-8)}</p>
                               </div>
                             </div>
                           </TableCell>

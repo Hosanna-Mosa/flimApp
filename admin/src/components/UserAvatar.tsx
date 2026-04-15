@@ -14,12 +14,13 @@ const sizeClasses = {
 };
 
 export function UserAvatar({ user, size = 'md', className }: UserAvatarProps) {
-  const initials = user.name
+  const initials = (user?.name || '?')
     .split(' ')
+    .filter(Boolean)
     .map((n) => n.charAt(0))
     .join('')
     .toUpperCase()
-    .slice(0, 2);
+    .slice(0, 2) || '?';
 
   return (
     <Avatar className={`${sizeClasses[size]} ${className}`}>

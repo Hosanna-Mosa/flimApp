@@ -15,54 +15,95 @@ const razorpayHtml = (data: any) => `
 <!DOCTYPE html>
 <html>
   <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
-      body { display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; font-family: sans-serif; background: #fff; }
-      .loader { border: 4px solid #f3f3f3; border-top: 4px solid ${data?.theme?.color || '#D4AF37'}; border-radius: 50%; width: 40px; height: 40px; animation: spin 2s linear infinite; }
+      body { 
+        display: flex; 
+        justify-content: center; 
+        align-items: center; 
+        height: 100vh; 
+        margin: 0; 
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+        background: #fff; 
+      }
+      .loader { 
+        border: 4px solid #f3f3f3; 
+        border-top: 4px solid ${data?.theme?.color || '#D4AF37'}; 
+        border-radius: 50%; 
+        width: 40px; 
+        height: 40px; 
+        animation: spin 2s linear infinite; 
+      }
       @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+      .error-msg { color: #ff0000; text-align: center; padding: 20px; }
     </style>
   </head>
   <body>
-    <div class="loader"></div>
-    <script>
-      const options = ${JSON.stringify(data)};
-      
-      options.handler = function(response) {
-        window.ReactNativeWebView.postMessage(JSON.stringify({
-          status: 'success',
-          response: response
-        }));
-      };
-      
-      options.modal = {
-        ondismiss: function() {
-          window.ReactNativeWebView.postMessage(JSON.stringify({
-            status: 'cancelled'
-          }));
-        }
-      };
+    <div id="content">
+      <div class="loader"></div>
+    </div>
 
-      try {
-        const rzp = new Razorpay(options);
-        
-        rzp.on('payment.failed', function(response) {
+    <script>
+      let rzp;
+      function startRazorpay() {
+        console.log('Starting Razorpay...');
+        try {
+          const options = ${JSON.stringify(data)};
+          
+          options.handler = function(response) {
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              status: 'success',
+              response: response
+            }));
+          };
+          
+          options.modal = {
+            ondismiss: function() {
+              window.ReactNativeWebView.postMessage(JSON.stringify({
+                status: 'cancelled'
+              }));
+            }
+          };
+
+          if (typeof Razorpay === 'undefined') {
+            throw new Error('Razorpay SDK not loaded');
+          }
+
+          rzp = new Razorpay(options);
+          
+          rzp.on('payment.failed', function(response) {
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              status: 'failed',
+              error: response.error
+            }));
+          });
+          
+          rzp.open();
+        } catch (e) {
+          console.error('Razorpay Error:', e);
+          document.getElementById('content').innerHTML = '<div class="error-msg">Failed to load payment: ' + e.message + '</div>';
           window.ReactNativeWebView.postMessage(JSON.stringify({
             status: 'failed',
-            error: response.error
+            error: { description: 'JS Error: ' + e.message }
           }));
-        });
-        
-        window.onload = function() {
-          rzp.open();
-        };
-      } catch (e) {
-        window.ReactNativeWebView.postMessage(JSON.stringify({
-          status: 'failed',
-          error: { description: 'JS Error: ' + e.message }
-        }));
+        }
       }
+
+      // Fallback if onload doesn't fire
+      setTimeout(() => {
+        if (!rzp && typeof Razorpay !== 'undefined') {
+          startRazorpay();
+        } else if (typeof Razorpay === 'undefined') {
+           document.getElementById('content').innerHTML = '<div class="error-msg">Loading Payment Gateway... (Taking longer than usual)</div>';
+        }
+      }, 5000);
     </script>
+    <script 
+      src="https://checkout.razorpay.com/v1/checkout.js" 
+      async 
+      onload="startRazorpay()"
+      onerror="window.ReactNativeWebView.postMessage(JSON.stringify({status:'failed', error:{description:'Failed to load Razorpay SDK'}}))"
+    ></script>
   </body>
 </html>
 `;
