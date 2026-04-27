@@ -17,9 +17,9 @@
       "supportsTablet": false,
       "bundleIdentifier": "app.rork.filmy",
       "infoPlist": {
-        "NSPhotoLibraryUsageDescription": "Allow $(PRODUCT_NAME) to access your photos",
-        "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to access your camera",
-        "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to access your microphone"
+        "NSPhotoLibraryUsageDescription": "We need access to your photos to let you upload and share content on FilmyConnect.",
+        "NSCameraUsageDescription": "We need camera access so you can capture and upload videos or photos.",
+        "NSMicrophoneUsageDescription": "Microphone access is required to record audio in videos."
       }
     },
     "android": {
