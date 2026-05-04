@@ -102,6 +102,24 @@ class FeedService {
   }
 
   /**
+   * Get IDs of users to exclude (mutual block)
+   * @private
+   */
+  async getExcludedAuthorIds(userId) {
+    if (!userId) return [];
+    
+    // 1. Users I have blocked
+    const currentUser = await User.findById(userId).select('blockedUsers');
+    const blockedByMe = currentUser ? currentUser.blockedUsers || [] : [];
+    
+    // 2. Users who have blocked me
+    const blockedMeResults = await User.find({ blockedUsers: userId }).select('_id');
+    const blockedMe = blockedMeResults.map(u => u._id);
+    
+    return [...new Set([...blockedByMe, ...blockedMe])];
+  }
+
+  /**
    * Enrich posts with isLiked and isFollowing status
    * @param {Array} posts - List of posts
    * @param {string} userId - Current user ID
@@ -171,8 +189,9 @@ class FeedService {
       }).select('following').lean();
 
       const followingIds = following.map(f => f.following);
+      const excludedIds = await this.getExcludedAuthorIds(userId);
 
-      // If user follows no one, show trending/public posts as fallback (excluding own posts)
+      // If user follows no one, show trending/public posts as fallback (excluding own posts and blocked users)
       if (followingIds.length === 0) {
         logger.info(`User ${userId} has no follows, showing trending posts as fallback`);
 
@@ -180,7 +199,7 @@ class FeedService {
         cutoffDate.setDate(cutoffDate.getDate() - timeRange);
 
         const posts = await Post.find({
-          author: { $ne: userId }, // Exclude user's own posts
+          author: { $nin: [...excludedIds, userId] }, // Exclude user's own posts and blocked users
           isActive: true,
           visibility: 'public',
           createdAt: { $gte: cutoffDate },
@@ -200,7 +219,7 @@ class FeedService {
       const posts = await Post.find({
         $and: [
           { author: { $in: followingIds } },
-          { author: { $ne: userId } } // Exclude user's own posts
+          { author: { $nin: [...excludedIds, userId] } } // Exclude user's own posts and blocked users
         ],
         isActive: true,
         visibility: { $in: ['public', 'followers'] },
@@ -231,6 +250,7 @@ class FeedService {
       }).select('following').lean();
 
       const followingIds = following.map(f => f.following);
+      const excludedIds = await this.getExcludedAuthorIds(userId);
 
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - timeRange);
@@ -241,7 +261,7 @@ class FeedService {
 
       // Global Feed: Show all public posts (excluding private accounts) + posts from users I follow
       const posts = await Post.find({
-        author: { $ne: userId }, // Exclude user's own posts
+        author: { $nin: [...excludedIds, userId] }, // Exclude user's own posts and blocked users
         isActive: true,
         createdAt: { $gte: cutoffDate },
         $or: [
@@ -289,6 +309,7 @@ class FeedService {
       }).select('following').lean();
 
       const followingIds = following.map(f => f.following.toString());
+      const excludedIds = await this.getExcludedAuthorIds(userId);
       logger.info(`[Feed] User ${userId} follows ${followingIds.length} users`);
 
       const cutoffDate = new Date();
@@ -310,7 +331,7 @@ class FeedService {
         queryConditions = {
           isActive: true,
           createdAt: { $gte: cutoffDate },
-          author: { $ne: userId }, // Exclude user's own posts
+          author: { $nin: [...excludedIds, userId] }, // Exclude user's own posts and blocked users
           $or: [
             {
               visibility: 'public',
@@ -328,7 +349,7 @@ class FeedService {
           createdAt: { $gte: cutoffDate },
           visibility: 'public',
           author: { 
-            $ne: userId,
+            $nin: [...excludedIds, userId],
             $nin: privateUserIds 
           }
         };
@@ -433,10 +454,14 @@ class FeedService {
       const cutoffDate = new Date();
       cutoffDate.setHours(cutoffDate.getHours() - 24);
 
+      // Get IDs to exclude
+      const excludedIds = await this.getExcludedAuthorIds(userId);
+
       const posts = await Post.find({
         isActive: true,
         visibility: 'public',
         createdAt: { $gte: cutoffDate },
+        author: { $nin: [...excludedIds, userId] }, // Exclude self and blocked users
       })
         .populate('author', 'name avatar isVerified roles')
         .sort({ score: -1, 'engagement.likesCount': -1 })
@@ -523,6 +548,18 @@ class FeedService {
       const skip = page * limit;
 
       const isOwnProfile = userId === viewerId;
+
+      // Mutual block check
+      if (viewerId && !isOwnProfile) {
+        const excludedIds = await this.getExcludedAuthorIds(viewerId);
+        if (excludedIds.some(id => id.toString() === userId.toString())) {
+           return {
+             success: true,
+             data: [],
+             pagination: { page, limit, total: 0, pages: 0 },
+           };
+        }
+      }
 
       // Get user account type
       const user = await User.findById(userId).select('accountType').lean();

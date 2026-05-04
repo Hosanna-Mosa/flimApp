@@ -1,4 +1,5 @@
-const { Schema, model, Types } = require('mongoose');
+const mongoose = require('mongoose');
+const { Schema, Types } = mongoose;
 
 const UserSchema = new Schema(
   {
@@ -78,6 +79,7 @@ const UserSchema = new Schema(
     isBoosted: { type: Boolean, default: false },
     boostedUntil: { type: Date },
     isBoostExpiringNotified: { type: Boolean, default: false },
+    blockedUsers: [{ type: Types.ObjectId, ref: 'User' }],
   },
   { timestamps: true }
 );
@@ -106,5 +108,5 @@ UserSchema.virtual('publicProfile').get(function () {
   };
 });
 
-module.exports = model('User', UserSchema);
+module.exports = mongoose.models.User || mongoose.model('User', UserSchema);
 

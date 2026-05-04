@@ -72,6 +72,21 @@ const getById = async (id, viewerId = null) => {
     return null;
   }
 
+  // Mutual block check
+  if (viewerId) {
+    // 1. Check if viewer is blocked by the target user
+    const targetUser = await User.findById(id).select('blockedUsers');
+    if (targetUser && targetUser.blockedUsers && targetUser.blockedUsers.includes(viewerId)) {
+      return null; // Target has blocked the viewer
+    }
+
+    // 2. Check if viewer has blocked the target user
+    const viewer = await User.findById(viewerId).select('blockedUsers');
+    if (viewer && viewer.blockedUsers && viewer.blockedUsers.includes(id)) {
+      return null; // Viewer has blocked the target
+    }
+  }
+
   // If viewer is the owner, return all data
   if (viewerId && viewerId.toString() === id.toString()) {
     return user;
@@ -119,8 +134,18 @@ const search = async ({ q, roles, industries }, currentUserId) => {
     return [];
   }
 
+  // Get IDs of users who have blocked current user OR are blocked by current user
+  const currentUser = await User.findById(currentUserId).select('blockedUsers');
+  const blockedByMe = currentUser ? currentUser.blockedUsers || [] : [];
+  
+  // Find users who have blocked current user
+  const blockedMeResults = await User.find({ blockedUsers: currentUserId }).select('_id');
+  const blockedMe = blockedMeResults.map(u => u._id);
+
+  const excludeIds = [...new Set([...blockedByMe, ...blockedMe, currentUserId])];
+
   let query = {
-    _id: { $ne: currentUserId } // Exclude current user
+    _id: { $nin: excludeIds } // Exclude blocked users and current user
   };
   let hasFilters = false;
 

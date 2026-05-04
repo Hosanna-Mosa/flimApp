@@ -40,7 +40,7 @@ const getFeed = async (req, res, next) => {
 
 const getTrending = async (req, res, next) => {
   try {
-    const posts = await postService.getTrending();
+    const posts = await postService.getTrending(req.user.id);
     return success(res, posts);
   } catch (err) {
     return next(err);
@@ -51,7 +51,7 @@ const getDonations = async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 0;
     const limit = parseInt(req.query.limit) || 20;
-    const posts = await postService.getDonations(page, limit);
+    const posts = await postService.getDonations(page, limit, req.user.id);
     return success(res, posts);
   } catch (err) {
     return next(err);
@@ -60,7 +60,7 @@ const getDonations = async (req, res, next) => {
 
 const getUserPosts = async (req, res, next) => {
   try {
-    const posts = await postService.getUserPosts(req.params.id);
+    const posts = await postService.getUserPosts(req.params.id, req.user.id);
     return success(res, posts);
   } catch (err) {
     return next(err);

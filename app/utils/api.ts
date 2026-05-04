@@ -449,6 +449,17 @@ export const api = {
       token,
     });
   },
+  // Safety & Moderation
+  reportContent: (type: 'post' | 'user' | 'comment', targetId: string, reason: string = 'inappropriate', t?: string) => 
+    unwrap(request('/report', { method: 'POST', body: { type, targetId, reason }, token: t })),
+  
+  blockUser: (blockedUserId: string, t?: string) => 
+    unwrap(request('/block', { method: 'POST', body: { blockedUserId }, token: t })),
+
+  unblockUser: (unblockedUserId: string, t?: string) =>
+    unwrap(request('/unblock', { method: 'POST', body: { unblockedUserId }, token: t })),
+
+  getBlockedUsers: (t?: string) => unwrap(request('/users/me/blocked', { token: t })),
 };
 
 // Default export

@@ -40,6 +40,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   hasCompletedOnboarding: boolean;
+  blockedUsers: string[];
 }
 
 /**
@@ -91,6 +92,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     isAuthenticated: false,
     isLoading: true,
     hasCompletedOnboarding: false,
+    blockedUsers: [],
   });
 
   const _updateUser = async (updatedUser: User) => {
@@ -144,6 +146,40 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     }
   };
 
+  const blockUser = async (blockedUserId: string) => {
+    if (!authState.token) return;
+    try {
+      await api.blockUser(blockedUserId, authState.token);
+      const newBlockedUsers = [...authState.blockedUsers, blockedUserId];
+      setAuthState(prev => ({ ...prev, blockedUsers: newBlockedUsers }));
+      await AsyncStorage.setItem('blocked_users', JSON.stringify(newBlockedUsers));
+    } catch (err) {
+      console.error('Failed to block user:', err);
+    }
+  };
+
+  const unblockUser = async (unblockedUserId: string) => {
+    if (!authState.token) return;
+    try {
+      await api.unblockUser(unblockedUserId, authState.token);
+      const updatedBlocked = authState.blockedUsers.filter(id => id !== unblockedUserId);
+      setAuthState(prev => ({ ...prev, blockedUsers: updatedBlocked }));
+      await AsyncStorage.setItem('blocked_users', JSON.stringify(updatedBlocked));
+    } catch (error) {
+      console.error('[AuthContext] Error unblocking user:', error);
+      throw error;
+    }
+  };
+
+  const reportContent = async (type: 'post' | 'user' | 'comment', id: string) => {
+    if (!authState.token) return;
+    try {
+      await api.reportContent(type, id, 'inappropriate', authState.token);
+    } catch (err) {
+      console.error('Failed to report content:', err);
+    }
+  };
+
   const refreshUser = useCallback(async () => {
     if (!authState.token) return null;
     try {
@@ -188,6 +224,15 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       await AsyncStorage.setItem('onboarding_complete', 'true');
     }
 
+    let blockedUsers: string[] = [];
+    try {
+      const response = await api.getBlockedUsers(data.token);
+      blockedUsers = response.blockedUsers || [];
+      await AsyncStorage.setItem('blocked_users', JSON.stringify(blockedUsers));
+    } catch (err) {
+      console.error('[AuthContext] Failed to fetch blocked users on login:', err);
+    }
+
     setAuthState({
       user: data.user,
       token: data.token,
@@ -195,6 +240,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       isAuthenticated: true,
       isLoading: false,
       hasCompletedOnboarding: completed,
+      blockedUsers,
     });
 
     registerPushToken(data.token);
@@ -209,6 +255,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       isAuthenticated: false,
       isLoading: false,
       hasCompletedOnboarding: false,
+      blockedUsers: [],
     });
   };
 
@@ -230,6 +277,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         const token = await AsyncStorage.getItem('token');
         const refreshToken = await AsyncStorage.getItem('refreshToken');
         const onboardingComplete = await AsyncStorage.getItem('onboarding_complete');
+        const blockedUsersJson = await AsyncStorage.getItem('blocked_users');
+        const blockedUsers = blockedUsersJson ? JSON.parse(blockedUsersJson) : [];
 
         if (userJson && token) {
           // ─── Verify Token with Backend ─────────────────────────────────────
@@ -250,9 +299,21 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
               isAuthenticated: true,
               isLoading: false,
               hasCompletedOnboarding: onboardingComplete === 'true' || (hasRoles && hasIndustries),
+              blockedUsers: blockedUsers,
             });
 
             registerPushToken(token);
+
+            // Fetch blocked users from API to keep in sync
+            try {
+              const apiBlockedUsers = await api.getBlockedUsers(token) as string[];
+              if (Array.isArray(apiBlockedUsers)) {
+                setAuthState(prev => ({ ...prev, blockedUsers: apiBlockedUsers }));
+                await AsyncStorage.setItem('blocked_users', JSON.stringify(apiBlockedUsers));
+              }
+            } catch (blockError) {
+              console.error('[AuthContext] Failed to fetch blocked users:', blockError);
+            }
           } catch (error) {
             console.error('[AuthContext] Token verification failed:', error);
             // Token is invalid/expired -> Clear auth state
@@ -279,5 +340,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     updateUserRoles,
     updateUserIndustries,
     refreshUser,
+    blockUser,
+    unblockUser,
+    reportContent,
   };
 });

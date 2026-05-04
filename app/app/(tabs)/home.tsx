@@ -46,7 +46,7 @@ const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpaci
 export default function HomeScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { user, token, isLoading: authLoading } = useAuth();
+  const { user, token, isLoading: authLoading, blockedUsers } = useAuth();
   const { unreadCount: notificationCount } = useNotifications();
   const { unreadCount: messageCount } = useMessages();
 
@@ -159,9 +159,9 @@ export default function HomeScreen() {
           shares: p.engagement?.sharesCount || p.shares || 0,
           isLiked: p.isLiked || false,
           createdAt: p.createdAt ? new Date(p.createdAt).toLocaleDateString() : 'Just now',
-        }));
+        })).filter((p: any) => !blockedUsers.includes(p.userId));
 
-        setHasMore(mappedPosts.length === 20);
+        setHasMore(mappedPosts.length >= 20);
 
         // Update followingIds from feed items to ensure consistency
         const followedUsersInFeed = mappedPosts
@@ -217,7 +217,7 @@ export default function HomeScreen() {
               shares: p.engagement?.sharesCount || p.shares || 0,
               isLiked: p.isLiked || false,
               createdAt: p.createdAt ? new Date(p.createdAt).toLocaleDateString() : 'Just now',
-            }));
+            })).filter((p: any) => !blockedUsers.includes(p.userId));
             setPosts(mappedPosts);
             setHasMore(false);
             return;

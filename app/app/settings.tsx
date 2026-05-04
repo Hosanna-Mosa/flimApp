@@ -6,9 +6,10 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { Moon, Sun, Bell, Shield, Lock, ChevronRight, User, BadgeCheck, Info } from 'lucide-react-native';
+import { Moon, Sun, Bell, Shield, Lock, ChevronRight, User, BadgeCheck, Info, FileText } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -308,6 +309,50 @@ export default function SettingsScreen() {
             <ChevronRight size={20} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Legal
+          </Text>
+
+          <TouchableOpacity
+            style={[
+              styles.settingItem,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
+            onPress={() => Linking.openURL('https://filmyconnect24.com/privacy-policy')}
+          >
+            <View style={styles.settingInfo}>
+              <Shield size={24} color={colors.textSecondary} />
+              <View style={styles.settingText}>
+                <Text style={[styles.settingLabel, { color: colors.text }]}>
+                  Privacy Policy
+                </Text>
+              </View>
+            </View>
+            <ChevronRight size={20} color={colors.textSecondary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.settingItem,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
+            onPress={() => Linking.openURL('https://filmyconnect24.com/terms-and-conditions')}
+          >
+            <View style={styles.settingInfo}>
+              <FileText size={24} color={colors.textSecondary} />
+              <View style={styles.settingText}>
+                <Text style={[styles.settingLabel, { color: colors.text }]}>
+                  Terms of Service
+                </Text>
+              </View>
+            </View>
+            <ChevronRight size={20} color={colors.textSecondary} />
+          </TouchableOpacity>
+        </View>
+
+        <View style={{ height: 40 }} />
       </ScrollView>
     </>
   );

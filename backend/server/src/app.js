@@ -25,6 +25,7 @@ const verificationRoutes = require('./routes/verification.routes');
 const supportRoutes = require('./routes/support.routes');
 const subscriptionRoutes = require('./routes/subscription.routes');
 const walletRoutes = require('./routes/wallet.routes');
+const moderationRoutes = require('./routes/moderation.routes');
 
 const app = express();
 
@@ -91,6 +92,7 @@ app.use('/verification', verificationRoutes);
 app.use('/support', supportRoutes);
 app.use('/subscriptions', subscriptionRoutes);
 app.use('/wallet', walletRoutes);
+app.use('/', moderationRoutes);
 
 app.use((req, res) => res.status(404).json({ success: false, message: 'Not found' }));
 app.use(errorHandler);
