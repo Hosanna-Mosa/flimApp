@@ -1,4 +1,4 @@
-const User = require('../models/user.model');
+const User = require('../models/User.model');
 const Report = require('../models/report.model');
 
 exports.reportContent = async (req, res) => {
