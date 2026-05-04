@@ -103,29 +103,45 @@ const deletePost = async (postId, userId) => {
 
 /**
  * Get user's posts
- * @param {string} userId - User ID
+ * @param {string} userId - Target user ID
+ * @param {string} viewerId - Current user ID
  * @returns {Promise<Post[]>} User's posts
  */
-const getUserPosts = async (userId) => {
-  return Post.find({ author: userId, isActive: true })
-    .sort({ createdAt: -1 })
-    .populate('author', 'name avatar isVerified roles');
+const getUserPosts = async (userId, viewerId) => {
+  // Use feedService to handle privacy and mutual blocks
+  const result = await feedService.getUserPosts(userId, viewerId, 0, 100);
+  return result.data || [];
 };
 
 /**
  * Get trending posts
  * @returns {Promise<Post[]>} Trending posts
  */
-const getTrending = async () => feedService.getTrending();
+const getTrending = async (userId) => {
+  const result = await feedService.getTrendingFeed(userId, 0, 100);
+  return result.data || [];
+};
 
 /**
  * Get donation posts
  * @param {number} page - Page number
  * @param {number} limit - Items per page
+ * @param {string} viewerId - Current user ID
  * @returns {Promise<Post[]>} Donation posts
  */
-const getDonations = async (page = 0, limit = 20) => {
-  return Post.find({ isDonation: true, isActive: true })
+const getDonations = async (page = 0, limit = 20, viewerId = null) => {
+  let excludedIds = [];
+  if (viewerId) {
+    excludedIds = await feedService.getExcludedAuthorIds(viewerId);
+  }
+
+  const query = { 
+    isDonation: true, 
+    isActive: true,
+    author: { $nin: [...excludedIds, viewerId].filter(Boolean) }
+  };
+
+  return Post.find(query)
     .sort({ createdAt: -1 })
     .skip(page * limit)
     .limit(limit)
@@ -153,6 +169,23 @@ const getPostById = async (postId, userId = null) => {
 
   if (!post) {
     return null;
+  }
+
+  // Mutual block check
+  if (userId && post.author) {
+    const authorId = post.author._id.toString();
+    
+    // 1. Check if viewer is blocked by author
+    const author = await User.findById(authorId).select('blockedUsers');
+    if (author && author.blockedUsers && author.blockedUsers.includes(userId)) {
+      return null;
+    }
+
+    // 2. Check if viewer has blocked author
+    const viewer = await User.findById(userId).select('blockedUsers');
+    if (viewer && viewer.blockedUsers && viewer.blockedUsers.includes(authorId)) {
+      return null;
+    }
   }
 
   // Check if user has liked this post

@@ -24,7 +24,7 @@ import SelectableCard from '@/components/SelectableCard';
 export default function SearchScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { token } = useAuth();
+  const { token, blockedUsers } = useAuth();
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [selectedRoles, setSelectedRoles] = useState<UserRole[]>([]);
@@ -60,10 +60,12 @@ export default function SearchScreen() {
       
       if (response && response.data) {
         // console.log('[Search] Results count:', response.data.length);
-        setResults(response.data);
+        const filteredResults = response.data.filter((u: any) => !blockedUsers.includes(u.id || u._id));
+        setResults(filteredResults);
       } else if (response && Array.isArray(response)) {
         // console.log('[Search] Response is array, count:', response.length);
-        setResults(response);
+        const filteredResults = response.filter((u: any) => !blockedUsers.includes(u.id || u._id));
+        setResults(filteredResults);
       } else {
         // console.log('[Search] No data in response');
         setResults([]);

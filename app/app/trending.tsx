@@ -12,7 +12,7 @@ import { TrendingSkeleton } from '@/components/skeletons/TrendingSkeleton';
 
 export default function TrendingScreen() {
   const { colors } = useTheme();
-  const { token } = useAuth();
+  const { token, blockedUsers } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   
@@ -34,7 +34,8 @@ export default function TrendingScreen() {
           caption: post.caption,
           type: post.type,
           likes: post.engagement?.likesCount || 0,
-        }));
+          userId: post.userId || post.author?._id || post.author?.id,
+        })).filter((post: any) => !blockedUsers.includes(post.userId));
         setTrendingPosts(mappedPosts);
       }
     } catch (error) {

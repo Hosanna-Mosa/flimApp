@@ -32,6 +32,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import api from '@/utils/api';
 import { ContentType } from '@/types';
 import { ProfileSkeleton } from '@/components/skeletons/ProfileSkeleton';
+import { BlockButton } from '@/components/BlockButton';
+import { ReportButton } from '@/components/ReportButton';
 
 interface UserProfile {
     _id: string;
@@ -324,6 +326,7 @@ export default function PublicProfileScreen() {
                     headerTitle: user.name,
                     headerStyle: { backgroundColor: colors.background },
                     headerTintColor: colors.text,
+                    headerRight: () => <ReportButton type="user" id={id as string} />
                 }}
             />
             <ScrollView

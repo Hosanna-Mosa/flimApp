@@ -19,6 +19,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { Post } from '@/types';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useMedia } from '@/contexts/MediaContext';
+import { ReportButton } from './ReportButton';
 
 interface FeedPostProps {
   post: Post;
@@ -471,6 +472,8 @@ export default function FeedPost({
               {isFollowing ? 'Following' : 'Follow'}
             </Text>
           </TouchableOpacity>
+
+          <ReportButton type="post" id={post.id} />
         </View>
       )}
 
