@@ -79,6 +79,7 @@
       "apiUrl": "https://api.filmyconnect24.com",
       "router": {},
       "expo-navigation-bar": {
+      
         "position": "absolute",
         "visibility": "visible",
         "behavior": "inset-swipe",
