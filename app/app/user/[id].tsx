@@ -32,7 +32,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import api from '@/utils/api';
 import { ContentType } from '@/types';
 import { ProfileSkeleton } from '@/components/skeletons/ProfileSkeleton';
-import { BlockButton } from '@/components/BlockButton';
 import { ReportButton } from '@/components/ReportButton';
 
 interface UserProfile {
@@ -64,7 +63,7 @@ interface UserPost {
 export default function PublicProfileScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const { colors } = useTheme();
-    const { token } = useAuth();
+    const { token, blockedUsers } = useAuth();
     const router = useRouter();
 
     const [selectedFilter, setSelectedFilter] = useState<ContentType | 'all'>('all');
@@ -75,6 +74,7 @@ export default function PublicProfileScreen() {
     const [user, setUser] = useState<UserProfile | null>(null);
     const [posts, setPosts] = useState<UserPost[]>([]);
     const [loading, setLoading] = useState(true);
+    const isBlockedUser = blockedUsers.some((blockedId) => String(blockedId) === String(id));
 
     useEffect(() => {
         if (id && token) {
@@ -155,6 +155,11 @@ export default function PublicProfileScreen() {
     }, [id]);
 
     const toggleFollow = async () => {
+        if (isBlockedUser) {
+            Alert.alert('User Blocked', 'Unblock this user from options to interact again.');
+            return;
+        }
+
         if (!user || !token) {
             Alert.alert('Error', 'You must be logged in to follow users');
             return;
@@ -261,6 +266,11 @@ export default function PublicProfileScreen() {
 
     const handleMessage = () => {
         if (!user) return;
+        const isBlocked = blockedUsers.some((blockedId) => String(blockedId) === String(id));
+        if (isBlocked) {
+            Alert.alert('User Blocked', 'Unblock this user first to start chatting.');
+            return;
+        }
 
         router.push({
             pathname: '/chat',
@@ -406,6 +416,14 @@ export default function PublicProfileScreen() {
                         </View>
                     )}
 
+                    {isBlockedUser && (
+                        <View style={styles.blockedMessageContainer}>
+                            <Text style={[styles.blockedMessage, { color: colors.textSecondary }]}>
+                                You blocked this user. Interactions are disabled until you unblock from options.
+                            </Text>
+                        </View>
+                    )}
+
                     <View style={styles.actionsContainer}>
                         <TouchableOpacity
                             style={[
@@ -419,6 +437,7 @@ export default function PublicProfileScreen() {
                                 },
                             ]}
                             onPress={toggleFollow}
+                            disabled={isBlockedUser}
                         >
                             {isFollowing ? (
                                 <Check size={20} color={colors.text} />
@@ -440,9 +459,11 @@ export default function PublicProfileScreen() {
                                     {
                                         backgroundColor: colors.surface,
                                         borderColor: colors.border,
+                                        opacity: isBlockedUser ? 0.5 : 1,
                                     },
                                 ]}
                                 onPress={handleMessage}
+                                disabled={isBlockedUser}
                             >
                                 <MessageCircle size={20} color={colors.text} />
                                 <Text style={[styles.messageButtonText, { color: colors.text }]}>
@@ -451,7 +472,6 @@ export default function PublicProfileScreen() {
                             </TouchableOpacity>
                         )}
                     </View>
-
                     <View style={styles.stats}>
                         <View style={styles.stat}>
                             <Text style={[styles.statValue, { color: colors.text }]}>
@@ -802,5 +822,15 @@ const styles = StyleSheet.create({
     privatePostsText: {
         fontSize: 14,
         textAlign: 'center',
+    },
+    blockedMessageContainer: {
+        paddingHorizontal: 20,
+        paddingVertical: 12,
+        alignItems: 'center',
+    },
+    blockedMessage: {
+        fontSize: 13,
+        textAlign: 'center',
+        lineHeight: 18,
     },
 });

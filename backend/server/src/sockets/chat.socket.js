@@ -87,6 +87,9 @@ const registerChatHandlers = (io) => {
         console.log('[SOCKET][MESSAGE] ✅ Emitted message_sent to sender, receive_message to recipient');
       } catch (error) {
         console.error('[SOCKET][MESSAGE] ❌ Error in send_message:', error);
+        socket.emit('message_error', {
+          message: error?.message || 'Failed to send message',
+        });
       }
     });
 

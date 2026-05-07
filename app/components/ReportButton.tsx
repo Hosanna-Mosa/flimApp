@@ -15,7 +15,7 @@ export const ReportButton: React.FC<ReportButtonProps> = ({ type, id, color, siz
   const { reportContent, blockUser, unblockUser, blockedUsers } = useAuth();
   const { colors } = useTheme();
 
-  const isBlocked = blockedUsers.includes(id);
+  const isBlocked = blockedUsers.some((blockedId) => String(blockedId) === String(id));
 
   const handleAction = () => {
     if (type === 'user') {

@@ -64,7 +64,7 @@ export default function PostDetailScreen() {
   const { isMuted, toggleMute } = useMedia();
   const router = useRouter();
   const { colors } = useTheme();
-  const { token, user } = useAuth();
+  const { token, user, reportContent } = useAuth();
   const insets = useSafeAreaInsets();
 
   // console.log('[PostDetail] Current user:', user ? `${user.name} (${(user as any)._id || user.id})` : 'Not logged in');
@@ -293,6 +293,50 @@ export default function PostDetailScreen() {
   const handleReply = (comment: Comment) => {
     setReplyTo(comment);
     commentInputRef.current?.focus();
+  };
+
+  const handleCommentOptions = (comment: Comment) => {
+    Alert.alert(
+      'Comment Options',
+      'Choose an action',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Report User',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await reportContent('user', comment.user._id);
+              Alert.alert('Reported', 'User has been reported to admin.');
+            } catch (error) {
+              Alert.alert('Error', 'Failed to report user');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleReportComment = (commentId: string) => {
+    Alert.alert(
+      'Report Comment',
+      'Are you sure you want to report this comment?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Report',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await reportContent('comment', commentId);
+              Alert.alert('Reported', 'Thank you. We will review this comment.');
+            } catch (error) {
+              Alert.alert('Error', 'Failed to report comment');
+            }
+          },
+        },
+      ]
+    );
   };
 
   const toggleHiddenReplies = (commentId: string) => {
@@ -652,6 +696,14 @@ export default function PostDetailScreen() {
                     <Text style={[styles.footerActionText, { color: colors.error }]}>Delete</Text>
                   </TouchableOpacity>
                 )}
+                {!isCommentAuthor && (
+                  <TouchableOpacity
+                    onPress={() => handleReportComment(comment._id)}
+                    style={styles.footerAction}
+                  >
+                    <Text style={[styles.footerActionText, { color: colors.textSecondary }]}>Report</Text>
+                  </TouchableOpacity>
+                )}
                 {comment.replies && comment.replies.length > 0 && (
                   <TouchableOpacity
                     onPress={() => toggleHiddenReplies(comment._id)}
@@ -664,6 +716,13 @@ export default function PostDetailScreen() {
                 )}
               </View>
             </View>
+            <TouchableOpacity
+              onPress={() => handleCommentOptions(comment)}
+              style={styles.commentMenuButton}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <MoreVertical size={16} color={colors.textSecondary} />
+            </TouchableOpacity>
           </View>
 
           {/* Render Replies */}
@@ -1190,9 +1249,13 @@ const styles = StyleSheet.create({
   },
   commentHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
     marginBottom: 4,
+  },
+  commentMenuButton: {
+    marginLeft: 8,
+    paddingTop: 2,
   },
   commentUserName: {
     fontSize: 14,

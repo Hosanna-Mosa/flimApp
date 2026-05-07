@@ -1,8 +1,31 @@
 const mongoose = require('mongoose');
 const Message = require('../models/Message.model');
+const User = require('../models/User.model');
 const { encryptMessage, decryptMessage } = require('../utils/messageCrypto');
 
+const ensureMessagingAllowed = async (userId, peerId) => {
+  const [user, peer] = await Promise.all([
+    User.findById(userId).select('blockedUsers'),
+    User.findById(peerId).select('blockedUsers'),
+  ]);
+
+  const blockedByUser = (user?.blockedUsers || []).some(
+    (blockedId) => blockedId.toString() === peerId.toString()
+  );
+  const blockedByPeer = (peer?.blockedUsers || []).some(
+    (blockedId) => blockedId.toString() === userId.toString()
+  );
+
+  if (blockedByUser || blockedByPeer) {
+    const err = new Error('Messaging is not allowed because one user has blocked the other');
+    err.status = 403;
+    throw err;
+  }
+};
+
 const createMessage = async ({ senderId, recipientId, content }) => {
+  await ensureMessagingAllowed(senderId, recipientId);
+
   const message = await Message.create({
     sender: senderId,
     recipient: recipientId,
@@ -19,6 +42,8 @@ const createMessage = async ({ senderId, recipientId, content }) => {
 };
 
 const getConversation = async (userId, peerId) => {
+  await ensureMessagingAllowed(userId, peerId);
+
   // Convert to ObjectId to ensure proper matching
   const userObjectId = mongoose.Types.ObjectId.isValid(userId) 
     ? new mongoose.Types.ObjectId(userId) 
@@ -55,6 +80,12 @@ const deleteMessage = async (messageId, userId) =>
 
 const getConversations = async (userId, searchQuery = '') => {
   const userObjectId = new mongoose.Types.ObjectId(userId);
+  const currentUser = await User.findById(userId).select('blockedUsers');
+  const blockedByMe = currentUser ? currentUser.blockedUsers || [] : [];
+  const blockedMeResults = await User.find({ blockedUsers: userObjectId }).select('_id');
+  const blockedMe = blockedMeResults.map((u) => u._id);
+  const excludedPeerIds = [...new Set([...blockedByMe, ...blockedMe])];
+
   const conversations = await Message.aggregate([
     {
       $match: {
@@ -83,6 +114,9 @@ const getConversations = async (userId, searchQuery = '') => {
       },
     },
     { $unwind: '$peer' },
+    ...(excludedPeerIds.length > 0
+      ? [{ $match: { _id: { $nin: excludedPeerIds } } }]
+      : []),
     {
       $lookup: {
         from: 'messages',

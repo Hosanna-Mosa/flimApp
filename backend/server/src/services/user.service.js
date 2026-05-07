@@ -79,12 +79,6 @@ const getById = async (id, viewerId = null) => {
     if (targetUser && targetUser.blockedUsers && targetUser.blockedUsers.includes(viewerId)) {
       return null; // Target has blocked the viewer
     }
-
-    // 2. Check if viewer has blocked the target user
-    const viewer = await User.findById(viewerId).select('blockedUsers');
-    if (viewer && viewer.blockedUsers && viewer.blockedUsers.includes(id)) {
-      return null; // Viewer has blocked the target
-    }
   }
 
   // If viewer is the owner, return all data

@@ -7,9 +7,11 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Linking,
+  Modal,
+  Alert,
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { Moon, Sun, Bell, Shield, Lock, ChevronRight, User, BadgeCheck, Info, FileText } from 'lucide-react-native';
+import { Moon, Sun, Bell, Shield, Lock, ChevronRight, User, BadgeCheck, Info, FileText, Trash2, AlertTriangle } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -17,8 +19,10 @@ export default function SettingsScreen() {
   console.log('SettingsScreen rendering...'); // Debug log
   const router = useRouter();
   const { colors, changeTheme, isDark } = useTheme();
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, deleteAccount } = useAuth();
   const [isUpdatingPrivate, setIsUpdatingPrivate] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [isTogglingPrivate, setIsTogglingPrivate] = React.useState(false);
   const togglePrivateAccount = async () => {
@@ -37,6 +41,35 @@ export default function SettingsScreen() {
     } finally {
       setIsUpdatingPrivate(false);
     }
+  };
+
+  const handleDeleteAccount = async () => {
+    Alert.alert(
+      "Confirm Deletion",
+      "Are you absolutely sure you want to delete your account? This action is permanent and cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Delete Account", 
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setIsDeleting(true);
+              await deleteAccount();
+              // After account is deleted, AuthContext handles state cleanup
+              // and the app will automatically redirect to the login/signup flow
+              // because isAuthenticated will become false.
+              router.replace('/auth/signup'); 
+            } catch (error: any) {
+              Alert.alert("Error", error.message || "Failed to delete account");
+            } finally {
+              setIsDeleting(false);
+              setShowDeleteModal(false);
+            }
+          }
+        }
+      ]
+    );
   };
 
   return (
@@ -338,19 +371,85 @@ export default function SettingsScreen() {
               styles.settingItem,
               { backgroundColor: colors.card, borderColor: colors.border },
             ]}
-            onPress={() => Linking.openURL('https://filmyconnect24.com/terms-and-conditions')}
+            onPress={() => router.push('/terms-and-conditions')}
           >
             <View style={styles.settingInfo}>
               <FileText size={24} color={colors.textSecondary} />
               <View style={styles.settingText}>
                 <Text style={[styles.settingLabel, { color: colors.text }]}>
-                  Terms of Service
+                  Terms and Conditions
                 </Text>
               </View>
             </View>
             <ChevronRight size={20} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
+
+        <View style={styles.section}>
+          <TouchableOpacity
+            style={[
+              styles.settingItem,
+              { backgroundColor: colors.card, borderColor: colors.error || '#ff4444' },
+            ]}
+            onPress={() => setShowDeleteModal(true)}
+          >
+            <View style={styles.settingInfo}>
+              <Trash2 size={24} color={colors.error || '#ff4444'} />
+              <View style={styles.settingText}>
+                <Text style={[styles.settingLabel, { color: colors.error || '#ff4444' }]}>
+                  Delete My Account
+                </Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        <Modal
+          visible={showDeleteModal}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowDeleteModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+              <View style={styles.modalHeader}>
+                <AlertTriangle size={48} color="#ff4444" />
+                <Text style={[styles.modalTitle, { color: colors.text }]}>
+                  Delete Account?
+                </Text>
+              </View>
+              
+              <Text style={[styles.modalDescription, { color: colors.textSecondary }]}>
+                You want to delete your account? If you delete, all your data will be permanently deleted. This includes your profile, posts, messages, and followers.
+              </Text>
+
+              <View style={styles.modalButtons}>
+                <TouchableOpacity 
+                  style={[styles.modalButton, { backgroundColor: colors.surface }]}
+                  onPress={() => setShowDeleteModal(false)}
+                >
+                  <Text style={[styles.modalButtonText, { color: colors.text }]}>
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[styles.modalButton, { backgroundColor: '#ff4444' }]}
+                  onPress={handleDeleteAccount}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={[styles.modalButtonText, { color: '#fff' }]}>
+                      Delete
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
 
         <View style={{ height: 40 }} />
       </ScrollView>
@@ -410,5 +509,49 @@ const styles = StyleSheet.create({
   },
   toggleThumbActive: {
     alignSelf: 'flex-end',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    width: '100%',
+    borderRadius: 24,
+    padding: 24,
+    alignItems: 'center',
+  },
+  modalHeader: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginTop: 12,
+  },
+  modalDescription: {
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  modalButton: {
+    flex: 1,
+    height: 48,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

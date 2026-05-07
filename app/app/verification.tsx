@@ -8,7 +8,9 @@ import {
   Alert,
   ActivityIndicator,
   Modal,
+  Platform,
 } from 'react-native';
+import RazorpayCheckoutNative from 'react-native-razorpay';
 import { Stack, useRouter, useFocusEffect } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
 import {
@@ -167,29 +169,48 @@ export default function VerificationScreen() {
         },
         theme: { color: colors.primary },
         retry: { enabled: true, max_count: 3 },
-        config: {
-          display: {
-            blocks: {
-              upi: {
-                name: 'UPI',
-                instruments: [{ method: 'upi' }]
-              }
-            },
-            sequence: ['block.upi', 'block.card', 'block.netbanking'],
-            preferences: { show_default_blocks: true }
-          }
-        },
-        _internal: {
-          integration: 'reactjs',
-          platform: 'mobile_app'
-        }
+        ...(Platform.OS === 'ios' && {
+          apple_pay: 1, // Enable Apple Pay for iOS gateway
+        }),
       };
 
-      console.log('[Verification] Opening Razorpay with options:', JSON.stringify(options, null, 2));
-      setRazorpayOptions(options);
-      setRazorpayModalVisible(true);
-      setIsProcessingPayment(false);
-
+      if (Platform.OS === 'ios') {
+        console.log('[iOS Gateway] Using native Razorpay integration');
+        RazorpayCheckoutNative.open(options)
+          .then((data: any) => {
+            console.log('[iOS Gateway] Payment successful:', data);
+            handlePaymentSuccess({
+              ...data,
+              razorpay_order_id: order.orderId
+            });
+          })
+          .catch((error: any) => {
+            console.log('[iOS Gateway] Payment failed:', error);
+            handlePaymentFailure(error);
+          })
+          .finally(() => {
+            setIsProcessingPayment(false);
+          });
+      } else {
+        console.log('[Android Gateway] Using WebView Razorpay integration');
+        setRazorpayOptions({
+          ...options,
+          config: {
+            display: {
+              blocks: {
+                upi: {
+                  name: 'UPI',
+                  instruments: [{ method: 'upi' }]
+                }
+              },
+              sequence: ['block.upi', 'block.card', 'block.netbanking'],
+              preferences: { show_default_blocks: true }
+            }
+          }
+        });
+        setRazorpayModalVisible(true);
+        setIsProcessingPayment(false);
+      }
     } catch (error: any) {
       console.error('[Verification] Payment initiation failed:', error);
       Alert.alert('Payment Error', error.message || 'Failed to initiate payment');
