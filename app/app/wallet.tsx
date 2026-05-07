@@ -12,7 +12,9 @@ import {
   TextInput,
   Platform,
   Linking,
+  KeyboardAvoidingView,
 } from 'react-native';
+import RazorpayCheckoutNative from 'react-native-razorpay';
 import { Stack, useRouter, useFocusEffect } from 'expo-router';
 import {
   Wallet as WalletIcon,
@@ -109,10 +111,12 @@ export default function WalletScreen() {
       const order = await api.createWalletOrder(amount, token || undefined);
       console.log('[Razorpay] Order created successfully:', order.id);
 
-      // Step 2: Prepare the options for the WebView checkout
+      console.log('[Razorpay] Step 2: Preparing options...');
       const options = {
         key: order.keyId,
         order_id: order.id,
+        amount: order.amount,
+        currency: order.currency || 'INR',
         name: 'FilmyApp',
         description: 'Wallet Deposit',
         prefill: {
@@ -122,31 +126,50 @@ export default function WalletScreen() {
         },
         theme: { color: colors.primary },
         retry: { enabled: true, max_count: 3 },
-        config: {
-          display: {
-            blocks: {
-              upi: {
-                name: 'UPI',
-                instruments: [{ method: 'upi' }]
-              }
-            },
-            sequence: ['block.upi', 'block.card', 'block.netbanking'],
-            preferences: { show_default_blocks: true }
-          }
-        },
-        _internal: {
-          integration: 'reactjs',
-          platform: 'mobile_app'
-        }
+        ...(Platform.OS === 'ios' && {
+          apple_pay: 1, // Enable Apple Pay for iOS gateway
+        }),
       };
 
-      console.log('[Razorpay] Step 2: Opening WebView with options:', JSON.stringify(options, null, 2));
-      setRazorpayOptions(options);
-      setRazorpayModalVisible(true);
-      setIsProcessing(false);
-
+      if (Platform.OS === 'ios') {
+        console.log('[iOS Gateway] Using native Razorpay integration');
+        RazorpayCheckoutNative.open(options)
+          .then((data: any) => {
+            console.log('[iOS Gateway] Payment successful:', data);
+            handlePaymentSuccess({
+              ...data,
+              razorpay_order_id: order.id
+            });
+          })
+          .catch((error: any) => {
+            console.log('[iOS Gateway] Payment failed:', error);
+            handlePaymentFailure(error);
+          })
+          .finally(() => {
+            setIsProcessing(false);
+          });
+      } else {
+        console.log('[Android Gateway] Using WebView Razorpay integration');
+        setRazorpayOptions({
+          ...options,
+          config: {
+            display: {
+              blocks: {
+                upi: {
+                  name: 'UPI',
+                  instruments: [{ method: 'upi' }]
+                }
+              },
+              sequence: ['block.upi', 'block.card', 'block.netbanking'],
+              preferences: { show_default_blocks: true }
+            }
+          }
+        });
+        setRazorpayModalVisible(true);
+        setIsProcessing(false);
+      }
     } catch (error: any) {
-      console.error('[Razorpay] Step 1 Failed - Order creation error:', error);
+      console.error('[Payment] Initiation failed:', error);
       Alert.alert('Error', error.status === 404 ? 'User profile not found. Try logging out and back in' : (error.message || 'Failed to process transaction'));
       setIsProcessing(false);
     }
@@ -243,46 +266,51 @@ export default function WalletScreen() {
         onRequestClose={() => setDepositModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.text }]}>Enter Amount</Text>
-              <TouchableOpacity onPress={() => setDepositModalVisible(false)}>
-                <Text style={{ color: colors.primary, fontWeight: 'bold' }}>Cancel</Text>
-              </TouchableOpacity>
-            </View>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ width: '100%' }}
+          >
+            <View style={[styles.modalContent, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={styles.modalHeader}>
+                <Text style={[styles.modalTitle, { color: colors.text }]}>Enter Amount</Text>
+                <TouchableOpacity onPress={() => setDepositModalVisible(false)}>
+                  <Text style={{ color: colors.primary, fontWeight: 'bold' }}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
 
-            <View style={[styles.inputContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <Text style={[styles.currencySymbol, { color: colors.text }]}>₹</Text>
-              <TextInput
-                style={[styles.input, { color: colors.text }]}
-                keyboardType="numeric"
-                value={depositAmount}
-                onChangeText={setDepositAmount}
-                autoFocus={true}
-                placeholder="0.00"
-                placeholderTextColor={colors.textSecondary}
+              <View style={[styles.inputContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                <Text style={[styles.currencySymbol, { color: colors.text }]}>₹</Text>
+                <TextInput
+                  style={[styles.input, { color: colors.text }]}
+                  keyboardType="numeric"
+                  value={depositAmount}
+                  onChangeText={setDepositAmount}
+                  autoFocus={true}
+                  placeholder="0.00"
+                  placeholderTextColor={colors.textSecondary}
+                />
+              </View>
+
+              <View style={styles.quickAmounts}>
+                {['100', '500', '1000', '2000'].map(val => (
+                  <TouchableOpacity
+                    key={val}
+                    style={[styles.quickAmountBtn, { backgroundColor: depositAmount === val ? colors.primary : colors.surface, borderColor: colors.border }]}
+                    onPress={() => setDepositAmount(val)}
+                  >
+                    <Text style={[styles.quickAmountText, { color: depositAmount === val ? '#000' : colors.text }]}>₹{val}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <Button
+                title="Next"
+                onPress={executeDeposit}
+                variant="primary"
+                style={styles.modalButton}
               />
             </View>
-
-            <View style={styles.quickAmounts}>
-              {['100', '500', '1000', '2000'].map(val => (
-                <TouchableOpacity
-                  key={val}
-                  style={[styles.quickAmountBtn, { backgroundColor: depositAmount === val ? colors.primary : colors.surface, borderColor: colors.border }]}
-                  onPress={() => setDepositAmount(val)}
-                >
-                  <Text style={[styles.quickAmountText, { color: depositAmount === val ? '#000' : colors.text }]}>₹{val}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <Button
-              title="Next"
-              onPress={executeDeposit}
-              variant="primary"
-              style={styles.modalButton}
-            />
-          </View>
+          </KeyboardAvoidingView>
         </View>
       </Modal>
 
@@ -302,37 +330,42 @@ export default function WalletScreen() {
         onRequestClose={() => setWithdrawModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.text }]}>Withdraw Funds</Text>
-              <TouchableOpacity onPress={() => setWithdrawModalVisible(false)}>
-                <Text style={{ color: colors.primary, fontWeight: 'bold' }}>Cancel</Text>
-              </TouchableOpacity>
-            </View>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ width: '100%' }}
+          >
+            <View style={[styles.modalContent, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={styles.modalHeader}>
+                <Text style={[styles.modalTitle, { color: colors.text }]}>Withdraw Funds</Text>
+                <TouchableOpacity onPress={() => setWithdrawModalVisible(false)}>
+                  <Text style={{ color: colors.primary, fontWeight: 'bold' }}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
 
-            <Text style={{ color: colors.textSecondary, marginBottom: 12 }}>Available Balance: ₹{balance}</Text>
+              <Text style={{ color: colors.textSecondary, marginBottom: 12 }}>Available Balance: ₹{balance}</Text>
 
-            <View style={[styles.inputContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <Text style={[styles.currencySymbol, { color: colors.text }]}>₹</Text>
-              <TextInput
-                style={[styles.input, { color: colors.text }]}
-                keyboardType="numeric"
-                value={withdrawAmount}
-                onChangeText={setWithdrawAmount}
-                autoFocus={true}
-                placeholder="0.00"
-                placeholderTextColor={colors.textSecondary}
+              <View style={[styles.inputContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                <Text style={[styles.currencySymbol, { color: colors.text }]}>₹</Text>
+                <TextInput
+                  style={[styles.input, { color: colors.text }]}
+                  keyboardType="numeric"
+                  value={withdrawAmount}
+                  onChangeText={setWithdrawAmount}
+                  autoFocus={true}
+                  placeholder="0.00"
+                  placeholderTextColor={colors.textSecondary}
+                />
+              </View>
+
+              <Button
+                title="Next"
+                onPress={executeWithdraw}
+                variant="primary"
+                style={styles.modalButton}
+                disabled={!withdrawAmount || parseFloat(withdrawAmount) > balance}
               />
             </View>
-
-            <Button
-              title="Next"
-              onPress={executeWithdraw}
-              variant="primary"
-              style={styles.modalButton}
-              disabled={!withdrawAmount || parseFloat(withdrawAmount) > balance}
-            />
-          </View>
+          </KeyboardAvoidingView>
         </View>
       </Modal>
 

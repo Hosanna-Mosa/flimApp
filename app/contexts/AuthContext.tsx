@@ -155,6 +155,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       await AsyncStorage.setItem('blocked_users', JSON.stringify(newBlockedUsers));
     } catch (err) {
       console.error('Failed to block user:', err);
+      throw err;
     }
   };
 
@@ -259,6 +260,17 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     });
   };
 
+  const deleteAccount = async () => {
+    if (!authState.token) return;
+    try {
+      await api.deleteMe(authState.token);
+      await logout();
+    } catch (err) {
+      console.error('Failed to delete account:', err);
+      throw err;
+    }
+  };
+
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener('auth_session_expired', () => {
 
@@ -343,5 +355,6 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     blockUser,
     unblockUser,
     reportContent,
+    deleteAccount,
   };
 });

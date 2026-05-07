@@ -9,30 +9,35 @@ interface BlockButtonProps {
 }
 
 export const BlockButton: React.FC<BlockButtonProps> = ({ userId }) => {
-  const { blockUser, blockedUsers } = useAuth();
+  const { blockUser, unblockUser, blockedUsers } = useAuth();
   const { colors } = useTheme();
   const router = useRouter();
 
-  const isBlocked = blockedUsers.includes(userId);
+  const isBlocked = blockedUsers.some((id) => String(id) === String(userId));
 
-  if (isBlocked) return null;
-
-  const handleBlock = () => {
+  const handleBlockToggle = () => {
     Alert.alert(
-      'Block User',
-      'Are you sure you want to block this user? You will no longer see their content.',
+      isBlocked ? 'Unblock User' : 'Block User',
+      isBlocked
+        ? 'Do you want to unblock this user? You can interact again after unblocking.'
+        : 'Are you sure you want to block this user? You will no longer be able to interact.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Block',
-          style: 'destructive',
+          text: isBlocked ? 'Unblock' : 'Block',
+          style: isBlocked ? 'default' : 'destructive',
           onPress: async () => {
             try {
-              await blockUser(userId);
-              Alert.alert('User Blocked', 'You will no longer see content from this user.');
-              router.back();
+              if (isBlocked) {
+                await unblockUser(userId);
+                Alert.alert('User Unblocked', 'You can now interact with this user again.');
+              } else {
+                await blockUser(userId);
+                Alert.alert('User Blocked', 'You can no longer interact with this user.');
+                router.back();
+              }
             } catch (error) {
-              console.log('Block failed:', error);
+              console.log('Block/unblock failed:', error);
             }
           },
         },
@@ -42,10 +47,17 @@ export const BlockButton: React.FC<BlockButtonProps> = ({ userId }) => {
 
   return (
     <TouchableOpacity 
-      onPress={handleBlock} 
-      style={[styles.button, { backgroundColor: colors.error + '20', borderColor: colors.error }]}
+      onPress={handleBlockToggle}
+      style={[
+        styles.button,
+        isBlocked
+          ? { backgroundColor: colors.primary + '20', borderColor: colors.primary }
+          : { backgroundColor: colors.error + '20', borderColor: colors.error },
+      ]}
     >
-      <Text style={[styles.text, { color: colors.error }]}>Block User</Text>
+      <Text style={[styles.text, { color: isBlocked ? colors.primary : colors.error }]}>
+        {isBlocked ? 'Unblock User' : 'Block User'}
+      </Text>
     </TouchableOpacity>
   );
 };

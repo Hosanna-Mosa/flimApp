@@ -118,7 +118,8 @@ export default function HomeScreen() {
 
     try {
 
-      const result = await api.getFeed(pageNumber, 20, 'hybrid', 36500, token) as any;
+      // Use 'latest' to show all posts, and increase limit to 50 for better initial load
+      const result = await api.getFeed(pageNumber, 50, 'latest', 36500, token) as any;
 
 
 
@@ -161,7 +162,8 @@ export default function HomeScreen() {
           createdAt: p.createdAt ? new Date(p.createdAt).toLocaleDateString() : 'Just now',
         })).filter((p: any) => !blockedUsers.includes(p.userId));
 
-        setHasMore(mappedPosts.length >= 20);
+        // hasMore should depend on the raw response from API, not the filtered results
+        setHasMore(feedItems.length >= 50);
 
         // Update followingIds from feed items to ensure consistency
         const followedUsersInFeed = mappedPosts
@@ -282,6 +284,7 @@ export default function HomeScreen() {
     setRefreshing(true);
     setPage(0);
     setHasMore(true);
+    setPosts([]);
     // Reload everything
     await Promise.all([fetchFollowingList(), loadFeed(0, false)]);
     setRefreshing(false);
@@ -573,12 +576,6 @@ export default function HomeScreen() {
             <FeedSkeleton key={i} />
           ))}
         </View>
-      ) : posts.length === 0 ? (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 100 }}>
-          <Text style={{ color: colors.textSecondary, fontSize: 16 }}>
-            No posts yet. Follow some users to see their posts!
-          </Text>
-        </View>
       ) : (
         <FlatList
           style={[styles.container, { backgroundColor: colors.background }]}
@@ -617,6 +614,13 @@ export default function HomeScreen() {
                 <ActivityIndicator color={colors.primary} />
               </View>
             ) : null
+          }
+          ListEmptyComponent={
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 100 }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 16 }}>
+                No posts yet. Follow some users to see their posts!
+              </Text>
+            </View>
           }
         />
       )}

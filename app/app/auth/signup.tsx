@@ -7,10 +7,11 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
-  Alert
+  Alert,
+  Linking,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft } from 'lucide-react-native';
+import { ArrowLeft, CheckSquare, Square } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import Input from '@/components/Input';
 import PhoneInput from '@/components/PhoneInput';
@@ -30,6 +31,7 @@ export default function SignUpScreen() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const [countryCode, setCountryCode] = useState('IN');
   const [callingCode, setCallingCode] = useState('91');
@@ -55,6 +57,11 @@ export default function SignUpScreen() {
 
     if (password.length < 6) {
       setError('Password must be at least 6 characters');
+      return;
+    }
+
+    if (!acceptedTerms) {
+      setError('Please agree to Terms of Service and Privacy Policy');
       return;
     }
 
@@ -213,11 +220,39 @@ export default function SignUpScreen() {
             editable={!loading}
           />
 
+          <TouchableOpacity
+            style={styles.termsRow}
+            onPress={() => setAcceptedTerms((prev) => !prev)}
+            activeOpacity={0.8}
+          >
+            {acceptedTerms ? (
+              <CheckSquare size={20} color={colors.primary} />
+            ) : (
+              <Square size={20} color={colors.textSecondary} />
+            )}
+            <Text style={[styles.termsText, { color: colors.textSecondary }]}>
+              I agree to the{' '}
+              <Text style={{ color: colors.primary }} onPress={() => Linking.openURL('https://filmyconnect24.com/terms-and-conditions')}>
+                Terms and Conditions
+              </Text>{' '}
+              and{' '}
+              <Text style={{ color: colors.primary }} onPress={() => Linking.openURL('https://filmyconnect24.com/privacy-policy')}>
+                Privacy Policy
+              </Text>
+            </Text>
+          </TouchableOpacity>
+          <View style={styles.guidelinesList}>
+            <Text style={[styles.guidelineItem, { color: colors.textSecondary }]}>- no abusive content</Text>
+            <Text style={[styles.guidelineItem, { color: colors.textSecondary }]}>- no harassment</Text>
+            <Text style={[styles.guidelineItem, { color: colors.textSecondary }]}>- no illegal content</Text>
+          </View>
+
           <Button
             title="Next"
             onPress={handleNext}
             size="large"
             loading={loading}
+            disabled={!acceptedTerms || loading}
             style={styles.button}
           />
         </View>
@@ -249,6 +284,27 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: 12,
+  },
+  termsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    alignItems: 'flex-start',
+    marginTop: 8,
+  },
+  termsText: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  guidelinesList: {
+    marginTop: 8,
+    marginBottom: 4,
+    paddingLeft: 30,
+    gap: 4,
+  },
+  guidelineItem: {
+    fontSize: 12,
+    lineHeight: 16,
   },
   countryPickerWrapper: {
     paddingLeft: 12,

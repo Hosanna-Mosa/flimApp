@@ -35,7 +35,7 @@ export default function ChatScreen() {
   }>();
   const router = useRouter();
   const { colors } = useTheme();
-  const { user, token } = useAuth();
+  const { user, token, blockedUsers, unblockUser } = useAuth();
   const { socket } = useSocket();
   const insets = useSafeAreaInsets();
   const flatListRef = useRef<FlatList>(null);
@@ -44,6 +44,9 @@ export default function ChatScreen() {
   const [inputMessage, setInputMessage] = useState<string>('');
   const [userAvatar, setUserAvatar] = useState<string>('');
   const [userName, setUserName] = useState<string>(name || 'Chat');
+  const [blockedByOther, setBlockedByOther] = useState(false);
+  const isBlockedByMe = blockedUsers.some((id) => String(id) === String(userId));
+  const isConversationBlocked = isBlockedByMe || blockedByOther;
 
   // Fetch user data for avatar
   useEffect(() => {
@@ -97,7 +100,13 @@ export default function ChatScreen() {
 
             setMessages([]);
           }
+          setBlockedByOther(false);
         } catch (e) {
+          if ((e as Error)?.message?.toLowerCase().includes('blocked')) {
+            setBlockedByOther(true);
+            setMessages([]);
+            return;
+          }
           console.error('[Chat] Error loading history:', e);
           setMessages([]);
         }
@@ -205,14 +214,24 @@ export default function ChatScreen() {
       }, 100);
     };
 
+    const handleMessageError = (payload: any) => {
+      const errorMessage = payload?.message || 'Failed to send message';
+      if (String(errorMessage).toLowerCase().includes('blocked')) {
+        setBlockedByOther(true);
+      }
+      Alert.alert('Message not sent', errorMessage);
+    };
+
     socket.on('receive_message', handleReceiveMessage);
     socket.on('message_sent', handleMessageSent);
     socket.on('message_status_update', handleStatusUpdate);
+    socket.on('message_error', handleMessageError);
 
     return () => {
       socket.off('receive_message', handleReceiveMessage);
       socket.off('message_sent', handleMessageSent);
       socket.off('message_status_update', handleStatusUpdate);
+      socket.off('message_error', handleMessageError);
     };
   }, [socket, userId, user]);
 
@@ -225,6 +244,16 @@ export default function ChatScreen() {
   // }, [socket]);
 
   const handleSend = () => {
+    if (isConversationBlocked) {
+      Alert.alert(
+        'Messaging unavailable',
+        isBlockedByMe
+          ? 'You blocked this user. Unblock them to send messages.'
+          : 'You cannot message this user right now.'
+      );
+      return;
+    }
+
     if (!inputMessage.trim()) return;
 
     if (!socket) {
@@ -415,6 +444,30 @@ export default function ChatScreen() {
             },
           ]}
         >
+          {isConversationBlocked && (
+            <View style={styles.blockedBanner}>
+              <Text style={[styles.blockedText, { color: colors.textSecondary }]}>
+                {isBlockedByMe
+                  ? 'You blocked this user. Unblock to continue chatting.'
+                  : 'Chat is unavailable because of a block.'}
+              </Text>
+              {isBlockedByMe && (
+                <TouchableOpacity
+                  style={[styles.unblockButton, { backgroundColor: colors.primary }]}
+                  onPress={async () => {
+                    try {
+                      await unblockUser(String(userId));
+                      setBlockedByOther(false);
+                    } catch (error) {
+                      Alert.alert('Error', 'Failed to unblock user');
+                    }
+                  }}
+                >
+                  <Text style={styles.unblockButtonText}>Unblock</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
           <TextInput
             style={[
               styles.input,
@@ -425,11 +478,13 @@ export default function ChatScreen() {
             value={inputMessage}
             onChangeText={setInputMessage}
             multiline
+            editable={!isConversationBlocked}
           />
           <TouchableOpacity
             style={[styles.sendButton, { backgroundColor: colors.primary }]}
             onPress={handleSend}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            disabled={isConversationBlocked}
           >
             <Send size={20} color="#000000" />
           </TouchableOpacity>
@@ -477,9 +532,30 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     padding: 12,
     gap: 12,
     borderTopWidth: 1,
+  },
+  blockedBanner: {
+    width: '100%',
+    marginBottom: 4,
+    gap: 10,
+    alignItems: 'center',
+  },
+  blockedText: {
+    fontSize: 13,
+    textAlign: 'center',
+  },
+  unblockButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 16,
+  },
+  unblockButtonText: {
+    color: '#000',
+    fontWeight: '700',
+    fontSize: 13,
   },
   input: {
     flex: 1,

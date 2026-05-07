@@ -148,7 +148,7 @@ export const apiCreatePost = (payload: any, token: string) => request('/posts', 
 export const apiGetSavedPosts = (page: number, limit: number, token: string) =>
   request(`/users/me/saved?page=${page}&limit=${limit}`, { token });
 export const apiGetTrendingFeed = (page: number, limit: number, token?: string) =>
-  request(`/api/feed/trending?page=${page}&limit=${limit}`, { token });
+  request(`/api/feed/trending?page=${page}&limit=${limit}&_t=${Date.now()}`, { token });
 export const apiGetDonations = (page: number, limit: number, token?: string) =>
   request(`/posts/donations?page=${page}&limit=${limit}`, { token });
 
@@ -363,7 +363,7 @@ export const api = {
     const limitNum = typeof limit === 'number' ? limit : 20;
     const algorithm = typeof algo === 'string' && algo.length < 20 ? algo : 'hybrid';
     const timeRange = typeof tr === 'number' ? tr : (typeof tr === 'string' ? parseInt(tr) : 365);
-    const url = `/api/feed?page=${pageNum}&limit=${limitNum}&algorithm=${algorithm}&timeRange=${timeRange}`;
+    const url = `/api/feed?page=${pageNum}&limit=${limitNum}&algorithm=${algorithm}&timeRange=${timeRange}&_t=${Date.now()}`;
     return unwrap(request(url, { token }));
   },
   getFeed: (page: any = 0, limit: any = 20, algo: any = 'hybrid', tr: any = 365, t?: string) => {
@@ -372,7 +372,7 @@ export const api = {
     const limitNum = typeof limit === 'number' ? limit : 20;
     const algorithm = typeof algo === 'string' && algo.length < 20 ? algo : 'hybrid';
     const timeRange = typeof tr === 'number' ? tr : (typeof tr === 'string' ? parseInt(tr) : 365);
-    const url = `/api/feed?page=${pageNum}&limit=${limitNum}&algorithm=${algorithm}&timeRange=${timeRange}`;
+    const url = `/api/feed?page=${pageNum}&limit=${limitNum}&algorithm=${algorithm}&timeRange=${timeRange}&_t=${Date.now()}`;
     return unwrap(request(url, { token }));
   },
   getUserFeed: (id: string, p: any = 0, l: any = 20, t?: string) => {
@@ -460,6 +460,9 @@ export const api = {
     unwrap(request('/unblock', { method: 'POST', body: { unblockedUserId }, token: t })),
 
   getBlockedUsers: (t?: string) => unwrap(request('/users/me/blocked', { token: t })),
+
+  // Account Deletion
+  deleteMe: (t?: string) => unwrap(request('/users/me', { method: 'DELETE', token: t })),
 };
 
 // Default export
