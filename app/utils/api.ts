@@ -257,6 +257,8 @@ export const apiCreateSubscriptionOrder = (planId: string, token?: string) =>
   request('/subscriptions/create-order', { method: 'POST', body: { planType: planId }, token });
 export const apiVerifySubscriptionPayment = (payload: any, token?: string) =>
   request('/subscriptions/verify-payment', { method: 'POST', body: payload, token });
+export const apiVerifyBadge = (transactionId: string, token?: string) =>
+  request('/verify-badge', { method: 'POST', body: { transactionId }, token });
 
 // Support
 export const apiCreateSupportRequest = (payload: any, token: string) =>
@@ -427,6 +429,7 @@ export const api = {
   submitVerificationRequest: (payload: any, t: string) => unwrap(apiSubmitVerificationRequest(payload, t)),
   apiCreateSubscriptionOrder: (planId: string, t?: string) => unwrap(apiCreateSubscriptionOrder(planId, t)),
   apiVerifySubscriptionPayment: (payload: any, t?: string) => unwrap(apiVerifySubscriptionPayment(payload, t)),
+  verifyBadge: (transactionId: string, t?: string) => unwrap(apiVerifyBadge(transactionId, t)),
 
   // Support
   createSupportRequest: (payload: any, t: string) => unwrap(apiCreateSupportRequest(payload, t)),
