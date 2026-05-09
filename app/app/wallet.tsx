@@ -13,8 +13,16 @@ import {
   Platform,
   Linking,
   KeyboardAvoidingView,
+  SafeAreaView,
 } from 'react-native';
-import RazorpayCheckoutNative from 'react-native-razorpay';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+// Safe import for Razorpay Native
+let RazorpayCheckoutNative: any = null;
+try {
+  RazorpayCheckoutNative = require('react-native-razorpay').default;
+} catch (e) {
+  console.log('[Razorpay] Native module not available, falling back to WebView');
+}
 import { Stack, useRouter, useFocusEffect } from 'expo-router';
 import {
   Wallet as WalletIcon,
@@ -39,6 +47,7 @@ export default function WalletScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { token, user, refreshUser } = useAuth();
+  const insets = useSafeAreaInsets();
 
   const [balance, setBalance] = useState(0);
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -131,7 +140,7 @@ export default function WalletScreen() {
         }),
       };
 
-      if (Platform.OS === 'ios') {
+      if (Platform.OS === 'ios' && RazorpayCheckoutNative) {
         console.log('[iOS Gateway] Using native Razorpay integration');
         RazorpayCheckoutNative.open(options)
           .then((data: any) => {
@@ -149,7 +158,7 @@ export default function WalletScreen() {
             setIsProcessing(false);
           });
       } else {
-        console.log('[Android Gateway] Using WebView Razorpay integration');
+        console.log(`[${Platform.OS} Gateway] Using WebView Razorpay integration`);
         setRazorpayOptions({
           ...options,
           config: {
@@ -270,7 +279,7 @@ export default function WalletScreen() {
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={{ width: '100%' }}
           >
-            <View style={[styles.modalContent, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={[styles.modalContent, { backgroundColor: colors.card, borderColor: colors.border, paddingBottom: insets.bottom + 24 }]}>
               <View style={styles.modalHeader}>
                 <Text style={[styles.modalTitle, { color: colors.text }]}>Enter Amount</Text>
                 <TouchableOpacity onPress={() => setDepositModalVisible(false)}>
@@ -334,7 +343,7 @@ export default function WalletScreen() {
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={{ width: '100%' }}
           >
-            <View style={[styles.modalContent, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={[styles.modalContent, { backgroundColor: colors.card, borderColor: colors.border, paddingBottom: insets.bottom + 24 }]}>
               <View style={styles.modalHeader}>
                 <Text style={[styles.modalTitle, { color: colors.text }]}>Withdraw Funds</Text>
                 <TouchableOpacity onPress={() => setWithdrawModalVisible(false)}>
@@ -371,10 +380,11 @@ export default function WalletScreen() {
 
       <ScrollView
         style={[styles.container, { backgroundColor: colors.background }]}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40 }]}
         refreshControl={
           <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }
+        keyboardShouldPersistTaps="handled"
       >
         {/* Balance Card */}
         <LinearGradient
@@ -625,7 +635,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 32,
     borderWidth: 1,
     borderBottomWidth: 0,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
   },
   modalHeader: {
     flexDirection: 'row',
