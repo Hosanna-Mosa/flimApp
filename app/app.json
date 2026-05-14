@@ -18,8 +18,10 @@
       "bundleIdentifier": "app.rork.filmy",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "FilmyConnect uses your photo library to let you upload profile pictures, portfolio images, and media content to showcase your work to the film industry community.",
+        "NSPhotoLibraryAddUsageDescription": "FilmyConnect needs permission to save downloaded images and media content from the community to your photo library.",
         "NSCameraUsageDescription": "FilmyConnect uses your camera to capture photos and videos for your portfolio, profile picture, and content uploads to share with the film industry community.",
-        "NSMicrophoneUsageDescription": "FilmyConnect uses your microphone to record audio while capturing videos for your portfolio and content uploads on the platform."
+        "NSMicrophoneUsageDescription": "FilmyConnect uses your microphone to record audio while capturing videos for your portfolio and content uploads on the platform.",
+        "NSLocationWhenInUseUsageDescription": "FilmyConnect uses your location to show relevant film industry events, jobs, and networking opportunities near you."
       }
     },
     "android": {
@@ -70,8 +72,22 @@
         "expo-media-library",
         {
           "photosPermission": "FilmyConnect uses your photo library to let you upload profile pictures, portfolio images, and media content to showcase your work to the film industry community.",
-          "savePhotosPermission": "Allow FilmyConnect to save photos and media to your library.",
+          "savePhotosPermission": "FilmyConnect needs permission to save downloaded images and media content from the community to your photo library.",
           "isAccessMediaLocationEnabled": true
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "FilmyConnect uses your photo library to let you upload profile pictures, portfolio images, and media content to showcase your work to the film industry community.",
+          "cameraPermission": "FilmyConnect uses your camera to capture photos and videos for your portfolio, profile picture, and content uploads to share with the film industry community.",
+          "microphonePermission": "FilmyConnect uses your microphone to record audio while capturing videos for your portfolio and content uploads on the platform."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "FilmyConnect uses your location to show relevant film industry events, jobs, and networking opportunities near you."
         }
       ],
       "react-native-iap"
