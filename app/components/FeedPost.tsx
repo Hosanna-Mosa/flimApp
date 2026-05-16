@@ -174,6 +174,7 @@ export default function FeedPost({
   };
 
   const toggleVideo = async () => {
+    console.log('[FeedPost] toggleVideo tapped');
     if (!videoRef.current) return;
     if (videoStatus?.isPlaying) {
       await videoRef.current.pauseAsync();

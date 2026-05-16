@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   FlatList,
+  ScrollView,
   TouchableOpacity,
   RefreshControl,
   Alert,
@@ -231,36 +232,39 @@ export default function HomeScreen() {
   }, [token]);
 
   const loadData = async () => {
-    setLoading(true);
-    await Promise.all([fetchFollowingList(), loadFeed()]);
-    setLoading(false);
+    try {
+      setLoading(true);
+      await Promise.all([
+        fetchFollowingList().catch(e => console.error('[Home] fetchFollowingList error:', e)),
+        loadFeed(0, false).catch(e => console.error('[Home] loadFeed error:', e))
+      ]);
+    } catch (error) {
+      console.error('[Home] loadData error:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Reload data every time the screen comes into focus
+  // Refresh data every time the screen comes into focus
   useFocusEffect(
     useCallback(() => {
-      fetchFollowingList();
-    }, [fetchFollowingList])
-  );
-
-  // Refresh feed when screen comes into focus (to update comment counts, etc.)
-  useFocusEffect(
-    useCallback(() => {
-      // Re-fetch following list ensuring current source of truth
-      fetchFollowingList();
-      // Only reload if we already have posts (not initial load)
-      if (token) {
-        // We can check if we have posts, but we shouldn't depend on posts.length
-        // because it changes after loading, causing a loop.
+      if (token && !authLoading) {
+        // console.log('[Home] Screen focused, refreshing data...');
+        fetchFollowingList();
         loadFeed(0, false);
       }
-    }, [token, loadFeed])
+    }, [token, authLoading, fetchFollowingList, loadFeed])
   );
 
   // Load feed and following list when token changes (Initial load)
   useEffect(() => {
-    if (!authLoading && token && user) {
-      loadData();
+    if (!authLoading) {
+      if (token && user) {
+        loadData();
+      } else {
+        // If not logged in, ensure we don't stay in loading state
+        setLoading(false);
+      }
     }
   }, [token, authLoading, user]);
 
@@ -281,13 +285,20 @@ export default function HomeScreen() {
   }, []);
 
   const onRefresh = async () => {
-    setRefreshing(true);
-    setPage(0);
-    setHasMore(true);
-    setPosts([]);
-    // Reload everything
-    await Promise.all([fetchFollowingList(), loadFeed(0, false)]);
-    setRefreshing(false);
+    try {
+      setRefreshing(true);
+      setPage(0);
+      setHasMore(true);
+      // Reload everything
+      await Promise.all([
+        fetchFollowingList().catch(e => console.error('[Home] onRefresh following error:', e)),
+        loadFeed(0, false).catch(e => console.error('[Home] onRefresh feed error:', e))
+      ]);
+    } catch (error) {
+      console.error('[Home] onRefresh error:', error);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const loadMore = async () => {
@@ -301,6 +312,7 @@ export default function HomeScreen() {
   };
 
   const toggleFollow = async (userId: string) => {
+    console.log('[Home] toggleFollow tapped for user:', userId);
     try {
       const isCurrentlyFollowing = followingIds.has(userId);
 
@@ -361,6 +373,7 @@ export default function HomeScreen() {
   };
 
   const handleLike = async (postId: string) => {
+    console.log('[Home] handleLike tapped for post:', postId);
     try {
       // console.log('[Home] handleLike - Current user:', user ? `${user.name} (${(user as any)._id || user.id})` : 'Not logged in');
 
@@ -418,10 +431,12 @@ export default function HomeScreen() {
   };
 
   const handleComment = (postId: string) => {
+    console.log('[Home] handleComment tapped for post:', postId);
     router.push(`/post/${postId}`);
   };
 
   const handleShare = async (postId: string) => {
+    console.log('[Home] handleShare tapped for post:', postId);
     try {
       const post = posts.find((p) => p.id === postId);
       if (!post) return;
@@ -439,6 +454,7 @@ export default function HomeScreen() {
   };
 
   const handleSave = async (postId: string) => {
+    console.log('[Home] handleSave tapped for post:', postId);
     if (!token) return;
 
     try {
@@ -494,14 +510,20 @@ export default function HomeScreen() {
           headerRight: () => (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingRight: 8 }}>
               <TouchableOpacity
-                onPress={() => router.push('/donations')}
+                onPress={() => {
+                  console.log('[Home] Donations tapped');
+                  router.push('/donations');
+                }}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 style={{ marginHorizontal: 4 }}
               >
                 <HandCoins size={24} color={colors.text} />
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => router.push('/notifications')}
+                onPress={() => {
+                  console.log('[Home] Notifications tapped');
+                  router.push('/notifications');
+                }}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 style={{ marginHorizontal: 4 }}
               >
@@ -525,6 +547,7 @@ export default function HomeScreen() {
                         elevation: 5,
                         zIndex: 999,
                       }}
+                      pointerEvents="none"
                     >
                       <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: 'bold' }}>
                         {notificationCount > 99 ? '99+' : notificationCount}
@@ -534,7 +557,10 @@ export default function HomeScreen() {
                 </View>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => router.push('/messages')}
+                onPress={() => {
+                  console.log('[Home] Messages tapped');
+                  router.push('/messages');
+                }}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 style={{ marginHorizontal: 4 }}
               >
@@ -558,6 +584,7 @@ export default function HomeScreen() {
                         elevation: 5, // Android shadow/z-index
                         zIndex: 999,
                       }}
+                      pointerEvents="none"
                     >
                       <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: 'bold' }}>
                         {messageCount > 99 ? '99+' : messageCount}
@@ -571,11 +598,21 @@ export default function HomeScreen() {
         }}
       />
       {loading && page === 0 ? (
-        <View style={{ flex: 1, paddingTop: 10, backgroundColor: colors.background }}>
+        <ScrollView
+          style={{ flex: 1, backgroundColor: colors.background }}
+          contentContainerStyle={{ paddingTop: 10 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.primary}
+            />
+          }
+        >
           {[1, 2, 3].map((i) => (
             <FeedSkeleton key={i} />
           ))}
-        </View>
+        </ScrollView>
       ) : (
         <FlatList
           style={[styles.container, { backgroundColor: colors.background }]}
