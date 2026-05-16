@@ -31,6 +31,9 @@ const request = async <T>(
 
 
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+
     const res = await fetch(fullUrl, {
       method,
       headers: {
@@ -40,12 +43,18 @@ const request = async <T>(
         'Pragma': 'no-cache',
       },
       body: body ? JSON.stringify(body) : undefined,
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
+
 
     // Handle 304 Not Modified responses - they have no body, so we need to retry without cache
     if (res.status === 304) {
 
       // Retry the request with cache-busting headers
+      const retryController = new AbortController();
+      const retryTimeoutId = setTimeout(() => retryController.abort(), 15000);
+
       const retryRes = await fetch(fullUrl, {
         method,
         headers: {
@@ -55,7 +64,10 @@ const request = async <T>(
           'Expires': '0',
         },
         body: body ? JSON.stringify(body) : undefined,
+        signal: retryController.signal,
       });
+      clearTimeout(retryTimeoutId);
+
 
       if (!retryRes.ok) {
         const retryJson = await retryRes.json().catch(() => ({}));
