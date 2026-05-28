@@ -90,7 +90,8 @@
           "locationWhenInUsePermission": "FilmyConnect uses your location to show relevant film industry events, jobs, and networking opportunities near you."
         }
       ],
-      "react-native-iap"
+      "react-native-iap",
+      "expo-web-browser"
     ],
     "extra": {
       "apiUrl": "https://api.filmyconnect24.com",
