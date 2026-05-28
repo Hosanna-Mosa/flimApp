@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import {
@@ -94,6 +95,30 @@ export default function BoostScreen() {
     }
   };
 
+  // iOS: Show unavailable message (payment features commented out on iOS per requirements)
+  if (Platform.OS === 'ios') {
+    return (
+      <>
+        <Stack.Screen
+          options={{
+            headerShown: true,
+            headerTitle: 'Boost Profile',
+            headerStyle: { backgroundColor: colors.background },
+            headerTintColor: colors.text,
+          }}
+        />
+        <View style={[styles.container, styles.center, { backgroundColor: colors.background }]}>
+          <Zap size={64} color={colors.textSecondary} />
+          <Text style={[styles.unavailableTitle, { color: colors.text }]}>Not Available on iOS</Text>
+          <Text style={[styles.unavailableText, { color: colors.textSecondary }]}>
+            Profile boosting is currently unavailable on iOS. Please use an Android device or check back later.
+          </Text>
+        </View>
+      </>
+    );
+  }
+
+  // Android: Show full boost profile with payment features
   return (
     <>
       <Stack.Screen
@@ -282,5 +307,22 @@ const styles = StyleSheet.create({
   infoText: {
     fontSize: 13,
     fontStyle: 'italic',
+  },
+  center: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  unavailableTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginTop: 20,
+    textAlign: 'center',
+  },
+  unavailableText: {
+    fontSize: 15,
+    textAlign: 'center',
+    marginTop: 12,
+    lineHeight: 22,
+    paddingHorizontal: 40,
   },
 });

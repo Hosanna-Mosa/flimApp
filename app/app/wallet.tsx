@@ -135,11 +135,16 @@ export default function WalletScreen() {
         },
         theme: { color: colors.primary },
         retry: { enabled: true, max_count: 3 },
+        /* Commented out iOS Apple Pay per requirements
         ...(Platform.OS === 'ios' && {
           apple_pay: 1, // Enable Apple Pay for iOS gateway
         }),
+        */
       };
 
+      // iOS check removed - handled by early return at component level
+
+      /* iOS Specific Native checkout check commented out per requirements
       if (Platform.OS === 'ios' && RazorpayCheckoutNative) {
         console.log('[iOS Gateway] Using native Razorpay integration');
         RazorpayCheckoutNative.open(options)
@@ -158,25 +163,28 @@ export default function WalletScreen() {
             setIsProcessing(false);
           });
       } else {
-        console.log(`[${Platform.OS} Gateway] Using WebView Razorpay integration`);
-        setRazorpayOptions({
-          ...options,
-          config: {
-            display: {
-              blocks: {
-                upi: {
-                  name: 'UPI',
-                  instruments: [{ method: 'upi' }]
-                }
-              },
-              sequence: ['block.upi', 'block.card', 'block.netbanking'],
-              preferences: { show_default_blocks: true }
-            }
+      */
+      
+      // Android / non-iOS fallback uses WebView Razorpay integration
+      console.log(`[${Platform.OS} Gateway] Using WebView Razorpay integration`);
+      setRazorpayOptions({
+        ...options,
+        config: {
+          display: {
+            blocks: {
+              upi: {
+                name: 'UPI',
+                instruments: [{ method: 'upi' }]
+              }
+            },
+            sequence: ['block.upi', 'block.card', 'block.netbanking'],
+            preferences: { show_default_blocks: true }
           }
-        });
-        setRazorpayModalVisible(true);
-        setIsProcessing(false);
-      }
+        }
+      });
+      setRazorpayModalVisible(true);
+      setIsProcessing(false);
+      // }
     } catch (error: any) {
       console.error('[Payment] Initiation failed:', error);
       Alert.alert('Error', error.status === 404 ? 'User profile not found. Try logging out and back in' : (error.message || 'Failed to process transaction'));
@@ -248,6 +256,29 @@ export default function WalletScreen() {
     }
   };
 
+  // iOS: Show unavailable message (wallet payments commented out on iOS per requirements)
+  if (Platform.OS === 'ios') {
+    return (
+      <>
+        <Stack.Screen
+          options={{
+            headerShown: true,
+            headerTitle: 'Wallet',
+            headerStyle: { backgroundColor: colors.background },
+            headerTintColor: colors.text,
+          }}
+        />
+        <View style={[styles.container, styles.center, { backgroundColor: colors.background }]}>
+          <WalletIcon size={64} color={colors.textSecondary} />
+          <Text style={[styles.unavailableTitle, { color: colors.text }]}>Not Available on iOS</Text>
+          <Text style={[styles.unavailableText, { color: colors.textSecondary }]}>
+            Wallet features are currently unavailable on iOS. Please use an Android device or check back later.
+          </Text>
+        </View>
+      </>
+    );
+  }
+
   if (isLoading) {
     return (
       <View style={[styles.container, styles.center, { backgroundColor: colors.background }]}>
@@ -276,7 +307,7 @@ export default function WalletScreen() {
       >
         <View style={styles.modalOverlay}>
           <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            behavior={'height'}
             style={{ width: '100%' }}
           >
             <View style={[styles.modalContent, { backgroundColor: colors.card, borderColor: colors.border, paddingBottom: insets.bottom + 24 }]}>
@@ -340,7 +371,7 @@ export default function WalletScreen() {
       >
         <View style={styles.modalOverlay}>
           <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            behavior={'height'}
             style={{ width: '100%' }}
           >
             <View style={[styles.modalContent, { backgroundColor: colors.card, borderColor: colors.border, paddingBottom: insets.bottom + 24 }]}>
@@ -684,5 +715,17 @@ const styles = StyleSheet.create({
   modalButton: {
     height: 56,
   },
-
+  unavailableTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginTop: 20,
+    textAlign: 'center',
+  },
+  unavailableText: {
+    fontSize: 15,
+    textAlign: 'center',
+    marginTop: 12,
+    lineHeight: 22,
+    paddingHorizontal: 40,
+  },
 });

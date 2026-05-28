@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Platform,
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import {
@@ -54,20 +55,26 @@ export default function AccountScreen() {
       subtitle: 'See what\'s popular',
       onPress: () => router.push('/trending'),
     },
-    {
-      id: 'wallet',
-      icon: Wallet,
-      label: 'Wallet',
-      subtitle: 'Payments & earnings',
-      onPress: () => router.push('/wallet'),
-    },
-    {
-      id: 'boost',
-      icon: Zap,
-      label: 'Profile Boost',
-      subtitle: 'Priority feed placement',
-      onPress: () => router.push('/boost'),
-    },
+    // Wallet hidden on iOS per requirements (payment features commented out)
+    ...(Platform.OS !== 'ios' ? [
+      {
+        id: 'wallet',
+        icon: Wallet,
+        label: 'Wallet',
+        subtitle: 'Payments & earnings',
+        onPress: () => router.push('/wallet'),
+      },
+    ] : []),
+    // Profile Boost hidden on iOS per requirements (payment features commented out)
+    ...(Platform.OS !== 'ios' ? [
+      {
+        id: 'boost',
+        icon: Zap,
+        label: 'Profile Boost',
+        subtitle: 'Priority feed placement',
+        onPress: () => router.push('/boost'),
+      },
+    ] : []),
     {
       id: 'settings',
       icon: SettingsIcon,
