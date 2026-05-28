@@ -24,8 +24,9 @@ if (Platform.OS === 'android') {
   }
 }
 
-// 2. Apple IAP (iOS)
+// 2. Apple IAP (iOS) - Commented out per requirements
 let IAP: any = null;
+/*
 if (Platform.OS === 'ios') {
   try {
     IAP = require('react-native-iap');
@@ -33,6 +34,7 @@ if (Platform.OS === 'ios') {
     console.log('[IAP] Native module not available (expected in Expo Go)');
   }
 }
+*/
 // -----------------------
 
 import { Stack, useRouter, useFocusEffect } from 'expo-router';
@@ -121,7 +123,8 @@ export default function VerificationScreen() {
   const [tempDocName, setTempDocName] = useState('');
   const [tempDocType, setTempDocType] = useState('ID_DOCUMENT');
 
-  // --- iOS IAP Setup ---
+  // --- iOS IAP Setup - Commented out per requirements ---
+  /*
   useEffect(() => {
     if (Platform.OS !== 'ios' || !IAP) return;
 
@@ -170,12 +173,7 @@ export default function VerificationScreen() {
       try { IAP.endConnection(); } catch (e) {}
     };
   }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      fetchStatus();
-    }, [fetchStatus])
-  );
+  */
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -211,12 +209,18 @@ export default function VerificationScreen() {
     }
   }, [refreshUser, token, user]);
 
+  useFocusEffect(
+    useCallback(() => {
+      fetchStatus();
+    }, [fetchStatus])
+  );
+
   // --- Main Payment Handler ---
   const handlePayment = async () => {
     if (Platform.OS === 'android') {
       await handleRazorpayPayment();
     } else if (Platform.OS === 'ios') {
-      await handleAppleIAP();
+      Alert.alert('In-App Purchases Disabled', 'iOS payments are currently unavailable.');
     }
   };
 
@@ -298,7 +302,8 @@ export default function VerificationScreen() {
     Alert.alert('Payment Failed', error.description || 'Transaction could not be completed');
   };
 
-  // --- iOS Apple IAP Logic ---
+  // --- iOS Apple IAP Logic - Commented out per requirements ---
+  /*
   const handleAppleIAP = async () => {
     if (!IAP) {
       Alert.alert(
@@ -361,6 +366,7 @@ export default function VerificationScreen() {
       setIsProcessingPayment(false);
     }
   };
+  */
 
   const handleAddDocument = async () => {
     try {
@@ -489,56 +495,48 @@ export default function VerificationScreen() {
             <Text style={[styles.planSubtitle, { color: colors.textSecondary }]}>
               Your documents have been approved. Activate your verification badge to stand out.
             </Text>
-          </View>
-
-          <View style={styles.planGrid}>
-            <TouchableOpacity
-              style={[
-                styles.planCard,
-                { backgroundColor: colors.card, borderColor: colors.primary, borderWidth: 2 }
-              ]}
-              activeOpacity={0.8}
-            >
-              <View style={[styles.popularBadge, { backgroundColor: colors.primary }]}>
-                <Text style={styles.popularText}>1 Month</Text>
-              </View>
-              <Text style={[styles.planLabel, { color: colors.text }]}>Verification Badge</Text>
-              <Text style={[styles.planPrice, { color: colors.text }]}>
-                {Platform.OS === 'ios' && iapProduct ? iapProduct.localizedPrice : '₹149'}
-              </Text>
-              <Text style={[styles.planDesc, { color: colors.textSecondary }]}>
-                Get a blue checkmark on your profile and stand out in the community.
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.planFooter}>
-            <Button
-              title={isProcessingPayment ? "Processing..." : (Platform.OS === 'android' ? "Pay Now with Razorpay" : "Pay Now with Apple Pay")}
-              onPress={handlePayment}
-              disabled={isProcessingPayment}
-              loading={isProcessingPayment}
-              size="large"
-            />
-            
-            {Platform.OS === 'ios' && (
-              <TouchableOpacity onPress={handleRestorePurchases} style={{ marginTop: 12 }}>
-                <Text style={{ color: colors.textSecondary, fontSize: 13, textDecorationLine: 'underline' }}>
-                  Restore Purchase
+          </View>          {/* Payment plan card hidden on iOS per requirements */}
+          {Platform.OS !== 'ios' && (
+            <View style={styles.planGrid}>
+              <TouchableOpacity
+                style={[
+                  styles.planCard,
+                  { backgroundColor: colors.card, borderColor: colors.primary, borderWidth: 2 }
+                ]}
+                activeOpacity={0.8}
+              >
+                <View style={[styles.popularBadge, { backgroundColor: colors.primary }]}>
+                  <Text style={styles.popularText}>1 Month</Text>
+                </View>
+                <Text style={[styles.planLabel, { color: colors.text }]}>Verification Badge</Text>
+                <Text style={[styles.planPrice, { color: colors.text }]}>
+                  ₹149
+                </Text>
+                <Text style={[styles.planDesc, { color: colors.textSecondary }]}>
+                  Get a blue checkmark on your profile and stand out in the community.
                 </Text>
               </TouchableOpacity>
-            )}
+            </View>
+          )
+}
 
-            {Platform.OS === 'ios' && !IAP && (
-              <Text style={{ color: colors.error, fontSize: 12, marginTop: 12, textAlign: 'center' }}>
-                Warning: Payments are disabled in Expo Go.
+          {/* Payment footer hidden on iOS per requirements */}
+          {Platform.OS !== 'ios' && (
+            <View style={styles.planFooter}>
+              <Button
+                title={isProcessingPayment ? "Processing..." : "Pay Now with Razorpay"}
+                onPress={handlePayment}
+                disabled={isProcessingPayment}
+                loading={isProcessingPayment}
+                size="large"
+              />
+              
+              <Text style={[styles.secureText, { color: colors.textSecondary, marginTop: 20 }]}>
+                Secure payment via Razorpay. Badge activated instantly.
               </Text>
-            )}
-            
-            <Text style={[styles.secureText, { color: colors.textSecondary, marginTop: 20 }]}>
-              Secure payment via {Platform.OS === 'android' ? 'Razorpay' : 'Apple In-App Purchase'}. Badge activated instantly.
-            </Text>
-          </View>
+            </View>
+          )
+}
         </ScrollView>
       );
     }

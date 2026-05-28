@@ -73,6 +73,20 @@ export default function LoginScreen() {
 
           <Button title="Continue" onPress={handleContinue} size="large" loading={loading} />
 
+          {/* Data Collection Disclosure */}
+          <View style={[styles.privacyDisclosure, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <Text style={[styles.privacyDisclosureTitle, { color: colors.textSecondary }]}>
+              📋 What data we collect
+            </Text>
+            <Text style={[styles.privacyDisclosureText, { color: colors.textSecondary }]}>
+              FilmyConnect collects your name, phone number, email, and profile media to provide networking services. Push notifications are used to alert you about messages, likes, and updates. Location is used to show nearby events and opportunities. Your data is never shared with third parties for marketing. See our{' '}
+              <Text style={{ color: colors.primary }} onPress={() => Linking.openURL('https://filmyconnect24.com/privacy-policy')}>
+                Privacy Policy
+              </Text>{' '}
+              for full details.
+            </Text>
+          </View>
+
           <TouchableOpacity
             style={styles.termsRow}
             onPress={() => setAcceptedTerms((prev) => !prev)}
@@ -134,6 +148,22 @@ const styles = StyleSheet.create({
   terms: {
     fontSize: 12,
     flex: 1,
+    lineHeight: 18,
+  },
+  privacyDisclosure: {
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginTop: 20,
+    marginBottom: 4,
+  },
+  privacyDisclosureTitle: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    marginBottom: 6,
+  },
+  privacyDisclosureText: {
+    fontSize: 12,
     lineHeight: 18,
   },
   termsRow: {
