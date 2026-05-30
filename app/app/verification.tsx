@@ -61,7 +61,16 @@ import Input from '@/components/Input';
 import Button from '@/components/Button';
 import { uploadMediaToCloudinary } from '@/utils/media';
 import api from '@/utils/api';
-import RazorpayCheckout from '@/components/RazorpayCheckout';
+// Razorpay component - dynamically loaded to avoid inclusion in iOS JS bundle
+let RazorpayCheckout: React.ComponentType<any> | null = null;
+if (Platform.OS !== 'ios') {
+  try {
+    const RazorpayModule = require('@/components/RazorpayCheckout');
+    RazorpayCheckout = RazorpayModule.default || RazorpayModule;
+  } catch (e) {
+    console.log('[Razorpay] Component not available');
+  }
+}
 
 const IOS_PRODUCT_ID = 'com.filmyconnect.account.verification';
 
@@ -807,14 +816,16 @@ export default function VerificationScreen() {
         </View>
       </Modal>
 
-      {/* Razorpay Component (only used on Android) */}
-      <RazorpayCheckout
-        visible={razorpayModalVisible}
-        options={razorpayOptions}
-        onSuccess={handleRazorpaySuccess}
-        onFailure={handleRazorpayFailure}
-        onClose={() => setRazorpayModalVisible(false)}
-      />
+      {/* Razorpay Component (Android only - dynamically loaded, excluded from iOS bundle) */}
+      {Platform.OS !== 'ios' && RazorpayCheckout && (
+        <RazorpayCheckout
+          visible={razorpayModalVisible}
+          options={razorpayOptions}
+          onSuccess={handleRazorpaySuccess}
+          onFailure={handleRazorpayFailure}
+          onClose={() => setRazorpayModalVisible(false)}
+        />
+      )}
     </View>
   );
 }
