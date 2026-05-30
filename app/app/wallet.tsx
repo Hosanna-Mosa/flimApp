@@ -40,7 +40,16 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/utils/api';
 import Button from '@/components/Button';
-import RazorpayCheckout from '@/components/RazorpayCheckout';
+// Razorpay component - dynamically loaded to avoid inclusion in iOS JS bundle
+let RazorpayCheckout: React.ComponentType<any> | null = null;
+if (Platform.OS !== 'ios') {
+  try {
+    const RazorpayModule = require('@/components/RazorpayCheckout');
+    RazorpayCheckout = RazorpayModule.default || RazorpayModule;
+  } catch (e) {
+    console.log('[Razorpay] Component not available');
+  }
+}
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function WalletScreen() {
@@ -354,13 +363,15 @@ export default function WalletScreen() {
         </View>
       </Modal>
 
-      <RazorpayCheckout
-        visible={razorpayModalVisible}
-        options={razorpayOptions}
-        onSuccess={handlePaymentSuccess}
-        onFailure={handlePaymentFailure}
-        onClose={() => setRazorpayModalVisible(false)}
-      />
+      {RazorpayCheckout && (
+        <RazorpayCheckout
+          visible={razorpayModalVisible}
+          options={razorpayOptions}
+          onSuccess={handlePaymentSuccess}
+          onFailure={handlePaymentFailure}
+          onClose={() => setRazorpayModalVisible(false)}
+        />
+      )}
 
       {/* Withdraw Amount Modal */}
       <Modal
