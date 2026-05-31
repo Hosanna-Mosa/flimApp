@@ -50,17 +50,40 @@ export default function TermsAndConditionsScreen() {
         <Text style={[styles.bullet, { color: colors.textSecondary }]}>- Send spam or fraudulent content</Text>
         <Text style={[styles.bullet, { color: colors.textSecondary }]}>- Interfere with system security</Text>
 
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>4. Service Availability</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>4. User-Generated Content (UGC) Policy</Text>
+        <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
+          FILMY CONNECT is a professional community. We enforce a zero-tolerance policy for objectionable content or abusive behavior.
+        </Text>
+        <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
+          By using our platform, you agree to the following strict rules:
+        </Text>
+        <Text style={[styles.bullet, { color: colors.textSecondary }]}>
+          - No objectionable content (including hate speech, pornography, sexual content, harassment, intellectual property violation, defamation, or graphic violence).
+        </Text>
+        <Text style={[styles.bullet, { color: colors.textSecondary }]}>
+          - No abusive behavior, bullying, or threat of violence toward other users.
+        </Text>
+        <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
+          If you encounter offensive content or abusive users, please use our built-in safety tools:
+        </Text>
+        <Text style={[styles.bullet, { color: colors.textSecondary }]}>
+          - **Report Content:** Tap the three dots option menu on any post or comment to report it for review. All reports are investigated within 24 hours.
+        </Text>
+        <Text style={[styles.bullet, { color: colors.textSecondary }]}>
+          - **Block Abusive Users:** Tap the three dots option menu on any user's profile to block them. Once blocked, you will no longer see any of their posts or be able to chat with them.
+        </Text>
+
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>5. Service Availability</Text>
         <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
           We aim to provide uninterrupted service but do not guarantee availability at all times.
         </Text>
 
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>5. Data and Privacy</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>6. Data and Privacy</Text>
         <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
           Your use of the platform is governed by our Privacy Policy. By using the service, you consent to data handling described there.
         </Text>
 
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>6. Limitation of Liability</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>7. Limitation of Liability</Text>
         <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
           FILMY CONNECT PRIVATE LIMITED is not liable for:
         </Text>
@@ -68,22 +91,22 @@ export default function TermsAndConditionsScreen() {
         <Text style={[styles.bullet, { color: colors.textSecondary }]}>- Data loss outside our control</Text>
         <Text style={[styles.bullet, { color: colors.textSecondary }]}>- User misuse of the platform</Text>
 
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>7. Termination</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>8. Termination & Zero-Tolerance Enforcement</Text>
         <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
-          We may suspend or terminate accounts that violate these terms.
+          We have a zero-tolerance policy for policy violations. We reserves the right to immediately suspend or permanently terminate accounts, and remove any content, that violates these Terms or our UGC Policy without prior notice or refund.
         </Text>
 
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>8. Changes to Terms</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>9. Changes to Terms</Text>
         <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
           We may update these Terms at any time. Continued use means acceptance of changes.
         </Text>
 
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>9. Governing Law</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>10. Governing Law</Text>
         <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
           These Terms are governed by the laws of India.
         </Text>
 
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>10. Contact</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>11. Contact</Text>
         <Text style={[styles.paragraph, { color: colors.textSecondary }]}>FILMY CONNECT PRIVATE LIMITED</Text>
         <Text style={[styles.paragraph, { color: colors.textSecondary }]}>Email: Filmyconnectpvt2@gmail.com</Text>
 

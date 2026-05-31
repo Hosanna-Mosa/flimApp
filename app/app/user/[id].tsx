@@ -8,6 +8,7 @@ import {
     ActivityIndicator,
     Alert,
     DeviceEventEmitter,
+    Platform,
 } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
@@ -353,7 +354,7 @@ export default function PublicProfileScreen() {
                         <Text style={[styles.name, { color: colors.text }]}>
                             {user.name}
                         </Text>
-                        {user.isVerified && (
+                        {user.isVerified && Platform.OS !== 'ios' && (
                             <BadgeCheck size={24} color="#FFFFFF" fill="#0095F6" />
                         )}
                     </View>

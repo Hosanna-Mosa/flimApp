@@ -671,7 +671,7 @@ export default function PostDetailScreen() {
                   <Text style={[styles.commentUserName, { color: colors.text }]}>
                     {comment.user?.name || 'Unknown User'}
                   </Text>
-                  {comment.user?.isVerified && (
+                  {comment.user?.isVerified && Platform.OS !== 'ios' && (
                     <BadgeCheck size={12} color="#FFFFFF" fill={colors.primary} />
                   )}
                 </View>
@@ -842,7 +842,7 @@ export default function PostDetailScreen() {
                 <Text style={[styles.userName, { color: colors.text }]}>
                   {post.author.name || 'Unknown User'}
                 </Text>
-                {post.author.isVerified && (
+                {post.author.isVerified && Platform.OS !== 'ios' && (
                   <BadgeCheck size={16} color="#FFFFFF" fill={colors.primary} />
                 )}
               </View>

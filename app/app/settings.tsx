@@ -9,6 +9,7 @@ import {
   Linking,
   Modal,
   Alert,
+  Platform,
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { Moon, Sun, Bell, Shield, Lock, ChevronRight, User, BadgeCheck, Info, FileText, Trash2, AlertTriangle } from 'lucide-react-native';
@@ -199,34 +200,36 @@ export default function SettingsScreen() {
             <ChevronRight size={20} color={colors.textSecondary} />
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[
-              styles.settingItem,
-              { backgroundColor: colors.card, borderColor: colors.border },
-            ]}
-            onPress={() => router.push('/verification')}
-          >
-            <View style={styles.settingInfo}>
-              <BadgeCheck size={24} color={colors.primary} />
-              <View style={styles.settingText}>
-                <Text style={[styles.settingLabel, { color: colors.text }]}>
-                  Verification
-                </Text>
-                <Text
-                  style={[
-                    styles.settingDescription,
-                    { color: colors.textSecondary },
-                  ]}
-                >
-                  {user?.verificationStatus === 'active'
-                    ? `Active until ${new Date(user.verifiedUntil!).toLocaleDateString()}`
-                    : 'Apply for a verified badge'
-                  }
-                </Text>
+          {Platform.OS !== 'ios' && (
+            <TouchableOpacity
+              style={[
+                styles.settingItem,
+                { backgroundColor: colors.card, borderColor: colors.border },
+              ]}
+              onPress={() => router.push('/verification')}
+            >
+              <View style={styles.settingInfo}>
+                <BadgeCheck size={24} color={colors.primary} />
+                <View style={styles.settingText}>
+                  <Text style={[styles.settingLabel, { color: colors.text }]}>
+                    Verification
+                  </Text>
+                  <Text
+                    style={[
+                      styles.settingDescription,
+                      { color: colors.textSecondary },
+                    ]}
+                  >
+                    {user?.verificationStatus === 'active'
+                      ? `Active until ${new Date(user.verifiedUntil!).toLocaleDateString()}`
+                      : 'Apply for a verified badge'
+                    }
+                  </Text>
+                </View>
               </View>
-            </View>
-            <ChevronRight size={20} color={colors.textSecondary} />
-          </TouchableOpacity>
+              <ChevronRight size={20} color={colors.textSecondary} />
+            </TouchableOpacity>
+          )}
 
           <TouchableOpacity
             style={[
