@@ -9,6 +9,7 @@ import {
   Alert,
   RefreshControl,
   Dimensions,
+  Platform,
 } from 'react-native';
 import { Stack, useRouter, useFocusEffect } from 'expo-router';
 import { Image } from 'expo-image';
@@ -239,14 +240,14 @@ export default function ProfileScreen() {
               <Text style={[styles.name, { color: colors.text }]}>
                 {user.name || 'Your Name'}
               </Text>
-              {user.isVerified && (
+              {user.isVerified && Platform.OS !== 'ios' && (
                 <BadgeCheck size={24} color="#FFFFFF" fill={colors.primary} />
               )}
-              {user.isBoosted && (
+              {user.isBoosted && Platform.OS !== 'ios' && (
                 <Zap size={22} color="#000" fill="#FFD700" style={{ marginLeft: 4 }} />
               )}
             </View>
-            {user.isBoosted && (
+            {user.isBoosted && Platform.OS !== 'ios' && (
               <View style={[styles.boostBadge, { backgroundColor: '#FFD700' }]}>
                 <Text style={styles.boostText}>PROFILE BOOST ACTIVE 🚀</Text>
               </View>

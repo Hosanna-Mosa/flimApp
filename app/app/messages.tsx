@@ -190,7 +190,7 @@ export default function MessagesScreen() {
                 <View style={styles.chatHeader}>
                   <Text style={[styles.userName, { color: colors.text }]}>
                     {chat.user.name}
-                    {chat.user.isVerified && (
+                    {chat.user.isVerified && Platform.OS !== 'ios' && (
                       <Text style={{ color: colors.primary }}> ✓</Text>
                     )}
                   </Text>

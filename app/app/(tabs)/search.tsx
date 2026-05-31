@@ -8,6 +8,7 @@ import {
   Modal,
   TextInput,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
@@ -168,7 +169,7 @@ export default function SearchScreen() {
                   <Text style={[styles.userName, { color: colors.text }]}>
                     {user.name}
                   </Text>
-                  {user.isVerified && (
+                  {user.isVerified && Platform.OS !== 'ios' && (
                     <BadgeCheck size={14} color="#FFFFFF" fill={colors.primary} style={{ marginLeft: 4 }} />
                   )}
                   {user.isOnline && (

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { BadgeCheck } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -50,7 +50,7 @@ export default function UserListItem({ user, onPress }: UserListItemProps) {
           >
             <Text style={[styles.name, { color: colors.text }]}>{user.name}</Text>
           </TouchableOpacity>
-          {user.isVerified && (
+          {user.isVerified && Platform.OS !== 'ios' && (
             <BadgeCheck size={16} color="#FFFFFF" fill={colors.primary} style={styles.badge} />
           )}
         </View>

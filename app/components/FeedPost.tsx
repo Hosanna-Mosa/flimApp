@@ -453,8 +453,8 @@ export default function FeedPost({
             <View style={{ marginLeft: 12, flex: 1 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                 <Text style={[styles.userName, { color: colors.text }]}>{post.user.name}</Text>
-                {post.user.isVerified && <BadgeCheck size={16} color="#FFFFFF" fill="#0095F6" />}
-                {post.user.isBoosted && (
+                {post.user.isVerified && Platform.OS !== 'ios' && <BadgeCheck size={16} color="#FFFFFF" fill="#0095F6" />}
+                {post.user.isBoosted && Platform.OS !== 'ios' && (
                   <View style={[styles.boostedBadge, { backgroundColor: colors.primary }]}>
                     <Zap size={10} color="#000" fill="#000" />
                     <Text style={styles.boostedText}>BOOSTED</Text>
