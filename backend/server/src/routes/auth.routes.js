@@ -1,13 +1,25 @@
 const express = require('express');
 const Joi = require('joi');
+const rateLimit = require('express-rate-limit');
 const authController = require('../controllers/auth.controller');
 const validate = require('../middlewares/validate.middleware');
 const auth = require('../middlewares/auth.middleware');
 
 const router = express.Router();
 
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 15, // Limit each IP to 15 authentication attempts per 15 minutes
+  message: {
+    message: 'Too many authentication attempts, please try again after 15 minutes'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 router.post(
   '/login',
+  loginLimiter,
   validate(
     Joi.object({
       body: Joi.object({ identifier: Joi.string().required() }).required(),
@@ -18,6 +30,7 @@ router.post(
 
 router.post(
   '/verify-otp',
+  loginLimiter,
   validate(
     Joi.object({
       body: Joi.object({
@@ -31,6 +44,7 @@ router.post(
 
 router.post(
   '/register',
+  loginLimiter,
   validate(
     Joi.object({
       body: Joi.object({
@@ -48,6 +62,7 @@ router.post(
 
 router.post(
   '/login-password',
+  loginLimiter,
   validate(
     Joi.object({
       body: Joi.object({
@@ -138,6 +153,19 @@ router.get(
 router.post(
   '/check-availability',
   authController.checkAvailability
+);
+
+router.get(
+  '/version-check',
+  validate(
+    Joi.object({
+      query: Joi.object({
+        platform: Joi.string().valid('ios', 'android').required(),
+        version: Joi.string().required(),
+      }).required(),
+    })
+  ),
+  authController.versionCheck
 );
 
 module.exports = router;

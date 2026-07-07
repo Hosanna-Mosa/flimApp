@@ -34,6 +34,7 @@ import api from '@/utils/api';
 import { ContentType } from '@/types';
 import { ProfileSkeleton } from '@/components/skeletons/ProfileSkeleton';
 import { ReportButton } from '@/components/ReportButton';
+import { getAvatarUrl } from '@/utils/avatar';
 
 interface UserProfile {
     _id: string;
@@ -46,6 +47,7 @@ interface UserProfile {
     location?: string;
     experience?: number;
     isVerified: boolean;
+    portfolio?: Array<{ title: string; type: string; url: string }>;
     stats: {
         followersCount: number;
         followingCount: number;
@@ -346,7 +348,7 @@ export default function PublicProfileScreen() {
             >
                 <View style={styles.header}>
                     <Image
-                        source={{ uri: user.avatar }}
+                        source={{ uri: getAvatarUrl(user.avatar) }}
                         style={styles.avatar}
                         contentFit="cover"
                     />
@@ -405,6 +407,20 @@ export default function PublicProfileScreen() {
                                         </Text>
                                     </View>
                                 )}
+                                <TouchableOpacity
+                                    style={styles.portfolioLink}
+                                    onPress={() => {
+                                        router.push({
+                                            pathname: '/portfolio',
+                                            params: { userId: id, name: user.name }
+                                        });
+                                    }}
+                                >
+                                    <Briefcase size={16} color={colors.primary} />
+                                    <Text style={[styles.portfolioLinkText, { color: colors.primary }]}>
+                                        View Portfolio {user.portfolio && user.portfolio.length > 0 ? `(${user.portfolio.length})` : ''}
+                                    </Text>
+                                </TouchableOpacity>
                             </View>
                         </>
                     )}
@@ -833,5 +849,22 @@ const styles = StyleSheet.create({
         fontSize: 13,
         textAlign: 'center',
         lineHeight: 18,
+    },
+    portfolioLink: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginTop: 12,
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: 'rgba(0, 149, 246, 0.3)',
+        backgroundColor: 'rgba(0, 149, 246, 0.05)',
+        alignSelf: 'flex-start',
+    },
+    portfolioLinkText: {
+        fontSize: 14,
+        fontWeight: '600',
     },
 });

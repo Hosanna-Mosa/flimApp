@@ -209,6 +209,15 @@ queues.notification.process('send-notification', async (job) => {
   try {
     const { userId, type, actorId, followerId, acceptedBy } = data;
 
+    const targetUser = await User.findById(userId).select('privacy');
+    if (!targetUser) return { success: true, skipped: true };
+
+    if (type === 'like' && targetUser.privacy?.pushLikes === false) return { success: true, skipped: true };
+    if ((type === 'comment' || type === 'reply') && targetUser.privacy?.pushComments === false) return { success: true, skipped: true };
+    if (['follow', 'follow_request', 'follow_request_accepted', 'follow_request_rejected'].includes(type) && targetUser.privacy?.pushFollows === false) return { success: true, skipped: true };
+    if (type === 'message' && targetUser.privacy?.pushMessages === false) return { success: true, skipped: true };
+    if (['boost_expiring', 'boost_expired'].includes(type) && targetUser.privacy?.pushBoosts === false) return { success: true, skipped: true };
+
     // For system notifications, skip actor lookup
     const isSystemType = ['boost_expiring', 'boost_expired'].includes(type);
     

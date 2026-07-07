@@ -4,10 +4,10 @@ const Admin = require('../server/src/models/Admin.model');
 
 const createAdmin = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI);
+    await mongoose.connect("mongodb+srv://hosannaking2019_db_user:79ygmfZiPPfJRWnE@cluster0.tv8wnu0.mongodb.net/?appName=Cluster0");
     console.log('Connected to MongoDB');
 
-    const email = 'admin@flimy.app';
+    const email = 'admin@flimy.com';
     const password = 'adminpassword123';
     const name = 'System Admin';
 

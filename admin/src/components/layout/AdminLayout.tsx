@@ -9,6 +9,7 @@ import {
   CreditCard,
   Zap,
   ShieldCheck,
+  Smartphone,
   Users as UsersIcon
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
@@ -21,6 +22,7 @@ const navigation = [
   { name: 'Management Hub', href: '/management-hub', icon: ShieldCheck },
   { name: 'Users / Wallet', href: '/users', icon: UsersIcon },
   { name: 'Audit Logs', href: '/logs', icon: History },
+  { name: 'App Updates', href: '/app-updates', icon: Smartphone },
 ];
 
 export function AdminLayout() {

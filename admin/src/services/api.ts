@@ -9,7 +9,7 @@ import {
 } from '@/types';
 
 // API base URL - configure for production
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.filmyconnect24.com';
+const API_BASE_URL =  import.meta.env.VITE_API_URL || 'https://api.filmyconnect24.com';
 
 // Create axios instance
 const api: AxiosInstance = axios.create({
@@ -212,6 +212,23 @@ export const statsApi = {
     if (search) params.append('search', search);
 
     const response = await api.get(`/admin/stats/wallet?${params.toString()}`);
+    return response.data;
+  },
+};
+
+// Version Config API
+export const versionApi = {
+  getVersion: async (): Promise<any> => {
+    const response = await api.get('/admin/version');
+    return response.data;
+  },
+  updateVersion: async (data: {
+    ios?: { latestVersion: string; minimumVersion: string; storeUrl: string };
+    android?: { latestVersion: string; minimumVersion: string; storeUrl: string };
+    title?: string;
+    message?: string;
+  }): Promise<any> => {
+    const response = await api.put('/admin/version', data);
     return response.data;
   },
 };

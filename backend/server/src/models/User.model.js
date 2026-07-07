@@ -63,7 +63,12 @@ const UserSchema = new Schema(
       showFollowing: { type: Boolean, default: true },
       allowComments: { type: Boolean, default: true },
       allowShares: { type: Boolean, default: true },
-      allowMessages: { type: Boolean, default: true }
+      allowMessages: { type: Boolean, default: true },
+      pushLikes: { type: Boolean, default: true },
+      pushComments: { type: Boolean, default: true },
+      pushFollows: { type: Boolean, default: true },
+      pushMessages: { type: Boolean, default: true },
+      pushBoosts: { type: Boolean, default: true }
     },
 
     refreshTokens: [{ type: String }],

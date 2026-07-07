@@ -39,10 +39,22 @@ router.put(
           Joi.object({
             title: Joi.string().allow('', null),
             type: Joi.string().allow('', null),
-            url: Joi.string().allow('', null),
+            url: Joi.string().uri({ scheme: ['http', 'https'] }).allow('', null),
           })
         ),
         accountType: Joi.string().valid('public', 'private', 'business'),
+        privacy: Joi.object({
+          showFollowers: Joi.boolean(),
+          showFollowing: Joi.boolean(),
+          allowComments: Joi.boolean(),
+          allowShares: Joi.boolean(),
+          allowMessages: Joi.boolean(),
+          pushLikes: Joi.boolean(),
+          pushComments: Joi.boolean(),
+          pushFollows: Joi.boolean(),
+          pushMessages: Joi.boolean(),
+          pushBoosts: Joi.boolean(),
+        }),
       }),
     })
   ),

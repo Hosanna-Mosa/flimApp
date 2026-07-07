@@ -13,15 +13,6 @@ import { Image } from 'expo-image';
 import { Camera } from 'lucide-react-native';
 import { uploadMediaToCloudinary } from '@/utils/media';
 
-const DEFAULT_AVATARS = [
-  'https://api.dicebear.com/7.x/avataaars/png?seed=Felix',
-  'https://api.dicebear.com/7.x/avataaars/png?seed=Aneka',
-  'https://api.dicebear.com/7.x/avataaars/png?seed=Bob',
-  'https://api.dicebear.com/7.x/avataaars/png?seed=Willow',
-  'https://api.dicebear.com/7.x/avataaars/png?seed=Scooby',
-  'https://api.dicebear.com/7.x/avataaars/png?seed=Garfield',
-];
-
 export default function OnboardingScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
@@ -29,7 +20,7 @@ export default function OnboardingScreen() {
   const { token, refreshToken: authRefreshToken, user: authUser, setAuth } = useAuth();
 
   const [step, setStep] = useState(1);
-  const [avatar, setAvatar] = useState<string | null>(null);
+  const [avatar, setAvatar] = useState<string | null>('https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y');
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [selectedIndustries, setSelectedIndustries] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -277,27 +268,8 @@ export default function OnboardingScreen() {
                 </View>
               </TouchableOpacity>
               <Text style={[styles.avatarHint, { color: colors.textSecondary }]}>
-                Shape your identity! Upload or pick one below.
+                Shape your identity! Tap the camera to upload a custom profile picture.
               </Text>
-
-              <View style={styles.defaultAvatarsContainer}>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>Or choose a default:</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.avatarList}>
-                  {DEFAULT_AVATARS.map((uri, index) => (
-                    <TouchableOpacity
-                      key={index}
-                      onPress={() => setAvatar(uri)}
-                      disabled={loading}
-                      style={[
-                        styles.defaultAvatarItem,
-                        avatar === uri && { borderColor: colors.primary, borderWidth: 2 }
-                      ]}
-                    >
-                      <Image source={{ uri }} style={styles.defaultAvatarImage} contentFit="cover" />
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
             </View>
           ) : step === 2 ? (
             ROLES.map((role) => (
