@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const User = require('../models/User.model');
+const VersionConfig = require('../models/VersionConfig.model');
 const {
   generateAccessToken,
   generateRefreshToken,
@@ -362,6 +363,53 @@ const resetPassword = async ({ email, otp, newPassword }) => {
   return { success: true, message: 'Password reset successfully' };
 };
 
+const compareVersions = (v1, v2) => {
+  const parts1 = String(v1).split('.').map(Number);
+  const parts2 = String(v2).split('.').map(Number);
+  for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
+    const p1 = parts1[i] || 0;
+    const p2 = parts2[i] || 0;
+    if (p1 > p2) return 1;
+    if (p2 > p1) return -1;
+  }
+  return 0;
+};
+
+const versionCheck = async ({ platform, version }) => {
+  let config = await VersionConfig.findOne({});
+  if (!config) {
+    config = await VersionConfig.create({
+      ios: {
+        latestVersion: '1.0.0',
+        minimumVersion: '1.0.0',
+        storeUrl: 'https://apps.apple.com'
+      },
+      android: {
+        latestVersion: '1.0.0',
+        minimumVersion: '1.0.0',
+        storeUrl: 'https://play.google.com'
+      }
+    });
+  }
+
+  const platformConfig = config[platform];
+  if (!platformConfig) {
+    return { updateRequired: false, forceUpdate: false };
+  }
+
+  const isBelowMin = compareVersions(version, platformConfig.minimumVersion) < 0;
+  const isBelowLatest = compareVersions(version, platformConfig.latestVersion) < 0;
+
+  return {
+    updateRequired: isBelowLatest,
+    forceUpdate: isBelowMin,
+    latestVersion: platformConfig.latestVersion,
+    storeUrl: platformConfig.storeUrl,
+    title: config.title || 'New Version Available',
+    message: config.message || 'Please update your application to the latest version to access new features.'
+  };
+};
+
 module.exports = {
   login,
   verifyOtp,
@@ -373,6 +421,7 @@ module.exports = {
   changePassword,
   forgotPassword,
   resetPassword,
-  checkAvailability
+  checkAvailability,
+  versionCheck
 };
 

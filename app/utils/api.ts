@@ -478,6 +478,10 @@ export const api = {
 
   // Account Deletion
   deleteMe: (t?: string) => unwrap(request('/users/me', { method: 'DELETE', token: t })),
+
+  // Version Check
+  checkVersion: (platform: string, version: string) =>
+    unwrap(request(`/auth/version-check?platform=${platform}&version=${version}`)),
 };
 
 // Default export

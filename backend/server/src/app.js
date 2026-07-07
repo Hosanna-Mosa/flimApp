@@ -27,11 +27,14 @@ const subscriptionRoutes = require('./routes/subscription.routes');
 const walletRoutes = require('./routes/wallet.routes');
 const moderationRoutes = require('./routes/moderation.routes');
 
+const mongoSanitize = require('express-mongo-sanitize');
+
 const app = express();
 
 app.set('trust proxy', 1);
 
 app.use(helmet());
+app.use(mongoSanitize());
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5173',
@@ -87,6 +90,7 @@ app.use('/admin/auth', adminAuthRoutes);
 app.use('/admin/verification', adminVerificationRoutes);
 app.use('/admin/users', require('./routes/adminUser.routes'));
 app.use('/admin/stats', require('./routes/adminStats.routes'));
+app.use('/admin/version', require('./routes/adminVersion.routes'));
 
 app.use('/verification', verificationRoutes);
 app.use('/support', supportRoutes);

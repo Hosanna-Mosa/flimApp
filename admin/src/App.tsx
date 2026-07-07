@@ -13,6 +13,7 @@ import UsersPage from "@/pages/Users";
 import ExpertBoostHub from "@/pages/ExpertBoostHub";
 import UserDetailPage from "@/pages/UserDetailPage";
 import AuditLogsPage from "@/pages/AuditLogsPage";
+import AppUpdatesPage from "@/pages/AppUpdatesPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -47,6 +48,7 @@ const App = () => (
               <Route path="/users" element={<UsersPage />} />
               <Route path="/users/:id" element={<UserDetailPage />} />
               <Route path="/logs" element={<AuditLogsPage />} />
+              <Route path="/app-updates" element={<AppUpdatesPage />} />
             </Route>
 
             {/* Catch-all */}

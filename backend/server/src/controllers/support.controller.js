@@ -15,8 +15,20 @@ const createSupportRequest = async (req, res, next) => {
         let finalImageUrl = imageUrl;
         let attachmentPath = null;
 
-        // If imageUrl is base64, upload to Cloudinary
+        // If imageUrl is base64, upload to Cloudinary with strict validation
         if (imageUrl && imageUrl.startsWith('data:image')) {
+            // 1. Validate MIME type
+            const mimeTypeMatch = imageUrl.match(/^data:(image\/(jpeg|png|webp|gif));base64,/);
+            if (!mimeTypeMatch) {
+                return res.status(400).json({ message: 'Invalid image format. Supported formats are JPEG, PNG, WEBP, and GIF.' });
+            }
+
+            // 2. Validate approximate file size (Limit to 5MB)
+            const approxSizeInBytes = (imageUrl.length * 3) / 4;
+            if (approxSizeInBytes > 5 * 1024 * 1024) {
+                return res.status(400).json({ message: 'Attached image is too large. Max allowed size is 5MB.' });
+            }
+
             try {
                 const cloudinary = require('../config/cloudinary')();
                 const uploadResponse = await cloudinary.uploader.upload(imageUrl, {

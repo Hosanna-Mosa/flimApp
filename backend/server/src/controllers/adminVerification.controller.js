@@ -2,6 +2,7 @@ const VerificationRequest = require('../models/VerificationRequest.model');
 const VerificationLog = require('../models/VerificationLog.model');
 const Subscription = require('../models/Subscription.model');
 const User = require('../models/User.model');
+const logger = require('../config/logger');
 const { success } = require('../utils/response');
 const { sendVerificationApproved, sendVerificationRejected } = require('../services/mail.service');
 
@@ -336,6 +337,7 @@ const getSubscriptions = async (req, res, next) => {
 const deleteSubscription = async (req, res, next) => {
   try {
     const { id } = req.params;
+    logger.info(`[AUDIT] Admin ${req.user.name} (${req.user.sub}) deleted subscription record ${id}`);
     await Subscription.findByIdAndDelete(id);
     return success(res, { message: 'Subscription record deleted' });
   } catch (err) {

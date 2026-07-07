@@ -270,7 +270,6 @@ export default function ProfileScreen() {
             <Text style={[styles.bio, { color: colors.textSecondary }]}>
               {user.bio || 'Add a bio to tell others about yourself'}
             </Text>
-
             <View style={styles.info}>
               {user.location && (
                 <View style={styles.infoRow}>

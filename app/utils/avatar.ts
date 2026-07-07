@@ -56,7 +56,6 @@ export function getAvatarUrl(
     return avatar;
   }
   
-  const color = getAvatarColor(userId, name);
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=${size}&background=${color}&color=fff&bold=true`;
+  return 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
 }
 

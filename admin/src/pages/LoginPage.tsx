@@ -19,6 +19,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [generalError, setGeneralError] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -28,6 +29,7 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
+    setGeneralError('');
 
     // Validate inputs
     const result = loginSchema.safeParse({ email, password });
@@ -49,6 +51,7 @@ export default function LoginPage() {
     } catch (error: any) {
       const message = error.response?.data?.message || 'Invalid credentials. Please try again.';
       toast.error(message);
+      setGeneralError(message);
     } finally {
       setIsLoading(false);
     }
@@ -68,6 +71,12 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {generalError && (
+              <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                <span>{generalError}</span>
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input

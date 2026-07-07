@@ -5,7 +5,11 @@ const { fail } = require('../utils/response');
 module.exports = (err, req, res, next) => {
   logger.error(err.message, { stack: err.stack });
   if (res.headersSent) return;
+  
   const status = err.status || 500;
-  return fail(res, err.message || 'Internal Server Error', status);
+  // Never expose 500 internal/database error messages to the client
+  const message = status >= 500 ? 'Internal Server Error' : err.message;
+  
+  return fail(res, message, status);
 };
 

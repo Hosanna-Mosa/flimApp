@@ -116,6 +116,15 @@ const checkAvailability = async (req, res, next) => {
   }
 };
 
+const versionCheck = async (req, res, next) => {
+  try {
+    const result = await authService.versionCheck(req.query);
+    return success(res, result, 200);
+  } catch (err) {
+    return next(err);
+  }
+};
+
 module.exports = {
   login,
   verifyOtp,
@@ -127,6 +136,7 @@ module.exports = {
   changePassword,
   forgotPassword,
   resetPassword,
-  checkAvailability
+  checkAvailability,
+  versionCheck
 };
 

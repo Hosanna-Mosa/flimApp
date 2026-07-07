@@ -13,5 +13,8 @@ const NotificationSchema = new Schema(
   { timestamps: true }
 );
 
+// Automatically delete notifications older than 30 days
+NotificationSchema.index({ createdAt: 1 }, { expireAfterSeconds: 30 * 24 * 60 * 60 });
+
 module.exports = model('Notification', NotificationSchema);
 

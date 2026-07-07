@@ -60,6 +60,16 @@ const updateMe = async (userId, payload) => {
     payload.email = payload.email.toLowerCase().trim();
   }
 
+  if (payload.privacy) {
+    const currentUser = await User.findById(userId).select('privacy');
+    if (currentUser) {
+      payload.privacy = {
+        ...(currentUser.privacy ? currentUser.privacy.toObject() : {}),
+        ...payload.privacy,
+      };
+    }
+  }
+
   return User.findByIdAndUpdate(userId, payload, { new: true }).select(
     '-password -refreshTokens'
   );
