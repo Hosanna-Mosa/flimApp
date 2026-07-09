@@ -26,6 +26,9 @@ router.put(
         }).optional(),
         title: Joi.string().allow('', null).optional(),
         message: Joi.string().allow('', null).optional(),
+        isShutdown: Joi.boolean().optional(),
+        shutdownTitle: Joi.string().allow('', null).optional(),
+        shutdownMessage: Joi.string().allow('', null).optional(),
       }).required(),
     })
   ),

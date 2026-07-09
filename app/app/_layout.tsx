@@ -1,9 +1,9 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Stack } from 'expo-router';
+import { Stack, router } from 'expo-router';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect, useState } from 'react';
-import { Platform, Linking, Modal, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Platform, Linking, Modal, View, Text, StyleSheet, TouchableOpacity, DeviceEventEmitter } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Constants from 'expo-constants';
 import api from '@/utils/api';
@@ -17,12 +17,63 @@ import { MessageProvider } from '@/contexts/MessageContext';
 import { MediaProvider } from '@/contexts/MediaContext';
 import { Audio } from 'expo-av';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Notifications from 'expo-notifications';
 
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
 
 function RootLayoutNav() {
+  useEffect(() => {
+    // Helper to handle navigation when user clicks notification
+    const handleNotificationClick = (data: any) => {
+      if (!data) return;
+      console.log('[PushNotification] Clicked notification data:', data);
+
+      const type = data.type;
+      const actorId = data.actorId || data.senderId || data.followerId;
+
+      if (type === 'message' || type === 'chat') {
+        if (actorId) {
+          router.push({
+            pathname: '/chat',
+            params: { userId: actorId }
+          });
+        }
+      } else if (['follow', 'follow_request', 'follow_request_accepted'].includes(type)) {
+        if (actorId) {
+          router.push(`/user/${actorId}`);
+        }
+      }
+    };
+
+    // 🔔 Listen for notification clicks when app is in foreground/background (hot-start)
+    const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+      try {
+        const data = response.notification.request.content.data;
+        handleNotificationClick(data);
+      } catch (err) {
+        console.error('[PushNotification] Error handling click interaction:', err);
+      }
+    });
+
+    // Check if app was opened by a notification click (cold-start)
+    Notifications.getLastNotificationResponseAsync().then((response) => {
+      try {
+        if (response) {
+          const data = response.notification.request.content.data;
+          handleNotificationClick(data);
+        }
+      } catch (err) {
+        console.error('[PushNotification] Error checking cold start notification:', err);
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
   return (
     <Stack
       screenOptions={{
@@ -68,6 +119,26 @@ export default function RootLayout() {
     latestVersion: string;
   } | null>(null);
 
+  const [showShutdownModal, setShowShutdownModal] = useState(false);
+  const [shutdownInfo, setShutdownInfo] = useState<{
+    title: string;
+    message: string;
+  } | null>(null);
+
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener('app_shutdown', (data) => {
+      console.log('[Layout] App shutdown event triggered, opening modal...', data);
+      setShutdownInfo({
+        title: data.title || 'Currently App is Shut Down',
+        message: data.message || 'We are fixing a big bug, so we want to suddenly shut down the application.',
+      });
+      setShowShutdownModal(true);
+    });
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
   useEffect(() => {
     const checkVersion = async () => {
       try {
@@ -76,6 +147,16 @@ export default function RootLayout() {
         
         const localVersion = Constants.expoConfig?.version || '1.0.0';
         const response = await api.checkVersion(platform, localVersion);
+        
+        if (response.isShutdown) {
+          setShutdownInfo({
+            title: response.shutdownTitle || 'Currently App is Shut Down',
+            message: response.shutdownMessage || 'We are fixing a big bug, so we want to suddenly shut down the application.',
+          });
+          setShowShutdownModal(true);
+          return;
+        }
+
         if (response.updateRequired) {
           if (!response.forceUpdate) {
             const dismissedVersion = await AsyncStorage.getItem('@last_dismissed_update_version');
@@ -184,6 +265,22 @@ export default function RootLayout() {
                                 <Text style={styles.cancelButtonText}>Not Now</Text>
                               </TouchableOpacity>
                             )}
+                          </View>
+                        </View>
+                      </Modal>
+                    )}
+
+                    {shutdownInfo && (
+                      <Modal
+                        visible={showShutdownModal}
+                        transparent
+                        animationType="fade"
+                        onRequestClose={() => {}}
+                      >
+                        <View style={styles.modalOverlay}>
+                          <View style={[styles.modalContent, { borderColor: '#FF4D4D', borderWidth: 1.5 }]}>
+                            <Text style={[styles.modalTitle, { color: '#FF4D4D', fontWeight: 'bold' }]}>{shutdownInfo.title}</Text>
+                            <Text style={styles.modalMessage}>{shutdownInfo.message}</Text>
                           </View>
                         </View>
                       </Modal>

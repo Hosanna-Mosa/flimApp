@@ -26,7 +26,7 @@ const getVersionConfig = async (req, res, next) => {
 
 const updateVersionConfig = async (req, res, next) => {
   try {
-    const { ios, android, title, message } = req.body;
+    const { ios, android, title, message, isShutdown, shutdownTitle, shutdownMessage } = req.body;
     
     let config = await VersionConfig.findOne({});
     if (!config) {
@@ -51,8 +51,28 @@ const updateVersionConfig = async (req, res, next) => {
     
     if (title !== undefined) config.title = title;
     if (message !== undefined) config.message = message;
+    if (isShutdown !== undefined) config.isShutdown = isShutdown;
+    if (shutdownTitle !== undefined) config.shutdownTitle = shutdownTitle;
+    if (shutdownMessage !== undefined) config.shutdownMessage = shutdownMessage;
     
     await config.save();
+
+    // Broadcast shutdown state to active client connections if shutdown is enabled
+    if (config.isShutdown) {
+      try {
+        const { getIo } = require('../utils/socketStore');
+        const io = getIo();
+        if (io) {
+          io.emit('app_shutdown', {
+            title: config.shutdownTitle,
+            message: config.shutdownMessage,
+          });
+        }
+      } catch (socketErr) {
+        console.error('Failed to broadcast app_shutdown socket event:', socketErr);
+      }
+    }
+
     return success(res, config, 200);
   } catch (err) {
     return next(err);

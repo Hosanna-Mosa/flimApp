@@ -39,6 +39,10 @@ interface UserPost {
   mediaUrl: string;
   thumbnailUrl?: string;
   caption?: string;
+  media?: {
+    url?: string;
+    thumbnail?: string;
+  };
 }
 
 interface UserStats {
@@ -69,7 +73,7 @@ function PostThumbnail({ post, onPress }: { post: UserPost; onPress: () => void 
         </View>
       ) : !hasError ? (
         <Image
-          source={{ uri: post.thumbnailUrl || post.mediaUrl }}
+          source={{ uri: post.media?.thumbnail || post.thumbnailUrl || post.media?.url || post.mediaUrl }}
           style={styles.portfolioImage}
           contentFit="cover"
           onError={() => setHasError(true)}

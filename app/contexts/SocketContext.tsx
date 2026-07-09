@@ -5,6 +5,7 @@ import React, {
   useState,
 } from 'react';
 import { io, Socket } from 'socket.io-client';
+import { DeviceEventEmitter } from 'react-native';
 import Constants from 'expo-constants';
 import { useAuth } from './AuthContext';
 
@@ -122,16 +123,23 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
       });
     };
 
+    const onAppShutdown = (data: any) => {
+      console.log('[Socket] Received app_shutdown event:', data);
+      DeviceEventEmitter.emit('app_shutdown', data);
+    };
+
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
     socket.on('connect_error', onConnectError);
     socket.on('receive_message', onReceiveMessage);
+    socket.on('app_shutdown', onAppShutdown);
 
     return () => {
       socket.off('connect', onConnect);
       socket.off('disconnect', onDisconnect);
       socket.off('connect_error', onConnectError);
       socket.off('receive_message', onReceiveMessage);
+      socket.off('app_shutdown', onAppShutdown);
     };
   }, [user]);
 
