@@ -61,6 +61,10 @@ interface UserPost {
     mediaUrl: string;
     thumbnailUrl?: string;
     caption?: string;
+    media?: {
+        url?: string;
+        thumbnail?: string;
+    };
 }
 
 export default function PublicProfileScreen() {
@@ -90,14 +94,26 @@ export default function PublicProfileScreen() {
             setLoading(true);
             const [userData, postsData] = await Promise.all([
                 api.user(id, token || undefined),
-                api.getUserFeed(id, 0, 100, token || undefined).catch(() => ({ data: [] })),
+                api.getUserFeed(id, 0, 100, token || undefined).catch((err) => {
+                    console.error('[UserProfile] api.getUserFeed error:', err);
+                    return { data: [] };
+                }),
             ]);
+
+            console.log('[UserProfile] API userData:', JSON.stringify(userData).substring(0, 500));
+            console.log('[UserProfile] API postsData:', JSON.stringify(postsData).substring(0, 500));
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const userInfo = userData as any;
             setUser(userInfo);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            setPosts((postsData as any).data || []);
+            let postsArray: any[] = [];
+            if (Array.isArray(postsData)) {
+                postsArray = postsData;
+            } else if (postsData && Array.isArray((postsData as any).data)) {
+                postsArray = (postsData as any).data;
+            }
+            setPosts(postsArray);
 
             // Check if account is private
             const accountType = userInfo?.accountType || (userInfo?.isPrivate ? 'private' : 'public');
@@ -356,9 +372,9 @@ export default function PublicProfileScreen() {
                         <Text style={[styles.name, { color: colors.text }]}>
                             {user.name}
                         </Text>
-                        {user.isVerified && Platform.OS !== 'ios' && (
+                        {user.isVerified && Platform.OS !== 'ios' ? (
                             <BadgeCheck size={24} color="#FFFFFF" fill="#0095F6" />
-                        )}
+                        ) : null}
                     </View>
                     <Text style={[styles.username, { color: colors.textSecondary }]}>
                         @{user.username || 'username'}
@@ -366,7 +382,7 @@ export default function PublicProfileScreen() {
 
                     {!hasLimitedData && (
                         <>
-                            {user.roles && user.roles.length > 0 && (
+                            {!!user.roles && user.roles.length > 0 ? (
                                 <View style={styles.rolesContainer}>
                                     {user.roles.map((role, idx) => (
                                         <View
@@ -379,15 +395,15 @@ export default function PublicProfileScreen() {
                                         </View>
                                     ))}
                                 </View>
-                            )}
-                            {user.bio && (
+                            ) : null}
+                            {!!user.bio ? (
                                 <Text style={[styles.bio, { color: colors.textSecondary }]}>
                                     {user.bio}
                                 </Text>
-                            )}
+                            ) : null}
 
                             <View style={styles.info}>
-                                {user.location && (
+                                {!!user.location ? (
                                     <View style={styles.infoRow}>
                                         <MapPin size={16} color={colors.textSecondary} />
                                         <Text
@@ -396,8 +412,8 @@ export default function PublicProfileScreen() {
                                             {user.location}
                                         </Text>
                                     </View>
-                                )}
-                                {user.experience && user.experience > 0 && (
+                                ) : null}
+                                {!!user.experience && user.experience > 0 ? (
                                     <View style={styles.infoRow}>
                                         <Briefcase size={16} color={colors.textSecondary} />
                                         <Text
@@ -406,7 +422,7 @@ export default function PublicProfileScreen() {
                                             {user.experience} years experience
                                         </Text>
                                     </View>
-                                )}
+                                ) : null}
                                 <TouchableOpacity
                                     style={styles.portfolioLink}
                                     onPress={() => {
@@ -633,7 +649,7 @@ export default function PublicProfileScreen() {
                                     </View>
                                 ) : (
                                     <Image
-                                        source={{ uri: post.thumbnailUrl || post.mediaUrl }}
+                                        source={{ uri: post.media?.thumbnail || post.thumbnailUrl || post.media?.url || post.mediaUrl }}
                                         style={styles.portfolioImage}
                                         contentFit="cover"
                                     />

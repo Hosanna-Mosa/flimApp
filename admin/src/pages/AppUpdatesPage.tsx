@@ -5,8 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { LoadingState } from '@/components/StateDisplay';
-import { Smartphone, RefreshCw, Save } from 'lucide-react';
+import { Smartphone, RefreshCw, Save, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AppUpdatesPage() {
@@ -23,6 +24,10 @@ export default function AppUpdatesPage() {
   
   const [title, setTitle] = useState('New Version Available');
   const [message, setMessage] = useState('Please update your application to the latest version to access new features.');
+  
+  const [isShutdown, setIsShutdown] = useState(false);
+  const [shutdownTitle, setShutdownTitle] = useState('Currently App is Shut Down');
+  const [shutdownMessage, setShutdownMessage] = useState('We are fixing a big bug, so we want to suddenly shut down the application.');
 
   const fetchConfig = async () => {
     try {
@@ -41,6 +46,9 @@ export default function AppUpdatesPage() {
         }
         setTitle(data.title || 'New Version Available');
         setMessage(data.message || 'Please update your application to the latest version to access new features.');
+        setIsShutdown(data.isShutdown || false);
+        setShutdownTitle(data.shutdownTitle || 'Currently App is Shut Down');
+        setShutdownMessage(data.shutdownMessage || 'We are fixing a big bug, so we want to suddenly shut down the application.');
       }
     } catch (err) {
       console.error(err);
@@ -71,6 +79,9 @@ export default function AppUpdatesPage() {
         },
         title,
         message,
+        isShutdown,
+        shutdownTitle,
+        shutdownMessage,
       });
       toast.success('App update configurations saved successfully!');
     } catch (err: any) {
@@ -226,6 +237,61 @@ export default function AppUpdatesPage() {
                 required 
               />
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Emergency Shutdown Controls */}
+        <Card className="bg-card/50 border-red-500/30 backdrop-blur-sm shadow-lg shadow-red-950/10">
+          <CardHeader className="border-b border-red-500/20 pb-4">
+            <CardTitle className="text-lg flex items-center gap-2 text-red-500">
+              <AlertTriangle className="h-5 w-5 animate-pulse text-red-500" />
+              Emergency App Shutdown Control
+            </CardTitle>
+            <CardDescription className="text-red-400/80">
+              Instantly lock and disable the application globally. Active users will be forced to the shutdown screen in real-time.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6 space-y-4">
+            <div className="flex items-center justify-between p-4 rounded-lg bg-red-950/20 border border-red-500/20">
+              <div className="space-y-0.5">
+                <Label htmlFor="isShutdown" className="text-base font-semibold text-red-400">Shutdown Mode</Label>
+                <p className="text-sm text-muted-foreground">
+                  Toggle this to lock/unlock all client applications immediately.
+                </p>
+              </div>
+              <Switch 
+                id="isShutdown"
+                checked={isShutdown}
+                onCheckedChange={setIsShutdown}
+                className="data-[state=checked]:bg-red-500"
+              />
+            </div>
+            
+            {isShutdown && (
+              <div className="space-y-4 pt-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="space-y-2">
+                  <Label htmlFor="shutdownTitle">Shutdown Alert Title</Label>
+                  <Input 
+                    id="shutdownTitle" 
+                    value={shutdownTitle} 
+                    onChange={(e) => setShutdownTitle(e.target.value)} 
+                    placeholder="e.g. Under Maintenance" 
+                    required={isShutdown}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="shutdownMessage">Detailed Message Description</Label>
+                  <Textarea 
+                    id="shutdownMessage" 
+                    value={shutdownMessage} 
+                    onChange={(e) => setShutdownMessage(e.target.value)} 
+                    placeholder="Provide details on why the app is shut down and when it might return." 
+                    rows={4}
+                    required={isShutdown} 
+                  />
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 

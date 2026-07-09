@@ -392,6 +392,16 @@ const versionCheck = async ({ platform, version }) => {
     });
   }
 
+  if (config.isShutdown) {
+    return {
+      isShutdown: true,
+      shutdownTitle: config.shutdownTitle || 'Currently App is Shut Down',
+      shutdownMessage: config.shutdownMessage || 'We are fixing a big bug, so we want to suddenly shut down the application.',
+      updateRequired: false,
+      forceUpdate: false
+    };
+  }
+
   const platformConfig = config[platform];
   if (!platformConfig) {
     return { updateRequired: false, forceUpdate: false };

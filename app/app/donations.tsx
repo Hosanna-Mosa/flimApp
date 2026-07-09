@@ -29,8 +29,8 @@ export default function DonationsScreen() {
 
                 const mappedPosts = data.map((post: any) => ({
                     id: post._id,
-                    thumbnailUrl: post.thumbnailUrl,
-                    mediaUrl: post.mediaUrl,
+                    thumbnailUrl: post.media?.thumbnail || post.thumbnailUrl,
+                    mediaUrl: post.media?.url || post.mediaUrl,
                     caption: post.caption,
                     type: post.type,
                     author: post.author,
