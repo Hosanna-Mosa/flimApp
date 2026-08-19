@@ -31,7 +31,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
-    fontWeight: 'bold' as const,
+    fontWeight: '700' as const,
   },
   link: {
     marginTop: 15,

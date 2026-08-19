@@ -1,9 +1,10 @@
 import React, { useMemo, useEffect } from 'react';
-import { View, Text, StyleSheet, Animated } from 'react-native';
+import { View, StyleSheet, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Film } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import Button from '@/components/Button';
+import AppText from '@/components/AppText';
 
 export default function LandingScreen() {
   const router = useRouter();
@@ -26,12 +27,12 @@ export default function LandingScreen() {
           source={require('../../assets/images/logo.png')} 
           style={{ width: 100, height: 100, resizeMode: 'contain' }} 
         />
-          <Text style={[styles.title, { color: colors.text, fontFamily: 'Geometric415Black', textTransform: 'uppercase' }]}>
+          <AppText variant="display" weight="regular" style={[styles.title, { fontFamily: 'Geometric415Black', textTransform: 'uppercase' }]}>
             FILMYCONNECT
-          </Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+          </AppText>
+          <AppText variant="h5" secondary align="center">
             24 CRAFTS
-          </Text>
+          </AppText>
         </View>
 
         <View style={styles.actions}>
@@ -69,13 +70,7 @@ const styles = StyleSheet.create({
     gap: 16,
     marginTop: 60,
   },
-  title: {
-    fontSize: 36,
-  },
-  subtitle: {
-    fontSize: 18,
-    textAlign: 'center',
-  },
+  title: {},
   actions: {
     gap: 16,
     width: '100%',

@@ -28,7 +28,6 @@ const sendOtp = async (req, res, next) => {
       .services(VERIFY_SERVICE_SID)
       .verifications.create({ to: phone, channel: 'sms' });
 
-    console.log(`[Twilio] OTP sent to ${phone}, SID: ${verification.sid}`);
 
     return success(res, { message: 'OTP sent' });
   } catch (error) {
@@ -129,7 +128,6 @@ const verifyOtp = async (req, res, next) => {
         industries: ['bollywood'], // Default industry
         isVerified: true, // Phone verified
       });
-      console.log(`[Auth] New user created for phone: ${phone}, name: ${user.name}, username: ${username}`);
     } else {
       // Existing user - ensure isVerified matches reality if we just did OTP
       if (!user.isVerified) {
@@ -151,8 +149,6 @@ const verifyOtp = async (req, res, next) => {
     user.refreshTokens.push(refreshToken);
     await user.save();
 
-    console.log(`[Auth Success] OTP verified for ${phone}. Tokens generated.`);
-    console.log(`[DEBUG] Response user id: ${user._id}`);
 
     return success(res, {
       user: {

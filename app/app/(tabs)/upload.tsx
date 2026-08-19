@@ -352,7 +352,7 @@ export default function UploadScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: 20 },
-  heading: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
+  heading: { fontSize: 24, fontWeight: '700', marginBottom: 20 },
   selectionContainer: { marginTop: 20 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
   optionCard: {
@@ -374,7 +374,7 @@ const styles = StyleSheet.create({
 
   formContainer: { gap: 24 },
   formHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  formTitle: { fontSize: 22, fontWeight: 'bold' },
+  formTitle: { fontSize: 24, fontWeight: '700' },
 
   mediaContainer: { width: '100%', aspectRatio: 16 / 9, borderRadius: 12, overflow: 'hidden' },
   previewWrapper: { width: '100%', height: '100%', position: 'relative' },

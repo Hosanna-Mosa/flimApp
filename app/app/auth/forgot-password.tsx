@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
     View,
-    Text,
     StyleSheet,
     ScrollView,
     KeyboardAvoidingView,
@@ -14,6 +13,7 @@ import { ArrowLeft } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import Input from '@/components/Input';
 import Button from '@/components/Button';
+import AppText from '@/components/AppText';
 import api from '@/utils/api';
 
 export default function ForgotPasswordScreen() {
@@ -65,10 +65,10 @@ export default function ForgotPasswordScreen() {
                     >
                         <ArrowLeft size={24} color={colors.text} />
                     </TouchableOpacity>
-                    <Text style={[styles.title, { color: colors.text }]}>Forgot Password</Text>
-                    <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+                    <AppText variant="h2" style={styles.title}>Forgot Password</AppText>
+                    <AppText variant="bodyLarge" secondary>
                         Enter your email to receive a password reset OTP.
-                    </Text>
+                    </AppText>
                 </View>
 
                 <View style={styles.form}>
@@ -112,12 +112,7 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     title: {
-        fontSize: 28,
-        fontWeight: '700',
         marginBottom: 8,
-    },
-    subtitle: {
-        fontSize: 16,
     },
     form: {
         gap: 16,

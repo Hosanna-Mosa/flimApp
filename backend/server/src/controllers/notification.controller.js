@@ -31,10 +31,6 @@ const markAllAsRead = async (req, res, next) => {
 
 const registerToken = async (req, res, next) => {
   const timestamp = new Date().toISOString();
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log(`[PUSH][REGISTER] 📥 Incoming token registration request at ${timestamp}`);
-  console.log('[PUSH][REGISTER] User ID:', req.user?.id || 'UNKNOWN');
-  console.log('[PUSH][REGISTER] Request body:', JSON.stringify(req.body));
 
   try {
     const { token } = req.body;
@@ -44,21 +40,15 @@ const registerToken = async (req, res, next) => {
       throw new Error('Token is required');
     }
 
-    console.log('[PUSH][REGISTER] Token received:', token);
-    console.log('[PUSH][REGISTER] Calling registerPushToken service...');
 
     const result = await notificationService.registerPushToken(req.user.id, token);
 
-    console.log('[PUSH][REGISTER] ✅ Token registration successful');
-    console.log('[PUSH][REGISTER] Result:', JSON.stringify(result));
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
     return success(res, result);
   } catch (err) {
     console.error('[PUSH][REGISTER] ❌ Token registration failed');
     console.error('[PUSH][REGISTER] Error:', err.message);
     console.error('[PUSH][REGISTER] Stack:', err.stack);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     return next(err);
   }
 };

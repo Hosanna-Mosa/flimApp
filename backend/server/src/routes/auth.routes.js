@@ -18,31 +18,6 @@ const loginLimiter = rateLimit({
 });
 
 router.post(
-  '/login',
-  loginLimiter,
-  validate(
-    Joi.object({
-      body: Joi.object({ identifier: Joi.string().required() }).required(),
-    })
-  ),
-  authController.login
-);
-
-router.post(
-  '/verify-otp',
-  loginLimiter,
-  validate(
-    Joi.object({
-      body: Joi.object({
-        identifier: Joi.string().required(),
-        otp: Joi.string().required(),
-      }).required(),
-    })
-  ),
-  authController.verifyOtp
-);
-
-router.post(
   '/register',
   loginLimiter,
   validate(

@@ -44,33 +44,23 @@ export default function GroupChatScreen() {
 
       let comRes, groupsRes, postsRes;
 
-      // console.log('🚀 [LoadData] Starting...', { id, groupId });
 
       // 1. Load Community (Independent)
       try {
-        // console.log('📡 [LoadData] Fetching community...');
         comRes = await api.community(id, token || undefined) as any;
-        // console.log('✅ [LoadData] Community loaded');
       } catch (e) {
-        // console.error('❌ [LoadData] Community failed:', e);
       }
 
       // 2. Load Groups (Independent)
       try {
-        // console.log('📡 [LoadData] Fetching groups...');
         groupsRes = await api.communityGroups(id, token || undefined) as any;
-        // console.log('✅ [LoadData] Groups loaded');
       } catch (e) {
-        // console.error('❌ [LoadData] Groups failed:', e);
       }
 
       // 3. Load Posts (Independent - often fails if not a member)
       try {
-        // console.log('📡 [LoadData] Fetching posts...');
         postsRes = await api.groupPosts(id, groupId, 0, 50, token || undefined) as any;
-        // console.log('✅ [LoadData] Posts loaded');
       } catch (e) {
-        // console.warn('⚠️ [LoadData] Posts failed (user likely not a member):', e);
       }
 
       setRole(comRes?.memberRole || 'member');
@@ -95,7 +85,6 @@ export default function GroupChatScreen() {
       const postsList = postsRes?.data || [];
       setPosts(Array.isArray(postsList) ? postsList : []);
     } catch (error) {
-      // console.error(error);
     } finally {
       setLoading(false);
     }
@@ -420,7 +409,7 @@ export default function GroupChatScreen() {
               {sending ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={{ color: '#fff', fontWeight: 'bold' }}>Join Group</Text>
+                <Text style={{ color: '#fff', fontWeight: '700' }}>Join Group</Text>
               )}
             </TouchableOpacity>
           </View>
@@ -467,7 +456,7 @@ const styles = StyleSheet.create({
   },
   introTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '700',
     marginBottom: 8
   },
   introDesc: {
@@ -492,7 +481,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerTitle: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '700',
   },
   menuButton: {

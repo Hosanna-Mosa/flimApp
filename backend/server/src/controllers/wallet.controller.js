@@ -34,7 +34,6 @@ exports.getWallet = async (req, res) => {
 exports.createOrder = async (req, res) => {
   try {
     const { amount } = req.body;
-    console.log('[Wallet] Creating payment order for amount:', amount);
 
     if (!amount || amount <= 0) {
       return res.status(400).json({ message: 'Invalid amount' });
@@ -46,10 +45,8 @@ exports.createOrder = async (req, res) => {
       receipt: `wd_${req.user.id.toString().slice(-10)}_${Date.now()}`,
     };
 
-    console.log('[Wallet] Razorpay options:', options);
 
     const order = await razorpay.orders.create(options);
-    console.log('[Wallet] Order created successfully:', order.id);
 
     res.status(200).json({
       ...order,

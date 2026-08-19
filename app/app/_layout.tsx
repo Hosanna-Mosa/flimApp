@@ -28,7 +28,6 @@ function RootLayoutNav() {
     // Helper to handle navigation when user clicks notification
     const handleNotificationClick = (data: any) => {
       if (!data) return;
-      console.log('[PushNotification] Clicked notification data:', data);
 
       const type = data.type;
       const actorId = data.actorId || data.senderId || data.followerId;
@@ -83,20 +82,9 @@ function RootLayoutNav() {
     >
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="auth" options={{ headerShown: false }} />
-      <Stack.Screen name="login" options={{ headerShown: false }} />
-      <Stack.Screen name="otp" options={{ headerShown: false }} />
-      <Stack.Screen name="role-selection" options={{ headerShown: false }} />
-      <Stack.Screen
-        name="industry-selection"
-        options={{ headerShown: false }}
-      />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="messages" options={{ title: 'Messages' }} />
       <Stack.Screen name="chat" options={{ title: 'Chat' }} />
-      <Stack.Screen name="post" options={{ title: 'Post' }} />
-      <Stack.Screen name="user" options={{ title: 'Profile' }} />
-      <Stack.Screen name="communities" options={{ title: 'Communities' }} />
-      <Stack.Screen name="community" options={{ title: 'Community' }} />
       <Stack.Screen name="edit-profile" options={{ title: 'Edit Profile' }} />
       <Stack.Screen name="settings" options={{ title: 'Settings' }} />
       <Stack.Screen name="trending" options={{ title: 'Trending' }} />
@@ -127,7 +115,6 @@ export default function RootLayout() {
 
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener('app_shutdown', (data) => {
-      console.log('[Layout] App shutdown event triggered, opening modal...', data);
       setShutdownInfo({
         title: data.title || 'Currently App is Shut Down',
         message: data.message || 'We are fixing a big bug, so we want to suddenly shut down the application.',
@@ -279,7 +266,7 @@ export default function RootLayout() {
                       >
                         <View style={styles.modalOverlay}>
                           <View style={[styles.modalContent, { borderColor: '#FF4D4D', borderWidth: 1.5 }]}>
-                            <Text style={[styles.modalTitle, { color: '#FF4D4D', fontWeight: 'bold' }]}>{shutdownInfo.title}</Text>
+                            <Text style={[styles.modalTitle, { color: '#FF4D4D', fontWeight: '700' }]}>{shutdownInfo.title}</Text>
                             <Text style={styles.modalMessage}>{shutdownInfo.message}</Text>
                           </View>
                         </View>

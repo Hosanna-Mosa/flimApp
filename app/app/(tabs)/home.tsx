@@ -52,7 +52,6 @@ export default function HomeScreen() {
   const { unreadCount: messageCount } = useMessages();
 
   useEffect(() => {
-    // console.log('[Home] Render messageCount:', messageCount);
   }, [messageCount]);
 
   const [posts, setPosts] = useState<Post[]>([]);
@@ -88,7 +87,6 @@ export default function HomeScreen() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const userId = user.id || (user as any)._id;
       if (!userId) {
-        // console.error('[Home] User ID missing', user);
         return;
       }
 
@@ -110,7 +108,6 @@ export default function HomeScreen() {
 
       }
     } catch (error) {
-      // console.error('[Home] Error fetching following list:', error);
     }
   }, [user, token]);
 
@@ -249,7 +246,6 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       if (token && !authLoading) {
-        // console.log('[Home] Screen focused, refreshing data...');
         fetchFollowingList();
         loadFeed(0, false);
       }
@@ -312,7 +308,6 @@ export default function HomeScreen() {
   };
 
   const toggleFollow = async (userId: string) => {
-    console.log('[Home] toggleFollow tapped for user:', userId);
     try {
       const isCurrentlyFollowing = followingIds.has(userId);
 
@@ -332,12 +327,10 @@ export default function HomeScreen() {
       if (isCurrentlyFollowing) {
         if (!token) return;
         const result = await api.unfollowUser(userId, token) as any;
-        // console.log('[Home] Unfollowed user:', result);
         DeviceEventEmitter.emit('user_follow_changed', { userId, following: false });
       } else {
         if (!token) return;
         const result = await api.followUser(userId, token) as any;
-        // console.log('[Home] Followed user:', result);
 
         if (result.status === 'pending') {
           Alert.alert('Follow Request Sent', 'This account is private. Your request is pending.');
@@ -367,15 +360,12 @@ export default function HomeScreen() {
         }
         return next;
       });
-      // console.error('[Home] Follow error:', error);
       Alert.alert('Error', error?.message || 'Failed to update follow status');
     }
   };
 
   const handleLike = async (postId: string) => {
-    console.log('[Home] handleLike tapped for post:', postId);
     try {
-      // console.log('[Home] handleLike - Current user:', user ? `${user.name} (${(user as any)._id || user.id})` : 'Not logged in');
 
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
@@ -399,7 +389,6 @@ export default function HomeScreen() {
       if (wasLiked) {
         if (!token) return;
         const result = await api.unlikePost(postId, token) as any;
-        // console.log('[Home] Unliked post:', result);
 
         // Update with real count from server
         setPosts(prevPosts => prevPosts.map((p) =>
@@ -408,7 +397,6 @@ export default function HomeScreen() {
       } else {
         if (!token) return;
         const result = await api.likePost(postId, token) as any;
-        // console.log('[Home] Liked post:', result);
 
         // Update with real count from server
         setPosts(prevPosts => prevPosts.map((p) =>
@@ -426,17 +414,14 @@ export default function HomeScreen() {
         }
         return p;
       }));
-      // console.error('[Home] Like error:', error);
     }
   };
 
   const handleComment = (postId: string) => {
-    console.log('[Home] handleComment tapped for post:', postId);
     router.push(`/post/${postId}`);
   };
 
   const handleShare = async (postId: string) => {
-    console.log('[Home] handleShare tapped for post:', postId);
     try {
       const post = posts.find((p) => p.id === postId);
       if (!post) return;
@@ -449,12 +434,10 @@ export default function HomeScreen() {
         url: shareUrl,
       });
     } catch (error) {
-      // console.error('[Home] Share error:', error);
     }
   };
 
   const handleSave = async (postId: string) => {
-    console.log('[Home] handleSave tapped for post:', postId);
     if (!token) return;
 
     try {
@@ -511,7 +494,6 @@ export default function HomeScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingRight: 8 }}>
               <TouchableOpacity
                 onPress={() => {
-                  console.log('[Home] Donations tapped');
                   router.push('/donations');
                 }}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -521,7 +503,6 @@ export default function HomeScreen() {
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => {
-                  console.log('[Home] Notifications tapped');
                   router.push('/notifications');
                 }}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -549,7 +530,7 @@ export default function HomeScreen() {
                       }}
                       pointerEvents="none"
                     >
-                      <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: 'bold' }}>
+                      <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '700' }}>
                         {notificationCount > 99 ? '99+' : notificationCount}
                       </Text>
                     </View>
@@ -558,7 +539,6 @@ export default function HomeScreen() {
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => {
-                  console.log('[Home] Messages tapped');
                   router.push('/messages');
                 }}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -586,7 +566,7 @@ export default function HomeScreen() {
                       }}
                       pointerEvents="none"
                     >
-                      <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: 'bold' }}>
+                      <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '700' }}>
                         {messageCount > 99 ? '99+' : messageCount}
                       </Text>
                     </View>

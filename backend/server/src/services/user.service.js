@@ -131,7 +131,6 @@ const getById = async (id, viewerId = null) => {
 };
 
 const search = async ({ q, roles, industries }, currentUserId) => {
-  console.log('[User Service] Search params - q:', q, 'roles:', roles, 'industries:', industries);
 
   // If no search query and no filters, return empty
   if (!q && (!roles || roles.length === 0) && (!industries || industries.length === 0)) {
@@ -193,9 +192,7 @@ const search = async ({ q, roles, industries }, currentUserId) => {
     }
   }
 
-  console.log('[User Service] MongoDB query:', JSON.stringify(query));
   const results = await User.find(query).select('name avatar roles industries location bio isVerified isOnline');
-  console.log('[User Service] Found users:', results.length);
 
   // Score and sort results by relevance
   if (results.length > 0) {
@@ -277,12 +274,6 @@ const search = async ({ q, roles, industries }, currentUserId) => {
     // Sort by relevance score (highest first)
     scoredResults.sort((a, b) => b._relevanceScore - a._relevanceScore);
 
-    console.log('[User Service] Top 5 scores:', scoredResults.slice(0, 5).map(r => ({
-      name: r.name,
-      score: r._relevanceScore,
-      roles: r.roles?.slice(0, 2),
-      industries: r.industries?.slice(0, 2)
-    })));
 
     return scoredResults;
   }

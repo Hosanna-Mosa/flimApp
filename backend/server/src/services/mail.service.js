@@ -12,17 +12,15 @@ const sendEmail = async ({ to, subject, text, html, attachments }) => {
   try {
     // If not in production and no real SMTP configured, just log to console
     if (process.env.NODE_ENV !== 'production' && (!process.env.SMTP_USER || process.env.SMTP_USER === 'mock_user')) {
-      console.log('-----------------------------------------');
-      console.log('📧 MOCK EMAIL SENT TO:', to);
-      console.log('Subject:', subject);
-      console.log('Content:', text);
-      if (attachments) console.log('Attachments:', attachments.length);
-      console.log('-----------------------------------------');
       return { messageId: 'mock-id' };
     }
 
     const info = await transporter.sendMail({
-      from: `"Flim App" <${process.env.SMTP_FROM || 'noreply@flimy.app'}>`,
+      // Must match (or be an alias of) the authenticated SMTP_USER, otherwise
+      // the From-domain has no SPF/DKIM/DMARC alignment with Gmail's relay
+      // and the mail gets accepted (250 OK) but silently buried in the
+      // recipient's Spam folder. Only trust SMTP_FROM if it's explicitly set.
+      from: `"Flim App" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
       to,
       subject,
       text,
@@ -31,7 +29,6 @@ const sendEmail = async ({ to, subject, text, html, attachments }) => {
     });
 
 
-    console.log('Message sent: %s', info.messageId);
     return info;
   } catch (error) {
     console.error('Error sending email:', error);

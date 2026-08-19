@@ -8,7 +8,6 @@ const {
 } = require('../utils/token');
 const mailService = require('./mail.service');
 
-const OTP_CODE = '123456';
 const checkAvailability = async ({ username, email, phone, password }) => {
   const conflicts = new Set();
 
@@ -145,24 +144,11 @@ const register = async ({ name, username, phone, email, password, roles, industr
 };
 
 const loginWithPassword = async ({ phone, password }) => {
-  console.log('[Auth Debug] Looking for user with phone:', phone);
 
   // Try to find all users to debug
   const allUsers = await User.find({}).select('phone email name');
-  console.log('[Auth Debug] All users in DB:', allUsers.map(u => ({
-    phone: u.phone,
-    email: u.email,
-    name: u.name
-  })));
 
   const user = await User.findOne({ phone });
-  console.log('[Auth Debug] User found:', user ? {
-    id: user._id,
-    phone: user.phone,
-    email: user.email,
-    name: user.name,
-    hasPassword: !!user.password
-  } : 'NO USER FOUND');
 
   if (!user) {
     const err = new Error('Invalid credentials');
@@ -170,9 +156,7 @@ const loginWithPassword = async ({ phone, password }) => {
     throw err;
   }
 
-  console.log('[Auth Debug] Comparing passwords...');
   const isMatch = await bcrypt.compare(password, user.password);
-  console.log('[Auth Debug] Password match:', isMatch);
 
   if (!isMatch) {
     const err = new Error('Invalid credentials');
@@ -181,53 +165,6 @@ const loginWithPassword = async ({ phone, password }) => {
   }
 
   user.lastLoginAt = new Date();
-  const payload = { sub: user.id, roles: user.roles };
-  const accessToken = generateAccessToken(payload);
-  const refreshToken = generateRefreshToken(payload);
-  user.refreshTokens = [refreshToken];
-  await user.save();
-
-  return { user, accessToken, refreshToken };
-};
-
-const login = async ({ identifier }) => {
-  const user =
-    (await User.findOne({ email: identifier })) ||
-    (await User.findOne({ phone: identifier }));
-  return {
-    otpSent: true,
-    userExists: Boolean(user),
-    message: 'OTP sent (mock)',
-  };
-};
-
-const verifyOtp = async ({ identifier, otp }) => {
-  if (otp !== OTP_CODE) {
-    const err = new Error('Invalid OTP');
-    err.status = 400;
-    throw err;
-  }
-
-  let user =
-    (await User.findOne({ email: identifier })) ||
-    (await User.findOne({ phone: identifier }));
-
-  if (!user) {
-    const hashed = await bcrypt.hash(identifier, 10);
-    user = await User.create({
-      name: 'New User',
-      username: `user_${identifier.slice(-4)}`,
-      email: identifier.includes('@') ? identifier : `${identifier}@film.app`,
-      phone: identifier,
-      password: hashed,
-      roles: ['actor'],
-      industries: ['bollywood'],
-    });
-    console.log(`[Auth Service] Created new user: ${user.name}, username: ${user.username}`);
-  }
-
-  user.lastLoginAt = new Date();
-
   const payload = { sub: user.id, roles: user.roles };
   const accessToken = generateAccessToken(payload);
   const refreshToken = generateRefreshToken(payload);
@@ -330,12 +267,27 @@ const forgotPassword = async ({ email }) => {
   await user.save();
 
   // Send Email
-  await mailService.sendEmail({
+  const emailResult = await mailService.sendEmail({
     to: email,
     subject: 'Password Reset OTP',
     text: `Your OTP for password reset is: ${otp}. It expires in 10 minutes.`,
     html: `<p>Your OTP for password reset is: <strong>${otp}</strong></p><p>It expires in 10 minutes.</p>`
   });
+
+  // sendEmail swallows transport/auth errors and returns null instead of
+  // throwing (so unrelated notification emails elsewhere don't take down
+  // their calling flow). For the OTP flow specifically we DO need the
+  // caller to know delivery failed, otherwise the API reports success and
+  // the user is sent to the OTP screen for an email that never arrived.
+  if (!emailResult) {
+    user.resetPasswordOtp = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    const err = new Error('Failed to send OTP email. Please try again later.');
+    err.status = 502;
+    throw err;
+  }
 
   return { message: 'OTP sent to your email' };
 };
@@ -421,8 +373,6 @@ const versionCheck = async ({ platform, version }) => {
 };
 
 module.exports = {
-  login,
-  verifyOtp,
   refresh,
   logout,
   register,

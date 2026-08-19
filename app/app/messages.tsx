@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
   unreadCountText: {
     color: '#000',
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
 
   emptyState: {

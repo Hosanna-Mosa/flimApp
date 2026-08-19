@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
       fontSize: 24,
-      fontWeight: 'bold'
+      fontWeight: '700'
   },
   trendingItem: {
     flexDirection: 'row',
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
   },
   rankText: {
       color: 'white',
-      fontWeight: 'bold',
+      fontWeight: '700',
       fontSize: 12
   },
   thumbnail: {

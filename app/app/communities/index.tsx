@@ -182,7 +182,7 @@ export default function CommunitiesScreen() {
                   style={[styles.button, { backgroundColor: colors.primary }]}
                   onPress={() => setActiveTab('discover')}
                 >
-                  <Text style={{ color: '#fff', fontWeight: 'bold' }}>Discover Communities</Text>
+                  <Text style={{ color: '#fff', fontWeight: '700' }}>Discover Communities</Text>
                 </TouchableOpacity>
               )}
             </View>

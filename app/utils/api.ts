@@ -85,7 +85,6 @@ const request = async <T>(
 
     if (!res.ok) {
       if (res.status === 401 && !path.includes('/auth/send-otp') && !path.includes('/auth/verify-otp') && !path.includes('/auth/login')) {
-        console.log('[API] 🔴 401 Unauthorized - Emitting session expired event');
         DeviceEventEmitter.emit('auth_session_expired');
       }
 

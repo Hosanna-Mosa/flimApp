@@ -5,13 +5,13 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  KeyboardAvoidingView,
   Platform,
   FlatList,
   Alert,
+  Keyboard,
 } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { Send, ChevronLeft, Check, CheckCheck } from 'lucide-react-native';
+import { SendHorizontal, ChevronLeft, Check, CheckCheck } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -47,6 +47,26 @@ export default function ChatScreen() {
   const [blockedByOther, setBlockedByOther] = useState(false);
   const isBlockedByMe = blockedUsers.some((id) => String(id) === String(userId));
   const isConversationBlocked = isBlockedByMe || blockedByOther;
+
+  // Manual keyboard-height tracking. KeyboardAvoidingView's "padding" behavior
+  // computes its own padding from the keyboard's screenY relative to this
+  // view's measured frame, and that calculation is unreliable on this device
+  // — it can leave a phantom gap even when the keyboard reports height=0. We
+  // already confirmed 'keyboardDidShow'/'keyboardDidHide' fire with correct
+  // `height` values, so drive the layout from that directly instead.
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardDidShow', (e) => {
+      setKeyboardHeight(e?.endCoordinates?.height ?? 0);
+    });
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardHeight(0);
+    });
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   // Fetch user data for avatar
   useEffect(() => {
@@ -235,14 +255,6 @@ export default function ChatScreen() {
     };
   }, [socket, userId, user]);
 
-  // Ensure socket is connected on mount
-  // useEffect(() => {
-  //   if (socket && !socket.connected) {
-  //     console.log('[CHAT] Socket not connected on mount, calling connect()');
-  //     // socket.connect(); 
-  //   }
-  // }, [socket]);
-
   const handleSend = () => {
     if (isConversationBlocked) {
       Alert.alert(
@@ -356,11 +368,7 @@ export default function ChatScreen() {
           </TouchableOpacity>
         </View>
       </View>
-      <KeyboardAvoidingView
-        style={[styles.container, { backgroundColor: colors.background }]}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 50 + insets.top : 0}
-      >
+      <View style={[styles.container, { backgroundColor: colors.background, paddingBottom: keyboardHeight }]}>
         <FlatList
           style={{ flex: 1 }}
           ref={flatListRef}
@@ -369,11 +377,35 @@ export default function ChatScreen() {
           contentContainerStyle={styles.messagesContent}
           onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
           onLayout={() => flatListRef.current?.scrollToEnd({ animated: false })}
-          renderItem={({ item: message }) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const currentUserId = user?.id || (user as any)?._id;
+          renderItem={({ item: message, index }) => {
             // Fallback: If sender is NOT the peer (userId), then it is me.
             const isMe = String(message.senderId) !== String(userId);
+
+            // Group consecutive messages from the same sender (Instagram-style):
+            // the shared edge between grouped bubbles gets a tight corner instead
+            // of a full round, and only the last bubble in a group shows the
+            // timestamp/ticks, so a burst of messages reads as one chain instead
+            // of a stack of separate boxes.
+            const prevMessage = messages[index - 1];
+            const nextMessage = messages[index + 1];
+            const isFirstInGroup = !prevMessage || String(prevMessage.senderId) !== String(message.senderId);
+            const isLastInGroup = !nextMessage || String(nextMessage.senderId) !== String(message.senderId);
+
+            const roundCorner = 18;
+            const tightCorner = 4;
+            const bubbleShape = isMe
+              ? {
+                  borderTopLeftRadius: roundCorner,
+                  borderBottomLeftRadius: roundCorner,
+                  borderTopRightRadius: isFirstInGroup ? roundCorner : tightCorner,
+                  borderBottomRightRadius: isLastInGroup ? roundCorner : tightCorner,
+                }
+              : {
+                  borderTopRightRadius: roundCorner,
+                  borderBottomRightRadius: roundCorner,
+                  borderTopLeftRadius: isFirstInGroup ? roundCorner : tightCorner,
+                  borderBottomLeftRadius: isLastInGroup ? roundCorner : tightCorner,
+                };
 
             return (
               <TouchableOpacity
@@ -385,14 +417,14 @@ export default function ChatScreen() {
                   style={[
                     styles.messageBubble,
                     isMe ? styles.myMessage : styles.theirMessage,
+                    { marginBottom: isLastInGroup ? 12 : 6 },
                   ]}
                 >
                   <View
                     style={[
                       styles.bubble,
-                      {
-                        backgroundColor: isMe ? colors.primary : colors.surface,
-                      },
+                      bubbleShape,
+                      { backgroundColor: isMe ? colors.primary : colors.surface },
                     ]}
                   >
                     <Text
@@ -403,24 +435,18 @@ export default function ChatScreen() {
                     >
                       {message.message}
                     </Text>
-                    <Text
-                      style={[
-                        styles.timestamp,
-                        {
-                          color: isMe ? 'rgba(0,0,0,0.6)' : colors.textSecondary,
-                        },
-                      ]}
-                    >
+                  </View>
+                  <View style={[styles.metaRow, isMe ? styles.metaRowMe : styles.metaRowThem]}>
+                    <Text style={[styles.timestamp, { color: colors.textSecondary }]}>
                       {message.timestamp}
                     </Text>
-                    {/* Ticks for MY messages */}
                     {isMe && (
                       <View style={styles.tickContainer}>
                         {(message.status === 'sent' || !message.status) && (
-                          <Check size={14} color="rgba(0,0,0,0.6)" />
+                          <Check size={14} color={colors.textSecondary} />
                         )}
                         {message.status === 'delivered' && (
-                          <CheckCheck size={14} color="rgba(0,0,0,0.6)" />
+                          <CheckCheck size={14} color={colors.textSecondary} />
                         )}
                         {message.status === 'read' && (
                           <CheckCheck size={14} color="#007AFF" />
@@ -440,7 +466,7 @@ export default function ChatScreen() {
             {
               backgroundColor: colors.background,
               borderTopColor: colors.border,
-              paddingBottom: Platform.OS === 'ios' ? Math.max(insets.bottom, 8) : 30,
+              paddingBottom: insets.bottom,
             },
           ]}
         >
@@ -486,10 +512,10 @@ export default function ChatScreen() {
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             disabled={isConversationBlocked}
           >
-            <Send size={20} color="#000000" />
+            <SendHorizontal size={20} color="#000000" />
           </TouchableOpacity>
         </View>
-      </KeyboardAvoidingView>
+      </View>
     </>
   );
 }
@@ -500,7 +526,6 @@ const styles = StyleSheet.create({
   },
   messagesContent: {
     padding: 16,
-    gap: 12,
     flexGrow: 1,
     justifyContent: 'flex-end', // Keeps messages at bottom if few
   },
@@ -514,21 +539,32 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   bubble: {
-    padding: 12,
-    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
   },
   messageText: {
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 20,
   },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 3,
+    gap: 4,
+  },
+  metaRowMe: {
+    justifyContent: 'flex-end',
+    paddingRight: 4,
+  },
+  metaRowThem: {
+    justifyContent: 'flex-start',
+    paddingLeft: 4,
+  },
   timestamp: {
-    fontSize: 11,
-    marginTop: 4,
-    marginRight: 4,
+    fontSize: 12,
   },
   tickContainer: {
-    marginLeft: 4,
-    alignSelf: 'flex-end',
+    alignSelf: 'center',
   },
   inputContainer: {
     flexDirection: 'row',
@@ -544,7 +580,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   blockedText: {
-    fontSize: 13,
+    fontSize: 14,
     textAlign: 'center',
   },
   unblockButton: {
@@ -555,7 +591,7 @@ const styles = StyleSheet.create({
   unblockButtonText: {
     color: '#000',
     fontWeight: '700',
-    fontSize: 13,
+    fontSize: 14,
   },
   input: {
     flex: 1,
@@ -563,7 +599,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     maxHeight: 100,
-    fontSize: 15,
+    fontSize: 16,
   },
   sendButton: {
     width: 44,

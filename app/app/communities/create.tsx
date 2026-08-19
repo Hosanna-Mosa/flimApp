@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   privacyDesc: {
-    fontSize: 13,
+    fontSize: 14,
   },
   createButton: {
     padding: 16,
@@ -254,6 +254,6 @@ const styles = StyleSheet.create({
   createButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
 });

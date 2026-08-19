@@ -33,7 +33,6 @@ export default function UserNetworkScreen() {
                 ? api.getFollowing(userId, pageNum, 20, token || undefined, query)
                 : api.getFollowers(userId, pageNum, 20, token || undefined, query));
 
-            // console.log(`[Network] API Response for ${type}:`, JSON.stringify(response).substring(0, 100));
 
             // Handle unwrapped response (array) or legacy structure (object with data field)
             let data = [];

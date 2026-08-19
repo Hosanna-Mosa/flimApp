@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   KeyboardAvoidingView,
@@ -15,6 +14,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import Input from '@/components/Input';
 import Button from '@/components/Button';
+import AppText from '@/components/AppText';
 import api from '@/utils/api';
 
 export default function OtpScreen() {
@@ -93,12 +93,12 @@ export default function OtpScreen() {
           >
             <ArrowLeft size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={[styles.title, { color: colors.text, fontFamily: 'Geometric415Black', textTransform: 'uppercase' }]}>
+          <AppText variant="h2" weight="regular" style={[styles.title, { fontFamily: 'Geometric415Black', textTransform: 'uppercase' }]}>
             FILMYCONNECT
-          </Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+          </AppText>
+          <AppText variant="bodyLarge" secondary>
             Enter the OTP sent to {phone}
-          </Text>
+          </AppText>
         </View>
 
         <View style={styles.form}>
@@ -142,11 +142,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   title: {
-    fontSize: 28,
     marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
   },
   form: {
     gap: 16,

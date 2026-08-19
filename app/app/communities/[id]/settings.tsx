@@ -211,7 +211,7 @@ export default function CommunitySettingsScreen() {
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 {community?.pendingRequests?.length > 0 && (
                   <View style={{ backgroundColor: '#FF4444', borderRadius: 10, paddingHorizontal: 6, paddingVertical: 2 }}>
-                    <Text style={{ color: '#fff', fontSize: 12, fontWeight: 'bold' }}>
+                    <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>
                       {community.pendingRequests.length}
                     </Text>
                   </View>
@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   sectionTitle: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
     marginBottom: 8,
     marginLeft: 4,
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   rowSubtitle: {
-    fontSize: 13,
+    fontSize: 14,
     marginTop: 2,
   },
   deleteText: {

@@ -412,7 +412,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   time: {
-    fontSize: 13,
+    fontSize: 14,
   },
   emptyState: {
     marginTop: 64,

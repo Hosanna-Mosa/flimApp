@@ -21,10 +21,8 @@ const createOrder = async (req, res, next) => {
     const { planType } = req.body;
     const userId = req.user.id;
 
-    console.log(`[Subscription] Creating order - User: ${userId}, Plan: ${planType}`);
 
     if (!PLAN_PRICES[planType]) {
-      console.log(`[Subscription] Invalid plan type: ${planType}`);
       const err = new Error('Invalid plan type');
       err.status = 400;
       throw err;
@@ -38,7 +36,6 @@ const createOrder = async (req, res, next) => {
       receipt: `rcpt_${userId.toString().slice(-10)}_${Date.now()}`,
     };
 
-    console.log(`[Subscription] Razorpay options:`, JSON.stringify(options));
 
     let order;
     try {
@@ -49,7 +46,6 @@ const createOrder = async (req, res, next) => {
       throw new Error(`Razorpay Error: ${errorDesc || 'Unknown Razorpay error'}`);
     }
 
-    console.log(`[Subscription] Order created: ${order.id}`);
 
     // Clean up any existing PENDING subscriptions for this user to avoid duplication
     await Subscription.deleteMany({ user: userId, status: 'PENDING' });
@@ -100,7 +96,6 @@ const verifyPayment = async (req, res, next) => {
         throw err;
       }
     } else {
-      console.log(`[Subscription] Simulated success bypass for user ${userId}`);
     }
 
     // Update subscription

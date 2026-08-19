@@ -33,7 +33,7 @@ export default function SplashScreen() {
         if (!isAuthenticated) {
           router.replace('/auth');
         } else if (!hasCompletedOnboarding) {
-          router.replace('/role-selection');
+          router.replace('/auth/onboarding');
         } else {
           router.replace('/home');
         }

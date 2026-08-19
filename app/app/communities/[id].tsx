@@ -321,7 +321,7 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
   stats: {
     fontSize: 14,
@@ -361,7 +361,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '700',
     marginBottom: 8,
   },
   emptyDescription: {

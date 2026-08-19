@@ -39,7 +39,6 @@ export const MessageBubble = ({ message, isMe, onVote, onLongPress }: any) => {
       FileSystem.getInfoAsync(fileUri).then(info => {
         if (info.exists) setDownloaded(true);
       }).catch(err => {
-        // console.log('File check error:', err)
       });
     }
   }, [message._id, fileUri]);
@@ -75,7 +74,6 @@ export const MessageBubble = ({ message, isMe, onVote, onLongPress }: any) => {
       
       setDownloaded(true);
     } catch (e) {
-      // console.error(e);
       alert('Failed to download image');
     } finally {
       setDownloading(false);
@@ -169,7 +167,7 @@ export const MessageBubble = ({ message, isMe, onVote, onLongPress }: any) => {
           {/* Simple Poll Placeholder */}
           {message.type === 'poll' && (
             <View style={styles.pollContainer}>
-              <Text style={{color: isMe ? '#fff' : colors.text, fontWeight: 'bold', marginBottom: 4}}>📊 Poll</Text>
+              <Text style={{color: isMe ? '#fff' : colors.text, fontWeight: '700', marginBottom: 4}}>📊 Poll</Text>
               {message.poll?.options.map((opt: any, idx: number) => (
                   <TouchableOpacity 
                     key={idx} 
@@ -316,11 +314,11 @@ const styles = StyleSheet.create({
   },
   authorName: {
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '700',
     marginBottom: 4,
   },
   messageText: {
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 20,
   },
   messageImage: {

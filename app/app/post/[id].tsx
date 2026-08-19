@@ -67,7 +67,6 @@ export default function PostDetailScreen() {
   const { token, user, reportContent } = useAuth();
   const insets = useSafeAreaInsets();
 
-  // console.log('[PostDetail] Current user:', user ? `${user.name} (${(user as any)._id || user.id})` : 'Not logged in');
 
   const [post, setPost] = useState<any>(null);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -121,7 +120,6 @@ export default function PostDetailScreen() {
 
       // Refresh on subsequent focuses
       if (id && token) {
-        // console.log('[PostDetail] Screen focused - refreshing post data');
         loadPostAndComments();
       }
 
@@ -181,7 +179,6 @@ export default function PostDetailScreen() {
       // Revert on error
       setIsLiked(!isLiked);
       setLikesCount(prev => isLiked ? prev + 1 : prev - 1);
-      // console.error('[PostDetail] Like error:', error);
     }
   };
 
@@ -433,7 +430,7 @@ export default function PostDetailScreen() {
             posterSource={thumbnailUrl ? { uri: thumbnailUrl } : undefined}
             usePoster={!!thumbnailUrl}
             onPlaybackStatusUpdate={(status: any) => setVideoStatus(status)}
-            onError={(e: string) => console.log('Video Playback Error:', e)}
+            onError={(e: string) => console.error('Video Playback Error:', e)}
           />
           <TouchableOpacity
             style={styles.muteButton}
@@ -547,7 +544,6 @@ export default function PostDetailScreen() {
         url: shareUrl,
       });
     } catch (error) {
-      // console.error('[PostDetail] Share error:', error);
     }
   };
 
@@ -750,7 +746,6 @@ export default function PostDetailScreen() {
                     toggleHiddenReplies(comment._id);
                   }
                 } catch (e) {
-                  console.log('Error loading replies:', e);
                 }
               }}
             >
@@ -910,7 +905,7 @@ export default function PostDetailScreen() {
       {replyTo && (
         <View style={[styles.replyBanner, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
           <Text style={[styles.replyText, { color: colors.textSecondary }]} numberOfLines={1}>
-            Replying to <Text style={{ fontWeight: 'bold' }}>{replyTo.user.name}</Text>
+            Replying to <Text style={{ fontWeight: '700' }}>{replyTo.user.name}</Text>
           </Text>
           <TouchableOpacity onPress={() => setReplyTo(null)}>
             <Text style={{ color: colors.primary, fontWeight: '600' }}>Cancel</Text>
@@ -1125,7 +1120,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   showMoreText: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
   },
   replyBanner: {

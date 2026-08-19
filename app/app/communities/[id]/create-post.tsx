@@ -357,7 +357,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
   groupItem: {
     paddingVertical: 16,
