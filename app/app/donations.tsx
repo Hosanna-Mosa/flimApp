@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
     },
     headerTitle: {
         fontSize: 24,
-        fontWeight: 'bold'
+        fontWeight: '700'
     },
     item: {
         flexDirection: 'row',

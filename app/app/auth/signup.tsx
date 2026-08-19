@@ -16,6 +16,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import Input from '@/components/Input';
 import PhoneInput from '@/components/PhoneInput';
 import Button from '@/components/Button';
+import AppText from '@/components/AppText';
 import api from '@/utils/api';
 import { Country } from '@/utils/country';
 import { isValidPhoneNumber, parsePhoneNumber } from 'libphonenumber-js';
@@ -158,9 +159,9 @@ export default function SignUpScreen() {
           >
             <ArrowLeft size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={[styles.title, { color: colors.text, fontFamily: 'Geometric415Black', textTransform: 'uppercase' }]}>
+          <AppText variant="h2" weight="regular" style={[styles.title, { fontFamily: 'Geometric415Black', textTransform: 'uppercase' }]}>
             FILMYCONNECT
-          </Text>
+          </AppText>
         </View>
 
         <View style={styles.form}>
@@ -222,16 +223,16 @@ export default function SignUpScreen() {
 
           {/* Data Collection Disclosure */}
           <View style={[styles.privacyDisclosure, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <Text style={[styles.privacyDisclosureTitle, { color: colors.textSecondary }]}>
+            <AppText variant="bodySemibold" secondary style={styles.privacyDisclosureTitle}>
               📋 What data we collect
-            </Text>
-            <Text style={[styles.privacyDisclosureText, { color: colors.textSecondary }]}>
+            </AppText>
+            <AppText variant="caption" secondary style={styles.privacyDisclosureText}>
               FilmyConnect collects your name, phone number, email, profile media (photos/videos), and location to provide networking and collaboration services. Push notifications alert you about messages, likes, and updates. Your data is never shared with third parties for marketing. See our{' '}
               <Text style={{ color: colors.primary }} onPress={() => Linking.openURL('https://filmyconnect24.com/privacy-policy')}>
                 Privacy Policy
               </Text>{' '}
               for full details.
-            </Text>
+            </AppText>
           </View>
 
           <TouchableOpacity
@@ -244,7 +245,7 @@ export default function SignUpScreen() {
             ) : (
               <Square size={20} color={colors.textSecondary} />
             )}
-            <Text style={[styles.termsText, { color: colors.textSecondary }]}>
+            <AppText variant="body" secondary style={styles.termsText}>
               I agree to the{' '}
               <Text style={{ color: colors.primary }} onPress={() => Linking.openURL('https://filmyconnect24.com/terms-and-conditions')}>
                 Terms and Conditions
@@ -253,12 +254,12 @@ export default function SignUpScreen() {
               <Text style={{ color: colors.primary }} onPress={() => Linking.openURL('https://filmyconnect24.com/privacy-policy')}>
                 Privacy Policy
               </Text>
-            </Text>
+            </AppText>
           </TouchableOpacity>
           <View style={styles.guidelinesList}>
-            <Text style={[styles.guidelineItem, { color: colors.textSecondary }]}>- no abusive content</Text>
-            <Text style={[styles.guidelineItem, { color: colors.textSecondary }]}>- no harassment</Text>
-            <Text style={[styles.guidelineItem, { color: colors.textSecondary }]}>- no illegal content</Text>
+            <AppText variant="caption" secondary>- no abusive content</AppText>
+            <AppText variant="caption" secondary>- no harassment</AppText>
+            <AppText variant="caption" secondary>- no illegal content</AppText>
           </View>
 
           <Button
@@ -291,9 +292,7 @@ const styles = StyleSheet.create({
   backButton: {
     marginBottom: 20,
   },
-  title: {
-    fontSize: 28,
-  },
+  title: {},
   form: {
   },
   button: {
@@ -307,7 +306,6 @@ const styles = StyleSheet.create({
   },
   termsText: {
     flex: 1,
-    fontSize: 13,
     lineHeight: 18,
   },
   privacyDisclosure: {
@@ -318,12 +316,9 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   privacyDisclosureTitle: {
-    fontSize: 13,
-    fontWeight: '600' as const,
     marginBottom: 6,
   },
   privacyDisclosureText: {
-    fontSize: 12,
     lineHeight: 18,
   },
   guidelinesList: {
@@ -331,10 +326,6 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     paddingLeft: 30,
     gap: 4,
-  },
-  guidelineItem: {
-    fontSize: 12,
-    lineHeight: 16,
   },
   countryPickerWrapper: {
     paddingLeft: 12,

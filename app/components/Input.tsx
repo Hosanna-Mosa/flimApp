@@ -3,7 +3,6 @@ import {
   TextInput,
   StyleSheet,
   View,
-  Text,
   TextInputProps,
   TouchableOpacity,
   Platform,
@@ -12,6 +11,8 @@ import {
 } from 'react-native';
 import { Eye, EyeOff } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
+import AppText from '@/components/AppText';
+import { fontSize } from '@/constants/typography';
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -211,7 +212,7 @@ export default function Input({
   return (
     <View style={[styles.container, containerStyle]}>
       {label && (
-        <Text style={[styles.label, { color: colors.text }]}>{label}</Text>
+        <AppText variant="bodySemibold" style={styles.label}>{label}</AppText>
       )}
       <View style={[styles.inputContainer, { backgroundColor: colors.surface, borderColor: error ? colors.error : colors.border }]}>
         {renderLeft && renderLeft()}
@@ -258,7 +259,7 @@ export default function Input({
         )}
       </View>
       {error && (
-        <Text style={[styles.error, { color: colors.error }]}>{error}</Text>
+        <AppText variant="caption" color={colors.error} style={styles.error}>{error}</AppText>
       )}
     </View>
   );
@@ -269,8 +270,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '600' as const,
     marginBottom: 8,
   },
   inputContainer: {
@@ -286,14 +285,13 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    fontSize: 16,
+    fontSize: fontSize.base,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   eyeIcon: {
     paddingRight: 16,
   },
   error: {
-    fontSize: 12,
     marginTop: 4,
   },
 });

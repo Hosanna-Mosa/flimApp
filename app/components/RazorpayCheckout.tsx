@@ -46,7 +46,6 @@ const razorpayHtml = (data: any) => `
     <script>
       let rzp;
       function startRazorpay() {
-        console.log('Starting Razorpay...');
         try {
           const options = ${JSON.stringify(data)};
           
@@ -198,7 +197,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: '#000',
   },
 });

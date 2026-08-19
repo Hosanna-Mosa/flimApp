@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   KeyboardAvoidingView,
@@ -15,6 +14,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Input from '@/components/Input';
 import PhoneInput from '@/components/PhoneInput';
 import Button from '@/components/Button';
+import AppText from '@/components/AppText';
 import api from '@/utils/api';
 import { Country } from '@/utils/country';
 import { isValidPhoneNumber, parsePhoneNumber } from 'libphonenumber-js';
@@ -89,9 +89,9 @@ export default function SignInScreen() {
           >
             <ArrowLeft size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={[styles.title, { color: colors.text, fontFamily: 'Geometric415Black', textTransform: 'uppercase' }]}>
+          <AppText variant="h2" weight="regular" style={[styles.title, { fontFamily: 'Geometric415Black', textTransform: 'uppercase' }]}>
             FILMYCONNECT
-          </Text>
+          </AppText>
         </View>
 
         <View style={styles.form}>
@@ -118,9 +118,9 @@ export default function SignInScreen() {
             onPress={() => router.push('/auth/forgot-password')}
             style={styles.forgotPasswordContainer}
           >
-            <Text style={[styles.forgotPasswordText, { color: colors.primary }]}>
+            <AppText variant="bodySemibold" color={colors.primary}>
               Forgot Password?
-            </Text>
+            </AppText>
           </TouchableOpacity>
 
           <Button
@@ -151,9 +151,7 @@ const styles = StyleSheet.create({
   backButton: {
     marginBottom: 20,
   },
-  title: {
-    fontSize: 28,
-  },
+  title: {},
   form: {
     gap: 16,
   },
@@ -163,9 +161,5 @@ const styles = StyleSheet.create({
   forgotPasswordContainer: {
     alignSelf: 'flex-end',
     marginTop: 8,
-  },
-  forgotPasswordText: {
-    fontSize: 14,
-    fontWeight: '600',
   },
 });

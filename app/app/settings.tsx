@@ -21,7 +21,6 @@ import Button from '@/components/Button';
 import api from '@/utils/api';
 
 export default function SettingsScreen() {
-  console.log('SettingsScreen rendering...'); // Debug log
   const router = useRouter();
   const { colors, changeTheme, isDark } = useTheme();
   const { user, updateProfile, deleteAccount } = useAuth();

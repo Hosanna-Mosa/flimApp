@@ -55,24 +55,18 @@ export default function SearchScreen() {
         industries: selectedIndustries,
       };
       
-      // console.log('[Search] Performing search with params:', params);
       const response = await api.searchUsers(params, token || undefined) as any;
-      // console.log('[Search] Response:', response);
       
       if (response && response.data) {
-        // console.log('[Search] Results count:', response.data.length);
         const filteredResults = response.data.filter((u: any) => !blockedUsers.includes(u.id || u._id));
         setResults(filteredResults);
       } else if (response && Array.isArray(response)) {
-        // console.log('[Search] Response is array, count:', response.length);
         const filteredResults = response.filter((u: any) => !blockedUsers.includes(u.id || u._id));
         setResults(filteredResults);
       } else {
-        // console.log('[Search] No data in response');
         setResults([]);
       }
     } catch (error) {
-      // console.error('[Search] Error:', error);
     } finally {
       setIsSearching(false);
       setShowFilters(false); // Close modal after search
@@ -392,7 +386,7 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
   },
   rolesText: {
-    fontSize: 13,
+    fontSize: 14,
     marginTop: 4,
     textTransform: 'capitalize' as const,
   },
@@ -416,7 +410,7 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
   },
   bio: {
-    fontSize: 13,
+    fontSize: 14,
     marginTop: 6,
     lineHeight: 18,
   },

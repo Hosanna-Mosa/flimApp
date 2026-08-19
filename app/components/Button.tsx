@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/contexts/ThemeContext';
+import { fontSize, fontWeight } from '@/constants/typography';
 
 interface ButtonProps {
   title: string;
@@ -101,15 +102,15 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   text: {
-    fontWeight: '600' as const,
+    fontWeight: fontWeight.semibold,
   },
   textSmall: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
   },
   textMedium: {
-    fontSize: 16,
+    fontSize: fontSize.base,
   },
   textLarge: {
-    fontSize: 18,
+    fontSize: fontSize.lg,
   },
 });

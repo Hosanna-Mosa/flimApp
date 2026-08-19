@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   sectionTitle: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
     marginBottom: 8,
     marginLeft: 4,
@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   rowSubtitle: {
-    fontSize: 13,
+    fontSize: 14,
     marginTop: 2,
   }
 });

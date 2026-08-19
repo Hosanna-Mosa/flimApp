@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,6 +7,8 @@ import { ROLES } from '@/constants/roles';
 import { INDUSTRIES } from '@/constants/industries';
 import SelectableCard from '@/components/SelectableCard';
 import Button from '@/components/Button';
+import AppText from '@/components/AppText';
+import { textVariants } from '@/constants/typography';
 import api from '@/utils/api';
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
@@ -240,16 +242,16 @@ export default function OnboardingScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.text }]}>
+          <AppText variant="h2" style={styles.title}>
             {step === 1 ? 'Choose Your Avatar' : step === 2 ? 'Select Your Roles' : 'Select Industries'}
-          </Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+          </AppText>
+          <AppText variant="bodyLarge" secondary>
             {step === 1
               ? 'Select a profile picture to represent you'
               : step === 2
                 ? 'Choose all that apply (you can change this later)'
                 : 'Which film industries are you interested in?'}
-          </Text>
+          </AppText>
         </View>
 
         <View style={styles.listContainer}>
@@ -267,9 +269,9 @@ export default function OnboardingScreen() {
                   <Camera size={14} color="#FFF" />
                 </View>
               </TouchableOpacity>
-              <Text style={[styles.avatarHint, { color: colors.textSecondary }]}>
+              <AppText variant="body" secondary style={styles.avatarHint}>
                 Shape your identity! Tap the camera to upload a custom profile picture.
-              </Text>
+              </AppText>
             </View>
           ) : step === 2 ? (
             ROLES.map((role) => (
@@ -341,12 +343,7 @@ const styles = StyleSheet.create({
     marginTop: 20
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
     marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
   },
   listContainer: {
     gap: 12,
@@ -387,7 +384,6 @@ const styles = StyleSheet.create({
     borderColor: '#000',
   },
   avatarHint: {
-    fontSize: 14,
     marginBottom: 24,
   },
   defaultAvatarsContainer: {
@@ -395,8 +391,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+    ...textVariants.bodyLargeSemibold,
     marginBottom: 12,
     marginLeft: 4,
   },

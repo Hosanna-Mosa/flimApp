@@ -89,7 +89,6 @@ export default function EditProfileScreen() {
         avatar: finalAvatarUrl,
       };
 
-      // console.log('[EditProfile] Saving updates:', updates);
 
       // Call updateProfile which now calls the backend
       await updateProfile(updates);

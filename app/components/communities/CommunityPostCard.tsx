@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
   },
   authorName: {
     fontWeight: '600',
-    fontSize: 15,
+    fontSize: 16,
   },
   timestamp: {
     fontSize: 12,
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 12,
     marginBottom: 12,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 20,
   },
   media: {

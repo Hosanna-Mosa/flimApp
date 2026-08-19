@@ -135,7 +135,6 @@ export default function FeedPost({
         const mediaUrl = post.media?.url || post.mediaUrl;
         if (!mediaUrl) {
           setLoadingAudio(false);
-          // console.log('Audio URL not available');
           return;
         }
         const { sound: newSound, status } = await Audio.Sound.createAsync(
@@ -162,7 +161,6 @@ export default function FeedPost({
         setIsPlaying(true);
       }
     } catch (error) {
-      // console.log('Error playing audio', error);
       setLoadingAudio(false);
     }
   };
@@ -174,7 +172,6 @@ export default function FeedPost({
   };
 
   const toggleVideo = async () => {
-    console.log('[FeedPost] toggleVideo tapped');
     if (!videoRef.current) return;
     if (videoStatus?.isPlaying) {
       await videoRef.current.pauseAsync();
@@ -196,7 +193,6 @@ export default function FeedPost({
 
     // Debug logging
     if (!mediaUrl && post.type !== 'audio') {
-      // console.warn('[FeedPost] Missing media URL for post:', {
       //   postId: post.id,
       //   type: post.type,
       //   hasMedia: !!post.media,
@@ -219,7 +215,6 @@ export default function FeedPost({
 
     if (post.type === 'video') {
       if (!mediaUrl) {
-        // console.warn('[FeedPost] Video post missing URL:', {
         //   postId: post.id,
         //   hasMedia: !!post.media,
         //   media: post.media
@@ -249,7 +244,6 @@ export default function FeedPost({
             usePoster={!!thumbnailUrl}
             onPlaybackStatusUpdate={status => setVideoStatus(status)}
             onError={(error) => {
-              // console.error('[FeedPost] Video load error:', {
               //   postId: post.id,
               //   mediaUrl,
               //   error: error.nativeEvent?.error || error
@@ -400,7 +394,6 @@ export default function FeedPost({
 
     // Image
     if (!mediaUrl) {
-      // console.warn('[FeedPost] Image post missing URL:', {
       //   postId: post.id,
       //   type: post.type,
       //   hasMedia: !!post.media,
@@ -426,14 +419,12 @@ export default function FeedPost({
           contentFit="cover"
           transition={200}
           onError={(error) => {
-            // console.error('[FeedPost] Image load error:', {
             //   postId: post.id,
             //   mediaUrl,
             //   error: error.nativeEvent?.error || error
             // });
           }}
           onLoad={() => {
-            // console.log('[FeedPost] Image loaded successfully:', post.id);
           }}
         />
       </View>
@@ -654,7 +645,7 @@ const styles = StyleSheet.create({
   },
   scriptTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
   scriptSubtitle: {
     fontSize: 14,
@@ -698,7 +689,7 @@ const styles = StyleSheet.create({
   readButtonText: {
     color: '#fff',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
   pdfChip: {
     flexDirection: 'row',
@@ -760,8 +751,8 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   boostedText: {
-    fontSize: 8,
-    fontWeight: 'bold',
+    fontSize: 10,
+    fontWeight: '700',
     color: '#000',
   },
 });

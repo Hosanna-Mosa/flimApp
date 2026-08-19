@@ -84,7 +84,6 @@ export const uploadMediaToCloudinary = async (
       }
 
       const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`;
-      console.log('[Media] Uploading to:', uploadUrl, 'Type:', type, 'mimeType:', mimeType);
 
       xhr.open('POST', uploadUrl);
 

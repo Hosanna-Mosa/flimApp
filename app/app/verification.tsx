@@ -20,7 +20,6 @@ if (Platform.OS === 'android') {
   try {
     RazorpayCheckoutNative = require('react-native-razorpay').default;
   } catch (e) {
-    console.log('[Razorpay] Native module not available');
   }
 }
 
@@ -31,7 +30,6 @@ if (Platform.OS === 'ios') {
   try {
     IAP = require('react-native-iap');
   } catch (e) {
-    console.log('[IAP] Native module not available (expected in Expo Go)');
   }
 }
 */
@@ -68,7 +66,6 @@ if (Platform.OS !== 'ios') {
     const RazorpayModule = require('@/components/RazorpayCheckout');
     RazorpayCheckout = RazorpayModule.default || RazorpayModule;
   } catch (e) {
-    console.log('[Razorpay] Component not available');
   }
 }
 
@@ -142,13 +139,11 @@ export default function VerificationScreen() {
 
     const setupIAP = async () => {
       try {
-        console.log('[IAP] Initializing connection...');
         await IAP.initConnection();
         
         purchaseUpdateSubscription = IAP.purchaseUpdatedListener(async (purchase: any) => {
           const receipt = purchase.transactionReceipt;
           if (receipt) {
-            console.log('[IAP] Purchase successful, verifying with backend:', purchase.transactionId);
             try {
               await handleIAPPurchaseSuccess(purchase);
             } catch (err) {
@@ -324,7 +319,6 @@ export default function VerificationScreen() {
 
     try {
       setIsProcessingPayment(true);
-      console.log('[IAP] Requesting purchase for:', IOS_PRODUCT_ID);
       await IAP.requestPurchase({ sku: IOS_PRODUCT_ID });
     } catch (error: any) {
       console.error('[IAP] Purchase request failed:', error);
@@ -477,7 +471,7 @@ export default function VerificationScreen() {
           <Text style={[styles.statusTitle, { color: colors.text }]}>Documents Under Review</Text>
           <Text style={[styles.statusDesc, { color: colors.textSecondary }]}>
             Your verification request is currently being reviewed by our team.
-            We'll notify you once a decision is made. Then you can pick a plan.
+            We&apos;ll notify you once a decision is made. Then you can pick a plan.
           </Text>
           <View style={[styles.infoBox, { backgroundColor: colors.surface }]}>
             <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Submitted on:</Text>
@@ -554,7 +548,7 @@ export default function VerificationScreen() {
       return (
         <View style={[styles.statusCard, { paddingBottom: insets.bottom + 20 }]}>
           <CheckCircle2 size={64} color="#4CAF50" />
-          <Text style={[styles.statusTitle, { color: colors.text }]}>You're Verified!</Text>
+          <Text style={[styles.statusTitle, { color: colors.text }]}>You&apos;re Verified!</Text>
           <Text style={[styles.statusDesc, { color: colors.textSecondary }]}>
             Congratulations! Your account has been verified. The verification badge is now visible on your profile.
           </Text>
@@ -580,7 +574,7 @@ export default function VerificationScreen() {
               <BadgeCheck size={48} color={colors.primary} />
               <Text style={[styles.title, { color: colors.text }]}>Get Verified</Text>
               <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-                Verified accounts have blue checkmarks next to their names to show that we've confirmed they're the real presence of the professionals they represent.
+                Verified accounts have blue checkmarks next to their names to show that we&apos;ve confirmed they&apos;re the real presence of the professionals they represent.
               </Text>
             </View>
 
@@ -835,25 +829,25 @@ const styles = StyleSheet.create({
   center: { justifyContent: 'center', alignItems: 'center' },
   content: { padding: 20 },
   intro: { alignItems: 'center', marginBottom: 32 },
-  title: { fontSize: 28, fontWeight: 'bold', marginTop: 12 },
+  title: { fontSize: 28, fontWeight: '700', marginTop: 12 },
   subtitle: { fontSize: 14, textAlign: 'center', marginTop: 8, lineHeight: 20 },
 
   statusCard: { flex: 1, padding: 40, alignItems: 'center', justifyContent: 'center' },
-  statusTitle: { fontSize: 24, fontWeight: 'bold', marginTop: 24 },
+  statusTitle: { fontSize: 24, fontWeight: '700', marginTop: 24 },
   statusDesc: { fontSize: 16, textAlign: 'center', marginTop: 12, lineHeight: 24 },
   infoBox: { width: '100%', padding: 20, borderRadius: 16, marginTop: 32 },
-  infoLabel: { fontSize: 12, textTransform: 'uppercase', fontWeight: 'bold' },
+  infoLabel: { fontSize: 12, textTransform: 'uppercase', fontWeight: '700' },
   infoValue: { fontSize: 16, fontWeight: '600', marginTop: 4 },
 
   rejectionCard: { padding: 16, borderRadius: 12, borderWidth: 1, marginBottom: 24 },
   rejectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
-  rejectionTitle: { fontWeight: 'bold', fontSize: 16 },
+  rejectionTitle: { fontWeight: '700', fontSize: 16 },
   rejectionReason: { fontWeight: '600', marginBottom: 4 },
-  rejectionText: { fontSize: 13 },
+  rejectionText: { fontSize: 14 },
 
   form: { paddingBottom: 40 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 24 },
-  sectionTitle: { fontSize: 16, fontWeight: 'bold' },
+  sectionTitle: { fontSize: 16, fontWeight: '700' },
   sectionSubtitle: { fontSize: 12, marginTop: 4, marginBottom: 12 },
 
   pickerTrigger: {
@@ -875,19 +869,19 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     gap: 4,
   },
-  addBtnText: { color: '#000', fontWeight: 'bold', fontSize: 13 },
+  addBtnText: { color: '#000', fontWeight: '700', fontSize: 14 },
 
   docList: { gap: 12 },
   emptyDocs: { height: 100, borderStyle: 'dashed', borderWidth: 1, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   docItem: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 12, borderWidth: 1 },
   docInfo: { flex: 1, marginLeft: 12 },
   docName: { fontWeight: '600', fontSize: 14 },
-  docType: { fontSize: 11, marginTop: 2 },
+  docType: { fontSize: 12, marginTop: 2 },
 
   planContainer: { padding: 20, alignItems: 'center' },
   planHeader: { alignItems: 'center', marginBottom: 32 },
-  planTitle: { fontSize: 24, fontWeight: 'bold', marginTop: 12 },
-  planSubtitle: { fontSize: 15, textAlign: 'center', marginTop: 8, lineHeight: 22 },
+  planTitle: { fontSize: 24, fontWeight: '700', marginTop: 12 },
+  planSubtitle: { fontSize: 16, textAlign: 'center', marginTop: 8, lineHeight: 22 },
   
   planGrid: { width: '100%', marginBottom: 32 },
   planCard: {
@@ -904,9 +898,9 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderBottomLeftRadius: 12,
   },
-  popularText: { color: '#000', fontWeight: 'bold', fontSize: 10 },
-  planLabel: { fontSize: 18, fontWeight: 'bold' },
-  planPrice: { fontSize: 32, fontWeight: 'bold', marginVertical: 8 },
+  popularText: { color: '#000', fontWeight: '700', fontSize: 10 },
+  planLabel: { fontSize: 18, fontWeight: '700' },
+  planPrice: { fontSize: 32, fontWeight: '700', marginVertical: 8 },
   planDesc: { fontSize: 14, lineHeight: 20 },
 
   planFooter: { width: '100%', alignItems: 'center' },
@@ -928,7 +922,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   sheetHeader: { marginBottom: 24 },
-  modalTitle: { fontSize: 20, fontWeight: 'bold' },
+  modalTitle: { fontSize: 20, fontWeight: '700' },
   modalSubtitle: { fontSize: 14, marginTop: 4 },
 
   docTypeGrid: { gap: 12, marginBottom: 24 },

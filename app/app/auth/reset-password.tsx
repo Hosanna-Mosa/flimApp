@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
     View,
-    Text,
     StyleSheet,
     ScrollView,
     KeyboardAvoidingView,
@@ -12,6 +11,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 import Input from '@/components/Input';
 import Button from '@/components/Button';
+import AppText from '@/components/AppText';
 import api from '@/utils/api';
 
 export default function ResetPasswordScreen() {
@@ -62,10 +62,10 @@ export default function ResetPasswordScreen() {
                 showsVerticalScrollIndicator={false}
             >
                 <View style={styles.header}>
-                    <Text style={[styles.title, { color: colors.text }]}>Reset Password</Text>
-                    <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+                    <AppText variant="h2" style={styles.title}>Reset Password</AppText>
+                    <AppText variant="bodyLarge" secondary>
                         Enter the OTP sent to {email} and your new password.
-                    </Text>
+                    </AppText>
                 </View>
 
                 <View style={styles.form}>
@@ -88,7 +88,7 @@ export default function ResetPasswordScreen() {
                         editable={!loading}
                     />
 
-                    <Text style={{ color: colors.error, textAlign: 'center' }}>{error}</Text>
+                    {!!error && <AppText variant="body" color={colors.error} align="center">{error}</AppText>}
 
                     <Button
                         title="Reset Password"
@@ -116,12 +116,7 @@ const styles = StyleSheet.create({
         marginBottom: 40,
     },
     title: {
-        fontSize: 28,
-        fontWeight: '700',
         marginBottom: 8,
-    },
-    subtitle: {
-        fontSize: 16,
     },
     form: {
         gap: 16,

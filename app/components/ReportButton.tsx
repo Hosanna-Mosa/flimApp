@@ -55,7 +55,6 @@ export const ReportButton: React.FC<ReportButtonProps> = ({ type, id, color, siz
               await reportContent(type, id);
               Alert.alert('Thank you', 'Your report has been submitted for review.');
             } catch (error) {
-              console.log('Report failed:', error);
             }
           },
         },
@@ -77,7 +76,6 @@ export const ReportButton: React.FC<ReportButtonProps> = ({ type, id, color, siz
               await blockUser(id);
               Alert.alert('User Blocked', 'You will no longer see content from this user.');
             } catch (error) {
-              console.log('Block failed:', error);
             }
           },
         },
@@ -98,7 +96,6 @@ export const ReportButton: React.FC<ReportButtonProps> = ({ type, id, color, siz
               await unblockUser(id);
               Alert.alert('User Unblocked', 'You can now see content from this user.');
             } catch (error) {
-              console.log('Unblock failed:', error);
             }
           },
         },

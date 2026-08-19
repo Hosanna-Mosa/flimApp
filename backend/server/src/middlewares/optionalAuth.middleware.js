@@ -23,7 +23,6 @@ module.exports = async (req, res, next) => {
         }
     } catch (err) {
         // Invalid token, but we don't fail - just continue without user
-        console.log('Optional auth: Invalid token, continuing without user');
     }
 
     return next();

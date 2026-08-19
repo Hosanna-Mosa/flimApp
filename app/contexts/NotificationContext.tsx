@@ -33,13 +33,11 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         }
       }
     } catch (error) {
-      // console.error('[NotificationContext] Failed to fetch unread count:', error);
     }
   };
 
   const incrementUnreadCount = () => {
     setUnreadCount((prev) => {
-      // console.log('[NotificationContext] Incrementing unread count:', prev + 1);
       return prev + 1;
     });
   };
@@ -67,7 +65,6 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     if (!socket) return;
 
     const handleNewNotification = (data: any) => {
-      // console.log('[NotificationContext] Received new notification:', data);
       incrementUnreadCount();
     };
 

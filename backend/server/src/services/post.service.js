@@ -197,10 +197,8 @@ const getPostById = async (postId, userId = null) => {
       // Note: Like model doesn't have isActive field
     });
     post.isLiked = !!like;
-    console.log(`[PostService] getPostById - userId: ${userId}, postId: ${postId}, isLiked: ${post.isLiked}, likeFound: ${!!like}`);
   } else {
     post.isLiked = false;
-    console.log(`[PostService] getPostById - No userId provided, setting isLiked to false`);
   }
 
   return post;

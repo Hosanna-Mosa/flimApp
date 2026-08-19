@@ -124,7 +124,6 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
     };
 
     const onAppShutdown = (data: any) => {
-      console.log('[Socket] Received app_shutdown event:', data);
       DeviceEventEmitter.emit('app_shutdown', data);
     };
 

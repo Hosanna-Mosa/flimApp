@@ -154,12 +154,10 @@ const approve = async (req, res, next) => {
 
     // Update user
     const user = await User.findById(userId);
-    console.log(`[Admin Verification] Approving user: ${userId}, found: ${!!user}`);
     
     if (user) {
       user.verificationStatus = 'approved_docs';
       // user.isVerified remains false until payment
-      console.log(`[Admin Verification] Updating user ${userId} status to approved_docs`);
       await user.save();
     } else {
       console.error(`[Admin Verification] User not found: ${userId}`);
@@ -210,12 +208,10 @@ const reject = async (req, res, next) => {
 
     // Update user
     const user = await User.findById(userId);
-    console.log(`[Admin Verification] Rejecting user: ${userId}, found: ${!!user}`);
     
     if (user) {
       user.verificationStatus = 'rejected';
       user.isVerified = false;
-      console.log(`[Admin Verification] Updating user ${userId} status to rejected`);
       await user.save();
     } else {
       console.error(`[Admin Verification] User not found: ${userId}`);

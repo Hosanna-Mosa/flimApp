@@ -52,7 +52,6 @@ const getConversation = async (userId, peerId) => {
     ? new mongoose.Types.ObjectId(peerId) 
     : peerId;
   
-  console.log(`[MessageService] getConversation: userId=${userObjectId}, peerId=${peerObjectId}`);
   
   const messages = await Message.find({
     $or: [
@@ -64,7 +63,6 @@ const getConversation = async (userId, peerId) => {
     .populate('recipient', 'name avatar isVerified')
     .sort({ createdAt: 1 });
   
-  console.log(`[MessageService] Found ${messages.length} messages`);
 
   for (const message of messages) {
     if (message && message.content) {
@@ -175,12 +173,10 @@ const getUnreadCount = async (userId) => {
 };
 
 const markConversationAsRead = async (userId, senderId) => {
-  console.log(`[MessageService] Marking Read: Recipient(Me)=${userId}, Sender(Them)=${senderId}`);
   const result = await Message.updateMany(
     { recipient: userId, sender: senderId, isRead: { $ne: true } },
     { isRead: true, readAt: new Date(), status: 'read' }
   );
-  console.log(`[MessageService] Mark Read Result: matched=${result.matchedCount}, modified=${result.modifiedCount}`);
   return result;
 };
 
@@ -194,7 +190,6 @@ const markMessageAsDelivered = async (messageId) => {
 
 const countMessagesBetween = async (user1, user2) => {
   try {
-    console.log(`[MessageService] Counting messages between: '${user1}' and '${user2}'`);
     const u1 = new mongoose.Types.ObjectId(user1);
     const u2 = new mongoose.Types.ObjectId(user2);
 
@@ -204,7 +199,6 @@ const countMessagesBetween = async (user1, user2) => {
         { sender: u2, recipient: u1 },
       ],
     });
-    console.log(`[MessageService] Count Result: ${count}`);
     return count;
   } catch (e) {
     console.error('[MessageService] countMessagesBetween Error:', e);

@@ -142,7 +142,7 @@ export default function SavedPostsScreen() {
         options={{
           headerShown: true,
           headerTitle: 'Saved Posts',
-          headerTitleStyle: { fontWeight: 'bold' },
+          headerTitleStyle: { fontWeight: '700' },
           headerStyle: { backgroundColor: colors.background },
           headerTintColor: colors.text,
           headerShadowVisible: false,

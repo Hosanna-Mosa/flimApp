@@ -111,16 +111,13 @@ export default function ProfileScreen() {
     try {
       if (showLoading) setLoading(true);
 
-      // console.log('[Profile] Loading data for user:', userId);
 
       // Fetch user data and posts
       const [userData, postsData] = await Promise.all([
         api.user(userId, token).catch(err => {
-          // console.error('[Profile] Error fetching user:', err);
           return null;
         }),
         api.getUserFeed(userId, 0, 100, token).catch(err => {
-          // console.error('[Profile] Error fetching posts:', err);
           return { data: [] };
         }),
       ]);
@@ -285,7 +282,7 @@ export default function ProfileScreen() {
                   </Text>
                 </View>
               )}
-              {user.experience && user.experience > 0 && (
+              {user.experience > 0 && (
                 <View style={styles.infoRow}>
                   <Briefcase size={16} color={colors.textSecondary} />
                   <Text

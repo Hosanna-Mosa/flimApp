@@ -41,7 +41,6 @@ const getUnreadCount = async (req, res, next) => {
 
 const markAsRead = async (req, res, next) => {
   try {
-    console.log(`[MessageController] markAsRead called. User=${req.user.id}, TargetSender=${req.params.userId}`);
     // Current user is reading messages FROM req.params.userId (sender)
     await messageService.markConversationAsRead(req.user.id, req.params.userId);
 

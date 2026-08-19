@@ -70,7 +70,7 @@ export default function TermsAndConditionsScreen() {
           - **Report Content:** Tap the three dots option menu on any post or comment to report it for review. All reports are investigated within 24 hours.
         </Text>
         <Text style={[styles.bullet, { color: colors.textSecondary }]}>
-          - **Block Abusive Users:** Tap the three dots option menu on any user's profile to block them. Once blocked, you will no longer see any of their posts or be able to chat with them.
+          - **Block Abusive Users:** Tap the three dots option menu on any user&apos;s profile to block them. Once blocked, you will no longer see any of their posts or be able to chat with them.
         </Text>
 
         <Text style={[styles.sectionTitle, { color: colors.text }]}>5. Service Availability</Text>

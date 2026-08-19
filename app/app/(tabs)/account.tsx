@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
@@ -20,6 +19,7 @@ import {
 } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
+import AppText from '@/components/AppText';
 
 export default function AccountScreen() {
   const router = useRouter();
@@ -121,17 +121,12 @@ export default function AccountScreen() {
                   <Icon size={24} color={colors.primary} />
                 </View>
                 <View style={styles.menuContent}>
-                  <Text style={[styles.menuLabel, { color: colors.text }]}>
+                  <AppText variant="bodyLargeSemibold">
                     {item.label}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.menuSubtitle,
-                      { color: colors.textSecondary },
-                    ]}
-                  >
+                  </AppText>
+                  <AppText variant="caption" secondary style={styles.menuSubtitle}>
                     {item.subtitle}
-                  </Text>
+                  </AppText>
                 </View>
               </TouchableOpacity>
             );
@@ -148,15 +143,15 @@ export default function AccountScreen() {
             onPress={handleLogout}
           >
             <LogOut size={20} color={colors.error} />
-            <Text style={[styles.logoutText, { color: colors.error }]}>
+            <AppText variant="bodyLargeSemibold" color={colors.error}>
               Logout
-            </Text>
+            </AppText>
           </TouchableOpacity>
         </View>
 
-        <Text style={[styles.version, { color: colors.textSecondary }]}>
+        <AppText variant="caption" secondary align="center" style={styles.version}>
           Version 1.0.0
-        </Text>
+        </AppText>
       </ScrollView>
     </>
   );
@@ -188,12 +183,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 16,
   },
-  menuLabel: {
-    fontSize: 16,
-    fontWeight: '600' as const,
-  },
   menuSubtitle: {
-    fontSize: 12,
     marginTop: 2,
   },
   logoutButton: {
@@ -205,13 +195,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     gap: 8,
   },
-  logoutText: {
-    fontSize: 16,
-    fontWeight: '600' as const,
-  },
   version: {
-    textAlign: 'center',
-    fontSize: 12,
     paddingBottom: 40,
   },
 });
