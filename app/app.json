@@ -27,6 +27,8 @@
     "android": {
       "package": "app.rork.filmy",
       "googleServicesFile": "./google-services.json",
+      "allowBackup": false,
+      "usesCleartextTraffic": false,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon_new.jpeg",
         "backgroundColor": "#000000"

@@ -148,6 +148,21 @@ class MediaService {
    * @param {string} resourceType - Resource type (image|video|raw)
    * @returns {Promise<Object>} Deletion result
    */
+  /**
+   * Check that a Cloudinary publicId lives inside the caller's own folder.
+   * Uploads are signed into `<type>/<userId>/...`, so ownership is the
+   * second path segment.
+   */
+  static isOwnedBy(publicId, userId) {
+    if (!publicId || !userId) return false;
+    const segments = String(publicId).split('/');
+    if (segments.length < 2) return false;
+    return (
+      Object.values(this.FOLDERS).includes(segments[0]) &&
+      segments[1] === String(userId)
+    );
+  }
+
   static async deleteMedia(publicId, resourceType = 'image') {
     try {
       const result = await cloudinary.uploader.destroy(publicId, {

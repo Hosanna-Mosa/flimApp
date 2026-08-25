@@ -61,6 +61,12 @@ class MediaController {
         return error(res, 'Public ID is required', 400);
       }
 
+      // Without this, any authenticated user could delete any other user's
+      // media by passing their publicId.
+      if (!MediaService.isOwnedBy(publicId, req.user.id)) {
+        return error(res, 'Forbidden', 403);
+      }
+
       const result = await MediaService.deleteMedia(
         publicId,
         resourceType || 'image'

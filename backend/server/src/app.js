@@ -25,6 +25,8 @@ const verificationRoutes = require('./routes/verification.routes');
 const supportRoutes = require('./routes/support.routes');
 const subscriptionRoutes = require('./routes/subscription.routes');
 const walletRoutes = require('./routes/wallet.routes');
+const paymentRoutes = require('./routes/payment.routes');
+const paymentController = require('./controllers/payment.controller');
 const moderationRoutes = require('./routes/moderation.routes');
 
 const mongoSanitize = require('express-mongo-sanitize');
@@ -58,6 +60,15 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+// Razorpay signs the exact bytes of the webhook body, so this has to be
+// mounted ahead of express.json() — once JSON is parsed the raw payload is
+// gone and the HMAC can no longer be reproduced.
+app.post(
+  '/payments/webhook',
+  express.raw({ type: '*/*', limit: '1mb' }),
+  paymentController.handleWebhook
+);
+
 app.use(express.json({ limit: '10mb' }));
 app.use(
   rateLimit({
@@ -96,6 +107,7 @@ app.use('/verification', verificationRoutes);
 app.use('/support', supportRoutes);
 app.use('/subscriptions', subscriptionRoutes);
 app.use('/wallet', walletRoutes);
+app.use('/payments', paymentRoutes);
 app.use('/', moderationRoutes);
 
 app.use((req, res) => res.status(404).json({ success: false, message: 'Not found' }));

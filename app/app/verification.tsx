@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -13,27 +13,12 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-// --- PAYMENT IMPORTS ---
-// 1. Razorpay (Android)
-let RazorpayCheckoutNative: any = null;
-if (Platform.OS === 'android') {
-  try {
-    RazorpayCheckoutNative = require('react-native-razorpay').default;
-  } catch (e) {
-  }
-}
-
-// 2. Apple IAP (iOS) - Commented out per requirements
-let IAP: any = null;
-/*
-if (Platform.OS === 'ios') {
-  try {
-    IAP = require('react-native-iap');
-  } catch (e) {
-  }
-}
-*/
-// -----------------------
+// --- PAYMENTS ---
+// Razorpay *web* checkout is the single payment path on both iOS and Android:
+// the app opens Razorpay's hosted page in the system browser, the user pays
+// there, and the browser deep-links back. No native payment SDK is bundled and
+// no in-app WebView is used. See utils/payments.ts for why.
+// ----------------
 
 import { Stack, useRouter, useFocusEffect } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
@@ -59,17 +44,9 @@ import Input from '@/components/Input';
 import Button from '@/components/Button';
 import { uploadMediaToCloudinary } from '@/utils/media';
 import api from '@/utils/api';
-// Razorpay component - dynamically loaded to avoid inclusion in iOS JS bundle
-let RazorpayCheckout: React.ComponentType<any> | null = null;
-if (Platform.OS !== 'ios') {
-  try {
-    const RazorpayModule = require('@/components/RazorpayCheckout');
-    RazorpayCheckout = RazorpayModule.default || RazorpayModule;
-  } catch (e) {
-  }
-}
+import { startRazorpayWebCheckout } from '@/utils/payments';
 
-const IOS_PRODUCT_ID = 'com.filmyconnect.account.verification';
+const VERIFICATION_PLAN = '1_MONTH';
 
 const VERIFICATION_TYPES = [
   { label: 'Content Creator', value: 'CREATOR' },
@@ -108,13 +85,8 @@ export default function VerificationScreen() {
   const [status, setStatus] = useState<'LOADING' | 'NONE' | 'PENDING_DOCS' | 'APPROVED_DOCS' | 'ACTIVE' | 'REJECTED'>('LOADING');
   const [requestData, setRequestData] = useState<any>(null);
 
-  // Payment States
+  // Payment State
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [iapProduct, setIapProduct] = useState<any>(null);
-  
-  // Razorpay Specific States
-  const [razorpayModalVisible, setRazorpayModalVisible] = useState(false);
-  const [razorpayOptions, setRazorpayOptions] = useState<any>(null);
 
   // Form State
   const [verificationType, setVerificationType] = useState('CREATOR');
@@ -128,56 +100,6 @@ export default function VerificationScreen() {
   const [showDocTypePicker, setShowDocTypePicker] = useState(false);
   const [tempDocName, setTempDocName] = useState('');
   const [tempDocType, setTempDocType] = useState('ID_DOCUMENT');
-
-  // --- iOS IAP Setup - Commented out per requirements ---
-  /*
-  useEffect(() => {
-    if (Platform.OS !== 'ios' || !IAP) return;
-
-    let purchaseUpdateSubscription: any;
-    let purchaseErrorSubscription: any;
-
-    const setupIAP = async () => {
-      try {
-        await IAP.initConnection();
-        
-        purchaseUpdateSubscription = IAP.purchaseUpdatedListener(async (purchase: any) => {
-          const receipt = purchase.transactionReceipt;
-          if (receipt) {
-            try {
-              await handleIAPPurchaseSuccess(purchase);
-            } catch (err) {
-              console.error('[IAP] handleIAPPurchaseSuccess failed:', err);
-            }
-          }
-        });
-
-        purchaseErrorSubscription = IAP.purchaseErrorListener((error: any) => {
-          console.warn('[IAP] Purchase error:', error);
-          if (error.code !== 'E_USER_CANCELLED') {
-            Alert.alert('Purchase Failed', error.message || 'An error occurred during the purchase.');
-          }
-          setIsProcessingPayment(false);
-        });
-
-        const products = await IAP.getProducts({ skus: [IOS_PRODUCT_ID] });
-        if (products && products.length > 0) {
-          setIapProduct(products[0]);
-        }
-      } catch (error) {
-        console.error('[IAP] Setup failed:', error);
-      }
-    };
-
-    setupIAP();
-
-    return () => {
-      if (purchaseUpdateSubscription) purchaseUpdateSubscription.remove();
-      if (purchaseErrorSubscription) purchaseErrorSubscription.remove();
-      try { IAP.endConnection(); } catch (e) {}
-    };
-  }, []);
-  */
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -219,157 +141,55 @@ export default function VerificationScreen() {
     }, [fetchStatus])
   );
 
-  // --- Main Payment Handler ---
+  // --- Payment Handler (Razorpay web checkout, iOS + Android) ---
+  //
+  // Everything happens in the system browser: this only kicks the flow off and
+  // then reacts to the server-confirmed outcome that comes back.
   const handlePayment = async () => {
-    if (Platform.OS === 'android') {
-      await handleRazorpayPayment();
-    } else if (Platform.OS === 'ios') {
-      Alert.alert('In-App Purchases Disabled', 'iOS payments are currently unavailable.');
-    }
-  };
+    if (isProcessingPayment) return;
 
-  // --- Android Razorpay Logic ---
-  const handleRazorpayPayment = async () => {
     try {
       setIsProcessingPayment(true);
-      const planId = '1_MONTH'; // Standard plan
-      
-      // Step 1: Create Order on Backend
-      const order = await api.apiCreateSubscriptionOrder(planId, token || undefined);
-      if (!order || !order.orderId) {
-        throw new Error('Invalid order response from server');
+
+      const outcome = await startRazorpayWebCheckout({
+        token: token || '',
+        purpose: 'SUBSCRIPTION',
+        planType: VERIFICATION_PLAN,
+        themeColor: colors.primary,
+      });
+
+      if (outcome.status === 'success') {
+        await refreshUser();
+        await fetchStatus();
+        Alert.alert('Payment Successful', 'Your verification badge is now active.');
+        return;
       }
 
-      // Step 2: Prepare options for checkout
-      const options = {
-        key: order.keyId,
-        order_id: order.orderId,
-        amount: order.amount,
-        currency: order.currency || 'INR',
-        name: 'FilmyConnect',
-        description: `Verification Badge - ${planId}`,
-        prefill: {
-          email: user?.email || '',
-          contact: user?.phone || '',
-          name: user?.name || ''
-        },
-        theme: { color: colors.primary },
-        retry: { enabled: true, max_count: 3 },
-      };
-
-      if (RazorpayCheckoutNative) {
-        RazorpayCheckoutNative.open(options)
-          .then((data: any) => {
-            handleRazorpaySuccess({ ...data, razorpay_order_id: order.orderId });
-          })
-          .catch((error: any) => {
-            handleRazorpayFailure(error);
-          })
-          .finally(() => {
-            setIsProcessingPayment(false);
-          });
-      } else {
-        setRazorpayOptions(options);
-        setRazorpayModalVisible(true);
-        setIsProcessingPayment(false);
+      if (outcome.status === 'pending') {
+        // Captured but not yet confirmed to us (webhook still in flight, or the
+        // browser was closed before the redirect). Re-reading status is the
+        // right move, not re-charging.
+        await fetchStatus();
+        Alert.alert(
+          'Payment Processing',
+          'We are still confirming your payment with the bank. Your badge will activate automatically once it clears — pull to refresh in a minute.'
+        );
+        return;
       }
+
+      if (outcome.status === 'cancelled') {
+        // Silent: the user closed the payment page on purpose.
+        return;
+      }
+
+      Alert.alert('Payment Failed', outcome.reason || 'Transaction could not be completed.');
     } catch (error: any) {
-      console.error('[Razorpay] Initiation failed:', error);
-      Alert.alert('Payment Error', error.message || 'Failed to initiate payment');
-      setIsProcessingPayment(false);
-    }
-  };
-
-  const handleRazorpaySuccess = async (response: any) => {
-    try {
-      setIsProcessingPayment(true);
-      setRazorpayModalVisible(false);
-      await api.apiVerifySubscriptionPayment({
-        razorpay_order_id: response.razorpay_order_id,
-        razorpay_payment_id: response.razorpay_payment_id,
-        razorpay_signature: response.razorpay_signature
-      }, token || undefined);
-
-      Alert.alert('Success', 'Verification badge activated successfully!');
-      fetchStatus();
-      await refreshUser();
-    } catch (e: any) {
-      console.error('[Razorpay] Verification failed:', e);
-      Alert.alert('Error', e.message || 'Payment verification failed');
+      console.error('[Payments] Checkout failed:', error);
+      Alert.alert('Payment Error', error?.message || 'Failed to start payment. Please try again.');
     } finally {
       setIsProcessingPayment(false);
     }
   };
-
-  const handleRazorpayFailure = (error: any) => {
-    setRazorpayModalVisible(false);
-    Alert.alert('Payment Failed', error.description || 'Transaction could not be completed');
-  };
-
-  // --- iOS Apple IAP Logic - Commented out per requirements ---
-  /*
-  const handleAppleIAP = async () => {
-    if (!IAP) {
-      Alert.alert(
-        'Feature Unavailable',
-        'In-App Purchases are not available in Expo Go. Please use a Development Build (npx expo run:ios) to test this feature.'
-      );
-      return;
-    }
-
-    try {
-      setIsProcessingPayment(true);
-      await IAP.requestPurchase({ sku: IOS_PRODUCT_ID });
-    } catch (error: any) {
-      console.error('[IAP] Purchase request failed:', error);
-      if (error.code !== 'E_USER_CANCELLED') {
-        Alert.alert('Error', error.message || 'Failed to initiate purchase');
-      }
-      setIsProcessingPayment(false);
-    }
-  };
-
-  const handleIAPPurchaseSuccess = async (purchase: any) => {
-    try {
-      const transactionId = purchase.transactionId;
-      await api.verifyBadge(transactionId!, token || undefined);
-      await IAP.finishTransaction({ purchase, isConsumable: true });
-
-      Alert.alert('Success', 'Verification badge activated successfully!');
-      fetchStatus();
-      await refreshUser();
-    } catch (error: any) {
-      console.error('[IAP] Backend verification failed:', error);
-      Alert.alert('Error', error.message || 'Payment verification failed. Please contact support.');
-    } finally {
-      setIsProcessingPayment(false);
-    }
-  };
-
-  const handleRestorePurchases = async () => {
-    if (!IAP) return;
-    try {
-      setIsProcessingPayment(true);
-      const purchases = await IAP.getAvailablePurchases();
-      if (purchases.length > 0) {
-        const hasVerification = purchases.find((p: any) => p.productId === IOS_PRODUCT_ID);
-        if (hasVerification) {
-          Alert.alert('Restore', 'Previous purchase found. Verifying with backend...');
-          await handleIAPPurchaseSuccess(hasVerification);
-        } else {
-          Alert.alert('Restore', 'No previous verification purchase found.');
-        }
-      } else {
-        Alert.alert('Restore', 'No previous purchases found.');
-      }
-      setIsProcessingPayment(false);
-    } catch (error) {
-      console.error('[IAP] Restore failed:', error);
-      Alert.alert('Error', 'Failed to restore purchases.');
-      setIsProcessingPayment(false);
-    }
-  };
-  */
 
   const handleAddDocument = async () => {
     try {
@@ -498,48 +318,44 @@ export default function VerificationScreen() {
             <Text style={[styles.planSubtitle, { color: colors.textSecondary }]}>
               Your documents have been approved. Activate your verification badge to stand out.
             </Text>
-          </View>          {/* Payment plan card hidden on iOS per requirements */}
-          {Platform.OS !== 'ios' && (
-            <View style={styles.planGrid}>
-              <TouchableOpacity
-                style={[
-                  styles.planCard,
-                  { backgroundColor: colors.card, borderColor: colors.primary, borderWidth: 2 }
-                ]}
-                activeOpacity={0.8}
-              >
-                <View style={[styles.popularBadge, { backgroundColor: colors.primary }]}>
-                  <Text style={styles.popularText}>1 Month</Text>
-                </View>
-                <Text style={[styles.planLabel, { color: colors.text }]}>Verification Badge</Text>
-                <Text style={[styles.planPrice, { color: colors.text }]}>
-                  ₹149
-                </Text>
-                <Text style={[styles.planDesc, { color: colors.textSecondary }]}>
-                  Get a blue checkmark on your profile and stand out in the community.
-                </Text>
-              </TouchableOpacity>
-            </View>
-          )
-}
+          </View>
 
-          {/* Payment footer hidden on iOS per requirements */}
-          {Platform.OS !== 'ios' && (
-            <View style={styles.planFooter}>
-              <Button
-                title={isProcessingPayment ? "Processing..." : "Pay Now with Razorpay"}
-                onPress={handlePayment}
-                disabled={isProcessingPayment}
-                loading={isProcessingPayment}
-                size="large"
-              />
-              
-              <Text style={[styles.secureText, { color: colors.textSecondary, marginTop: 20 }]}>
-                Secure payment via Razorpay. Badge activated instantly.
+          {/* Razorpay web checkout runs on both platforms, so no iOS gate here. */}
+          <View style={styles.planGrid}>
+            <TouchableOpacity
+              style={[
+                styles.planCard,
+                { backgroundColor: colors.card, borderColor: colors.primary, borderWidth: 2 }
+              ]}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.popularBadge, { backgroundColor: colors.primary }]}>
+                <Text style={styles.popularText}>1 Month</Text>
+              </View>
+              <Text style={[styles.planLabel, { color: colors.text }]}>Verification Badge</Text>
+              <Text style={[styles.planPrice, { color: colors.text }]}>
+                ₹149
               </Text>
-            </View>
-          )
-}
+              <Text style={[styles.planDesc, { color: colors.textSecondary }]}>
+                Get a blue checkmark on your profile and stand out in the community.
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.planFooter}>
+            <Button
+              title={isProcessingPayment ? 'Processing...' : 'Pay Now with Razorpay'}
+              onPress={handlePayment}
+              disabled={isProcessingPayment}
+              loading={isProcessingPayment}
+              size="large"
+            />
+
+            <Text style={[styles.secureText, { color: colors.textSecondary, marginTop: 20 }]}>
+              You&apos;ll be taken to Razorpay&apos;s secure page in your browser, then returned
+              here automatically.
+            </Text>
+          </View>
         </ScrollView>
       );
     }
@@ -810,16 +626,6 @@ export default function VerificationScreen() {
         </View>
       </Modal>
 
-      {/* Razorpay Component (Android only - dynamically loaded, excluded from iOS bundle) */}
-      {Platform.OS !== 'ios' && RazorpayCheckout && (
-        <RazorpayCheckout
-          visible={razorpayModalVisible}
-          options={razorpayOptions}
-          onSuccess={handleRazorpaySuccess}
-          onFailure={handleRazorpayFailure}
-          onClose={() => setRazorpayModalVisible(false)}
-        />
-      )}
     </View>
   );
 }

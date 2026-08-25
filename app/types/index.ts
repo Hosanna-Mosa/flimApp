@@ -59,6 +59,9 @@ export interface User {
   verifiedUntil?: string;
   isFollowing?: boolean;
   isBoosted?: boolean;
+  boostedUntil?: string;
+  /** Rupees. Returned by /users/me; funds boosts and is topped up via Razorpay. */
+  walletBalance?: number;
 }
 
 export interface Post {

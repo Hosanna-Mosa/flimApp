@@ -22,10 +22,10 @@ router.post(
 );
 
 // Get comments for post
-router.get('/posts/:id/comments', commentController.getPostComments); // Public
+router.get('/posts/:id/comments', auth, commentController.getPostComments);
 
 // Get replies for comment
-router.get('/comments/:id/replies', commentController.getCommentReplies); // Public
+router.get('/comments/:id/replies', auth, commentController.getCommentReplies);
 
 // Edit comment
 router.put(
@@ -48,6 +48,6 @@ router.delete('/comments/:id', auth, commentController.deleteComment);
 router.post('/comments/:id/like', auth, commentController.likeComment);
 
 // Get user's comments
-router.get('/users/:id/comments', commentController.getUserComments); // Public
+router.get('/users/:id/comments', auth, commentController.getUserComments);
 
 module.exports = router;

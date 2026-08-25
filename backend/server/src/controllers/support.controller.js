@@ -47,9 +47,27 @@ const createSupportRequest = async (req, res, next) => {
                 // For now, let's assume if it fails we don't block the support request but log it.
             }
         } else if (imageUrl) {
-            // Already a URL
-            attachmentPath = imageUrl;
+            // Only accept https URLs on our own Cloudinary account. nodemailer's
+            // `path` also resolves LOCAL FILESYSTEM paths, so an unvalidated
+            // value here would let a caller mail themselves server files.
+            const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+            const allowedPrefix = `https://res.cloudinary.com/${cloudName}/`;
+            if (typeof imageUrl === 'string' && imageUrl.startsWith(allowedPrefix)) {
+                finalImageUrl = imageUrl;
+                attachmentPath = imageUrl;
+            } else {
+                return res.status(400).json({ message: 'Invalid image URL' });
+            }
         }
+
+        // Escape anything user-controlled before it goes into the HTML email.
+        const escapeHtml = (value) =>
+            String(value == null ? '' : value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
 
         const newSupportRequest = new Support({
             userId: user.id,
@@ -60,7 +78,7 @@ const createSupportRequest = async (req, res, next) => {
         await newSupportRequest.save();
 
         // Send Email to Admin
-        const adminEmail = 'hosannamosa4190@gmail.com';
+        const adminEmail = process.env.SUPPORT_ADMIN_EMAIL || process.env.SMTP_USER;
         const subject = `New Support Request from ${user.name}`;
         const text = `
 User: ${user.name} (${user.email})
@@ -73,11 +91,11 @@ ${attachmentPath ? `Image Attached. Download here: ${attachmentPath}` : 'No imag
         let html = `
 <div style="font-family: sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
     <h2 style="color: #333;">New Support Request</h2>
-    <p><strong>User:</strong> ${user.name} (<a href="mailto:${user.email}">${user.email}</a>)</p>
-    <p><strong>User ID:</strong> ${user.id}</p>
+    <p><strong>User:</strong> ${escapeHtml(user.name)} (<a href="mailto:${escapeHtml(user.email)}">${escapeHtml(user.email)}</a>)</p>
+    <p><strong>User ID:</strong> ${escapeHtml(user.id)}</p>
     <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
     <p><strong>Reason:</strong></p>
-    <p style="background-color: #f9f9f9; padding: 15px; border-radius: 4px;">${reason}</p>
+    <p style="background-color: #f9f9f9; padding: 15px; border-radius: 4px;">${escapeHtml(reason)}</p>
     <p><strong>Date:</strong> ${new Date().toLocaleString()}</p>
 `;
 
@@ -95,7 +113,7 @@ ${attachmentPath ? `Image Attached. Download here: ${attachmentPath}` : 'No imag
             });
 
             // 2. Add download link in HTML
-            html += `<p><strong>Attachment:</strong> <a href="${attachmentPath}" download style="color: #007bff; text-decoration: none;">Download Image</a></p>`;
+            html += `<p><strong>Attachment:</strong> <a href="${escapeHtml(attachmentPath)}" download style="color: #007bff; text-decoration: none;">Download Image</a></p>`;
         }
 
         html += `</div>`;

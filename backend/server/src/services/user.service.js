@@ -10,7 +10,36 @@ const BOOST_PLAN_DETAILS = {
 
 const getMe = async (userId) => User.findById(userId).select('-password -refreshTokens');
 
-const updateMe = async (userId, payload) => {
+// Fields a user is permitted to change on their own profile.
+// Anything outside this list (walletBalance, isVerified, status, boostedUntil,
+// verifiedUntil, refreshTokens, ...) is dropped before it reaches the database.
+const SELF_EDITABLE_FIELDS = [
+  'name',
+  'username',
+  'email',
+  'phone',
+  'avatar',
+  'bio',
+  'roles',
+  'industries',
+  'experience',
+  'location',
+  'portfolio',
+  'accountType',
+  'privacy',
+];
+
+const pickSelfEditable = (payload = {}) =>
+  SELF_EDITABLE_FIELDS.reduce((acc, key) => {
+    if (Object.prototype.hasOwnProperty.call(payload, key)) acc[key] = payload[key];
+    return acc;
+  }, {});
+
+const updateMe = async (userId, rawPayload) => {
+  // Strip privileged fields. The validate middleware runs Joi with
+  // { allowUnknown: true }, so unknown keys survive validation and would
+  // otherwise be written straight through by findByIdAndUpdate.
+  const payload = pickSelfEditable(rawPayload);
   // Check for duplicate email if email is being updated
   if (payload.email) {
     const existingUser = await User.findOne({

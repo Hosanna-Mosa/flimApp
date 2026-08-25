@@ -12,7 +12,7 @@ router.get('/', auth, feedController.getPersonalizedFeed);
 router.get('/trending', auth, feedController.getTrendingFeed);
 
 // Get industry feed
-router.get('/industry/:industry', feedController.getIndustryFeed); // Public
+router.get('/industry/:industry', auth, feedController.getIndustryFeed);
 
 // Get user's posts (profile feed)
 router.get('/users/:id/posts', optionalAuth, feedController.getUserFeed); // Public with optional auth
