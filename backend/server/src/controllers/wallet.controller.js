@@ -3,9 +3,13 @@ const crypto = require('crypto');
 const User = require('../models/User.model');
 const Wallet = require('../models/Wallet.model');
 
+if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+  throw new Error('RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET must be set');
+}
+
 const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_Rbm66o8JPEj0P8',
-  key_secret: process.env.RAZORPAY_KEY_SECRET || 'fbze5Ra1MSS1ExDE5tlszK22',
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
 exports.getWallet = async (req, res) => {
@@ -50,7 +54,7 @@ exports.createOrder = async (req, res) => {
 
     res.status(200).json({
       ...order,
-      keyId: process.env.RAZORPAY_KEY_ID || 'rzp_test_Rbm66o8JPEj0P8'
+      keyId: process.env.RAZORPAY_KEY_ID
     });
   } catch (error) {
     console.error('Create order error details:', error);
@@ -61,21 +65,22 @@ exports.createOrder = async (req, res) => {
 
 exports.verifyPayment = async (req, res) => {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, amount } = req.body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.status(400).json({ message: 'Missing payment parameters' });
+    }
 
     const body = razorpay_order_id + '|' + razorpay_payment_id;
-    const isSimulated = razorpay_signature === 'simulated_success' && process.env.NODE_ENV === 'development';
-    
-    let isVerified = false;
-    if (isSimulated) {
-      isVerified = true;
-    } else {
-      const expectedSignature = crypto
-        .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
-        .update(body.toString())
-        .digest('hex');
-      isVerified = expectedSignature === razorpay_signature;
-    }
+    const expectedSignature = crypto
+      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+      .update(body.toString())
+      .digest('hex');
+
+    const sigBuf = Buffer.from(String(razorpay_signature));
+    const expBuf = Buffer.from(expectedSignature);
+    const isVerified =
+      sigBuf.length === expBuf.length && crypto.timingSafeEqual(sigBuf, expBuf);
 
     if (isVerified) {
       // Payment is verified
@@ -84,7 +89,22 @@ exports.verifyPayment = async (req, res) => {
         return res.status(404).json({ message: 'User not found' });
       }
 
-      const depositAmount = parseFloat(amount);
+      // Never trust a client-supplied amount: read what was actually captured.
+      const order = await razorpay.orders.fetch(razorpay_order_id);
+      if (!order || order.status !== 'paid') {
+        return res.status(400).json({ message: 'Payment not captured' });
+      }
+
+      // Replay guard: a payment id may only ever be credited once.
+      const existing = await Wallet.findOne({
+        user: req.user.id,
+        'transactions.reference': razorpay_payment_id,
+      });
+      if (existing) {
+        return res.status(409).json({ message: 'Payment already processed' });
+      }
+
+      const depositAmount = order.amount_paid / 100;
       user.walletBalance = (user.walletBalance || 0) + depositAmount;
       await user.save();
 
@@ -120,15 +140,24 @@ exports.verifyPayment = async (req, res) => {
 
 exports.withdraw = async (req, res) => {
   try {
-    const { amount } = req.body;
-    const user = await User.findById(req.user.id);
+    const amount = Number(req.body.amount);
 
-    if (!user || user.walletBalance < amount) {
-      return res.status(400).json({ message: 'Insufficient balance' });
+    // A negative or non-numeric amount would otherwise pass the balance check
+    // and *increase* the balance on subtraction.
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return res.status(400).json({ message: 'Invalid amount' });
     }
 
-    user.walletBalance -= amount;
-    await user.save();
+    // Atomic conditional deduction closes the concurrent-withdrawal race.
+    const user = await User.findOneAndUpdate(
+      { _id: req.user.id, walletBalance: { $gte: amount } },
+      { $inc: { walletBalance: -amount } },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(400).json({ message: 'Insufficient balance' });
+    }
 
     let wallet = await Wallet.findOne({ user: req.user.id });
     if (!wallet) {

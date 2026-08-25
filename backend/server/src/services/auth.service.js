@@ -8,7 +8,10 @@ const {
 } = require('../utils/token');
 const mailService = require('./mail.service');
 
-const checkAvailability = async ({ username, email, phone, password }) => {
+// NOTE: `password` is deliberately ignored here. This endpoint is
+// unauthenticated; comparing a submitted password against a stored hash and
+// reporting the result makes it a remote password-guessing oracle.
+const checkAvailability = async ({ username, email, phone }) => {
   const conflicts = new Set();
 
   // Check username
@@ -28,25 +31,6 @@ const checkAvailability = async ({ username, email, phone, password }) => {
   if (phone) {
     const user = await User.findOne({ phone });
     if (user) conflicts.add('phone');
-  }
-
-  // Check password - verify if email or phone already has this password
-  if (password) {
-    if (email) {
-      const normalizedEmail = email.trim().toLowerCase();
-      const user = await User.findOne({ email: normalizedEmail });
-      if (user && user.password) {
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (isMatch) conflicts.add('password');
-      }
-    }
-    if (phone) {
-      const user = await User.findOne({ phone });
-      if (user && user.password) {
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (isMatch) conflicts.add('password');
-      }
-    }
   }
 
   const conflictArray = Array.from(conflicts);
@@ -77,29 +61,6 @@ const register = async ({ name, username, phone, email, password, roles, industr
     const existingEmail = await User.findOne({ email: normalizedEmail });
     if (existingEmail) {
       conflictsSet.add('email');
-    }
-  }
-
-  // Check password - verify if email or phone already has this password
-  if (password) {
-    if (email) {
-      const normalizedEmail = email.trim().toLowerCase();
-      const user = await User.findOne({ email: normalizedEmail });
-      if (user && user.password) {
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (isMatch) {
-          conflictsSet.add('password');
-        }
-      }
-    }
-    if (phone) {
-      const user = await User.findOne({ phone });
-      if (user && user.password) {
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (isMatch) {
-          conflictsSet.add('password');
-        }
-      }
     }
   }
 
@@ -144,9 +105,6 @@ const register = async ({ name, username, phone, email, password, roles, industr
 };
 
 const loginWithPassword = async ({ phone, password }) => {
-
-  // Try to find all users to debug
-  const allUsers = await User.find({}).select('phone email name');
 
   const user = await User.findOne({ phone });
 

@@ -14,8 +14,8 @@ router.post('/follow-requests/:userId/accept', auth, followController.acceptFoll
 router.post('/follow-requests/:userId/reject', auth, followController.rejectFollowRequest);
 
 // Get followers/following
-router.get('/users/:id/followers', followController.getFollowers); // Public
-router.get('/users/:id/following', followController.getFollowing); // Public
+router.get('/users/:id/followers', auth, followController.getFollowers);
+router.get('/users/:id/following', auth, followController.getFollowing);
 
 // Check follow status
 router.get('/users/:id/following-status', auth, followController.isFollowing);

@@ -9,10 +9,10 @@ router.post('/posts/:id/like', auth, likeController.likePost);
 router.delete('/posts/:id/like', auth, likeController.unlikePost);
 
 // Get post likes
-router.get('/posts/:id/likes', likeController.getPostLikes); // Public
+router.get('/posts/:id/likes', auth, likeController.getPostLikes);
 
 // Get user's liked posts
-router.get('/users/:id/liked', likeController.getUserLikedPosts); // Public
+router.get('/users/:id/liked', auth, likeController.getUserLikedPosts);
 
 // Check if user liked a post
 router.get('/posts/:id/liked', auth, likeController.hasLiked);

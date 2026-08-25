@@ -5,10 +5,15 @@ const connectDB = require('../config/db');
 
 const seedAdmin = async () => {
     try {
-        const uri = "mongodb+srv://hosannaking2019_db_user:79ygmfZiPPfJRWnE@cluster0.tv8wnu0.mongodb.net/?appName=Cluster0";
-        await connectDB(uri);
+        await connectDB(process.env.MONGODB_URI);
 
-        const adminEmail = 'admin1@testing.com';
+        const adminEmail = process.env.ADMIN_EMAIL;
+        const adminPassword = process.env.ADMIN_PASSWORD;
+
+        if (!adminEmail || !adminPassword) {
+            console.error('Set ADMIN_EMAIL and ADMIN_PASSWORD before running this script.');
+            process.exit(1);
+        }
         const existingAdmin = await Admin.findOne({ email: adminEmail });
 
         if (existingAdmin) {
@@ -19,7 +24,7 @@ const seedAdmin = async () => {
         const admin = new Admin({
             name: 'Super Admin',
             email: adminEmail,
-            password: 'admin123', // You should change this in production
+            password: adminPassword,
             role: 'SUPER_ADMIN'
         });
 

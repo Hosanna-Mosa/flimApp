@@ -4,6 +4,7 @@ const rateLimit = require('express-rate-limit');
 const authController = require('../controllers/auth.controller');
 const validate = require('../middlewares/validate.middleware');
 const auth = require('../middlewares/auth.middleware');
+const { credentialLimiter } = require('../middlewares/rateLimiters');
 
 const router = express.Router();
 
@@ -97,6 +98,7 @@ router.post(
 
 router.post(
   '/forgot-password',
+  credentialLimiter,
   validate(
     Joi.object({
       body: Joi.object({
@@ -109,6 +111,7 @@ router.post(
 
 router.post(
   '/reset-password',
+  credentialLimiter,
   validate(
     Joi.object({
       body: Joi.object({
@@ -122,11 +125,13 @@ router.post(
 );
 router.get(
   '/check-availability',
+  credentialLimiter,
   authController.checkAvailability
 );
 
 router.post(
   '/check-availability',
+  credentialLimiter,
   authController.checkAvailability
 );
 

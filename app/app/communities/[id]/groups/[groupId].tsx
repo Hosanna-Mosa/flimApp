@@ -96,8 +96,10 @@ export default function GroupChatScreen() {
 
   // Socket
   useEffect(() => {
-    if (!socket || !groupId) return;
-    socket.emit('join_group', groupId);
+    if (!socket || !groupId || !id) return;
+    // communityId is required server-side to verify membership before the
+    // socket is admitted to the group room.
+    socket.emit('join_group', { groupId, communityId: id });
 
     const handleNewPost = (post: any) => {
       setPosts(prev => {
@@ -118,7 +120,7 @@ export default function GroupChatScreen() {
       socket.off('new_group_post', handleNewPost);
       socket.off('delete_group_post', handleDeletePost);
     };
-  }, [socket, groupId]);
+  }, [socket, groupId, id]);
 
   const handleSendMessage = async (text: string) => {
     try {

@@ -73,7 +73,9 @@ const request = async <T>(
         const retryJson = await retryRes.json().catch(() => ({}));
         console.error(`[API ERR] 🔴 ${retryRes.status} for ${path}:`, retryJson.message || retryRes.statusText);
         const message = (retryJson && retryJson.message) || retryRes.statusText || 'Request failed';
-        throw new Error(message);
+        const retryError = new Error(message);
+        (retryError as any).status = retryRes.status;
+        throw retryError;
       }
 
       const retryJson = await retryRes.json().catch(() => ({}));
@@ -92,6 +94,8 @@ const request = async <T>(
       const message = (json && json.message) || res.statusText || 'Request failed';
       const error = new Error(message);
       (error as any).logged = true;
+      // Callers branch on this (e.g. 402 = insufficient wallet balance).
+      (error as any).status = res.status;
       throw error;
     }
 
@@ -271,6 +275,45 @@ export const apiVerifySubscriptionPayment = (payload: any, token?: string) =>
 export const apiVerifyBadge = (transactionId: string, token?: string) =>
   request('/verify-badge', { method: 'POST', body: { transactionId }, token });
 
+// Razorpay web checkout (see utils/payments.ts). The app never talks to
+// Razorpay directly — it asks for a hosted checkout URL and later asks the
+// backend what actually happened.
+export interface PaymentSessionResponse {
+  sessionId: string;
+  checkoutUrl: string;
+  orderId: string;
+  amount: number;
+  currency: string;
+  expiresAt: string;
+}
+
+export interface PaymentSessionStatus {
+  sessionId: string;
+  status: 'CREATED' | 'PAID' | 'FAILED' | 'CANCELLED' | 'EXPIRED';
+  purpose: 'SUBSCRIPTION' | 'WALLET';
+  planType?: string;
+  amount: number;
+  currency: string;
+  orderId: string;
+  paymentId?: string;
+  fulfilled: boolean;
+  failureReason?: string;
+  expiresAt: string;
+}
+
+export const apiCreatePaymentSession = (
+  payload: {
+    purpose: 'SUBSCRIPTION' | 'WALLET';
+    planType?: string;
+    amount?: number;
+    returnUrl: string;
+  },
+  token?: string
+) => request<any>('/payments/session', { method: 'POST', body: payload, token });
+
+export const apiGetPaymentSession = (sessionId: string, token?: string) =>
+  request<any>(`/payments/session/${sessionId}`, { token });
+
 // Support
 export const apiCreateSupportRequest = (payload: any, token: string) =>
   request('/support', { method: 'POST', body: payload, token });
@@ -441,6 +484,14 @@ export const api = {
   apiCreateSubscriptionOrder: (planId: string, t?: string) => unwrap(apiCreateSubscriptionOrder(planId, t)),
   apiVerifySubscriptionPayment: (payload: any, t?: string) => unwrap(apiVerifySubscriptionPayment(payload, t)),
   verifyBadge: (transactionId: string, t?: string) => unwrap(apiVerifyBadge(transactionId, t)),
+
+  // Razorpay web checkout
+  createPaymentSession: (
+    payload: { purpose: 'SUBSCRIPTION' | 'WALLET'; planType?: string; amount?: number; returnUrl: string },
+    t?: string
+  ): Promise<PaymentSessionResponse> => unwrap(apiCreatePaymentSession(payload, t)),
+  getPaymentSession: (sessionId: string, t?: string): Promise<PaymentSessionStatus> =>
+    unwrap(apiGetPaymentSession(sessionId, t)),
 
   // Support
   createSupportRequest: (payload: any, t: string) => unwrap(apiCreateSupportRequest(payload, t)),

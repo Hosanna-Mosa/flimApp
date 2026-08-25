@@ -23,15 +23,15 @@ router.post(
 );
 
 // Get post shares
-router.get('/posts/:id/shares', shareController.getPostShares); // Public
+router.get('/posts/:id/shares', auth, shareController.getPostShares);
 
 // Get user's shares
-router.get('/users/:id/shares', shareController.getUserShares); // Public
+router.get('/users/:id/shares', auth, shareController.getUserShares);
 
 // Delete share
 router.delete('/shares/:id', auth, shareController.deleteShare);
 
 // Get share statistics
-router.get('/posts/:id/share-stats', shareController.getShareStats); // Public
+router.get('/posts/:id/share-stats', auth, shareController.getShareStats);
 
 module.exports = router;

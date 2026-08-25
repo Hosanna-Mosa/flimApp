@@ -5,8 +5,8 @@ const User = require('../models/User.model');
 const { success } = require('../utils/response');
 
 const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_placeholder',
-  key_secret: process.env.RAZORPAY_KEY_SECRET || 'rzp_test_secret_placeholder',
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
 const PLAN_PRICES = {
@@ -63,7 +63,7 @@ const createOrder = async (req, res, next) => {
       orderId: order.id,
       amount: options.amount,
       currency: options.currency,
-      keyId: process.env.RAZORPAY_KEY_ID || 'rzp_test_placeholder',
+      keyId: process.env.RAZORPAY_KEY_ID,
     });
   } catch (err) {
     console.error('[Subscription] Order creation failed:', err);
@@ -81,21 +81,24 @@ const verifyPayment = async (req, res, next) => {
     const userId = req.user.id;
 
     // Verify signature
-    const isSimulated = razorpay_signature === 'simulated_success' && process.env.NODE_ENV === 'development';
-    
-    if (!isSimulated) {
-      const text = razorpay_order_id + '|' + razorpay_payment_id;
-      const generated_signature = crypto
-        .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || 'rzp_test_secret_placeholder')
-        .update(text)
-        .digest('hex');
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      const err = new Error('Missing payment parameters');
+      err.status = 400;
+      throw err;
+    }
 
-      if (generated_signature !== razorpay_signature) {
-        const err = new Error('Invalid payment signature');
-        err.status = 400;
-        throw err;
-      }
-    } else {
+    const text = razorpay_order_id + '|' + razorpay_payment_id;
+    const generated_signature = crypto
+      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+      .update(text)
+      .digest('hex');
+
+    const sigBuf = Buffer.from(String(razorpay_signature));
+    const expBuf = Buffer.from(generated_signature);
+    if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
+      const err = new Error('Invalid payment signature');
+      err.status = 400;
+      throw err;
     }
 
     // Update subscription

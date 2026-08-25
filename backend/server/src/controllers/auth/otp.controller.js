@@ -36,9 +36,11 @@ const sendOtp = async (req, res, next) => {
     // Twilio's 401 "Authenticate" error means credentials in .env are likely invalid/expired.
     // We map this to 500 to prevent the frontend from thinking the user's session expired and logging them out.
     if (error.status === 401) {
-      // ✅ DEVELOPER BYPASS: If Twilio credentials fail in dev, allow moving forward
-      const isDev = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV || process.env.NODE_ENV === 'undefined';
-      if (isDev && (error.code === 20003 || error.message?.includes('Authenticate'))) {
+      // Developer bypass: requires an explicit opt-in flag AND a non-production
+      // NODE_ENV. Never infer "development" from an unset NODE_ENV.
+      const bypassEnabled =
+        process.env.ALLOW_OTP_BYPASS === 'true' && process.env.NODE_ENV !== 'production';
+      if (bypassEnabled && (error.code === 20003 || error.message?.includes('Authenticate'))) {
         console.warn('⚠️ [DEV WARNING] Twilio auth failed. Using fallback OTP bypass: 123456');
         return success(res, {
           message: 'OTP sent (Bypass Mode)',
@@ -81,9 +83,10 @@ const verifyOtp = async (req, res, next) => {
         .services(VERIFY_SERVICE_SID)
         .verificationChecks.create({ to: phone, code: otp });
     } catch (vError) {
-      // ✅ DEVELOPER BYPASS for verification
-      const isDev = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV || process.env.NODE_ENV === 'undefined';
-      if (isDev && (vError.status === 401 || vError.code === 20003 || vError.message?.includes('Authenticate'))) {
+      // Developer bypass for verification: same explicit opt-in as sendOtp.
+      const bypassEnabled =
+        process.env.ALLOW_OTP_BYPASS === 'true' && process.env.NODE_ENV !== 'production';
+      if (bypassEnabled && (vError.status === 401 || vError.code === 20003 || vError.message?.includes('Authenticate'))) {
         console.warn('⚠️ [DEV WARNING] Twilio auth failed. Bypassing OTP check...');
         if (otp === '123456') {
           verificationCheck = { status: 'approved' };
