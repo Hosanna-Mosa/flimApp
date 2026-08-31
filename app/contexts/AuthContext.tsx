@@ -1,9 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import createContextHook from '@nkzw/create-context-hook';
 import { useEffect, useState, useCallback } from 'react';
-import { Platform, PermissionsAndroid, DeviceEventEmitter } from 'react-native';
+import { Platform, DeviceEventEmitter } from 'react-native';
 import { User, UserRole, Industry } from '@/types';
-import api from '@/utils/api';
+import { api } from '@/utils/api';
 
 // 🔔 PUSH NOTIFICATIONS
 import * as Notifications from 'expo-notifications';
@@ -74,7 +74,7 @@ async function registerForPushNotificationsAsync(): Promise<string | null> {
   try {
     const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
     return token;
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -122,17 +122,6 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     } catch (err) {
       console.error('[PUSH] Failed to register token:', err);
     }
-  };
-
-  const login = async (phone: string) => {
-    // This is likely a mock or simplified login for the OTP flow in this app
-    // In a real app, this would call an API and get a token
-    // For now, we'll mock it if it's expected to be here
-
-    // Since otp.tsx calls login and then redirects to /role-selection,
-    // we need to make sure isAuthenticated becomes true.
-    // However, without a real API response here, we're guessing.
-    // Let's assume it's a placeholder for now since I don't see it in API.ts as "login(phone)"
   };
 
   const updateProfile = async (updates: Partial<User>) => {
@@ -347,7 +336,6 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     ...authState,
     setAuth,
     logout,
-    login,
     updateProfile,
     updateUserRoles,
     updateUserIndustries,

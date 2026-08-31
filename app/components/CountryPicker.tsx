@@ -1,18 +1,18 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
   FlatList,
   TouchableOpacity,
   StyleSheet,
-  ActivityIndicator,
   SafeAreaView,
   Platform,
 } from 'react-native';
-import { Search } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
-import Input from './Input';
-import { Country, RestCountry, mapRestCountryToCountry } from '@/utils/country';
+import EmptyState from '@/components/ui/EmptyState';
+import SearchBar from '@/components/ui/SearchBar';
+import { Country } from '@/utils/country';
+import { COUNTRIES } from '@/constants/countries';
 
 interface CountryPickerProps {
   onSelect: (country: Country) => void;
@@ -20,46 +20,13 @@ interface CountryPickerProps {
 }
 
 /**
- * A custom Country Picker component that fetches data from REST Countries API.
+ * Country picker backed by the bundled list in constants/countries — no network.
  * Built with NO native dependencies for cross-platform compatibility.
  */
 export default function CountryPicker({ onSelect, selectedCountryCode }: CountryPickerProps) {
   const { colors } = useTheme();
-  const [countries, setCountries] = useState<Country[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-
-  useEffect(() => {
-    fetchCountries();
-  }, []);
-
-  const fetchCountries = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await fetch(
-        'https://restcountries.com/v3.1/all?fields=name,cca2,idd'
-      );
-      if (!response.ok) {
-        throw new Error('Failed to fetch countries');
-      }
-      const data: RestCountry[] = await response.json();
-      
-      const mappedCountries = data
-        .map(mapRestCountryToCountry)
-        // Filter out countries without a calling code if necessary, 
-        // but typically all have at least a root.
-        .filter((c) => c.callingCode !== '')
-        .sort((a, b) => a.name.localeCompare(b.name));
-
-      setCountries(mappedCountries);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const countries = COUNTRIES;
 
   const filteredCountries = useMemo(() => {
     if (!searchQuery) return countries;
@@ -96,44 +63,14 @@ export default function CountryPicker({ onSelect, selectedCountryCode }: Country
     );
   };
 
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={[styles.statusText, { color: colors.textSecondary, marginTop: 12 }]}>
-          Loading countries...
-        </Text>
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View style={styles.center}>
-        <Text style={[styles.statusText, { color: colors.error }]}>{error}</Text>
-        <TouchableOpacity
-          style={[styles.retryButton, { backgroundColor: colors.primary }]}
-          onPress={fetchCountries}
-        >
-          <Text style={styles.retryText}>Retry</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <Input
+        <SearchBar
           placeholder="Search country or code..."
           value={searchQuery}
           onChangeText={setSearchQuery}
-          renderLeft={() => (
-            <View style={styles.searchIcon}>
-              <Search size={20} color={colors.textSecondary} />
-            </View>
-          )}
-          containerStyle={styles.searchContainer}
+          style={styles.searchContainer}
         />
       </View>
 
@@ -147,11 +84,7 @@ export default function CountryPicker({ onSelect, selectedCountryCode }: Country
         contentContainerStyle={styles.listContent}
         keyboardShouldPersistTaps="handled"
         ListEmptyComponent={
-          <View style={styles.center}>
-            <Text style={[styles.statusText, { color: colors.textSecondary }]}>
-              No countries found
-            </Text>
-          </View>
+          <EmptyState title="No countries found" variant="fullscreen" />
         }
       />
     </SafeAreaView>
@@ -168,10 +101,6 @@ const styles = StyleSheet.create({
   },
   searchContainer: {
     marginBottom: 8,
-  },
-  searchIcon: {
-    paddingLeft: 16,
-    justifyContent: 'center',
   },
   listContent: {
     paddingBottom: 24,
@@ -201,26 +130,5 @@ const styles = StyleSheet.create({
   callingCode: {
     fontSize: 16,
     marginLeft: 8,
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  statusText: {
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  retryButton: {
-    marginTop: 16,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  retryText: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-    fontSize: 16,
   },
 });

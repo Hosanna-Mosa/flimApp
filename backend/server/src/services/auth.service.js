@@ -45,7 +45,7 @@ const checkAvailability = async ({ username, email, phone }) => {
   return { available: true };
 };
 
-const register = async ({ name, username, phone, email, password, roles, industries }) => {
+const register = async ({ name, username, phone, email, password, roles, industries, language }) => {
   // Comprehensive check for all fields before registration
   const conflictsSet = new Set();
   
@@ -93,6 +93,7 @@ const register = async ({ name, username, phone, email, password, roles, industr
     password: hashedPassword,
     roles,
     industries,
+    language,
   });
 
   const payload = { sub: user.id, roles: user.roles };

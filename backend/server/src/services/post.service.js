@@ -102,27 +102,6 @@ const deletePost = async (postId, userId) => {
 };
 
 /**
- * Get user's posts
- * @param {string} userId - Target user ID
- * @param {string} viewerId - Current user ID
- * @returns {Promise<Post[]>} User's posts
- */
-const getUserPosts = async (userId, viewerId) => {
-  // Use feedService to handle privacy and mutual blocks
-  const result = await feedService.getUserPosts(userId, viewerId, 0, 100);
-  return result.data || [];
-};
-
-/**
- * Get trending posts
- * @returns {Promise<Post[]>} Trending posts
- */
-const getTrending = async (userId) => {
-  const result = await feedService.getTrendingFeed(userId, 0, 100);
-  return result.data || [];
-};
-
-/**
  * Get donation posts
  * @param {number} page - Page number
  * @param {number} limit - Items per page
@@ -138,7 +117,8 @@ const getDonations = async (page = 0, limit = 20, viewerId = null) => {
   const query = { 
     isDonation: true, 
     isActive: true,
-    author: { $nin: [...excludedIds, viewerId].filter(Boolean) }
+    // Only hide blocked/blocking authors — a user should see their own request in the list.
+    author: { $nin: excludedIds }
   };
 
   return Post.find(query)
@@ -148,13 +128,6 @@ const getDonations = async (page = 0, limit = 20, viewerId = null) => {
     .populate('author', 'name avatar isVerified roles')
     .lean();
 };
-
-/**
- * Get personalized feed
- * @param {Object} user - User object
- * @returns {Promise<Post[]>} Feed posts
- */
-const getFeed = async (user) => feedService.getPersonalizedFeed(user);
 
 /**
  * Get post by ID
@@ -233,10 +206,7 @@ const updatePost = async (postId, userId, updates) => {
 module.exports = {
   createPost,
   deletePost,
-  getUserPosts,
-  getTrending,
   getDonations,
-  getFeed,
   getPostById,
   updatePost
 };

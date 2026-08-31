@@ -1,3 +1,14 @@
+/**
+ * Business-rule failures must carry an HTTP status: the error middleware
+ * masks any status-less error as a 500 "Internal Server Error", which is how
+ * "you are not a member" was reaching the app as a blank server error.
+ */
+const httpError = (status, message) => {
+  const err = new Error(message);
+  err.status = status;
+  return err;
+};
+
 const Community = require('../models/Community.model');
 const CommunityMember = require('../models/CommunityMember.model');
 
@@ -8,7 +19,7 @@ const createGroup = async (communityId, groupData, userId) => {
   const community = await Community.findById(communityId);
   
   if (!community) {
-    throw new Error('Community not found');
+    throw httpError(404, 'Community not found');
   }
 
   // Check if user is admin or if members can create groups
@@ -18,18 +29,18 @@ const createGroup = async (communityId, groupData, userId) => {
   });
 
   if (!member) {
-    throw new Error('You must be a member to create groups');
+    throw httpError(403, 'You must be a member to create groups');
   }
 
   const canCreate = member.isAdminOrHigher() || community.settings.allowGroupCreation;
   
   if (!canCreate) {
-    throw new Error('Insufficient permissions to create groups');
+    throw httpError(403, 'Insufficient permissions to create groups');
   }
 
   // Check max groups limit
   if (community.groups.length >= community.settings.maxGroups) {
-    throw new Error(`Maximum number of groups (${community.settings.maxGroups}) reached`);
+    throw httpError(400, `Maximum number of groups (${community.settings.maxGroups}) reached`);
   }
 
   // Create new group
@@ -60,7 +71,7 @@ const getGroups = async (communityId, userId = null) => {
   const community = await Community.findById(communityId).lean();
   
   if (!community) {
-    throw new Error('Community not found');
+    throw httpError(404, 'Community not found');
   }
 
   let groups = community.groups;
@@ -88,13 +99,13 @@ const getGroup = async (communityId, groupId) => {
   const community = await Community.findById(communityId).lean();
   
   if (!community) {
-    throw new Error('Community not found');
+    throw httpError(404, 'Community not found');
   }
 
   const group = community.groups.find(g => g._id.toString() === groupId);
   
   if (!group) {
-    throw new Error('Group not found');
+    throw httpError(404, 'Group not found');
   }
 
   return group;
@@ -107,18 +118,18 @@ const updateGroup = async (communityId, groupId, updates, userId) => {
   const community = await Community.findById(communityId);
   
   if (!community) {
-    throw new Error('Community not found');
+    throw httpError(404, 'Community not found');
   }
 
   // Check if user is admin
   if (!community.isAdmin(userId)) {
-    throw new Error('Only admins can update groups');
+    throw httpError(403, 'Only admins can update groups');
   }
 
   const group = community.groups.id(groupId);
   
   if (!group) {
-    throw new Error('Group not found');
+    throw httpError(404, 'Group not found');
   }
 
   // Update allowed fields
@@ -140,23 +151,23 @@ const deleteGroup = async (communityId, groupId, userId) => {
   const community = await Community.findById(communityId);
   
   if (!community) {
-    throw new Error('Community not found');
+    throw httpError(404, 'Community not found');
   }
 
   // Check if user is admin
   if (!community.isAdmin(userId)) {
-    throw new Error('Only admins can delete groups');
+    throw httpError(403, 'Only admins can delete groups');
   }
 
   const group = community.groups.id(groupId);
   
   if (!group) {
-    throw new Error('Group not found');
+    throw httpError(404, 'Group not found');
   }
 
   // Can't delete announcement or general groups
   if (group.type === 'announcement' || group.name === 'General') {
-    throw new Error('Cannot delete default groups');
+    throw httpError(400, 'Cannot delete default groups');
   }
 
   // Remove group
@@ -179,7 +190,7 @@ const joinGroup = async (communityId, groupId, userId) => {
   const community = await Community.findById(communityId);
   
   if (!community) {
-    throw new Error('Community not found');
+    throw httpError(404, 'Community not found');
   }
 
   // Check if user is a community member
@@ -189,13 +200,13 @@ const joinGroup = async (communityId, groupId, userId) => {
   });
 
   if (!member) {
-    throw new Error('You must be a community member to join groups');
+    throw httpError(403, 'You must be a community member to join groups');
   }
 
   const group = community.groups.id(groupId);
   
   if (!group) {
-    throw new Error('Group not found');
+    throw httpError(404, 'Group not found');
   }
 
   // Check if already in group
@@ -208,7 +219,7 @@ const joinGroup = async (communityId, groupId, userId) => {
 
   // Add to group
   group.members.push(userId);
-  group.memberCount += 1;
+  group.memberCount = (group.memberCount || 0) + 1;
   await community.save();
 
   // Add to member's groups
@@ -230,18 +241,18 @@ const leaveGroup = async (communityId, groupId, userId) => {
   const community = await Community.findById(communityId);
   
   if (!community) {
-    throw new Error('Community not found');
+    throw httpError(404, 'Community not found');
   }
 
   const group = community.groups.id(groupId);
   
   if (!group) {
-    throw new Error('Group not found');
+    throw httpError(404, 'Group not found');
   }
 
   // Can't leave announcement or general groups
   if (group.type === 'announcement' || group.name === 'General') {
-    throw new Error('Cannot leave default groups');
+    throw httpError(400, 'Cannot leave default groups');
   }
 
   // Remove from group
@@ -273,13 +284,13 @@ const getGroupMembers = async (communityId, groupId, page = 0, limit = 50) => {
     .lean();
   
   if (!community) {
-    throw new Error('Community not found');
+    throw httpError(404, 'Community not found');
   }
 
   const group = community.groups.find(g => g._id.toString() === groupId);
   
   if (!group) {
-    throw new Error('Group not found');
+    throw httpError(404, 'Group not found');
   }
 
   // Get member details with their roles

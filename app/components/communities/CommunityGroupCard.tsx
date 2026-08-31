@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { CommunityGroup } from '@/types';
-import { Volume2, Hash, MessageSquare, Lock } from 'lucide-react-native';
+import { Volume2, Hash, MessageSquare } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
 interface CommunityGroupCardProps {

@@ -12,6 +12,7 @@ const UserSchema = new Schema(
     bio: { type: String, maxlength: 500 },
     roles: [{ type: String, required: true }],
     industries: [{ type: String, required: true }],
+    language: { type: String, default: '' },
     experience: { type: Number, default: 0 },
     location: { type: String },
     portfolio: [
@@ -107,6 +108,7 @@ UserSchema.virtual('publicProfile').get(function () {
     bio: this.bio,
     roles: this.roles,
     industries: this.industries,
+    language: this.language,
     isVerified: this.isVerified,
     accountType: this.accountType,
     stats: this.stats

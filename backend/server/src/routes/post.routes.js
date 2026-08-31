@@ -31,10 +31,7 @@ router.post(
   postController.createPost
 );
 
-router.get('/feed', auth, postController.getFeed);
-router.get('/trending', auth, postController.getTrending);
 router.get('/donations', auth, postController.getDonations);
-router.get('/user/:id', auth, postController.getUserPosts);
 router.get('/:id', auth, postController.getPost);
 router.put(
   '/:id',

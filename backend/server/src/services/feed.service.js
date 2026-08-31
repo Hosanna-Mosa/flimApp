@@ -199,6 +199,7 @@ class FeedService {
         cutoffDate.setDate(cutoffDate.getDate() - timeRange);
 
         const posts = await Post.find({
+          isDonation: { $ne: true }, // crowd-fund posts live only on the Crowd Fund screen
           author: { $nin: [...excludedIds, userId] }, // Exclude user's own posts and blocked users
           isActive: true,
           visibility: 'public',
@@ -217,6 +218,7 @@ class FeedService {
       cutoffDate.setDate(cutoffDate.getDate() - timeRange);
 
       const posts = await Post.find({
+        isDonation: { $ne: true }, // crowd-fund posts live only on the Crowd Fund screen
         $and: [
           { author: { $in: followingIds } },
           { author: { $nin: [...excludedIds, userId] } } // Exclude user's own posts and blocked users
@@ -261,6 +263,7 @@ class FeedService {
 
       // Global Feed: Show all public posts (excluding private accounts) + posts from users I follow
       const posts = await Post.find({
+        isDonation: { $ne: true }, // crowd-fund posts live only on the Crowd Fund screen
         author: { $nin: [...excludedIds, userId] }, // Exclude user's own posts and blocked users
         isActive: true,
         createdAt: { $gte: cutoffDate },
@@ -329,6 +332,7 @@ class FeedService {
         // Show: (public posts from non-private accounts) OR (posts from users I follow)
         // Use $and to ensure author is not self in both conditions
         queryConditions = {
+          isDonation: { $ne: true }, // crowd-fund posts live only on the Crowd Fund screen
           isActive: true,
           createdAt: { $gte: cutoffDate },
           author: { $nin: [...excludedIds, userId] }, // Exclude user's own posts and blocked users
@@ -345,6 +349,7 @@ class FeedService {
       } else {
         // No follows - show all public posts (excluding private accounts and self)
         queryConditions = {
+          isDonation: { $ne: true }, // crowd-fund posts live only on the Crowd Fund screen
           isActive: true,
           createdAt: { $gte: cutoffDate },
           visibility: 'public',
@@ -458,6 +463,7 @@ class FeedService {
       const excludedIds = await this.getExcludedAuthorIds(userId);
 
       const posts = await Post.find({
+        isDonation: { $ne: true }, // crowd-fund posts live only on the Crowd Fund screen
         isActive: true,
         visibility: 'public',
         createdAt: { $gte: cutoffDate },
@@ -503,6 +509,7 @@ class FeedService {
       const skip = page * limit;
 
       const posts = await Post.find({
+        isDonation: { $ne: true }, // crowd-fund posts live only on the Crowd Fund screen
         industries: industry,
         isActive: true,
         visibility: 'public',

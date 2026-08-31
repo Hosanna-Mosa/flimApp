@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 import { useSocket } from './SocketContext';
-import api from '@/utils/api';
+import { api } from '@/utils/api';
 
 interface NotificationContextType {
   unreadCount: number;
@@ -32,7 +32,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
           setUnreadCount(count);
         }
       }
-    } catch (error) {
+    } catch {
     }
   };
 
@@ -58,6 +58,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       const interval = setInterval(refreshUnreadCount, 5000);
       return () => clearInterval(interval);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only subscription; refreshUnreadCount identity is unstable
   }, [token]);
 
   // Listen for new notifications via socket

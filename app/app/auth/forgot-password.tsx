@@ -1,123 +1,70 @@
 import React, { useState } from 'react';
-import {
-    View,
-    StyleSheet,
-    ScrollView,
-    KeyboardAvoidingView,
-    Platform,
-    TouchableOpacity,
-    Alert
-} from 'react-native';
+import { View, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft } from 'lucide-react-native';
-import { useTheme } from '@/contexts/ThemeContext';
+import AuthScreen from '@/components/auth/AuthScreen';
+import AuthHeader from '@/components/auth/AuthHeader';
 import Input from '@/components/Input';
 import Button from '@/components/Button';
-import AppText from '@/components/AppText';
-import api from '@/utils/api';
+import { api } from '@/utils/api';
 
 export default function ForgotPasswordScreen() {
-    const router = useRouter();
-    const { colors } = useTheme();
+  const router = useRouter();
 
-    const [email, setEmail] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-    const handleSendOtp = async () => {
-        if (!email) {
-            setError('Please enter your email');
-            return;
-        }
+  const handleSendOtp = async () => {
+    if (!email) {
+      setError('Please enter your email');
+      return;
+    }
 
-        setLoading(true);
-        setError('');
+    setLoading(true);
+    setError('');
 
-        try {
-            await api.forgotPassword(email);
-            Alert.alert('Success', 'OTP sent to your email');
-            router.push({
-                pathname: '/auth/reset-password',
-                params: { email }
-            });
-        } catch (err: any) {
-            setError(err.message || 'Failed to send OTP');
-        } finally {
-            setLoading(false);
-        }
-    };
+    try {
+      await api.forgotPassword(email);
+      Alert.alert('Success', 'OTP sent to your email');
+      router.push({
+        pathname: '/auth/reset-password',
+        params: { email }
+      });
+    } catch (err: any) {
+      setError(err.message || 'Failed to send OTP');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return (
-        <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            style={[styles.container, { backgroundColor: '#000000' }]}
-        >
-            <ScrollView
-                contentContainerStyle={styles.scrollContent}
-                keyboardShouldPersistTaps="handled"
-                showsVerticalScrollIndicator={false}
-            >
-                <View style={styles.header}>
-                    <TouchableOpacity
-                        onPress={() => router.back()}
-                        style={styles.backButton}
-                        hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-                    >
-                        <ArrowLeft size={24} color={colors.text} />
-                    </TouchableOpacity>
-                    <AppText variant="h2" style={styles.title}>Forgot Password</AppText>
-                    <AppText variant="bodyLarge" secondary>
-                        Enter your email to receive a password reset OTP.
-                    </AppText>
-                </View>
+  return (
+    <AuthScreen>
+      <AuthHeader
+        onBack={() => router.back()}
+        title="Forgot Password"
+        subtitle="Enter your email to receive a password reset OTP."
+      />
 
-                <View style={styles.form}>
-                    <Input
-                        label="Email Address"
-                        placeholder="john@example.com"
-                        value={email}
-                        onChangeText={setEmail}
-                        keyboardType="email-address"
-                        autoCapitalize="none"
-                        error={error}
-                        editable={!loading}
-                    />
+      <View style={{ gap: 16 }}>
+        <Input
+          label="Email Address"
+          placeholder="john@example.com"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          error={error}
+          editable={!loading}
+        />
 
-                    <Button
-                        title="Send OTP"
-                        onPress={handleSendOtp}
-                        loading={loading}
-                        size="large"
-                        style={styles.button}
-                    />
-                </View>
-            </ScrollView>
-        </KeyboardAvoidingView>
-    );
+        <Button
+          title="Send OTP"
+          onPress={handleSendOtp}
+          loading={loading}
+          size="large"
+          style={{ marginTop: 24 }}
+        />
+      </View>
+    </AuthScreen>
+  );
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    scrollContent: {
-        flexGrow: 1,
-        padding: 24,
-    },
-    header: {
-        marginBottom: 40,
-        marginTop: 20,
-    },
-    backButton: {
-        marginBottom: 20,
-    },
-    title: {
-        marginBottom: 8,
-    },
-    form: {
-        gap: 16,
-    },
-    button: {
-        marginTop: 24,
-    },
-});

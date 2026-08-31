@@ -30,49 +30,6 @@ class CacheService {
   };
 
   /**
-   * User Stats Operations
-   */
-  async getUserStats(userId) {
-    try {
-      const stats = await redis.hgetall(this.keys.userStats(userId));
-      if (Object.keys(stats).length === 0) return null;
-      
-      // Convert string values to numbers
-      return {
-        followersCount: parseInt(stats.followersCount) || 0,
-        followingCount: parseInt(stats.followingCount) || 0,
-        postsCount: parseInt(stats.postsCount) || 0,
-        likesReceived: parseInt(stats.likesReceived) || 0,
-      };
-    } catch (error) {
-      logger.error('Error getting user stats from cache:', error);
-      return null;
-    }
-  }
-
-  async setUserStats(userId, stats) {
-    try {
-      await redis.hmset(this.keys.userStats(userId), stats);
-      await redis.expire(this.keys.userStats(userId), this.STATS_TTL);
-      return true;
-    } catch (error) {
-      logger.error('Error setting user stats in cache:', error);
-      return false;
-    }
-  }
-
-  async incrementUserStat(userId, field, value = 1) {
-    try {
-      await redis.hincrby(this.keys.userStats(userId), field, value);
-      await redis.expire(this.keys.userStats(userId), this.STATS_TTL);
-      return true;
-    } catch (error) {
-      logger.error('Error incrementing user stat:', error);
-      return false;
-    }
-  }
-
-  /**
    * Post Stats Operations
    */
   async getPostStats(postId) {
@@ -175,16 +132,6 @@ class CacheService {
     }
   }
 
-  async getPostLikesCount(postId) {
-    try {
-      const count = await redis.zcard(this.keys.postLikes(postId));
-      return count;
-    } catch (error) {
-      logger.error('Error getting post likes count:', error);
-      return 0;
-    }
-  }
-
   /**
    * Follow Operations
    */
@@ -235,36 +182,6 @@ class CacheService {
     }
   }
 
-  async isFollowing(followerId, followingId) {
-    try {
-      const score = await redis.zscore(this.keys.userFollowing(followerId), followingId);
-      return score !== null;
-    } catch (error) {
-      logger.error('Error checking follow status:', error);
-      return false;
-    }
-  }
-
-  async getFollowersCount(userId) {
-    try {
-      const count = await redis.zcard(this.keys.userFollowers(userId));
-      return count;
-    } catch (error) {
-      logger.error('Error getting followers count:', error);
-      return 0;
-    }
-  }
-
-  async getFollowingCount(userId) {
-    try {
-      const count = await redis.zcard(this.keys.userFollowing(userId));
-      return count;
-    } catch (error) {
-      logger.error('Error getting following count:', error);
-      return 0;
-    }
-  }
-
   /**
    * Feed Operations
    */
@@ -305,89 +222,6 @@ class CacheService {
     }
   }
 
-  /**
-   * General Cache Operations
-   */
-  async get(key) {
-    try {
-      return await redis.get(key);
-    } catch (error) {
-      logger.error('Error getting from cache:', error);
-      return null;
-    }
-  }
-
-  async set(key, value, ttl = this.DEFAULT_TTL) {
-    try {
-      await redis.setex(key, ttl, JSON.stringify(value));
-      return true;
-    } catch (error) {
-      logger.error('Error setting cache:', error);
-      return false;
-    }
-  }
-
-  async del(key) {
-    try {
-      await redis.del(key);
-      return true;
-    } catch (error) {
-      logger.error('Error deleting from cache:', error);
-      return false;
-    }
-  }
-
-  async delPattern(pattern) {
-    try {
-      const keys = await redis.keys(pattern);
-      if (keys.length > 0) {
-        await redis.del(...keys);
-      }
-      return true;
-    } catch (error) {
-      logger.error('Error deleting pattern from cache:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Batch operations for efficiency
-   */
-  async batchGetPostStats(postIds) {
-    try {
-      const pipeline = redis.pipeline();
-      postIds.forEach(postId => {
-        pipeline.hgetall(this.keys.postStats(postId));
-      });
-      
-      const results = await pipeline.exec();
-      return results.map(([err, stats]) => {
-        if (err || !stats || Object.keys(stats).length === 0) return null;
-        return {
-          likesCount: parseInt(stats.likesCount) || 0,
-          commentsCount: parseInt(stats.commentsCount) || 0,
-          sharesCount: parseInt(stats.sharesCount) || 0,
-          viewsCount: parseInt(stats.viewsCount) || 0,
-        };
-      });
-    } catch (error) {
-      logger.error('Error batch getting post stats:', error);
-      return postIds.map(() => null);
-    }
-  }
-
-  /**
-   * Health check
-   */
-  async ping() {
-    try {
-      const result = await redis.ping();
-      return result === 'PONG';
-    } catch (error) {
-      logger.error('Redis ping failed:', error);
-      return false;
-    }
-  }
 }
 
 module.exports = new CacheService();

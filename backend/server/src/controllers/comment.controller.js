@@ -1,5 +1,5 @@
 const commentService = require('../services/comment.service');
-const { success, error } = require('../utils/response');
+const { success } = require('../utils/response');
 
 /**
  * Comment Controller - Handles comment operations

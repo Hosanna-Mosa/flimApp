@@ -2,7 +2,7 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 const VersionConfig = require('../server/src/models/VersionConfig.model');
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/flim-app';
+const MONGO_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/flim-app';
 
 const run = async () => {
   const mode = process.argv[2] || 'force';

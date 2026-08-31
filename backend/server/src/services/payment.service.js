@@ -318,11 +318,7 @@ const markCancelled = async (session) => {
 };
 
 module.exports = {
-  razorpay,
   PLAN_PRICES,
-  PLAN_MONTHS,
-  SESSION_TTL_MS,
-  isAllowedReturnUrl,
   publicBaseUrl,
   buildCheckoutUrl,
   verifyPaymentSignature,

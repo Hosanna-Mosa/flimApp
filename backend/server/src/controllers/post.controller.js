@@ -28,39 +28,11 @@ const deletePost = async (req, res, next) => {
   }
 };
 
-const getFeed = async (req, res, next) => {
-  try {
-    const feed = await postService.getFeed(req.user);
-    return success(res, feed);
-  } catch (err) {
-    console.error('[FeedController] getFeed Error:', err);
-    return next(err);
-  }
-};
-
-const getTrending = async (req, res, next) => {
-  try {
-    const posts = await postService.getTrending(req.user.id);
-    return success(res, posts);
-  } catch (err) {
-    return next(err);
-  }
-};
-
 const getDonations = async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 0;
     const limit = parseInt(req.query.limit) || 20;
     const posts = await postService.getDonations(page, limit, req.user.id);
-    return success(res, posts);
-  } catch (err) {
-    return next(err);
-  }
-};
-
-const getUserPosts = async (req, res, next) => {
-  try {
-    const posts = await postService.getUserPosts(req.params.id, req.user.id);
     return success(res, posts);
   } catch (err) {
     return next(err);
@@ -85,10 +57,7 @@ const getPost = async (req, res, next) => {
 module.exports = {
   createPost,
   deletePost,
-  getFeed,
-  getTrending,
   getDonations,
-  getUserPosts,
   getPost,
   updatePost,
 };

@@ -6,16 +6,21 @@ import React, { useEffect, useState } from 'react';
 import { Platform, Linking, Modal, View, Text, StyleSheet, TouchableOpacity, DeviceEventEmitter } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Constants from 'expo-constants';
-import api from '@/utils/api';
+import { api } from '@/utils/api';
 import * as SystemUI from 'expo-system-ui';
 import { StatusBar } from 'expo-status-bar';
-import { AuthProvider } from '@/contexts/AuthContext';
-import { ThemeProvider } from '@/contexts/ThemeContext';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
+import {
+  getNotificationRoute,
+  setPendingNotificationRoute,
+  wasResponseHandled,
+  markResponseHandled,
+} from '@/utils/notificationRouting';
 import { SocketProvider } from '@/contexts/SocketContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { MessageProvider } from '@/contexts/MessageContext';
 import { MediaProvider } from '@/contexts/MediaContext';
-import { Audio } from 'expo-av';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 
@@ -24,60 +29,53 @@ SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
 
 function RootLayoutNav() {
+  const { colors } = useTheme();
+  const { isAuthenticated, isLoading } = useAuth();
+
+  // Push-notification taps → deep link. Hot start (app open/backgrounded)
+  // navigates immediately once the user is authenticated; cold start parks the
+  // route until the splash screen has redirected to /home (see index.tsx).
   useEffect(() => {
-    // Helper to handle navigation when user clicks notification
-    const handleNotificationClick = (data: any) => {
-      if (!data) return;
+    const openFromNotification = async (response: Notifications.NotificationResponse | null, coldStart: boolean) => {
+      if (!response) return;
+      const identifier = response.notification.request.identifier;
+      if (await wasResponseHandled(identifier)) return;
+      const route = getNotificationRoute(response.notification.request.content.data as Record<string, any>);
+      if (!route) return;
+      await markResponseHandled(identifier);
 
-      const type = data.type;
-      const actorId = data.actorId || data.senderId || data.followerId;
-
-      if (type === 'message' || type === 'chat') {
-        if (actorId) {
-          router.push({
-            pathname: '/chat',
-            params: { userId: actorId }
-          });
-        }
-      } else if (['follow', 'follow_request', 'follow_request_accepted'].includes(type)) {
-        if (actorId) {
-          router.push(`/user/${actorId}`);
-        }
+      if (coldStart || isLoading || !isAuthenticated) {
+        setPendingNotificationRoute(route);
+        return;
       }
+      router.push(route as any);
     };
 
-    // 🔔 Listen for notification clicks when app is in foreground/background (hot-start)
     const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
-      try {
-        const data = response.notification.request.content.data;
-        handleNotificationClick(data);
-      } catch (err) {
-        console.error('[PushNotification] Error handling click interaction:', err);
-      }
+      openFromNotification(response, false).catch((err) =>
+        console.error('[PushNotification] Error handling click interaction:', err)
+      );
     });
 
-    // Check if app was opened by a notification click (cold-start)
-    Notifications.getLastNotificationResponseAsync().then((response) => {
-      try {
-        if (response) {
-          const data = response.notification.request.content.data;
-          handleNotificationClick(data);
-        }
-      } catch (err) {
-        console.error('[PushNotification] Error checking cold start notification:', err);
-      }
-    });
+    Notifications.getLastNotificationResponseAsync()
+      .then((response) => openFromNotification(response, true))
+      .catch((err) => console.error('[PushNotification] Error checking cold start notification:', err));
 
     return () => {
       subscription.remove();
     };
-  }, []);
+  }, [isAuthenticated, isLoading]);
 
   return (
     <Stack
       screenOptions={{
         headerBackTitle: 'Back',
-        contentStyle: { backgroundColor: '#000000' }
+        // Themed defaults so individual screens don't have to repeat
+        // headerStyle/headerTintColor in their own Stack.Screen options.
+        headerStyle: { backgroundColor: colors.background },
+        headerTintColor: colors.text,
+        headerShadowVisible: false,
+        contentStyle: { backgroundColor: colors.background },
       }}
     >
       <Stack.Screen name="index" options={{ headerShown: false }} />
@@ -185,10 +183,11 @@ export default function RootLayout() {
     SystemUI.setBackgroundColorAsync('#000000');
     const setNavBar = async () => {
       try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports -- optional native module, loaded lazily
         const NavigationBar = require('expo-navigation-bar');
         await NavigationBar.setBackgroundColorAsync('#000000');
         await NavigationBar.setButtonStyleAsync('light');
-      } catch (e) {
+      } catch {
         // Ignore if module not found or platform issue
       }
     };

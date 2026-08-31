@@ -28,16 +28,6 @@ FollowSchema.index({ follower: 1, following: 1 }, { unique: true }); // Prevent 
 FollowSchema.index({ following: 1, status: 1, createdAt: -1 }); // Get user's followers
 FollowSchema.index({ follower: 1, status: 1, createdAt: -1 }); // Get user's following
 
-// Static method to check if user follows another
-FollowSchema.statics.isFollowing = async function(followerId, followingId) {
-  const follow = await this.findOne({
-    follower: followerId,
-    following: followingId,
-    status: 'accepted'
-  });
-  return !!follow;
-};
-
 // Static method to get mutual followers
 FollowSchema.statics.getMutualFollowers = async function(userId1, userId2) {
   const user1Followers = await this.find({ 

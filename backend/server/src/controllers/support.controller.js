@@ -1,6 +1,6 @@
 const Support = require('../models/Support.model');
 const { sendEmail } = require('../services/mail.service');
-const { success, error } = require('../utils/response');
+const { success } = require('../utils/response');
 
 const createSupportRequest = async (req, res, next) => {
     try {
@@ -39,12 +39,6 @@ const createSupportRequest = async (req, res, next) => {
                 attachmentPath = finalImageUrl;
             } catch (uploadError) {
                 console.error('Cloudinary upload error:', uploadError);
-                // Fallback: If upload fails, keep original base64 or log? 
-                // We will continue but maybe without proper link.
-                // Actually, if upload fails, we likely want to fail the request or just proceed with base64/no-image?
-                // Let's proceed with base64 as fallback for safety, though it's huge.
-                // Better to just not verify here and let standard error handling catch if critical.
-                // For now, let's assume if it fails we don't block the support request but log it.
             }
         } else if (imageUrl) {
             // Only accept https URLs on our own Cloudinary account. nodemailer's

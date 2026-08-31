@@ -1,5 +1,5 @@
 const shareService = require('../services/share.service');
-const { success, error } = require('../utils/response');
+const { success } = require('../utils/response');
 
 /**
  * Share Controller - Handles share operations

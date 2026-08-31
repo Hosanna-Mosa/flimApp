@@ -1,47 +1,30 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useTheme } from '@/contexts/ThemeContext';
-import { useAuth } from '@/contexts/AuthContext';
-import { ROLES } from '@/constants/roles';
-import { INDUSTRIES } from '@/constants/industries';
-import SelectableCard from '@/components/SelectableCard';
-import Button from '@/components/Button';
-import AppText from '@/components/AppText';
-import { textVariants } from '@/constants/typography';
-import api from '@/utils/api';
+import { View, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { Image } from 'expo-image';
-import { Camera } from 'lucide-react-native';
-import { uploadMediaToCloudinary } from '@/utils/media';
+import AuthScreen from '@/components/auth/AuthScreen';
+import OnboardingStepHeader, { ONBOARDING_STEP_COUNT } from '@/components/onboarding/OnboardingStepHeader';
+import AvatarStep from '@/components/onboarding/AvatarStep';
+import LanguageStep from '@/components/onboarding/LanguageStep';
+import RolesStep from '@/components/onboarding/RolesStep';
+import IndustriesStep from '@/components/onboarding/IndustriesStep';
+import OnboardingFooter from '@/components/onboarding/OnboardingFooter';
+import { useOnboardingSubmit } from '@/hooks/useOnboardingSubmit';
+import { PresetAvatar } from '@/constants/avatars';
+
+const DEFAULT_AVATAR = 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
 
 export default function OnboardingScreen() {
-  const router = useRouter();
-  const params = useLocalSearchParams();
-  const { colors } = useTheme();
-  const { token, refreshToken: authRefreshToken, user: authUser, setAuth } = useAuth();
+  const { submit, loading } = useOnboardingSubmit();
 
   const [step, setStep] = useState(1);
-  const [avatar, setAvatar] = useState<string | null>('https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y');
+  const [avatar, setAvatar] = useState<string | null>(DEFAULT_AVATAR);
+  const [presetAvatar, setPresetAvatar] = useState<PresetAvatar | null>(null);
+  const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [selectedIndustries, setSelectedIndustries] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
 
-  const handleToggleRole = (id: string) => {
-    if (selectedRoles.includes(id)) {
-      setSelectedRoles(selectedRoles.filter((r) => r !== id));
-    } else {
-      setSelectedRoles([...selectedRoles, id]);
-    }
-  };
-
-  const handleToggleIndustry = (id: string) => {
-    if (selectedIndustries.includes(id)) {
-      setSelectedIndustries(selectedIndustries.filter((i) => i !== id));
-    } else {
-      setSelectedIndustries([...selectedIndustries, id]);
-    }
-  };
+  const toggle = (list: string[], id: string) =>
+    list.includes(id) ? list.filter((x) => x !== id) : [...list, id];
 
   const handlePickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -60,364 +43,79 @@ export default function OnboardingScreen() {
 
     if (!result.canceled) {
       setAvatar(result.assets[0].uri);
+      setPresetAvatar(null);
     }
   };
 
-  const handleContinue = async () => {
+  const handlePickPreset = (preset: PresetAvatar) => {
+    setPresetAvatar(preset);
+    setAvatar(null);
+  };
+
+  const handleContinue = () => {
     if (step === 1) {
-      if (!avatar) {
+      if (!avatar && !presetAvatar) {
         Alert.alert('Avatar Required', 'Please choose a profile picture to continue.');
         return;
       }
       setStep(2);
     } else if (step === 2) {
-      if (selectedRoles.length === 0) return;
+      if (!selectedLanguage) return;
       setStep(3);
+    } else if (step === 3) {
+      if (selectedRoles.length === 0) return;
+      setStep(4);
     } else {
-      // Finalize Profile (Register or Update)
-      setLoading(true);
-      try {
-        let accessToken = token;
-        let refreshToken = authRefreshToken;
-        let user = authUser;
-
-        // If not authenticated (should not happen normally after OTP, but handle just in case)
-        if (!accessToken || !user) {
-
-          const { name, phone, email, password, username } = params;
-
-          // Check if we can just log in instead of registering if user was already created during OTP
-          if (phone && password) {
-            try {
-
-              const loginResult = await api.loginPassword({
-                phone: phone as string,
-                password: password as string
-              });
-              accessToken = loginResult.accessToken;
-              refreshToken = loginResult.refreshToken;
-              user = loginResult.user as any;
-
-
-              // Update Auth Context since we were missing it
-              setAuth({
-                token: accessToken!,
-                refreshToken: refreshToken || '',
-                user: user as any
-              });
-            } catch (loginErr) {
-              console.error('[Onboarding] Login fallback failed:', loginErr);
-            }
-          }
-
-          // If still no token, only then try to register
-          if (!accessToken || !user) {
-            // Validate required fields before attempting registration
-            if (!name || !phone || !email || !password) {
-              throw new Error('Missing required registration fields. Please start over from signup.');
-            }
-
-            const payload = {
-              name: name as string,
-              phone: phone as string,
-              email: email as string,
-              password: password as string,
-              username: username as string,
-              roles: selectedRoles,
-              industries: selectedIndustries
-            };
-
-            // Check availability before registering
-            const check = await api.checkAvailability({
-              email: email as string,
-              phone: phone as string,
-              password: password as string
-            });
-            if (!check.available) {
-              const fieldLabels: Record<string, string> = {
-                email: 'Email',
-                phone: 'Phone number',
-                password: 'Password',
-                username: 'Username'
-              };
-              if (check.fields && Array.isArray(check.fields)) {
-                const conflictMessages = check.fields.map((field: string) => fieldLabels[field] || field);
-                throw new Error(`Registration failed. The following ${conflictMessages.length === 1 ? 'field is' : 'fields are'} already registered: ${conflictMessages.join(', ')}`);
-              } else {
-                throw new Error(check.message || 'One or more fields are already registered.');
-              }
-            }
-          }
-
-          const response = await api.register(payload);
-          accessToken = response.accessToken;
-          refreshToken = response.refreshToken;
-          user = response.user as any;
-        } else {
-          // User is already authenticated (via OTP), just update profile
-          await api.updateMe({
-            roles: selectedRoles,
-            industries: selectedIndustries
-          }, accessToken!);
-
-          // Update local user object
-          if (user) {
-            (user as any).roles = selectedRoles;
-            (user as any).industries = selectedIndustries;
-          }
-        }
-
-        // 2. Upload Avatar if selected
-        let finalAvatarUrl = '';
-        if (avatar && accessToken) {
-          // Check if it's a remote URL (default avatar) or local file
-          if (avatar.startsWith('http')) {
-            finalAvatarUrl = avatar;
-          } else {
-            try {
-              const uploadResult = await uploadMediaToCloudinary(
-                { uri: avatar },
-                'image',
-                accessToken // use the token we have
-              );
-              finalAvatarUrl = uploadResult.url;
-            } catch (uploadError) {
-              console.error('Avatar upload failed:', uploadError);
-            }
-          }
-
-          if (finalAvatarUrl) {
-            // 3. Update User Profile with Avatar URL
-            try {
-              await api.updateMe({ avatar: finalAvatarUrl }, accessToken);
-              // Update local user object to include the new avatar
-              if (user) (user as any).avatar = finalAvatarUrl;
-            } catch (updateError) {
-              console.error('Failed to update profile with avatar:', updateError);
-            }
-          }
-        }
-
-        // Update Auth Context
-        if (accessToken && user) {
-          const updatedUser = {
-            ...user,
-            roles: (user as any).roles || selectedRoles,
-            industries: (user as any).industries || selectedIndustries,
-            avatar: (user as any).avatar || finalAvatarUrl
-          };
-
-          await setAuth({
-            token: accessToken,
-            refreshToken: refreshToken || '',
-            user: updatedUser as any,
-          });
-        }
-
-        router.replace('/home');
-      } catch (err: any) {
-        // Handle registration errors with conflicts
-        let errorMessage = err.message || 'Something went wrong';
-        if (err.conflicts && Array.isArray(err.conflicts)) {
-          const fieldLabels: Record<string, string> = {
-            email: 'Email',
-            phone: 'Phone number',
-            password: 'Password',
-            username: 'Username'
-          };
-          const conflictMessages = err.conflicts.map((field: string) => fieldLabels[field] || field);
-          errorMessage = `Registration failed. The following ${conflictMessages.length === 1 ? 'field is' : 'fields are'} already registered: ${conflictMessages.join(', ')}`;
-        }
-        Alert.alert('Setup Failed', errorMessage);
-      } finally {
-        setLoading(false);
-      }
+      submit({ avatar, presetAvatar, selectedLanguage, selectedRoles, selectedIndustries });
     }
   };
 
+  const nextDisabled =
+    (step === 1 && !avatar && !presetAvatar) ||
+    (step === 2 && !selectedLanguage) ||
+    (step === 3 && selectedRoles.length === 0) ||
+    (step === 4 && selectedIndustries.length === 0);
+
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.header}>
-          <AppText variant="h2" style={styles.title}>
-            {step === 1 ? 'Choose Your Avatar' : step === 2 ? 'Select Your Roles' : 'Select Industries'}
-          </AppText>
-          <AppText variant="bodyLarge" secondary>
-            {step === 1
-              ? 'Select a profile picture to represent you'
-              : step === 2
-                ? 'Choose all that apply (you can change this later)'
-                : 'Which film industries are you interested in?'}
-          </AppText>
-        </View>
-
-        <View style={styles.listContainer}>
-          {step === 1 ? (
-            <View style={styles.avatarContainer}>
-              <TouchableOpacity onPress={handlePickImage} style={styles.avatarWrapper} disabled={loading}>
-                {avatar ? (
-                  <Image source={{ uri: avatar }} style={styles.avatar} contentFit="cover" />
-                ) : (
-                  <View style={[styles.avatarPlaceholder, { backgroundColor: colors.surface }]}>
-                    <Camera size={40} color={colors.textSecondary} />
-                  </View>
-                )}
-                <View style={[styles.editBadge, { backgroundColor: colors.primary }]}>
-                  <Camera size={14} color="#FFF" />
-                </View>
-              </TouchableOpacity>
-              <AppText variant="body" secondary style={styles.avatarHint}>
-                Shape your identity! Tap the camera to upload a custom profile picture.
-              </AppText>
-            </View>
-          ) : step === 2 ? (
-            ROLES.map((role) => (
-              <SelectableCard
-                key={role.id}
-                id={role.id}
-                label={role.label}
-                icon={role.icon}
-                selected={selectedRoles.includes(role.id)}
-                onToggle={handleToggleRole}
-              />
-            ))
-          ) : (
-            INDUSTRIES.map((industry) => (
-              <SelectableCard
-                key={industry.id}
-                id={industry.id}
-                label={industry.label}
-                description={industry.description}
-                selected={selectedIndustries.includes(industry.id)}
-                onToggle={handleToggleIndustry}
-                color={industry.color}
-              />
-            ))
-          )}
-        </View>
-      </ScrollView>
-
-      <View
-        style={[
-          styles.footer,
-          { backgroundColor: colors.background, borderTopColor: colors.border },
-        ]}
-      >
-        <Button
-          title={step === 3 ? "Complete Setup" : "Next"}
-          onPress={handleContinue}
-          size="large"
+    <AuthScreen
+      keyboard={false}
+      bottomPadding={120}
+      footer={
+        <OnboardingFooter
+          step={step}
+          totalSteps={ONBOARDING_STEP_COUNT}
+          onNext={handleContinue}
+          onBack={() => setStep(step - 1)}
           loading={loading}
-          disabled={
-            (step === 1 && !avatar) ||
-            (step === 2 && selectedRoles.length === 0) ||
-            (step === 3 && selectedIndustries.length === 0)
-          }
+          disabled={nextDisabled}
         />
-        {step > 1 && (
-          <Button
-            title="Back"
-            onPress={() => setStep(step - 1)}
-            variant="outline"
-            style={{ marginTop: 10 }}
+      }
+    >
+      <OnboardingStepHeader step={step} />
+
+      <View style={{ gap: 12 }}>
+        {step === 1 ? (
+          <AvatarStep
+            avatar={avatar}
+            presetAvatar={presetAvatar}
+            onPickImage={handlePickImage}
+            onPickPreset={handlePickPreset}
+            disabled={loading}
+          />
+        ) : step === 2 ? (
+          <LanguageStep selected={selectedLanguage} onSelect={setSelectedLanguage} />
+        ) : step === 3 ? (
+          <RolesStep
+            selected={selectedRoles}
+            onToggle={(id) => setSelectedRoles(toggle(selectedRoles, id))}
+          />
+        ) : (
+          <IndustriesStep
+            selected={selectedIndustries}
+            onToggle={(id) => setSelectedIndustries(toggle(selectedIndustries, id))}
           />
         )}
       </View>
-    </View>
+    </AuthScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 24,
-    paddingBottom: 120,
-  },
-  header: {
-    marginBottom: 32,
-    marginTop: 20
-  },
-  title: {
-    marginBottom: 8,
-  },
-  listContainer: {
-    gap: 12,
-  },
-  avatarContainer: {
-    alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 20,
-  },
-  avatarWrapper: {
-    position: 'relative',
-    marginBottom: 16,
-  },
-  avatar: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-  },
-  avatarPlaceholder: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  editBadge: {
-    position: 'absolute',
-    bottom: 0,
-    right: 10,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#000',
-  },
-  avatarHint: {
-    marginBottom: 24,
-  },
-  defaultAvatarsContainer: {
-    width: '100%',
-    marginTop: 10,
-  },
-  sectionTitle: {
-    ...textVariants.bodyLargeSemibold,
-    marginBottom: 12,
-    marginLeft: 4,
-  },
-  avatarList: {
-    gap: 12,
-    paddingHorizontal: 4,
-  },
-  defaultAvatarItem: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  defaultAvatarImage: {
-    width: '100%',
-    height: '100%',
-  },
-  footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 24,
-    paddingBottom: 40,
-    borderTopWidth: 1,
-  },
-});

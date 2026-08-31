@@ -23,7 +23,8 @@ export type UserRole =
   | 'camera_assistants_focus_pullers'
   | 'set_designers_workers'
   | 'production_assistants_ad_team'
-  | 'publicity_promotion_pro';
+  | 'publicity_promotion_pro'
+  | 'influencer';
 
 export type Industry =
   | 'bollywood'
@@ -49,6 +50,7 @@ export interface User {
   bio: string;
   roles: UserRole[];
   industries: Industry[];
+  language?: string;
   experience: number;
   location: string;
   isOnline: boolean;
@@ -222,4 +224,91 @@ export interface Chat {
   lastMessage: string;
   lastMessageTime: string;
   unreadCount: number;
+}
+
+// Post detail + comments (raw API shape used by /post/[id])
+
+/** The media fields shared by feed `Post` and the raw post-detail payload. */
+export interface PostMediaSource {
+  type: ContentType;
+  mediaUrl?: string;
+  thumbnailUrl?: string;
+  media?: Post['media'];
+}
+
+export interface PostAuthor {
+  _id: string;
+  name: string;
+  avatar?: string;
+  isVerified?: boolean;
+  roles?: string[];
+}
+
+export interface PostDetail extends PostMediaSource {
+  _id: string;
+  author?: PostAuthor;
+  caption?: string;
+  createdAt: string;
+  isLiked?: boolean;
+  engagement?: {
+    likesCount?: number;
+    commentsCount?: number;
+  };
+}
+
+export interface CommentUser {
+  _id: string;
+  name: string;
+  avatar: string;
+  isVerified: boolean;
+}
+
+export interface Comment {
+  _id: string;
+  content: string;
+  user: CommentUser;
+  createdAt: string;
+  likesCount?: number;
+  repliesCount?: number;
+  parentComment?: string | null;
+  replies?: Comment[];
+}
+
+// Profile screens (own + public) — raw API shapes used by /profile and /user/[id]
+
+export interface UserStats {
+  followersCount: number;
+  followingCount: number;
+  postsCount: number;
+}
+
+/** One tile in a profile's post grid (raw API post, trimmed to what the grid needs). */
+export interface UserPost {
+  _id: string;
+  type: ContentType;
+  mediaUrl: string;
+  thumbnailUrl?: string;
+  caption?: string;
+  media?: {
+    url?: string;
+    thumbnail?: string;
+  };
+}
+
+/** Another user's profile as returned by GET /users/:id. */
+export interface UserProfile {
+  _id: string;
+  name: string;
+  username?: string;
+  avatar: string;
+  bio?: string;
+  roles: string[];
+  industries?: string[];
+  location?: string;
+  experience?: number;
+  isVerified: boolean;
+  isPrivate?: boolean;
+  accountType?: 'public' | 'private' | 'business';
+  portfolio?: { title: string; type: string; url: string }[];
+  stats: UserStats;
 }

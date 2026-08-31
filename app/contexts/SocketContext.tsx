@@ -27,8 +27,14 @@ const SOCKET_URL = API_BASE_URL
 
 export const socket: Socket = io(SOCKET_URL, {
   path: '/socket.io',
-  transports: ['websocket'],
+  // Start on HTTP long-polling, then upgrade to WebSocket when the server
+  // supports it. WebSocket-only fails hard when a proxy (nginx) in front of
+  // the API doesn't forward the Upgrade/Connection headers — polling-first
+  // always connects and upgrades opportunistically.
+  transports: ['polling', 'websocket'],
   reconnection: true,
+  reconnectionDelay: 1000,
+  reconnectionDelayMax: 10000,
   timeout: 20000,
   autoConnect: false, // 🔴 IMPORTANT: connect ONLY after token exists
 });
@@ -108,7 +114,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
     };
 
     const onConnectError = (err: Error) => {
-
+      console.warn('[Socket] connect_error:', err.message);
     };
 
     const onReceiveMessage = (message: any) => {

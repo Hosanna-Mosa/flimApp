@@ -1,4 +1,4 @@
-import api from './api';
+import { api } from './api';
 
 export interface CloudinaryResponse {
   url: string;
@@ -41,7 +41,6 @@ export const uploadMediaToCloudinary = async (
     }
 
     // Append file
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     formData.append('file', {
       uri: file.uri,
       type: mimeType,
@@ -111,14 +110,14 @@ export const uploadMediaToCloudinary = async (
               pages: response.pages,
               thumbnail_url: response.thumbnail_url
             });
-          } catch (e) {
+          } catch {
             reject(new Error('Failed to parse Cloudinary response'));
           }
         } else {
           try {
             const error = JSON.parse(xhr.responseText);
             reject(new Error(error.error?.message || 'Upload failed'));
-          } catch (e) {
+          } catch {
             reject(new Error(`Upload failed with status ${xhr.status}`));
           }
         }

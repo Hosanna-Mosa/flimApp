@@ -163,50 +163,6 @@ class ShareService {
   }
 
   /**
-   * Check if user has shared a post
-   * @param {string} userId - User ID
-   * @param {string} postId - Post ID
-   * @returns {Promise<boolean>} True if shared
-   */
-  async hasShared(userId, postId) {
-    try {
-      const share = await Share.findOne({ user: userId, post: postId });
-      return !!share;
-    } catch (error) {
-      logger.error('Error checking share status:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Get share count for a post
-   * @param {string} postId - Post ID
-   * @returns {Promise<number>} Share count
-   */
-  async getPostShareCount(postId) {
-    try {
-      // Try cache first
-      const cachedStats = await cacheService.getPostStats(postId);
-      if (cachedStats && cachedStats.sharesCount !== undefined) {
-        return cachedStats.sharesCount;
-      }
-
-      // Fallback to database
-      const count = await Share.countDocuments({ post: postId });
-
-      // Update cache
-      if (count > 0) {
-        await cacheService.setPostStats(postId, { sharesCount: count });
-      }
-
-      return count;
-    } catch (error) {
-      logger.error('Error getting share count:', error);
-      return 0;
-    }
-  }
-
-  /**
    * Delete a share
    * @param {string} shareId - Share ID
    * @param {string} userId - User ID

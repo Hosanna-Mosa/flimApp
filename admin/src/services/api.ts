@@ -166,10 +166,6 @@ export const verificationApi = {
     );
     return response.data;
   },
-  
-  deleteSubscription: async (id: string): Promise<void> => {
-    await api.delete(`/admin/verification/subscriptions/${id}`);
-  },
 };
 
 // Users API
@@ -199,21 +195,6 @@ export const statsApi = {
     const response = await api.get('/admin/stats/boost');
     return response.data;
   },
-
-  getWalletStats: async (
-    page: number = 1,
-    limit: number = 10,
-    search?: string
-  ): Promise<PaginatedResponse<any> & { platformTotal: number }> => {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString(),
-    });
-    if (search) params.append('search', search);
-
-    const response = await api.get(`/admin/stats/wallet?${params.toString()}`);
-    return response.data;
-  },
 };
 
 // Version Config API
@@ -232,5 +213,3 @@ export const versionApi = {
     return response.data;
   },
 };
-
-export default api;

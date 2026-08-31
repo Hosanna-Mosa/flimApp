@@ -1,195 +1,20 @@
 import React from 'react';
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-} from 'react-native';
-import { Stack, useRouter } from 'expo-router';
-import {
-  Users,
-  Wallet,
-  Settings as SettingsIcon,
-  LogOut,
-  Info,
-  Flame,
-  Zap,
-} from 'lucide-react-native';
-import { useTheme } from '@/contexts/ThemeContext';
-import { useAuth } from '@/contexts/AuthContext';
+import Screen from '@/components/layout/Screen';
 import AppText from '@/components/AppText';
+import AccountMenu from '@/components/account/AccountMenu';
+import LogoutRow from '@/components/account/LogoutRow';
+import { useAccount } from '@/hooks/useAccount';
 
 export default function AccountScreen() {
-  const router = useRouter();
-  const { colors } = useTheme();
-  const { logout } = useAuth();
-
-  const handleLogout = () => {
-    Alert.alert('Logout', 'Are you sure you want to logout?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Logout',
-        style: 'destructive',
-        onPress: async () => {
-          await logout();
-          router.replace('/auth');
-        },
-      },
-    ]);
-  };
-
-  const menuItems = [
-    {
-      id: 'communities',
-      icon: Users,
-      label: 'Communities',
-      subtitle: 'Join and manage groups',
-      onPress: () => router.push('/communities'),
-    },
-    {
-      id: 'trending',
-      icon: Flame,
-      label: 'Trending',
-      subtitle: 'See what\'s popular',
-      onPress: () => router.push('/trending'),
-    },
-    // Both run on Razorpay web checkout, so neither is platform-gated.
-    {
-      id: 'wallet',
-      icon: Wallet,
-      label: 'Wallet',
-      subtitle: 'Payments & earnings',
-      onPress: () => router.push('/wallet'),
-    },
-    {
-      id: 'boost',
-      icon: Zap,
-      label: 'Profile Boost',
-      subtitle: 'Priority feed placement',
-      onPress: () => router.push('/boost'),
-    },
-    {
-      id: 'settings',
-      icon: SettingsIcon,
-      label: 'Settings',
-      subtitle: 'App preferences',
-      onPress: () => router.push('/settings'),
-    }
-  ];
-
+  const a = useAccount();
 
   return (
-    <>
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerTitle: 'Account',
-          headerStyle: { backgroundColor: colors.background },
-          headerTintColor: colors.text,
-        }}
-      />
-      <ScrollView
-        style={[styles.container, { backgroundColor: colors.background }]}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.section}>
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <TouchableOpacity
-                key={item.id}
-                style={[
-                  styles.menuItem,
-                  { backgroundColor: colors.card, borderColor: colors.border },
-                ]}
-                hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
-                onPress={item.onPress}
-              >
-                <View
-                  style={[
-                    styles.iconContainer,
-                    { backgroundColor: `${colors.primary}15` },
-                  ]}
-                >
-                  <Icon size={24} color={colors.primary} />
-                </View>
-                <View style={styles.menuContent}>
-                  <AppText variant="bodyLargeSemibold">
-                    {item.label}
-                  </AppText>
-                  <AppText variant="caption" secondary style={styles.menuSubtitle}>
-                    {item.subtitle}
-                  </AppText>
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-
-        <View style={styles.section}>
-          <TouchableOpacity
-            style={[
-              styles.logoutButton,
-              { backgroundColor: colors.card, borderColor: colors.error },
-            ]}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            onPress={handleLogout}
-          >
-            <LogOut size={20} color={colors.error} />
-            <AppText variant="bodyLargeSemibold" color={colors.error}>
-              Logout
-            </AppText>
-          </TouchableOpacity>
-        </View>
-
-        <AppText variant="caption" secondary align="center" style={styles.version}>
-          Version 1.0.0
-        </AppText>
-      </ScrollView>
-    </>
+    <Screen title="Account" padded={false}>
+      <AccountMenu />
+      <LogoutRow onPress={a.confirmLogout} />
+      <AppText variant="caption" secondary align="center" style={{ paddingBottom: 40 }}>
+        Version 1.0.0
+      </AppText>
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  section: {
-    padding: 20,
-    gap: 12,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-  },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  menuContent: {
-    flex: 1,
-    marginLeft: 16,
-  },
-  menuSubtitle: {
-    marginTop: 2,
-  },
-  logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    gap: 8,
-  },
-  version: {
-    paddingBottom: 40,
-  },
-});

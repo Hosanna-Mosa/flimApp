@@ -54,6 +54,32 @@ const appendParams = (url, params) => {
   return query ? `${url}${separator}${query}` : url;
 };
 
+/**
+ * Sends the browser back to the app once checkout has finished.
+ *
+ * For app deep links (myapp://, exp://, …) this MUST be an HTTP 302: Chrome
+ * Custom Tabs and SFSafariViewController honour a server redirect to a custom
+ * scheme (it is the same mechanism OAuth logins rely on), but they silently
+ * block a `window.location = 'myapp://…'` fired from page script without a
+ * user gesture — which is exactly what the auto-return on the HTML page was
+ * doing, leaving the user stuck on "Returning you to FilmyConnect…".
+ *
+ * For an https return URL (the web build) the HTML page is still the right
+ * answer, since there is nothing to hand off to.
+ */
+const sendBackToApp = (res, session, { status, message } = {}) => {
+  const deepLink = appendParams(session.returnUrl, {
+    status,
+    sessionId: session.token,
+    reason: message,
+  });
+  if (/^https?:\/\//i.test(deepLink)) {
+    return res.send(views.returnToAppPage({ deepLink, status, message }));
+  }
+  res.set('Cache-Control', 'no-store');
+  return res.redirect(302, deepLink);
+};
+
 const sessionPayload = (session) => ({
   sessionId: session.token,
   status: session.status,
@@ -133,15 +159,7 @@ const renderCheckout = async (req, res) => {
   }
 
   if (session.status === 'PAID') {
-    return res.send(
-      views.returnToAppPage({
-        deepLink: appendParams(session.returnUrl, {
-          status: 'success',
-          sessionId: session.token,
-        }),
-        status: 'success',
-      })
-    );
+    return sendBackToApp(res, session, { status: 'success' });
   }
 
   if (session.expiresAt < new Date()) {
@@ -179,18 +197,7 @@ const handleCallback = async (req, res) => {
   const signature = payload.razorpay_signature;
   const orderId = payload.razorpay_order_id || session.razorpayOrderId;
 
-  const renderOutcome = (status, message) =>
-    res.send(
-      views.returnToAppPage({
-        deepLink: appendParams(session.returnUrl, {
-          status,
-          sessionId: session.token,
-          reason: message,
-        }),
-        status,
-        message,
-      })
-    );
+  const renderOutcome = (status, message) => sendBackToApp(res, session, { status, message });
 
   // Razorpay reported a failed attempt.
   if (!paymentId) {
@@ -237,12 +244,7 @@ const handleCancel = async (req, res) => {
   await paymentService.markCancelled(session);
 
   const status = session.status === 'PAID' ? 'success' : 'cancelled';
-  return res.send(
-    views.returnToAppPage({
-      deepLink: appendParams(session.returnUrl, { status, sessionId: session.token }),
-      status,
-    })
-  );
+  return sendBackToApp(res, session, { status });
 };
 
 /**

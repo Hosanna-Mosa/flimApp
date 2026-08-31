@@ -159,8 +159,8 @@ export const apiChangePassword = (currentPassword: string, newPassword: string, 
   request('/auth/change-password', { method: 'POST', body: { currentPassword, newPassword }, token });
 
 // Posts - Additional
-export const apiCreatePost = (payload: any, token: string) => request('/posts', { method: 'POST', body: payload, token });
-export const apiGetSavedPosts = (page: number, limit: number, token: string) =>
+export const apiCreatePost = (payload: any, token?: string) => request('/posts', { method: 'POST', body: payload, token });
+export const apiGetSavedPosts = (page: number, limit: number, token?: string) =>
   request(`/users/me/saved?page=${page}&limit=${limit}`, { token });
 export const apiGetTrendingFeed = (page: number, limit: number, token?: string) =>
   request(`/api/feed/trending?page=${page}&limit=${limit}&_t=${Date.now()}`, { token });
@@ -168,8 +168,8 @@ export const apiGetDonations = (page: number, limit: number, token?: string) =>
   request(`/posts/donations?page=${page}&limit=${limit}`, { token });
 
 // Likes
-export const apiLikePost = (id: string, token: string) => request(`/api/posts/${id}/like`, { method: 'POST', token });
-export const apiUnlikePost = (id: string, token: string) => request(`/api/posts/${id}/like`, { method: 'DELETE', token });
+export const apiLikePost = (id: string, token?: string) => request(`/api/posts/${id}/like`, { method: 'POST', token });
+export const apiUnlikePost = (id: string, token?: string) => request(`/api/posts/${id}/like`, { method: 'DELETE', token });
 
 // Comments - Additional
 export const apiGetComments = (id: string, page: number, limit: number, sort?: string, token?: string) => {
@@ -183,33 +183,28 @@ export const apiGetCommentReplies = (id: string, page: number, limit: number, to
   request(`/api/comments/${id}/replies?page=${page}&limit=${limit}`, { token });
 
 // Follow - Additional
-export const apiFollowUser = (id: string, token: string) => request(`/api/users/${id}/follow`, { method: 'POST', token });
-export const apiUnfollowUser = (id: string, token: string) => request(`/api/users/${id}/follow`, { method: 'DELETE', token });
+export const apiFollowUser = (id: string, token?: string) => request(`/api/users/${id}/follow`, { method: 'POST', token });
+export const apiUnfollowUser = (id: string, token?: string) => request(`/api/users/${id}/follow`, { method: 'DELETE', token });
 export const apiGetFollowStatus = (id: string, token?: string) => request(`/api/users/${id}/follow-status`, { token });
-export const apiAcceptFollowRequest = (userId: string, token: string) =>
+export const apiAcceptFollowRequest = (userId: string, token?: string) =>
   request(`/api/follow-requests/${userId}/accept`, { method: 'POST', token });
-export const apiRejectFollowRequest = (userId: string, token: string) =>
+export const apiRejectFollowRequest = (userId: string, token?: string) =>
   request(`/api/follow-requests/${userId}/reject`, { method: 'POST', token });
 
-// Notifications - Named exports for contexts
-export const apiNotifications = (token: string) => request('/notifications', { token });
-export const apiMarkAllNotificationsRead = (token: string) => request('/notifications/read-all', { method: 'POST', token });
-export const apiGetUnreadMessageCount = (token: string) => request('/messages/unread-count', { token });
+export const apiGetUnreadMessageCount = (token?: string) => request('/messages/unread-count', { token });
 
 // Messages
-export const apiGetConversations = (token: string, query?: string) => {
+export const apiGetConversations = (token?: string, query?: string) => {
   const url = query ? `/messages?search=${encodeURIComponent(query)}` : '/messages';
   return request(url, { token });
 };
-export const apiSendMessage = (recipientId: string, content: string, token: string) =>
-  request('/messages', { method: 'POST', body: { recipientId, content }, token });
-export const apiConversation = (userId: string, token: string) => request(`/messages/${userId}`, { token });
-export const apiMarkConversationRead = (userId: string, token: string) =>
+export const apiConversation = (userId: string, token?: string) => request(`/messages/${userId}`, { token });
+export const apiMarkConversationRead = (userId: string, token?: string) =>
   request(`/messages/${userId}/read`, { method: 'POST', token });
-export const apiDeleteMessage = (id: string, token: string) => request(`/messages/${id}`, { method: 'DELETE', token });
+export const apiDeleteMessage = (id: string, token?: string) => request(`/messages/${id}`, { method: 'DELETE', token });
 
 // Communities
-export const apiCreateCommunity = (payload: any, token: string) =>
+export const apiCreateCommunity = (payload: any, token?: string) =>
   request('/api/communities', { method: 'POST', body: payload, token });
 export const apiCommunities = (params: any, token?: string) => {
   const queryParams = new URLSearchParams();
@@ -219,61 +214,53 @@ export const apiCommunities = (params: any, token?: string) => {
   const url = `/api/communities?${queryParams.toString()}`;
   return request(url, { token });
 };
-export const apiMyCommunities = (page: number, limit: number, token: string) =>
+export const apiMyCommunities = (page: number, limit: number, token?: string) =>
   request(`/api/communities/my?page=${page}&limit=${limit}`, { token });
 export const apiCommunity = (id: string, token?: string) => request(`/api/communities/${id}`, { token });
-export const apiUpdateCommunity = (id: string, payload: any, token: string) =>
+export const apiUpdateCommunity = (id: string, payload: any, token?: string) =>
   request(`/api/communities/${id}`, { method: 'PUT', body: payload, token });
-export const apiDeleteCommunity = (id: string, token: string) =>
+export const apiDeleteCommunity = (id: string, token?: string) =>
   request(`/api/communities/${id}`, { method: 'DELETE', token });
-export const apiJoinCommunity = (id: string, token: string) =>
+export const apiJoinCommunity = (id: string, token?: string) =>
   request(`/api/communities/${id}/join`, { method: 'POST', token });
-export const apiLeaveCommunity = (id: string, token: string) =>
+export const apiLeaveCommunity = (id: string, token?: string) =>
   request(`/api/communities/${id}/leave`, { method: 'POST', token });
 export const apiCommunityMembers = (id: string, page: number, limit: number, token?: string) =>
   request(`/api/communities/${id}/members?page=${page}&limit=${limit}`, { token });
-export const apiUpdateMemberRole = (id: string, userId: string, role: string, token: string) =>
+export const apiUpdateMemberRole = (id: string, userId: string, role: string, token?: string) =>
   request(`/api/communities/${id}/members/${userId}/role`, { method: 'PUT', body: { role }, token });
-export const apiRemoveMember = (id: string, userId: string, token: string) =>
+export const apiRemoveMember = (id: string, userId: string, token?: string) =>
   request(`/api/communities/${id}/members/${userId}`, { method: 'DELETE', token });
-export const apiApproveJoinRequest = (id: string, userId: string, token: string) =>
+export const apiApproveJoinRequest = (id: string, userId: string, token?: string) =>
   request(`/api/communities/${id}/requests/${userId}/approve`, { method: 'POST', token });
-export const apiRejectJoinRequest = (id: string, userId: string, token: string) =>
+export const apiRejectJoinRequest = (id: string, userId: string, token?: string) =>
   request(`/api/communities/${id}/requests/${userId}/reject`, { method: 'POST', token });
 
 // Groups
 export const apiCommunityGroups = (id: string, token?: string) => request(`/api/communities/${id}/groups`, { token });
-export const apiCreateGroup = (id: string, payload: any, token: string) =>
+export const apiCreateGroup = (id: string, payload: any, token?: string) =>
   request(`/api/communities/${id}/groups`, { method: 'POST', body: payload, token });
-export const apiUpdateGroup = (id: string, groupId: string, payload: any, token: string) =>
-  request(`/api/communities/${id}/groups/${groupId}`, { method: 'PUT', body: payload, token });
-export const apiDeleteGroup = (id: string, groupId: string, token: string) =>
+export const apiDeleteGroup = (id: string, groupId: string, token?: string) =>
   request(`/api/communities/${id}/groups/${groupId}`, { method: 'DELETE', token });
-export const apiJoinGroup = (id: string, groupId: string, token: string) =>
+export const apiJoinGroup = (id: string, groupId: string, token?: string) =>
   request(`/api/communities/${id}/groups/${groupId}/join`, { method: 'POST', token });
-export const apiLeaveGroup = (id: string, groupId: string, token: string) =>
+export const apiLeaveGroup = (id: string, groupId: string, token?: string) =>
   request(`/api/communities/${id}/groups/${groupId}/leave`, { method: 'POST', token });
 export const apiGroupPosts = (id: string, groupId: string, page: number, limit: number, token?: string) =>
   request(`/api/communities/${id}/groups/${groupId}/posts?page=${page}&limit=${limit}`, { token });
 
 // Community Posts
-export const apiCreateCommunityPost = (id: string, payload: any, token: string) =>
+export const apiCreateCommunityPost = (id: string, payload: any, token?: string) =>
   request(`/api/communities/${id}/posts`, { method: 'POST', body: payload, token });
-export const apiDeleteCommunityPost = (id: string, postId: string, token: string) =>
+export const apiDeleteCommunityPost = (id: string, postId: string, token?: string) =>
   request(`/api/communities/${id}/posts/${postId}`, { method: 'DELETE', token });
-export const apiVotePoll = (id: string, postId: string, optionIndex: number, token: string) =>
+export const apiVotePoll = (id: string, postId: string, optionIndex: number, token?: string) =>
   request(`/api/communities/${id}/posts/${postId}/vote`, { method: 'POST', body: { optionIndex }, token });
 
 // Verification
 export const apiGetVerificationStatus = (token?: string) => request('/verification/status', { token });
 export const apiSubmitVerificationRequest = (payload: any, token: string) =>
   request('/verification/request', { method: 'POST', body: payload, token });
-export const apiCreateSubscriptionOrder = (planId: string, token?: string) =>
-  request('/subscriptions/create-order', { method: 'POST', body: { planType: planId }, token });
-export const apiVerifySubscriptionPayment = (payload: any, token?: string) =>
-  request('/subscriptions/verify-payment', { method: 'POST', body: payload, token });
-export const apiVerifyBadge = (transactionId: string, token?: string) =>
-  request('/verify-badge', { method: 'POST', body: { transactionId }, token });
 
 // Razorpay web checkout (see utils/payments.ts). The app never talks to
 // Razorpay directly — it asks for a hosted checkout URL and later asks the
@@ -325,12 +312,12 @@ export const apiCreateSupportRequest = (payload: any, token: string) =>
  */
 export const api = {
   // Auth
-  sendOtp: (phone: string) => unwrap(apiSendOtp(phone)),
   verifyOtp: (p: any, o: any, d: any) => unwrap(apiVerifyOtp(p, o, d)),
   login: (phone: string) => unwrap(apiSendOtp(phone)),
   loginPassword: (payload: { phone: string; password: string }) => unwrap(apiLoginPassword(payload)),
   checkAvailability: (params: { username?: string; email?: string; phone?: string; password?: string }) => unwrap(apiCheckAvailability(params)),
   register: (p: any) => unwrap(apiRegister(p)),
+  // held: see dead-code report
   logout: (ref: string, tok?: string) => request('/auth/logout', { method: 'POST', body: { refreshToken: ref }, token: tok }),
   forgotPassword: (email: string) => unwrap(apiForgotPassword(email)),
   resetPassword: (email: string, otp: string, pass: string) => unwrap(apiResetPassword(email, otp, pass)),
@@ -341,7 +328,7 @@ export const api = {
   user: (id: string, t?: string) => unwrap(apiGetUser(id, t)),
   getUser: (id: string, t?: string) => unwrap(apiGetUser(id, t)),
   updateMe: (p: any, t?: string) => unwrap(apiUpdateMe(p, t)),
-  searchUsers: (params: any, t: string) => {
+  searchUsers: (params: any, t?: string) => {
     const queryParams = new URLSearchParams();
     if (params.q) queryParams.append('q', params.q);
     if (params.roles) {
@@ -357,17 +344,15 @@ export const api = {
   },
 
   // Posts
-  createPost: (p: any, t: string) => unwrap(request('/posts', { method: 'POST', body: p, token: t })),
-  getPosts: (params: any, t?: string) => unwrap(request('/api/feed/trending', { token: t })),
+  createPost: (p: any, t?: string) => unwrap(request('/posts', { method: 'POST', body: p, token: t })),
   getDonations: (page: number, limit: number, t?: string) => unwrap(apiGetDonations(page, limit, t)),
   getPost: (id: string, t?: string) => unwrap(request(`/posts/${id}`, { token: t })),
-  updatePost: (id: string, p: any, t: string) => unwrap(request(`/posts/${id}`, { method: 'PUT', body: p, token: t })),
-  deletePost: (id: string, t: string) => unwrap(request(`/posts/${id}`, { method: 'DELETE', token: t })),
+  updatePost: (id: string, p: any, t?: string) => unwrap(request(`/posts/${id}`, { method: 'PUT', body: p, token: t })),
+  deletePost: (id: string, t?: string) => unwrap(request(`/posts/${id}`, { method: 'DELETE', token: t })),
 
   // Engagement
-  toggleLike: (id: string, t: string) => unwrap(request(`/api/posts/${id}/like`, { method: 'POST', token: t })),
-  likePost: (id: string, t: string) => unwrap(apiLikePost(id, t)),
-  unlikePost: (id: string, t: string) => unwrap(apiUnlikePost(id, t)),
+  likePost: (id: string, t?: string) => unwrap(apiLikePost(id, t)),
+  unlikePost: (id: string, t?: string) => unwrap(apiUnlikePost(id, t)),
   getComments: (id: string, page?: number, limit?: number, sort?: string, t?: string) => {
     const p = page ?? 0;
     const l = limit ?? 50;
@@ -381,18 +366,16 @@ export const api = {
     }
     return unwrap(request(`/api/posts/${id}/comments`, { method: 'POST', body, token: t }));
   },
-  deleteComment: (cId: string, t: string) => unwrap(request(`/api/comments/${cId}`, { method: 'DELETE', token: t })),
-  sharePost: (id: string, text: string, t: string) => unwrap(request(`/api/posts/${id}/share`, { method: 'POST', body: { caption: text, shareType: 'repost' }, token: t })),
-  toggleSavePost: (id: string, t: string) => unwrap(request(`/posts/${id}/save`, { method: 'POST', token: t })),
-  getSavedPosts: (page: number, limit: number, t: string) => unwrap(apiGetSavedPosts(page, limit, t)),
+  deleteComment: (cId: string, t?: string) => unwrap(request(`/api/comments/${cId}`, { method: 'DELETE', token: t })),
+  toggleSavePost: (id: string, t?: string) => unwrap(request(`/posts/${id}/save`, { method: 'POST', token: t })),
+  getSavedPosts: (page: number, limit: number, t?: string) => unwrap(apiGetSavedPosts(page, limit, t)),
 
   // Followers
-  toggleFollow: (id: string, t: string) => unwrap(request(`/api/users/${id}/follow`, { method: 'POST', token: t })),
-  followUser: (id: string, t: string) => unwrap(apiFollowUser(id, t)),
-  unfollowUser: (id: string, t: string) => unwrap(apiUnfollowUser(id, t)),
+  followUser: (id: string, t?: string) => unwrap(apiFollowUser(id, t)),
+  unfollowUser: (id: string, t?: string) => unwrap(apiUnfollowUser(id, t)),
   getFollowStatus: (id: string, t?: string) => unwrap(apiGetFollowStatus(id, t)),
-  acceptFollowRequest: (userId: string, t: string) => unwrap(apiAcceptFollowRequest(userId, t)),
-  rejectFollowRequest: (userId: string, t: string) => unwrap(apiRejectFollowRequest(userId, t)),
+  acceptFollowRequest: (userId: string, t?: string) => unwrap(apiAcceptFollowRequest(userId, t)),
+  rejectFollowRequest: (userId: string, t?: string) => unwrap(apiRejectFollowRequest(userId, t)),
   getFollowers: (id: string, page: number, limit: number, token?: string, query?: string) => {
     const url = `/api/users/${id}/followers?page=${page}&limit=${limit}${query ? `&q=${encodeURIComponent(query)}` : ''}`;
     return unwrap(request(url, { token }));
@@ -403,14 +386,13 @@ export const api = {
   },
 
   // Notifications
-  getNotifications: (t: string) => unwrap(request('/notifications', { token: t })),
-  markNotificationRead: (id: string, t: string) => unwrap(request(`/notifications/${id}/read`, { method: 'POST', token: t })),
-  markAllNotificationsRead: (t: string) => unwrap(request('/notifications/read-all', { method: 'POST', token: t })),
-  getNotificationUnreadCount: (t: string) => unwrap(request('/notifications/count', { token: t })),
-  registerPushToken: (p: string, t: string) => unwrap(request('/notifications/register-token', { method: 'POST', body: { token: p }, token: t })),
+  getNotifications: (t?: string) => unwrap(request('/notifications', { token: t })),
+  markAllNotificationsRead: (t?: string) => unwrap(request('/notifications/read-all', { method: 'POST', token: t })),
+  getNotificationUnreadCount: (t?: string) => unwrap(request('/notifications/count', { token: t })),
+  registerPushToken: (p: string, t?: string) => unwrap(request('/notifications/register-token', { method: 'POST', body: { token: p }, token: t })),
 
   // Media
-  getMediaSignature: (type: string, t: string) => unwrap(request('/media/signature', { method: 'POST', body: { type }, token: t })),
+  getMediaSignature: (type: string, t?: string) => unwrap(request('/media/signature', { method: 'POST', body: { type }, token: t })),
 
   // Feed
   feed: (page: any = 0, limit: any = 20, algo: any = 'hybrid', tr: any = 365, t?: string) => {
@@ -442,37 +424,35 @@ export const api = {
   changePassword: (currentPassword: string, newPassword: string, t?: string) => unwrap(apiChangePassword(currentPassword, newPassword, t)),
 
   // Communities
-  createCommunity: (payload: any, t: string) => unwrap(apiCreateCommunity(payload, t)),
+  createCommunity: (payload: any, t?: string) => unwrap(apiCreateCommunity(payload, t)),
   communities: (params: any, t?: string) => unwrap(apiCommunities(params, t)),
-  myCommunities: (page: number, limit: number, t: string) => unwrap(apiMyCommunities(page, limit, t)),
+  myCommunities: (page: number, limit: number, t?: string) => unwrap(apiMyCommunities(page, limit, t)),
   community: (id: string, t?: string) => unwrap(apiCommunity(id, t)),
-  updateCommunity: (id: string, payload: any, t: string) => unwrap(apiUpdateCommunity(id, payload, t)),
-  deleteCommunity: (id: string, t: string) => unwrap(apiDeleteCommunity(id, t)),
-  joinCommunity: (id: string, t: string) => unwrap(apiJoinCommunity(id, t)),
-  leaveCommunity: (id: string, t: string) => unwrap(apiLeaveCommunity(id, t)),
+  updateCommunity: (id: string, payload: any, t?: string) => unwrap(apiUpdateCommunity(id, payload, t)),
+  deleteCommunity: (id: string, t?: string) => unwrap(apiDeleteCommunity(id, t)),
+  joinCommunity: (id: string, t?: string) => unwrap(apiJoinCommunity(id, t)),
+  leaveCommunity: (id: string, t?: string) => unwrap(apiLeaveCommunity(id, t)),
   communityMembers: (id: string, page: number, limit: number, t?: string) => unwrap(apiCommunityMembers(id, page, limit, t)),
-  updateMemberRole: (id: string, userId: string, role: string, t: string) => unwrap(apiUpdateMemberRole(id, userId, role, t)),
-  removeMember: (id: string, userId: string, t: string) => unwrap(apiRemoveMember(id, userId, t)),
-  approveJoinRequest: (id: string, userId: string, t: string) => unwrap(apiApproveJoinRequest(id, userId, t)),
-  rejectJoinRequest: (id: string, userId: string, t: string) => unwrap(apiRejectJoinRequest(id, userId, t)),
+  updateMemberRole: (id: string, userId: string, role: string, t?: string) => unwrap(apiUpdateMemberRole(id, userId, role, t)),
+  removeMember: (id: string, userId: string, t?: string) => unwrap(apiRemoveMember(id, userId, t)),
+  approveJoinRequest: (id: string, userId: string, t?: string) => unwrap(apiApproveJoinRequest(id, userId, t)),
+  rejectJoinRequest: (id: string, userId: string, t?: string) => unwrap(apiRejectJoinRequest(id, userId, t)),
 
   // Groups
   communityGroups: (id: string, t?: string) => unwrap(apiCommunityGroups(id, t)),
-  createGroup: (id: string, payload: any, t: string) => unwrap(apiCreateGroup(id, payload, t)),
-  updateGroup: (id: string, groupId: string, payload: any, t: string) => unwrap(apiUpdateGroup(id, groupId, payload, t)),
-  deleteGroup: (id: string, groupId: string, t: string) => unwrap(apiDeleteGroup(id, groupId, t)),
-  joinGroup: (id: string, groupId: string, t: string) => unwrap(apiJoinGroup(id, groupId, t)),
-  leaveGroup: (id: string, groupId: string, t: string) => unwrap(apiLeaveGroup(id, groupId, t)),
+  createGroup: (id: string, payload: any, t?: string) => unwrap(apiCreateGroup(id, payload, t)),
+  deleteGroup: (id: string, groupId: string, t?: string) => unwrap(apiDeleteGroup(id, groupId, t)),
+  joinGroup: (id: string, groupId: string, t?: string) => unwrap(apiJoinGroup(id, groupId, t)),
+  leaveGroup: (id: string, groupId: string, t?: string) => unwrap(apiLeaveGroup(id, groupId, t)),
   groupPosts: (id: string, groupId: string, page: number, limit: number, t?: string) => unwrap(apiGroupPosts(id, groupId, page, limit, t)),
 
   // Community Posts
-  createCommunityPost: (id: string, payload: any, t: string) => unwrap(apiCreateCommunityPost(id, payload, t)),
-  deleteCommunityPost: (id: string, postId: string, t: string) => unwrap(apiDeleteCommunityPost(id, postId, t)),
-  votePoll: (id: string, postId: string, optionIndex: number, t: string) => unwrap(apiVotePoll(id, postId, optionIndex, t)),
+  createCommunityPost: (id: string, payload: any, t?: string) => unwrap(apiCreateCommunityPost(id, payload, t)),
+  deleteCommunityPost: (id: string, postId: string, t?: string) => unwrap(apiDeleteCommunityPost(id, postId, t)),
+  votePoll: (id: string, postId: string, optionIndex: number, t?: string) => unwrap(apiVotePoll(id, postId, optionIndex, t)),
 
   // Messages
-  getConversations: (t: string, query?: string) => unwrap(apiGetConversations(t, query)),
-  sendMessage: (recipientId: string, content: string, t: string) => unwrap(apiSendMessage(recipientId, content, t)),
+  getConversations: (t?: string, query?: string) => unwrap(apiGetConversations(t || '', query)),
   conversation: (userId: string, t: string) => unwrap(apiConversation(userId, t)),
   markConversationRead: (userId: string, t: string) => unwrap(apiMarkConversationRead(userId, t)),
   deleteMessage: (id: string, t: string) => unwrap(apiDeleteMessage(id, t)),
@@ -481,9 +461,6 @@ export const api = {
   // Verification
   getVerificationStatus: (t?: string) => unwrap(apiGetVerificationStatus(t)),
   submitVerificationRequest: (payload: any, t: string) => unwrap(apiSubmitVerificationRequest(payload, t)),
-  apiCreateSubscriptionOrder: (planId: string, t?: string) => unwrap(apiCreateSubscriptionOrder(planId, t)),
-  apiVerifySubscriptionPayment: (payload: any, t?: string) => unwrap(apiVerifySubscriptionPayment(payload, t)),
-  verifyBadge: (transactionId: string, t?: string) => unwrap(apiVerifyBadge(transactionId, t)),
 
   // Razorpay web checkout
   createPaymentSession: (
@@ -498,8 +475,7 @@ export const api = {
 
   // Wallet
   getWalletBalance: (t?: string) => unwrap(request('/wallet/balance', { token: t })),
-  createWalletOrder: (amount: number, t?: string) => unwrap(request('/wallet/deposit/create', { method: 'POST', body: { amount }, token: t })),
-  verifyWalletPayment: (payload: any, t?: string) => unwrap(request('/wallet/deposit/verify', { method: 'POST', body: payload, token: t })),
+  // held: see dead-code report
   withdrawWallet: async (amount: number, token?: string) => {
     return request<any>('/wallet/withdraw', {
       method: 'POST',

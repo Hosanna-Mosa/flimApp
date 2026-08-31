@@ -1,46 +1,28 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Dimensions, Platform } from 'react-native';
-import { Image } from 'expo-image';
-import { Video, ResizeMode, Audio } from 'expo-av';
-import { useRouter, useFocusEffect } from 'expo-router';
-import Slider from '@react-native-community/slider';
-import {
-  Play,
-  Pause,
-  FileText,
-  BadgeCheck,
-  Bookmark,
-  Volume2,
-  VolumeX,
-  Zap,
-} from 'lucide-react-native';
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Bookmark, Zap } from 'lucide-react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as WebBrowser from 'expo-web-browser';
 import { Post } from '@/types';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useMedia } from '@/contexts/MediaContext';
+import { formatDateTime } from '@/utils/date';
 import { ReportButton } from './ReportButton';
+import Avatar from '@/components/ui/Avatar';
+import VerifiedBadge from '@/components/ui/VerifiedBadge';
+import PostMedia from '@/components/post/media/PostMedia';
 
 interface FeedPostProps {
   post: Post;
-  isFollowing: boolean;
-  onFollow: (userId: string) => void;
+  /** Omit onFollow to hide the follow button (e.g. saved / crowd-fund lists). */
+  isFollowing?: boolean;
+  onFollow?: (userId: string) => void;
   onLike: (postId: string) => void;
   onComment: (postId: string) => void;
   onShare: (postId: string) => void;
   onSave?: (postId: string) => void;
-  primaryColor: string;
-  borderColor: string;
+  /** Whether this post is the one currently in view (drives video/audio autoplay). */
   isActive: boolean;
 }
-
-const SCREEN_WIDTH = Dimensions.get('window').width;
-
-const formatTime = (millis: number) => {
-  const minutes = Math.floor(millis / 60000);
-  const seconds = ((millis % 60000) / 1000).toFixed(0);
-  return `${minutes}:${Number(seconds) < 10 ? '0' : ''}${seconds}`;
-};
 
 export default function FeedPost({
   post,
@@ -50,474 +32,120 @@ export default function FeedPost({
   onComment,
   onShare,
   onSave,
-  primaryColor,
-  borderColor,
   isActive,
 }: FeedPostProps) {
   const router = useRouter();
   const { colors } = useTheme();
 
-  // Media State
-  const videoRef = useRef<Video>(null);
-  const [sound, setSound] = useState<Audio.Sound | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [videoStatus, setVideoStatus] = useState<any>(null);
-  const [audioPosition, setAudioPosition] = useState(0);
-  const [audioDuration, setAudioDuration] = useState(0);
-  const [loadingAudio, setLoadingAudio] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const { isMuted, toggleMute, currentPlayingAudioId, setCurrentPlayingAudioId } = useMedia();
-
-  useEffect(() => {
-    return () => {
-      if (sound) {
-        sound.unloadAsync();
-      }
-    };
-  }, [sound]);
-
-  // Pause if another audio starts playing
-  useEffect(() => {
-    if (currentPlayingAudioId !== post.id && isPlaying && sound) {
-      sound.pauseAsync();
-      setIsPlaying(false);
-    }
-  }, [currentPlayingAudioId, isPlaying, sound, post.id]);
-
-  // Handle auto-pause when screen is blurred (e.g. tab switch)
-  useFocusEffect(
-    useCallback(() => {
-      return () => {
-        if (videoStatus?.isPlaying && videoRef.current) {
-          videoRef.current.pauseAsync();
-        }
-        if (isPlaying && sound) {
-          sound.pauseAsync();
-          setIsPlaying(false);
-        }
-      };
-    }, [videoStatus?.isPlaying, isPlaying, sound])
-  );
-
-  // Handle auto-pause when not active and autoplay when active
-  useEffect(() => {
-    if (!isActive) {
-      if (videoRef.current) {
-        videoRef.current.pauseAsync();
-      }
-      if (sound) {
-        sound.pauseAsync();
-        setIsPlaying(false);
-      }
-    } else if (isActive && post.type === 'video' && videoRef.current) {
-      // Autoplay video when it becomes active
-      videoRef.current.playAsync();
-    }
-  }, [isActive, post.type, sound]);
-
-  const toggleAudio = async () => {
-    try {
-      if (sound) {
-        if (isPlaying) {
-          await sound.pauseAsync();
-          setIsPlaying(false);
-          if (currentPlayingAudioId === post.id) {
-            setCurrentPlayingAudioId(null);
-          }
-        } else {
-          setCurrentPlayingAudioId(post.id);
-          await sound.playAsync();
-          setIsPlaying(true);
-        }
-      } else {
-        setLoadingAudio(true);
-        setCurrentPlayingAudioId(post.id);
-        const mediaUrl = post.media?.url || post.mediaUrl;
-        if (!mediaUrl) {
-          setLoadingAudio(false);
-          return;
-        }
-        const { sound: newSound, status } = await Audio.Sound.createAsync(
-          { uri: mediaUrl },
-          { shouldPlay: true },
-          (status) => {
-            if (status.isLoaded) {
-              setAudioPosition(status.positionMillis);
-              setAudioDuration(status.durationMillis || 0);
-              setIsPlaying(status.isPlaying);
-              if (status.didJustFinish) {
-                setIsPlaying(false);
-                setAudioPosition(0);
-                newSound.setPositionAsync(0);
-                // Can't use setCurrentPlayingAudioId directly here without adding it to dependencies,
-                // but we can just use a generic closure. Actually, we can use the context setter.
-                setCurrentPlayingAudioId(null);
-              }
-            }
-          }
-        );
-        setSound(newSound);
-        setLoadingAudio(false);
-        setIsPlaying(true);
-      }
-    } catch (error) {
-      setLoadingAudio(false);
-    }
-  };
-
-  const handleSeek = async (value: number) => {
-    if (sound) {
-      await sound.setPositionAsync(value);
-    }
-  };
-
-  const toggleVideo = async () => {
-    if (!videoRef.current) return;
-    if (videoStatus?.isPlaying) {
-      await videoRef.current.pauseAsync();
-    } else {
-      await videoRef.current.playAsync();
-    }
-  };
-
-  const handleScroll = (event: any) => {
-    const offsetX = event.nativeEvent.contentOffset.x;
-    const page = Math.round(offsetX / SCREEN_WIDTH) + 1;
-    setCurrentPage(page);
-  };
-
-  const renderMedia = () => {
-    // Get media URL - prioritize new structure over legacy
-    const mediaUrl = post.media?.url || post.mediaUrl;
-    const thumbnailUrl = post.media?.thumbnail || post.thumbnailUrl;
-
-    // Debug logging
-    if (!mediaUrl && post.type !== 'audio') {
-      //   postId: post.id,
-      //   type: post.type,
-      //   hasMedia: !!post.media,
-      //   hasMediaUrl: !!post.mediaUrl,
-      //   media: post.media
-      // });
-    }
-
-    const defaultRatio = post.type === 'video' ? 16 / 9 : 1;
-    let aspectRatio = defaultRatio;
-
-    // Calculate aspect ratio safely
-    if (post.media?.width && post.media?.height && post.media.height > 0) {
-      aspectRatio = post.media.width / post.media.height;
-      // Ensure aspect ratio is valid (not 0, not infinity, not NaN)
-      if (!isFinite(aspectRatio) || aspectRatio <= 0) {
-        aspectRatio = defaultRatio;
-      }
-    }
-
-    if (post.type === 'video') {
-      if (!mediaUrl) {
-        //   postId: post.id,
-        //   hasMedia: !!post.media,
-        //   media: post.media
-        // });
-        const safeAspectRatio = isFinite(aspectRatio) && aspectRatio > 0 ? aspectRatio : 16 / 9;
-        return (
-          <View style={[styles.mediaContainer, { aspectRatio: safeAspectRatio, minHeight: 200, backgroundColor: colors.surface }]}>
-            <View style={[styles.media, { backgroundColor: colors.surface, justifyContent: 'center', alignItems: 'center', minHeight: 200 }]}>
-              <Text style={{ color: colors.textSecondary }}>Video unavailable</Text>
-            </View>
-          </View>
-        );
-      }
-
-      const safeAspectRatio = isFinite(aspectRatio) && aspectRatio > 0 ? aspectRatio : 16 / 9;
-      return (
-        <View style={[styles.mediaContainer, { aspectRatio: safeAspectRatio, minHeight: 200 }]}>
-          <Video
-            ref={videoRef}
-            style={[styles.media, { minHeight: 200 }]}
-            source={{ uri: mediaUrl }}
-            useNativeControls={false}
-            resizeMode={ResizeMode.CONTAIN}
-            isLooping
-            isMuted={isMuted}
-            posterSource={thumbnailUrl ? { uri: thumbnailUrl } : undefined}
-            usePoster={!!thumbnailUrl}
-            onPlaybackStatusUpdate={status => setVideoStatus(status)}
-            onError={(error) => {
-              //   postId: post.id,
-              //   mediaUrl,
-              //   error: error.nativeEvent?.error || error
-              // });
-            }}
-          />
-          <TouchableOpacity
-            style={styles.muteButton}
-            onPress={toggleMute}
-          >
-            {isMuted ? (
-              <VolumeX size={18} color="#fff" />
-            ) : (
-              <Volume2 size={18} color="#fff" />
-            )}
-          </TouchableOpacity>
-          {(!videoStatus?.isPlaying || videoStatus?.didJustFinish) && (
-            <TouchableOpacity style={styles.centerOverlay} onPress={toggleVideo}>
-              <View style={[styles.playButtonCircle, { backgroundColor: 'rgba(0,0,0,0.6)' }]}>
-                <Play size={32} color="#fff" fill="#fff" style={{ marginLeft: 4 }} />
-              </View>
-            </TouchableOpacity>
-          )}
-          {videoStatus?.isPlaying && (
-            <TouchableOpacity style={styles.fullOverlay} onPress={toggleVideo} />
-          )}
-        </View>
-      );
-    }
-
-    if (post.type === 'audio') {
-      return (
-        <View style={[styles.audioCard, { backgroundColor: colors.surface }]}>
-          <View style={styles.audioRow}>
-            <TouchableOpacity onPress={toggleAudio} disabled={loadingAudio}>
-              {loadingAudio ? (
-                <ActivityIndicator color={primaryColor} />
-              ) : isPlaying ? (
-                <Pause size={32} color={primaryColor} fill={primaryColor} />
-              ) : (
-                <Play size={32} color={primaryColor} fill={primaryColor} />
-              )}
-            </TouchableOpacity>
-
-            <View style={styles.audioProgress}>
-              <Text style={[styles.timeText, { color: colors.textSecondary }]}>{formatTime(audioPosition)}</Text>
-              <Slider
-                style={{ flex: 1, marginHorizontal: 8 }}
-                minimumValue={0}
-                maximumValue={audioDuration || 100}
-                value={audioPosition}
-                minimumTrackTintColor={primaryColor}
-                maximumTrackTintColor={colors.border}
-                thumbTintColor={primaryColor}
-                onSlidingComplete={handleSeek}
-                disabled={!sound}
-              />
-              <Text style={[styles.timeText, { color: colors.textSecondary }]}>
-                {audioDuration ? formatTime(audioDuration) : '--:--'}
-              </Text>
-            </View>
-          </View>
-        </View>
-      );
-    }
-
-    if (post.type === 'script') {
-      const scriptUrl = post.media?.url || post.mediaUrl;
-      if (!scriptUrl) {
-        return (
-          <View style={[styles.scriptCard, { backgroundColor: colors.surface }]}>
-            <View style={styles.genericScriptCard}>
-              <View style={styles.scriptIcon}>
-                <FileText size={48} color={primaryColor} />
-              </View>
-              <Text style={[styles.scriptTitle, { color: colors.text }]}>Document unavailable</Text>
-            </View>
-          </View>
-        );
-      }
-
-      const isPdf = scriptUrl.toLowerCase().endsWith('.pdf') || (post.media?.format === 'pdf');
-
-      // Unified LinkedIn Style Carousel: Always attempt to show slides
-      if (isPdf) {
-        // Default to 3 pages if metadata missing, to enable sliding for legacy/unknown PDFs
-        const pages = post.media?.pages || 3;
-
-        const pageUrls = [];
-        const baseUrl = scriptUrl.replace(/\.pdf$/i, '.jpg');
-        const uploadIndex = baseUrl.indexOf('/upload/');
-        const hasUpload = uploadIndex > -1;
-
-        if (hasUpload) {
-          const prefix = baseUrl.substring(0, uploadIndex + 8);
-          const suffix = baseUrl.substring(uploadIndex + 8);
-          // Limit to 20 pages max for performance
-          for (let i = 1; i <= Math.min(pages, 20); i++) {
-            pageUrls.push(`${prefix}pg_${i}/${suffix}`);
-          }
-
-          return (
-            <View style={styles.pdfCarouselContainer}>
-              <FlatList
-                data={pageUrls}
-                horizontal
-                pagingEnabled
-                showsHorizontalScrollIndicator={false}
-                keyExtractor={(item) => item}
-                onScroll={handleScroll}
-                renderItem={({ item }) => (
-                  <View style={{ width: SCREEN_WIDTH, height: 500, backgroundColor: '#f0f0f0', alignItems: 'center', justifyContent: 'center' }}>
-                    <Image
-                      source={{ uri: item }}
-                      style={{ width: '100%', height: '100%' }}
-                      contentFit="contain"
-                      transition={200}
-                    />
-                  </View>
-                )}
-              />
-              <View style={styles.pdfOverlayBottom}>
-                <View style={styles.pageBadge}>
-                  <Text style={styles.pageBadgeText}>{currentPage} {pages > 1 ? `/ ${pages}` : ''}</Text>
-                </View>
-              </View>
-            </View>
-          );
-        }
-      }
-
-      // Fallback for non-PDF scripts (generic doc)
-      return (
-        <TouchableOpacity
-          style={[styles.scriptCard, { backgroundColor: colors.surface }]}
-          onPress={() => WebBrowser.openBrowserAsync(scriptUrl)}
-        >
-          <View style={styles.genericScriptCard}>
-            <View style={styles.scriptIcon}>
-              <FileText size={48} color={primaryColor} />
-            </View>
-            <Text style={[styles.scriptTitle, { color: colors.text }]}>Document</Text>
-            <Text style={[styles.scriptSubtitle, { color: primaryColor }]}>Tap to Open</Text>
-          </View>
-        </TouchableOpacity>
-      );
-    }
-
-    // Image
-    if (!mediaUrl) {
-      //   postId: post.id,
-      //   type: post.type,
-      //   hasMedia: !!post.media,
-      //   media: post.media
-      // });
-      return (
-        <View style={[styles.mediaContainer, { aspectRatio, minHeight: 200, backgroundColor: colors.surface }]}>
-          <View style={[styles.media, { backgroundColor: colors.surface, justifyContent: 'center', alignItems: 'center', minHeight: 200 }]}>
-            <Text style={{ color: colors.textSecondary }}>Image unavailable</Text>
-          </View>
-        </View>
-      );
-    }
-
-    // Ensure aspectRatio is valid for rendering
-    const safeAspectRatio = isFinite(aspectRatio) && aspectRatio > 0 ? aspectRatio : 1;
-
-    return (
-      <View style={[styles.mediaContainer, { aspectRatio: safeAspectRatio, minHeight: 200 }]}>
-        <Image
-          source={{ uri: mediaUrl }}
-          style={[styles.media, { minHeight: 200 }]}
-          contentFit="cover"
-          transition={200}
-          onError={(error) => {
-            //   postId: post.id,
-            //   mediaUrl,
-            //   error: error.nativeEvent?.error || error
-            // });
-          }}
-          onLoad={() => {
-          }}
-        />
-      </View>
-    );
-  };
+  const mediaUrl = post.media?.url || post.mediaUrl;
+  const hasMedia = !!mediaUrl || post.type === 'audio';
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.card, borderColor: borderColor }]}>
-      {/* Header */}
+    <View style={[styles.container, { backgroundColor: colors.background, borderBottomColor: colors.divider }]}>
+      {/* Header: avatar · name · role · follow · menu */}
       {post.user && (
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.userInfo}
             onPress={() => router.push({ pathname: '/user/[id]', params: { id: post.user.id } })}
           >
-            <Image source={{ uri: post.user.avatar }} style={styles.avatar} contentFit="cover" />
-            <View style={{ marginLeft: 12, flex: 1 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <Text style={[styles.userName, { color: colors.text }]}>{post.user.name}</Text>
-                {post.user.isVerified && Platform.OS !== 'ios' && <BadgeCheck size={16} color="#FFFFFF" fill="#0095F6" />}
+            <Avatar uri={post.user.avatar} userId={post.user.id} name={post.user.name} size={36} />
+            <View style={styles.headerText}>
+              <View style={styles.nameRow}>
+                <Text style={[styles.userName, { color: colors.text }]} numberOfLines={1}>
+                  {post.user.name}
+                </Text>
+                <VerifiedBadge visible={post.user.isVerified} size={14} />
                 {post.user.isBoosted && Platform.OS !== 'ios' && (
                   <View style={[styles.boostedBadge, { backgroundColor: colors.primary }]}>
-                    <Zap size={10} color="#000" fill="#000" />
-                    <Text style={styles.boostedText}>BOOSTED</Text>
+                    <Zap size={10} color={colors.onPrimary} fill={colors.onPrimary} />
+                    <Text style={[styles.boostedText, { color: colors.onPrimary }]}>BOOSTED</Text>
                   </View>
                 )}
               </View>
-              <Text style={[styles.role, { color: colors.textSecondary }]}>{post.user.roles?.[0] || 'Member'}</Text>
+              <Text style={[styles.role, { color: colors.textSecondary }]} numberOfLines={1}>
+                {post.user.roles?.[0] || 'Member'}
+              </Text>
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.followBtn, { backgroundColor: isFollowing ? 'transparent' : '#0095F6', borderColor: isFollowing ? borderColor : '#0095F6', borderWidth: 1 }]}
-            onPress={() => onFollow(post.user.id)}
-          >
-            <Text style={{ color: isFollowing ? colors.text : '#fff', fontSize: 12, fontWeight: '600' }}>
-              {isFollowing ? 'Following' : 'Follow'}
-            </Text>
-          </TouchableOpacity>
+          {onFollow && (
+            <TouchableOpacity
+              style={[
+                styles.followBtn,
+                isFollowing
+                  ? { backgroundColor: 'transparent', borderColor: colors.border }
+                  : { backgroundColor: colors.link, borderColor: colors.link },
+              ]}
+              onPress={() => onFollow(post.user.id)}
+            >
+              <Text style={[styles.followText, { color: isFollowing ? colors.text : '#FFFFFF' }]}>
+                {isFollowing ? 'Following' : 'Follow'}
+              </Text>
+            </TouchableOpacity>
+          )}
 
           <ReportButton type="post" id={post.id} />
         </View>
       )}
 
-      {/* Content */}
-      {(() => {
-        const mediaUrl = post.media?.url || post.mediaUrl;
-        if (mediaUrl || post.type === 'audio') {
-          return (
-            <View style={{ width: '100%' }}>
-              {renderMedia()}
-            </View>
-          );
-        }
-        return null;
-      })()}
+      {/* Media: full-bleed */}
+      {hasMedia && (
+        <View style={styles.mediaWrap}>
+          <PostMedia source={post} audioId={post.id} isActive={isActive} variant="feed" />
+        </View>
+      )}
 
-      <View style={styles.content}>
-        <Text style={[styles.caption, { color: colors.text }]}>{post.caption}</Text>
-        <Text style={[styles.timestamp, { color: colors.textSecondary }]}>{post.createdAt}</Text>
-      </View>
-
-      {/* Actions */}
-      <View style={[styles.actions, { borderTopColor: borderColor }]}>
-        <TouchableOpacity style={styles.actionBtn} onPress={() => onLike(post.id)}>
+      {/* Actions: like · comment · share ··· save */}
+      <View style={styles.actions}>
+        <TouchableOpacity style={styles.actionBtn} onPress={() => onLike(post.id)} hitSlop={8}>
           <Ionicons
-            name={post.isLiked ? "heart" : "heart-outline"}
+            name={post.isLiked ? 'heart' : 'heart-outline'}
             size={26}
             color={post.isLiked ? colors.error : colors.text}
           />
-          <Text style={[styles.actionText, { color: colors.text }]}>{post.likes}</Text>
         </TouchableOpacity>
-
-        <TouchableOpacity style={styles.actionBtn} onPress={() => onComment(post.id)}>
+        <TouchableOpacity style={styles.actionBtn} onPress={() => onComment(post.id)} hitSlop={8}>
           <Ionicons name="chatbubble-outline" size={24} color={colors.text} />
-          <Text style={[styles.actionText, { color: colors.text }]}>{post.comments}</Text>
         </TouchableOpacity>
-
-        <TouchableOpacity style={styles.actionBtn} onPress={() => onShare(post.id)}>
+        <TouchableOpacity style={styles.actionBtn} onPress={() => onShare(post.id)} hitSlop={8}>
           <Ionicons name="paper-plane-outline" size={24} color={colors.text} />
         </TouchableOpacity>
-
-        <View style={{ flex: 1 }} />
-
+        <View style={styles.spacer} />
         {onSave && (
-          <TouchableOpacity style={styles.saveBtn} onPress={() => onSave(post.id)}>
+          <TouchableOpacity style={styles.actionBtn} onPress={() => onSave(post.id)} hitSlop={8}>
             <Bookmark
               size={24}
-              color={post.isSaved ? primaryColor : colors.textSecondary}
-              fill={post.isSaved ? primaryColor : 'transparent'}
+              color={post.isSaved ? colors.primary : colors.text}
+              fill={post.isSaved ? colors.primary : 'transparent'}
             />
           </TouchableOpacity>
         )}
+      </View>
+
+      {/* Likes · caption · comments · time */}
+      <View style={styles.content}>
+        {post.likes > 0 && (
+          <Text style={[styles.likesText, { color: colors.text }]}>
+            {post.likes} {post.likes === 1 ? 'like' : 'likes'}
+          </Text>
+        )}
+        {!!post.caption && (
+          <Text style={[styles.caption, { color: colors.text }]}>
+            <Text style={styles.captionName}>{post.user?.name} </Text>
+            {post.caption}
+          </Text>
+        )}
+        {post.comments > 0 && (
+          <TouchableOpacity onPress={() => onComment(post.id)}>
+            <Text style={[styles.viewComments, { color: colors.textSecondary }]}>
+              View {post.comments === 1 ? '1 comment' : `all ${post.comments} comments`}
+            </Text>
+          </TouchableOpacity>
+        )}
+        <Text style={[styles.timestamp, { color: colors.textSecondary }]}>
+          {post.createdAt ? formatDateTime(post.createdAt) : 'Just now'}
+        </Text>
       </View>
     </View>
   );
@@ -525,221 +153,94 @@ export default function FeedPost({
 
 const styles = StyleSheet.create({
   container: {
+    paddingBottom: 12,
     marginBottom: 8,
-    borderBottomWidth: 0.5,
+    borderBottomWidth: 1,
   },
   header: {
-    padding: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 8,
   },
   userInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    minWidth: 0,
   },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  headerText: {
+    marginLeft: 10,
+    flex: 1,
+    minWidth: 0,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   userName: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
+    flexShrink: 1,
   },
   role: {
     fontSize: 12,
+    marginTop: 1,
   },
   followBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
     borderRadius: 8,
-    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  followText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  mediaWrap: {
+    width: '100%',
+  },
+  actions: {
+    flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingTop: 10,
+    paddingBottom: 6,
+    gap: 16,
   },
-  mediaContainer: {
-    width: '100%',
+  actionBtn: {
+    alignItems: 'center',
     justifyContent: 'center',
-    position: 'relative',
-    backgroundColor: '#000',
   },
-  media: {
-    width: '100%',
-    height: '100%',
+  spacer: {
+    flex: 1,
   },
   content: {
-    padding: 12,
-    paddingTop: 8,
+    paddingHorizontal: 12,
+    gap: 4,
+  },
+  likesText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   caption: {
     fontSize: 14,
     lineHeight: 20,
   },
+  captionName: {
+    fontWeight: '600',
+  },
+  viewComments: {
+    fontSize: 14,
+    marginTop: 2,
+  },
   timestamp: {
-    fontSize: 12,
-    marginTop: 4,
-  },
-  actions: {
-    flexDirection: 'row',
-    padding: 12,
-    paddingTop: 8,
-  },
-  actionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 24,
-    gap: 6,
-  },
-  actionText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  saveBtn: {
-    padding: 2,
-  },
-
-  // Audio Styles
-  audioCard: {
-    padding: 16,
-    width: '100%',
-    minHeight: 100,
-    justifyContent: 'center',
-  },
-  audioRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-  },
-  audioProgress: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  timeText: {
-    fontSize: 12,
-    fontVariant: ['tabular-nums'],
-  },
-
-  // Script Styles
-  scriptContainer: {
-    width: '100%',
-    backgroundColor: '#f5f5f5',
-  },
-  scriptCard: {
-    width: '100%',
-    minHeight: 250,
-    backgroundColor: '#f5f5f5',
-  },
-  genericScriptCard: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    height: 250,
-  },
-  scriptIcon: {
-    padding: 16,
-    borderRadius: 40,
-    backgroundColor: 'rgba(0,0,0,0.05)',
-  },
-  scriptTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  scriptSubtitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginTop: 4,
-  },
-
-  // PDF Carousel (LinkedIn Style)
-  pdfCarouselContainer: {
-    width: '100%',
-    height: 500,
-    position: 'relative',
-    backgroundColor: '#333',
-  },
-  pdfOverlayBottom: {
-    position: 'absolute',
-    bottom: 20,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-  },
-  pageBadge: {
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-  },
-  pageBadgeText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  readButtonSmall: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  readButtonText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  pdfChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 24,
-  },
-  pdfChipText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-
-  // Video Custom Controls
-  centerOverlay: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 10,
-  },
-  fullOverlay: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-    zIndex: 5,
-  },
-  playButtonCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  muteButton: {
-    position: 'absolute',
-    bottom: 12,
-    right: 12,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    padding: 8,
-    borderRadius: 20,
-    zIndex: 20,
+    fontSize: 11,
+    marginTop: 2,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
   },
   boostedBadge: {
     flexDirection: 'row',
@@ -753,6 +254,5 @@ const styles = StyleSheet.create({
   boostedText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#000',
   },
 });

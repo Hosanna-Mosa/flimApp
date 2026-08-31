@@ -1,5 +1,5 @@
 const likeService = require('../services/like.service');
-const { success, error } = require('../utils/response');
+const { success } = require('../utils/response');
 
 /**
  * Like Controller - Handles like/unlike operations
