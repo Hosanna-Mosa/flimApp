@@ -89,15 +89,4 @@ CommunitySchema.methods.isAdmin = function(userId) {
          this.admins.some(admin => admin.equals(userId));
 };
 
-// Virtual for checking if user is moderator
-CommunitySchema.methods.isModerator = function(userId) {
-  return this.isAdmin(userId) || 
-         this.moderators.some(mod => mod.equals(userId));
-};
-
-// Virtual for checking if user is member
-CommunitySchema.methods.isMember = function(userId) {
-  return this.members.some(member => member.equals(userId));
-};
-
 module.exports = model('Community', CommunitySchema);

@@ -1,5 +1,5 @@
 const followService = require('../services/follow.service');
-const { success, error } = require('../utils/response');
+const { success } = require('../utils/response');
 
 /**
  * Follow Controller - Handles follow/unfollow operations

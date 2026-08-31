@@ -99,5 +99,4 @@ const decryptMessage = (value) => {
 module.exports = {
   encryptMessage,
   decryptMessage,
-  isEncrypted,
 };

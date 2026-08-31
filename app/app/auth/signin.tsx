@@ -1,27 +1,19 @@
 import React, { useState } from 'react';
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  TouchableOpacity,
-} from 'react-native';
+import { View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft } from 'lucide-react-native';
-import { useTheme } from '@/contexts/ThemeContext';
+import { isValidPhoneNumber, parsePhoneNumber } from 'libphonenumber-js';
 import { useAuth } from '@/contexts/AuthContext';
+import AuthScreen from '@/components/auth/AuthScreen';
+import AuthHeader from '@/components/auth/AuthHeader';
 import Input from '@/components/Input';
 import PhoneInput from '@/components/PhoneInput';
 import Button from '@/components/Button';
-import AppText from '@/components/AppText';
-import api from '@/utils/api';
+import TextLink from '@/components/ui/TextLink';
+import { api } from '@/utils/api';
 import { Country } from '@/utils/country';
-import { isValidPhoneNumber, parsePhoneNumber } from 'libphonenumber-js';
 
 export default function SignInScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
   const { setAuth } = useAuth();
 
   const [phone, setPhone] = useState('');
@@ -72,94 +64,44 @@ export default function SignInScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={[styles.container, { backgroundColor: '#000000' }]}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backButton}
-            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-          >
-            <ArrowLeft size={24} color={colors.text} />
-          </TouchableOpacity>
-          <AppText variant="h2" weight="regular" style={[styles.title, { fontFamily: 'Geometric415Black', textTransform: 'uppercase' }]}>
-            FILMYCONNECT
-          </AppText>
-        </View>
+    <AuthScreen>
+      <AuthHeader onBack={() => router.back()} />
 
-        <View style={styles.form}>
-          <PhoneInput
-            label="Phone Number"
-            value={phone}
-            onChangeText={setPhone}
-            countryCode={countryCode}
-            callingCode={callingCode}
-            onSelectCountry={onSelect}
-          />
+      <View style={{ gap: 16 }}>
+        <PhoneInput
+          label="Phone Number"
+          value={phone}
+          onChangeText={setPhone}
+          countryCode={countryCode}
+          callingCode={callingCode}
+          onSelectCountry={onSelect}
+        />
 
-          <Input
-            label="Password"
-            placeholder="Enter your password"
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-            error={error}
-            editable={!loading}
-          />
+        <Input
+          label="Password"
+          placeholder="Enter your password"
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+          error={error}
+          editable={!loading}
+        />
 
-          <TouchableOpacity
-            onPress={() => router.push('/auth/forgot-password')}
-            style={styles.forgotPasswordContainer}
-          >
-            <AppText variant="bodySemibold" color={colors.primary}>
-              Forgot Password?
-            </AppText>
-          </TouchableOpacity>
+        <TextLink
+          label="Forgot Password?"
+          onPress={() => router.push('/auth/forgot-password')}
+          align="end"
+          style={{ marginTop: 8 }}
+        />
 
-          <Button
-            title="Sign In"
-            onPress={handleSignIn}
-            loading={loading}
-            size="large"
-            style={styles.button}
-          />
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        <Button
+          title="Sign In"
+          onPress={handleSignIn}
+          loading={loading}
+          size="large"
+          style={{ marginTop: 24 }}
+        />
+      </View>
+    </AuthScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    padding: 24,
-  },
-  header: {
-    marginBottom: 40,
-    marginTop: 20,
-  },
-  backButton: {
-    marginBottom: 20,
-  },
-  title: {},
-  form: {
-    gap: 16,
-  },
-  button: {
-    marginTop: 24,
-  },
-  forgotPasswordContainer: {
-    alignSelf: 'flex-end',
-    marginTop: 8,
-  },
-});

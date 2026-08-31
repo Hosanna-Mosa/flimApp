@@ -1,5 +1,4 @@
 const cloudinary = require('cloudinary').v2;
-const crypto = require('crypto');
 
 /**
  * Media Service - Handles Cloudinary upload signatures and validation

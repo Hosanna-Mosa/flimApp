@@ -188,24 +188,6 @@ const markMessageAsDelivered = async (messageId) => {
   );
 };
 
-const countMessagesBetween = async (user1, user2) => {
-  try {
-    const u1 = new mongoose.Types.ObjectId(user1);
-    const u2 = new mongoose.Types.ObjectId(user2);
-
-    const count = await Message.countDocuments({
-      $or: [
-        { sender: u1, recipient: u2 },
-        { sender: u2, recipient: u1 },
-      ],
-    });
-    return count;
-  } catch (e) {
-    console.error('[MessageService] countMessagesBetween Error:', e);
-    return 0; // This fallback to 0 is DANGEROUS if it's an error, as it triggers notification!
-  }
-};
-
 module.exports = {
   createMessage,
   getConversation,
@@ -213,7 +195,6 @@ module.exports = {
   getConversations,
   getUnreadCount,
   markConversationAsRead,
-  countMessagesBetween,
   markMessageAsDelivered
 };
 

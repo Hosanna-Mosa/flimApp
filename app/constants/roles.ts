@@ -32,4 +32,5 @@ export const ROLES: RoleData[] = [
   { id: 'set_designers_workers', label: 'Set Designers / Set Workers', icon: '🔨' },
   { id: 'production_assistants_ad_team', label: 'Production Assistants / AD Team', icon: '📢' },
   { id: 'publicity_promotion_pro', label: 'Publicity & Promotion / PRO', icon: '📣' },
+  { id: 'influencer', label: 'Influencer', icon: '📱' },
 ];

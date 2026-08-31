@@ -1,7 +1,5 @@
 const jwt = require('jsonwebtoken');
 const messageService = require('../services/message.service');
-const queueService = require('../services/queue.service');
-const logger = require('../config/logger');
 const notificationService = require('../services/notification.service');
 const User = require('../models/User.model');
 

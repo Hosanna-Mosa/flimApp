@@ -22,6 +22,7 @@ const SELF_EDITABLE_FIELDS = [
   'bio',
   'roles',
   'industries',
+  'language',
   'experience',
   'location',
   'portfolio',

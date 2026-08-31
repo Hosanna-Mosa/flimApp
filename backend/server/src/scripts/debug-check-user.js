@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const User = require('../models/user.model');
+const User = require('../models/User.model');
 const dotenv = require('dotenv');
 const path = require('path');
 

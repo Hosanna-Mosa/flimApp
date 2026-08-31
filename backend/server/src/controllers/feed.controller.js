@@ -1,5 +1,5 @@
 const feedService = require('../services/feed.service');
-const { success, error } = require('../utils/response');
+const { success } = require('../utils/response');
 
 /**
  * Feed Controller - Handles feed operations

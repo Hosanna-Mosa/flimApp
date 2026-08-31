@@ -1,7 +1,5 @@
 const Community = require('../models/Community.model');
 const CommunityMember = require('../models/CommunityMember.model');
-const CommunityPost = require('../models/CommunityPost.model');
-const User = require('../models/User.model');
 
 /**
  * Create a new community

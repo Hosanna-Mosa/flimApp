@@ -1,29 +1,25 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  TouchableOpacity,
-  Alert,
-  Linking,
-} from 'react-native';
+import { View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, CheckSquare, Square } from 'lucide-react-native';
-import { useTheme } from '@/contexts/ThemeContext';
+import { isValidPhoneNumber, parsePhoneNumber } from 'libphonenumber-js';
+import AuthScreen from '@/components/auth/AuthScreen';
+import AuthHeader from '@/components/auth/AuthHeader';
+import PrivacyDisclosureCard from '@/components/auth/PrivacyDisclosureCard';
+import TermsCheckbox from '@/components/auth/TermsCheckbox';
+import CommunityGuidelinesList from '@/components/auth/CommunityGuidelinesList';
 import Input from '@/components/Input';
 import PhoneInput from '@/components/PhoneInput';
 import Button from '@/components/Button';
-import AppText from '@/components/AppText';
-import api from '@/utils/api';
+import { api } from '@/utils/api';
 import { Country } from '@/utils/country';
-import { isValidPhoneNumber, parsePhoneNumber } from 'libphonenumber-js';
+import {
+  formatAlreadyRegisteredMessage,
+  formatConflictMessage,
+  formatSingleFieldMessage,
+} from '@/utils/authErrors';
 
 export default function SignUpScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
 
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
@@ -36,7 +32,6 @@ export default function SignUpScreen() {
 
   const [countryCode, setCountryCode] = useState('IN');
   const [callingCode, setCallingCode] = useState('91');
-  const [pickerVisible, setPickerVisible] = useState(false);
 
   const [loading, setLoading] = useState(false);
 
@@ -90,23 +85,10 @@ export default function SignUpScreen() {
       if (!check.available) {
         // Handle multiple conflicting fields
         if (check.fields && Array.isArray(check.fields)) {
-          const fieldLabels: Record<string, string> = {
-            email: 'Email',
-            phone: 'Phone number',
-            password: 'Password',
-            username: 'Username'
-          };
-          const conflictMessages = check.fields.map((field: string) => fieldLabels[field] || field);
-          setError(`The following ${conflictMessages.length === 1 ? 'field is' : 'fields are'} already registered: ${conflictMessages.join(', ')}`);
+          setError(formatAlreadyRegisteredMessage(check.fields));
         } else if (check.field) {
           // Legacy single field response
-          const fieldLabels: Record<string, string> = {
-            email: 'Email',
-            phone: 'Phone number',
-            password: 'Password',
-            username: 'Username'
-          };
-          setError(`This ${fieldLabels[check.field] || check.field} is already registered.`);
+          setError(formatSingleFieldMessage(check.field));
         } else {
           setError(check.message || 'One or more fields are already registered.');
         }
@@ -124,14 +106,7 @@ export default function SignUpScreen() {
     } catch (err: any) {
       // Handle registration errors with conflicts
       if (err.conflicts && Array.isArray(err.conflicts)) {
-        const fieldLabels: Record<string, string> = {
-          email: 'Email',
-          phone: 'Phone number',
-          password: 'Password',
-          username: 'Username'
-        };
-        const conflictMessages = err.conflicts.map((field: string) => fieldLabels[field] || field);
-        setError(`Registration failed. The following ${conflictMessages.length === 1 ? 'field is' : 'fields are'} already registered: ${conflictMessages.join(', ')}`);
+        setError(formatConflictMessage(err.conflicts));
       } else {
         setError(err.message || 'Failed to send OTP. Please check phone number.');
       }
@@ -141,200 +116,78 @@ export default function SignUpScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={[styles.container, { backgroundColor: '#000000' }]}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backButton}
-            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-          >
-            <ArrowLeft size={24} color={colors.text} />
-          </TouchableOpacity>
-          <AppText variant="h2" weight="regular" style={[styles.title, { fontFamily: 'Geometric415Black', textTransform: 'uppercase' }]}>
-            FILMYCONNECT
-          </AppText>
-        </View>
+    <AuthScreen bottomPadding={40}>
+      <AuthHeader onBack={() => router.back()} />
 
-        <View style={styles.form}>
-          <Input
-            label="Full Name"
-            placeholder="John Doe"
-            value={name}
-            onChangeText={setName}
-            editable={!loading}
-          />
+      <View>
+        <Input
+          label="Full Name"
+          placeholder="John Doe"
+          value={name}
+          onChangeText={setName}
+          editable={!loading}
+        />
 
-          <Input
-            label="Username"
-            placeholder="johndoe"
-            value={username}
-            onChangeText={setUsername}
-            autoCapitalize="none"
-            editable={!loading}
-          />
+        <Input
+          label="Username"
+          placeholder="johndoe"
+          value={username}
+          onChangeText={setUsername}
+          autoCapitalize="none"
+          editable={!loading}
+        />
 
-          <Input
-            label="Email"
-            placeholder="john@example.com"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            value={email}
-            onChangeText={setEmail}
-            editable={!loading}
-          />
+        <Input
+          label="Email"
+          placeholder="john@example.com"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          value={email}
+          onChangeText={setEmail}
+          editable={!loading}
+        />
 
-          <PhoneInput
-            label="Phone Number"
-            value={phone}
-            onChangeText={setPhone}
-            countryCode={countryCode}
-            callingCode={callingCode}
-            onSelectCountry={onSelect}
-          // PhoneInput might not support editable directly, but let's assume it doesn't need it for now or check it
-          />
+        <PhoneInput
+          label="Phone Number"
+          value={phone}
+          onChangeText={setPhone}
+          countryCode={countryCode}
+          callingCode={callingCode}
+          onSelectCountry={onSelect}
+        />
 
-          <Input
-            label="Password"
-            placeholder="Create a password"
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-            editable={!loading}
-          />
+        <Input
+          label="Password"
+          placeholder="Create a password"
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+          editable={!loading}
+        />
 
-          <Input
-            label="Confirm Password"
-            placeholder="Confirm your password"
-            secureTextEntry
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            error={error}
-            editable={!loading}
-          />
+        <Input
+          label="Confirm Password"
+          placeholder="Confirm your password"
+          secureTextEntry
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+          error={error}
+          editable={!loading}
+        />
 
-          {/* Data Collection Disclosure */}
-          <View style={[styles.privacyDisclosure, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <AppText variant="bodySemibold" secondary style={styles.privacyDisclosureTitle}>
-              📋 What data we collect
-            </AppText>
-            <AppText variant="caption" secondary style={styles.privacyDisclosureText}>
-              FilmyConnect collects your name, phone number, email, profile media (photos/videos), and location to provide networking and collaboration services. Push notifications alert you about messages, likes, and updates. Your data is never shared with third parties for marketing. See our{' '}
-              <Text style={{ color: colors.primary }} onPress={() => Linking.openURL('https://filmyconnect24.com/privacy-policy')}>
-                Privacy Policy
-              </Text>{' '}
-              for full details.
-            </AppText>
-          </View>
+        <PrivacyDisclosureCard />
+        <TermsCheckbox checked={acceptedTerms} onToggle={() => setAcceptedTerms((prev) => !prev)} />
+        <CommunityGuidelinesList />
 
-          <TouchableOpacity
-            style={styles.termsRow}
-            onPress={() => setAcceptedTerms((prev) => !prev)}
-            activeOpacity={0.8}
-          >
-            {acceptedTerms ? (
-              <CheckSquare size={20} color={colors.primary} />
-            ) : (
-              <Square size={20} color={colors.textSecondary} />
-            )}
-            <AppText variant="body" secondary style={styles.termsText}>
-              I agree to the{' '}
-              <Text style={{ color: colors.primary }} onPress={() => Linking.openURL('https://filmyconnect24.com/terms-and-conditions')}>
-                Terms and Conditions
-              </Text>{' '}
-              and{' '}
-              <Text style={{ color: colors.primary }} onPress={() => Linking.openURL('https://filmyconnect24.com/privacy-policy')}>
-                Privacy Policy
-              </Text>
-            </AppText>
-          </TouchableOpacity>
-          <View style={styles.guidelinesList}>
-            <AppText variant="caption" secondary>- no abusive content</AppText>
-            <AppText variant="caption" secondary>- no harassment</AppText>
-            <AppText variant="caption" secondary>- no illegal content</AppText>
-          </View>
-
-          <Button
-            title="Next"
-            onPress={handleNext}
-            size="large"
-            loading={loading}
-            disabled={!acceptedTerms || loading}
-            style={styles.button}
-          />
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        <Button
+          title="Next"
+          onPress={handleNext}
+          size="large"
+          loading={loading}
+          disabled={!acceptedTerms || loading}
+          style={{ marginTop: 12 }}
+        />
+      </View>
+    </AuthScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    padding: 24,
-    paddingBottom: 40,
-  },
-  header: {
-    marginBottom: 40,
-    marginTop: 20,
-  },
-  backButton: {
-    marginBottom: 20,
-  },
-  title: {},
-  form: {
-  },
-  button: {
-    marginTop: 12,
-  },
-  termsRow: {
-    flexDirection: 'row',
-    gap: 10,
-    alignItems: 'flex-start',
-    marginTop: 8,
-  },
-  termsText: {
-    flex: 1,
-    lineHeight: 18,
-  },
-  privacyDisclosure: {
-    padding: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    marginTop: 12,
-    marginBottom: 4,
-  },
-  privacyDisclosureTitle: {
-    marginBottom: 6,
-  },
-  privacyDisclosureText: {
-    lineHeight: 18,
-  },
-  guidelinesList: {
-    marginTop: 8,
-    marginBottom: 4,
-    paddingLeft: 30,
-    gap: 4,
-  },
-  countryPickerWrapper: {
-    paddingLeft: 12,
-    justifyContent: 'center',
-    borderRightWidth: 1,
-    borderRightColor: '#333',
-    marginRight: 8,
-  },
-  countryPickerButton: {
-    marginTop: 0,
-  },
-});

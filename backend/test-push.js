@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 /*
   Task: Verify Expo push notifications before APK build.
-  Usage: node test-push.js
+  Usage: TEST_PUSH_TOKEN='ExponentPushToken[...]' node test-push.js
 */
 
 // Try to use global fetch (Node 18+)
@@ -10,13 +10,15 @@ const fetch = global.fetch || require('node-fetch');
 
 const EXPO_PUSH_API_URL = 'https://exp.host/--/api/v2/push/send';
 
-// ⚠️ HARDCODED TOKEN - REPLACE THIS BEFORE RUNNING
-// Example: 'ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]'
-const TARGET_TOKEN = 'ExponentPushToken[-3CaQuJiVPaA1ce4pqiPZf]';
+// The token comes from the environment; a real device token must not live in the repo.
+// Example: TEST_PUSH_TOKEN='ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]' node test-push.js
+const TARGET_TOKEN = process.env.TEST_PUSH_TOKEN;
+
 
 async function sendPush() {
-  if (!TARGET_TOKEN || TARGET_TOKEN.includes('REPLACE_WITH_YOUR_TOKEN')) {
-    console.error('❌ Error: Please replace TARGET_TOKEN with a valid push token in test-push.js');
+  if (!TARGET_TOKEN) {
+    console.error('❌ Error: TEST_PUSH_TOKEN environment variable is not set.');
+    console.log("Usage: TEST_PUSH_TOKEN='ExponentPushToken[...]' node test-push.js");
     console.log('You can find your token by checking the logs of the running app or checking your User document in DB.');
     process.exit(1);
   }

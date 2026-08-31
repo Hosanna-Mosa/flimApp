@@ -1,10 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Image } from 'expo-image';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Community } from '@/types';
 import { Users, Lock, ChevronRight, ShieldCheck, Globe } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
+import Avatar from '@/components/ui/Avatar';
+import Chip from '@/components/ui/Chip';
 
 interface CommunityCardProps {
   community: Community;
@@ -35,11 +36,11 @@ export default function CommunityCard({ community, onPress, onJoin, joining }: C
       onPress={handlePress}
       activeOpacity={0.7}
     >
-      <Image
-        source={community.avatar || community.coverImage || 'https://via.placeholder.com/80'}
+      <Avatar
+        uri={community.avatar || community.coverImage}
+        name={community.name}
+        size={60}
         style={[styles.avatar, { backgroundColor: colors.background }]}
-        contentFit="cover"
-        transition={200}
       />
       
       <View style={styles.content}>
@@ -76,11 +77,7 @@ export default function CommunityCard({ community, onPress, onJoin, joining }: C
           </View>
 
           {community.industry && (
-            <View style={[styles.industryBadge, { backgroundColor: colors.primary + '20' }]}>
-              <Text style={[styles.industryText, { color: colors.primary }]}>
-                {community.industry}
-              </Text>
-            </View>
+            <Chip label={community.industry} tone="primary" size="small" />
           )}
         </View>
       </View>
@@ -127,8 +124,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   avatar: {
-    width: 60,
-    height: 60,
     borderRadius: 16,
     marginRight: 12,
   },
@@ -191,14 +186,4 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
-  industryBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  industryText: {
-    fontSize: 10,
-    fontWeight: '600',
-    textTransform: 'capitalize',
-  }
 });

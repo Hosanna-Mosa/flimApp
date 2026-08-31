@@ -43,7 +43,6 @@ export const lineHeight = {
   '5xl': 42,
 } as const;
 
-export type FontSizeToken = keyof typeof fontSize;
 export type FontWeightToken = keyof typeof fontWeight;
 
 export interface TextVariant {

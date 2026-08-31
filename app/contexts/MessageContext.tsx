@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 import { useSocket } from './SocketContext';
-import api from '@/utils/api';
+import { api } from '@/utils/api';
 
 interface MessageContextType {
     unreadCount: number;
@@ -15,7 +15,7 @@ const MessageContext = createContext<MessageContextType | undefined>(undefined);
 
 export const MessageProvider = ({ children }: { children: ReactNode }) => {
     const [unreadCount, setUnreadCount] = useState(0);
-    const { token } = useAuth();
+    const { token, user } = useAuth();
     const { socket } = useSocket();
 
     const refreshUnreadCount = async () => {
@@ -25,7 +25,7 @@ export const MessageProvider = ({ children }: { children: ReactNode }) => {
       if (data && typeof data.count === 'number') {
         setUnreadCount(data.count);
       }
-    } catch (error) {
+    } catch {
         }
     };
 
@@ -51,15 +51,22 @@ export const MessageProvider = ({ children }: { children: ReactNode }) => {
             const interval = setInterval(refreshUnreadCount, 5000);
             return () => clearInterval(interval);
         }
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only subscription; refreshUnreadCount identity is unstable
     }, [token]);
 
     // Listen for new messages via socket
     useEffect(() => {
         if (!socket) return;
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const handleNewMessage = (message: any) => {
-            // Basic check: if meaningful content and not sent by me (though socket usually only emits to recipient)
+            // Only count messages sent by someone else. The socket normally
+            // only emits to the recipient, but guard against echoes of my
+            // own messages.
+            const senderId =
+                message?.senderId ||
+                (typeof message?.sender === 'object' ? message.sender?._id : message?.sender);
+            const myId = user?._id || user?.id;
+            if (myId && senderId && String(senderId) === String(myId)) return;
             incrementUnreadCount();
         };
 
@@ -69,7 +76,7 @@ export const MessageProvider = ({ children }: { children: ReactNode }) => {
         return () => {
             socket.off('receive_message', handleNewMessage);
         };
-    }, [socket]);
+    }, [socket, user]);
 
     return (
         <MessageContext.Provider

@@ -1,5 +1,4 @@
 require('dotenv').config({ path: '../../.env' });
-const mongoose = require('mongoose');
 const Admin = require('../models/Admin.model');
 const connectDB = require('../config/db');
 

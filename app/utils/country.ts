@@ -18,29 +18,3 @@ export interface Country {
   callingCode: string;
   flag: string;
 }
-
-export interface RestCountry {
-  name: {
-    common: string;
-  };
-  cca2: string;
-  idd: {
-    root?: string;
-    suffixes?: string[];
-  };
-}
-
-/**
- * Maps the REST Countries API response to our internal Country interface.
- */
-export const mapRestCountryToCountry = (restCountry: RestCountry): Country => {
-  const root = restCountry.idd?.root || '';
-  const suffix = restCountry.idd?.suffixes?.[0] || '';
-  
-  return {
-    name: restCountry.name.common,
-    code: restCountry.cca2,
-    callingCode: `${root}${suffix}`,
-    flag: getFlagEmoji(restCountry.cca2),
-  };
-};

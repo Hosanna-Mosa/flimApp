@@ -1,5 +1,5 @@
 const MediaService = require('../services/media.service');
-const { success, error } = require('../utils/response');
+const { success, fail } = require('../utils/response');
 
 /**
  * Media Controller - Handles HTTP requests for media operations
@@ -15,7 +15,7 @@ class MediaController {
       const userId = req.user.id;
 
       if (!type) {
-        return error(res, 'Media type is required', 400);
+        return fail(res, 'Media type is required', 400);
       }
 
       const signatureData = await MediaService.generateUploadSignature(type, userId);
@@ -36,7 +36,7 @@ class MediaController {
       const { type, metadata } = req.body;
 
       if (!type || !metadata) {
-        return error(res, 'Type and metadata are required', 400);
+        return fail(res, 'Type and metadata are required', 400);
       }
 
       const isValid = MediaService.validateMediaMetadata(metadata, type);
@@ -44,7 +44,7 @@ class MediaController {
       return success(res, { valid: isValid }, 200);
     } catch (err) {
       console.error('Error validating media:', err);
-      return error(res, err.message, 400);
+      return fail(res, err.message, 400);
     }
   }
 
@@ -58,13 +58,13 @@ class MediaController {
       const { resourceType } = req.query;
 
       if (!publicId) {
-        return error(res, 'Public ID is required', 400);
+        return fail(res, 'Public ID is required', 400);
       }
 
       // Without this, any authenticated user could delete any other user's
       // media by passing their publicId.
       if (!MediaService.isOwnedBy(publicId, req.user.id)) {
-        return error(res, 'Forbidden', 403);
+        return fail(res, 'Forbidden', 403);
       }
 
       const result = await MediaService.deleteMedia(

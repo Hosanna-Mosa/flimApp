@@ -70,12 +70,4 @@ CommunityPostSchema.index({ isPinned: 1, createdAt: -1 });
 CommunityPostSchema.index({ author: 1, createdAt: -1 });
 CommunityPostSchema.index({ isDeleted: 1 });
 
-// Method to check if user has voted in poll
-CommunityPostSchema.methods.hasVoted = function(userId) {
-  if (!this.poll || !this.poll.options) return false;
-  return this.poll.options.some(option => 
-    option.votes.some(vote => vote.equals(userId))
-  );
-};
-
 module.exports = model('CommunityPost', CommunityPostSchema);

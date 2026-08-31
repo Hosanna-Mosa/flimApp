@@ -1,5 +1,5 @@
 const User = require('../models/User.model');
-const { success, error } = require('../utils/response');
+const { success } = require('../utils/response');
 
 const getAllUsers = async (req, res, next) => {
     try {

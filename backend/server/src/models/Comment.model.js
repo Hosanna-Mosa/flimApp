@@ -49,12 +49,4 @@ CommentSchema.virtual('isReply').get(function() {
   return this.parentComment !== null;
 });
 
-// Method to get all replies
-CommentSchema.methods.getReplies = async function() {
-  return await this.model('Comment').find({ 
-    parentComment: this._id,
-    isActive: true 
-  }).populate('user', 'name avatar isVerified');
-};
-
 module.exports = model('Comment', CommentSchema);

@@ -403,31 +403,6 @@ class CommentService {
     }
   }
 
-  /**
-   * Get comment count for a post
-   * @param {string} postId - Post ID
-   * @returns {Promise<number>} Comment count
-   */
-  async getPostCommentCount(postId) {
-    try {
-      // Try cache first
-      const cachedStats = await cacheService.getPostStats(postId);
-      if (cachedStats && cachedStats.commentsCount !== undefined) {
-        return cachedStats.commentsCount;
-      }
-
-      // Fallback to database
-      const count = await Comment.countDocuments({
-        post: postId,
-        isActive: true,
-      });
-
-      return count;
-    } catch (error) {
-      logger.error('Error getting comment count:', error);
-      return 0;
-    }
-  }
 }
 
 module.exports = new CommentService();

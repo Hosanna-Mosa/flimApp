@@ -30,6 +30,7 @@ router.post(
         password: Joi.string().min(6).required(),
         roles: Joi.array().items(Joi.string()).required(),
         industries: Joi.array().items(Joi.string()).required(),
+        language: Joi.string().allow('', null),
       }).required(),
     })
   ),
@@ -123,12 +124,6 @@ router.post(
   ),
   authController.resetPassword
 );
-router.get(
-  '/check-availability',
-  credentialLimiter,
-  authController.checkAvailability
-);
-
 router.post(
   '/check-availability',
   credentialLimiter,

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Modal, SafeAreaView, Platform } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, Modal, SafeAreaView } from 'react-native';
 import Input from './Input';
 import CountryPicker from './CountryPicker';
 import { Country } from '@/utils/country';
@@ -37,7 +37,7 @@ export default function PhoneInput({
     try {
       const example = getExampleNumber(countryCode as any, examples);
       return example ? example.formatNational() : '98765 43210';
-    } catch (e) {
+    } catch {
       return '98765 43210';
     }
   }, [countryCode]);
