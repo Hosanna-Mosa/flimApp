@@ -252,3 +252,60 @@ export interface SupportStats {
   firstReplyHours: number;
   resolutionDays: number;
 }
+
+
+// ---------------------------------------------------------------------------
+// Payments
+// ---------------------------------------------------------------------------
+
+export type PaymentSource = 'session' | 'subscription' | 'wallet';
+export type PaymentStatus = 'paid' | 'failed' | 'cancelled' | 'expired' | 'started';
+
+export interface PaymentEntry {
+  id: string;
+  source: PaymentSource;
+  status: PaymentStatus;
+  rawStatus: string;
+  purpose: string;
+  planType: string | null;
+  amount: number;
+  currency: string;
+  razorpayOrderId: string | null;
+  razorpayPaymentId: string | null;
+  fulfilled: boolean;
+  failureReason: string | null;
+  user: { _id: string; name: string; email?: string; avatar?: string } | null;
+  createdAt: string;
+  description?: string | null;
+}
+
+export interface PaymentBreakdown {
+  [key: string]: { count: number; paidCount: number; collected: number };
+}
+
+export interface PaymentSummary {
+  attempted: number;
+  paidCount: number;
+  collected: number;
+  currency: string;
+  averagePayment: number;
+  successRate: number;
+  byStatus: Record<string, number>;
+  bySource: PaymentBreakdown;
+  byPurpose: PaymentBreakdown;
+  byPlan: PaymentBreakdown;
+  failureReasons: Record<string, number>;
+  daily: { date: string; count: number; collected: number }[];
+}
+
+export interface PaymentExceptions {
+  paidNotDelivered: PaymentEntry[];
+  abandonedCheckouts: PaymentEntry[];
+  pendingSubscriptions: PaymentEntry[];
+  staleAfterHours: number;
+  totals: {
+    paidNotDelivered: number;
+    abandonedCheckouts: number;
+    pendingSubscriptions: number;
+  };
+}

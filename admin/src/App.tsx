@@ -17,6 +17,7 @@ import ReportsPage from "@/pages/ReportsPage";
 import ReportDetailPage from "@/pages/ReportDetailPage";
 import SupportPage from "@/pages/SupportPage";
 import SupportDetailPage from "@/pages/SupportDetailPage";
+import PaymentsPage from "@/pages/PaymentsPage";
 import NotFound from "@/pages/NotFound";
 import { ADMIN_ROLES } from "@/types";
 
@@ -25,6 +26,12 @@ const queryClient = new QueryClient();
 /** Verification and operations staff. */
 const ReviewersOnly = ({ children }: { children: React.ReactNode }) => (
   <ProtectedRoute roles={[ADMIN_ROLES.VERIFICATION, ADMIN_ROLES.OPERATIONS]}>{children}</ProtectedRoute>
+);
+
+/** Super admin only. ProtectedRoute grants super every role list, so an empty
+    list admits nobody else. */
+const SuperOnly = ({ children }: { children: React.ReactNode }) => (
+  <ProtectedRoute roles={[]}>{children}</ProtectedRoute>
 );
 
 /** Operations staff only - document reviewers do not see these. */
@@ -66,6 +73,7 @@ const App = () => (
               <Route path="/boost-subscriptions" element={<Navigate to="/management-hub" replace />} />
               <Route path="/users" element={<OperationsOnly><UsersPage /></OperationsOnly>} />
               <Route path="/users/:id" element={<OperationsOnly><UserDetailPage /></OperationsOnly>} />
+              <Route path="/payments" element={<SuperOnly><PaymentsPage /></SuperOnly>} />
               <Route path="/logs" element={<ReviewersOnly><AuditLogsPage /></ReviewersOnly>} />
               <Route path="/app-updates" element={<ReviewersOnly><AppUpdatesPage /></ReviewersOnly>} />
             </Route>

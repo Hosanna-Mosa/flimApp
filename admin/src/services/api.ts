@@ -13,7 +13,10 @@ import {
   SupportTicket,
   SupportStats,
   SupportStatus,
-  ReplyChannel
+  ReplyChannel,
+  PaymentEntry,
+  PaymentSummary,
+  PaymentExceptions
 } from '@/types';
 
 // API base URL - configure for production
@@ -321,5 +324,61 @@ export const supportApi = {
 
   setStatus: async (id: string, status: SupportStatus, notes?: string): Promise<void> => {
     await api.put(`/admin/support/${id}/status`, { status, notes });
+  },
+};
+
+
+// Payments
+export const paymentApi = {
+  getPayments: async (
+    page: number = 1,
+    limit: number = 25,
+    filters?: { status?: string; source?: string; purpose?: string; from?: string; to?: string }
+  ): Promise<PaginatedResponse<PaymentEntry>> => {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    Object.entries(filters || {}).forEach(([k, v]) => {
+      if (v && v !== 'all') params.append(k, v);
+    });
+    const response = await api.get<PaginatedResponse<PaymentEntry>>(
+      `/admin/payments?${params.toString()}`
+    );
+    return response.data;
+  },
+
+  getSummary: async (filters?: { from?: string; to?: string }): Promise<PaymentSummary> => {
+    const params = new URLSearchParams();
+    if (filters?.from) params.append('from', filters.from);
+    if (filters?.to) params.append('to', filters.to);
+    const response = await api.get<PaymentSummary>(`/admin/payments/summary?${params.toString()}`);
+    return response.data;
+  },
+
+  getExceptions: async (): Promise<PaymentExceptions> => {
+    const response = await api.get<PaymentExceptions>('/admin/payments/exceptions');
+    return response.data;
+  },
+
+  /**
+   * Downloads the CSV. The response is a file rather than JSON, so it bypasses
+   * the shared client's unwrapping interceptor and is fetched directly.
+   */
+  exportCsv: async (filters?: { from?: string; to?: string; status?: string }): Promise<void> => {
+    const params = new URLSearchParams();
+    Object.entries(filters || {}).forEach(([k, v]) => {
+      if (v && v !== 'all') params.append(k, v);
+    });
+
+    const response = await api.get(`/admin/payments/export?${params.toString()}`, {
+      responseType: 'blob',
+    });
+
+    const url = window.URL.createObjectURL(new Blob([response.data as BlobPart]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `filmyconnect-payments-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
   },
 };
