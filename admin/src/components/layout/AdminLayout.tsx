@@ -10,7 +10,8 @@ import {
   Zap,
   ShieldCheck,
   Smartphone,
-  Users as UsersIcon
+  Users as UsersIcon,
+  Flag
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { ADMIN_ROLES, AdminRole } from '@/types';
@@ -27,6 +28,7 @@ const navigation: {
   icon: typeof ClipboardList;
   roles: AdminRole[];
 }[] = [
+  { name: 'Reports', href: '/reports', icon: Flag, roles: [ADMIN_ROLES.OPERATIONS] },
   { name: 'Verification Requests', href: '/requests', icon: ClipboardList, roles: [ADMIN_ROLES.VERIFICATION, ADMIN_ROLES.OPERATIONS] },
   { name: 'Management Hub', href: '/management-hub', icon: ShieldCheck, roles: [ADMIN_ROLES.OPERATIONS] },
   { name: 'Users / Wallet', href: '/users', icon: UsersIcon, roles: [ADMIN_ROLES.OPERATIONS] },
@@ -78,7 +80,7 @@ export function AdminLayout() {
           <nav className="flex-1 px-4 py-6 space-y-1">
             {visibleNavigation.map((item) => {
               const isActive = location.pathname === item.href ||
-                (item.href === '/requests' && location.pathname.startsWith('/requests'));
+                (item.href !== '/' && location.pathname.startsWith(item.href + '/'));
               return (
                 <NavLink
                   key={item.name}

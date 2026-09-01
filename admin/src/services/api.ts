@@ -6,7 +6,10 @@ import {
   VerificationRequest, 
   VerificationLog,
   Subscription,
-  ApiError 
+  ApiError,
+  Report,
+  ReportStats,
+  ReportResolution
 } from '@/types';
 
 // API base URL - configure for production
@@ -222,5 +225,55 @@ export const versionApi = {
   }): Promise<any> => {
     const response = await api.put('/admin/version', data);
     return response.data;
+  },
+};
+
+
+// Moderation reports
+export const reportApi = {
+  getReports: async (
+    page: number = 1,
+    limit: number = 20,
+    filters?: { status?: string; type?: string; sla?: string }
+  ): Promise<PaginatedResponse<Report>> => {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.type && filters.type !== 'all') params.append('type', filters.type);
+    if (filters?.sla && filters.sla !== 'all') params.append('sla', filters.sla);
+
+    const response = await api.get<PaginatedResponse<Report>>(`/admin/reports?${params.toString()}`);
+    return response.data;
+  },
+
+  getStats: async (): Promise<ReportStats> => {
+    const response = await api.get<ReportStats>('/admin/reports/stats');
+    return response.data;
+  },
+
+  getReportById: async (id: string): Promise<Report> => {
+    const response = await api.get<Report>(`/admin/reports/${id}`);
+    return response.data;
+  },
+
+  acknowledge: async (id: string): Promise<void> => {
+    await api.put(`/admin/reports/${id}/acknowledge`);
+  },
+
+  resolve: async (
+    id: string,
+    resolution: ReportResolution,
+    notes?: string,
+    suspensionDays?: number
+  ): Promise<{ outcome: string; duplicatesClosed: number }> => {
+    const response = await api.post(`/admin/reports/${id}/resolve`, {
+      resolution,
+      notes,
+      suspensionDays,
+    });
+    return response.data;
+  },
+
+  escalate: async (id: string, notes?: string): Promise<void> => {
+    await api.post(`/admin/reports/${id}/escalate`, { notes });
   },
 };

@@ -125,3 +125,73 @@ export interface ApiError {
   message: string;
   statusCode: number;
 }
+
+
+// ---------------------------------------------------------------------------
+// Moderation reports
+// ---------------------------------------------------------------------------
+
+export type ReportType = 'post' | 'user' | 'comment';
+export type ReportStatus = 'pending' | 'reviewed' | 'resolved';
+export type ReportResolution =
+  | 'content_removed'
+  | 'user_warned'
+  | 'user_suspended'
+  | 'no_action'
+  | 'escalated';
+
+/** Derived server-side from createdAt, never stored. */
+export interface ReportSla {
+  state: 'ok' | 'due_soon' | 'overdue' | 'done';
+  hoursOpen: number | null;
+}
+
+export interface ReportTargetOwner {
+  _id: string;
+  name: string;
+  username?: string;
+  avatar?: string;
+  status?: string;
+}
+
+export interface ReportTarget {
+  missing?: boolean;
+  kind?: ReportType;
+  id?: string;
+  preview?: string;
+  mediaUrl?: string | null;
+  isActive?: boolean;
+  createdAt?: string;
+  postId?: string;
+  owner?: ReportTargetOwner;
+}
+
+export interface Report {
+  _id: string;
+  reporterId: ReportTargetOwner | null;
+  type: ReportType;
+  targetId: string;
+  reason: string;
+  status: ReportStatus;
+  resolution?: ReportResolution;
+  reviewedByName?: string;
+  reviewedAt?: string;
+  adminNotes?: string;
+  escalatedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  sla: ReportSla;
+  target: ReportTarget;
+  otherReportsOnTarget?: number;
+  otherReports?: Report[];
+}
+
+export interface ReportStats {
+  pending: number;
+  reviewed: number;
+  resolved: number;
+  open: number;
+  overdue: number;
+  oldestOpenAgeHours: number | null;
+  slaHours: number;
+}

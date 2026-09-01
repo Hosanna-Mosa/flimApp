@@ -13,6 +13,8 @@ import ExpertBoostHub from "@/pages/ExpertBoostHub";
 import UserDetailPage from "@/pages/UserDetailPage";
 import AuditLogsPage from "@/pages/AuditLogsPage";
 import AppUpdatesPage from "@/pages/AppUpdatesPage";
+import ReportsPage from "@/pages/ReportsPage";
+import ReportDetailPage from "@/pages/ReportDetailPage";
 import NotFound from "@/pages/NotFound";
 import { ADMIN_ROLES } from "@/types";
 
@@ -51,6 +53,8 @@ const App = () => (
             >
               {/* Role gates mirror the server guards in routes/admin*.routes.js.
                   These only hide screens - the API is what enforces access. */}
+              <Route path="/reports" element={<OperationsOnly><ReportsPage /></OperationsOnly>} />
+              <Route path="/reports/:id" element={<OperationsOnly><ReportDetailPage /></OperationsOnly>} />
               <Route path="/requests" element={<ReviewersOnly><VerificationRequestsPage /></ReviewersOnly>} />
               <Route path="/requests/:id" element={<ReviewersOnly><VerificationDetailPage /></ReviewersOnly>} />
               <Route path="/management-hub" element={<OperationsOnly><ExpertBoostHub /></OperationsOnly>} />
