@@ -10,7 +10,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SendHorizontal, Plus } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useKeyboardHeight } from '@/hooks/useKeyboardHeight';
+import { useKeyboardOverlap } from '@/hooks/useKeyboardOverlap';
 
 interface ChatInputBarProps {
   /**
@@ -54,8 +54,9 @@ const ChatInputBar = forwardRef<ChatInputBarHandle, ChatInputBarProps>(function 
 ) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  // Android: pad the bar up by the keyboard height (iOS screens use KAV).
-  const keyboardHeight = useKeyboardHeight();
+  // Android: lift by however much the keyboard actually covers (0 when the
+  // OS already resized the window). iOS screens use KeyboardAvoidingView.
+  const keyboardOverlap = useKeyboardOverlap();
   const [text, setText] = useState('');
   const inputRef = useRef<TextInput>(null);
 
@@ -72,7 +73,7 @@ const ChatInputBar = forwardRef<ChatInputBarHandle, ChatInputBarProps>(function 
     <View
       style={[
         styles.container,
-        { backgroundColor: colors.background, borderTopColor: colors.border, paddingBottom: keyboardHeight },
+        { backgroundColor: colors.background, borderTopColor: colors.border, paddingBottom: keyboardOverlap },
       ]}
     >
       {!!replyingTo && (
@@ -87,7 +88,7 @@ const ChatInputBar = forwardRef<ChatInputBarHandle, ChatInputBarProps>(function 
           )}
         </View>
       )}
-      <View style={[styles.row, { paddingBottom: keyboardHeight > 0 ? 12 : insets.bottom || 12 }]}>
+      <View style={[styles.row, { paddingBottom: keyboardOverlap > 0 ? 12 : insets.bottom || 12 }]}>
         {onAttachment && (
           <TouchableOpacity
             style={styles.attachButton}

@@ -3,7 +3,6 @@ import { Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { api } from '@/utils/api';
 import { useAuth } from '@/contexts/AuthContext';
-import { useConfirm } from '@/hooks/useConfirm';
 
 export type PushKey = 'pushLikes' | 'pushComments' | 'pushFollows' | 'pushMessages' | 'pushBoosts';
 
@@ -15,7 +14,6 @@ export type PushKey = 'pushLikes' | 'pushComments' | 'pushFollows' | 'pushMessag
 export function useSettings() {
   const router = useRouter();
   const { user, token, updateProfile, deleteAccount } = useAuth();
-  const confirm = useConfirm();
   const u = user as any;
 
   // ---- Private account
@@ -108,16 +106,14 @@ export function useSettings() {
 
   // ---- Delete account (themed dialog → native confirm → delete)
   const [isDeleting, setIsDeleting] = useState(false);
-  /** Returns true when the account was deleted. */
+  /**
+   * Returns true when the account was deleted.
+   *
+   * No extra confirm here: DeleteAccountDialog already asks, and stacking a
+   * native Alert on top of an open Modal is unreliable on Android (the alert
+   * can land behind the modal, so nothing appears to happen).
+   */
   const deleteMyAccount = async (): Promise<boolean> => {
-    const confirmed = await confirm({
-      title: 'Confirm Deletion',
-      message:
-        'Are you absolutely sure you want to delete your account? This action is permanent and cannot be undone.',
-      confirmLabel: 'Delete Account',
-      destructive: true,
-    });
-    if (!confirmed) return false;
     try {
       setIsDeleting(true);
       await deleteAccount();

@@ -1,13 +1,4 @@
-/**
- * Business-rule failures must carry an HTTP status: the error middleware
- * masks any status-less error as a 500 "Internal Server Error", which is how
- * "you are not a member" was reaching the app as a blank server error.
- */
-const httpError = (status, message) => {
-  const err = new Error(message);
-  err.status = status;
-  return err;
-};
+const { httpError } = require('../utils/httpError');
 
 const Community = require('../models/Community.model');
 const CommunityMember = require('../models/CommunityMember.model');

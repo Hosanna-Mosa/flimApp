@@ -1,3 +1,4 @@
+const { httpError } = require('../utils/httpError');
 const CommunityPost = require('../models/CommunityPost.model');
 const Community = require('../models/Community.model');
 const CommunityMember = require('../models/CommunityMember.model');
@@ -10,7 +11,7 @@ const createPost = async (communityId, groupId, postData, userId) => {
   const community = await Community.findById(communityId);
   
   if (!community) {
-    throw new Error('Community not found');
+    throw httpError(404, 'Community not found');
   }
 
   // Check if user is a member
@@ -20,23 +21,23 @@ const createPost = async (communityId, groupId, postData, userId) => {
   });
 
   if (!member || !member.canPost()) {
-    throw new Error('You do not have permission to post');
+    throw httpError(403, 'You do not have permission to post');
   }
 
   // Check if user is in the group
   if (!member.groups.some(g => g.equals(groupId))) {
-    throw new Error('You must be a member of this group to post');
+    throw httpError(403, 'You must be a member of this group to post');
   }
 
   // Check if group exists
   const group = community.groups.id(groupId);
   if (!group) {
-    throw new Error('Group not found');
+    throw httpError(404, 'Group not found');
   }
 
   // Check if group is announcement-only
   if (group.isAnnouncementOnly && !member.isAdminOrHigher()) {
-    throw new Error('Only admins can post in announcement groups');
+    throw httpError(403, 'Only admins can post in announcement groups');
   }
 
   // Create post
@@ -82,7 +83,7 @@ const getCommunityFeed = async (communityId, userId, page = 0, limit = 20) => {
   });
 
   if (!member) {
-    throw new Error('You must be a member to view posts');
+    throw httpError(403, 'You must be a member to view posts');
   }
 
   // Get posts from groups the user is in
@@ -134,7 +135,7 @@ const getGroupPosts = async (communityId, groupId, userId, page = 0, limit = 20)
   });
 
   if (!member || !member.groups.some(g => g.equals(groupId))) {
-    throw new Error('You must be a member of this group to view posts');
+    throw httpError(403, 'You must be a member of this group to view posts');
   }
 
   const posts = await CommunityPost.find({
@@ -181,12 +182,12 @@ const updatePost = async (postId, userId, updates) => {
   const post = await CommunityPost.findById(postId);
   
   if (!post) {
-    throw new Error('Post not found');
+    throw httpError(404, 'Post not found');
   }
 
   // Only author can update
   if (!post.author.equals(userId)) {
-    throw new Error('Only the author can update this post');
+    throw httpError(403, 'Only the author can update this post');
   }
 
   // Can only update content and media
@@ -204,7 +205,7 @@ const deletePost = async (postId, userId) => {
   const post = await CommunityPost.findById(postId);
   
   if (!post) {
-    throw new Error('Post not found');
+    throw httpError(404, 'Post not found');
   }
 
   // Check permissions (author or moderator+)
@@ -216,7 +217,7 @@ const deletePost = async (postId, userId) => {
   const canDelete = post.author.equals(userId) || member?.isModeratorOrHigher();
   
   if (!canDelete) {
-    throw new Error('Insufficient permissions to delete this post');
+    throw httpError(403, 'Insufficient permissions to delete this post');
   }
 
   // Soft delete
@@ -255,7 +256,7 @@ const togglePinPost = async (postId, userId) => {
   const post = await CommunityPost.findById(postId);
   
   if (!post) {
-    throw new Error('Post not found');
+    throw httpError(404, 'Post not found');
   }
 
   // Check if user is moderator or higher
@@ -265,7 +266,7 @@ const togglePinPost = async (postId, userId) => {
   });
 
   if (!member?.isModeratorOrHigher()) {
-    throw new Error('Only moderators and admins can pin posts');
+    throw httpError(403, 'Only moderators and admins can pin posts');
   }
 
   post.isPinned = !post.isPinned;
@@ -288,7 +289,7 @@ const likePost = async (postId, userId) => {
   const post = await CommunityPost.findById(postId);
   
   if (!post) {
-    throw new Error('Post not found');
+    throw httpError(404, 'Post not found');
   }
 
   // Check if already liked
@@ -318,7 +319,7 @@ const unlikePost = async (postId, userId) => {
   const post = await CommunityPost.findById(postId);
   
   if (!post) {
-    throw new Error('Post not found');
+    throw httpError(404, 'Post not found');
   }
 
   post.likes = post.likes.filter(like => !like.equals(userId));
@@ -339,16 +340,16 @@ const voteInPoll = async (postId, optionIndex, userId) => {
   const post = await CommunityPost.findById(postId);
   
   if (!post) {
-    throw new Error('Post not found');
+    throw httpError(404, 'Post not found');
   }
 
   if (post.type !== 'poll' || !post.poll) {
-    throw new Error('This is not a poll');
+    throw httpError(400, 'This is not a poll');
   }
 
   // Check if poll has ended
   if (post.poll.endsAt && new Date() > post.poll.endsAt) {
-    throw new Error('Poll has ended');
+    throw httpError(400, 'Poll has ended');
   }
 
   // Check if already voted
@@ -374,7 +375,7 @@ const voteInPoll = async (postId, optionIndex, userId) => {
       poll: post.poll
     };
   } else {
-    throw new Error('Invalid option index');
+    throw httpError(400, 'Invalid option index');
   }
 };
 

@@ -1,3 +1,4 @@
+const { httpError } = require('../utils/httpError');
 const Like = require('../models/Like.model');
 const Post = require('../models/Post.model');
 const User = require('../models/User.model');
@@ -41,7 +42,7 @@ class LikeService {
       if (!post) {
         // Rollback if post doesn't exist
         await Like.findByIdAndDelete(like._id);
-        throw new Error('Post not found');
+        throw httpError(404, 'Post not found');
       }
 
       logger.info(`[Like] Updated post ${postId} likes count to ${post.engagement.likesCount}`);
@@ -82,6 +83,7 @@ class LikeService {
       };
     } catch (error) {
       logger.error('[Like] Error in likePost:', error);
+      if (error.status) throw error;
       throw new Error('Failed to like post');
     }
   }
@@ -115,7 +117,7 @@ class LikeService {
       if (!post) {
         // Recreate like if post doesn't exist (rollback)
         await Like.create({ user: userId, post: postId });
-        throw new Error('Post not found');
+        throw httpError(404, 'Post not found');
       }
 
       logger.info(`[Unlike] Updated post ${postId} likes count to ${post.engagement.likesCount}`);
@@ -146,6 +148,7 @@ class LikeService {
       };
     } catch (error) {
       logger.error('[Unlike] Error in unlikePost:', error);
+      if (error.status) throw error;
       throw new Error('Failed to unlike post');
     }
   }
@@ -182,6 +185,7 @@ class LikeService {
       };
     } catch (error) {
       logger.error('Error getting post likes:', error);
+      if (error.status) throw error;
       throw new Error('Failed to get post likes');
     }
   }
@@ -224,6 +228,7 @@ class LikeService {
       };
     } catch (error) {
       logger.error('Error getting user liked posts:', error);
+      if (error.status) throw error;
       throw new Error('Failed to get liked posts');
     }
   }

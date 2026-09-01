@@ -50,5 +50,15 @@ const boostProfile = async (req, res, next) => {
   }
 };
 
-module.exports = { getMe, updateMe, getById, search, boostProfile };
+
+const deleteMe = async (req, res, next) => {
+  try {
+    const result = await userService.deleteAccount(req.user.id);
+    return success(res, result);
+  } catch (err) {
+    return next(err);
+  }
+};
+
+module.exports = { getMe, updateMe, getById, search, boostProfile, deleteMe };
 

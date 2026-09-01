@@ -46,3 +46,9 @@ serviceAccount*.json
 .vercel
 
 .rork
+
+# MCP server config — contains API keys, never commit
+.mcp.json
+
+testsprite_tests/tmp/config.json
+testsprite_tests/tmp/

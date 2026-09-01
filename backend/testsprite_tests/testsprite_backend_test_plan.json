@@ -1,0 +1,7 @@
+[
+  {
+    "id": "TC001",
+    "title": "postpostscreatepostwithdonationflag",
+    "description": "Test creating a post with the isDonation flag set to true to verify it is marked as a crowd-funding request and excluded from the main feed."
+  }
+]

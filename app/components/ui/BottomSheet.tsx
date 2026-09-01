@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useKeyboardHeight } from '@/hooks/useKeyboardHeight';
+import { useKeyboardOverlap } from '@/hooks/useKeyboardOverlap';
 
 interface BottomSheetProps {
   visible: boolean;
@@ -31,7 +31,7 @@ interface BottomSheetProps {
  *
  * Keyboard: on iOS the sheet is lifted with KeyboardAvoidingView. On Android
  * (edge-to-edge, so the window no longer resizes) the sheet is moved up by the
- * reported keyboard height via useKeyboardHeight — a KAV inside an Android
+ * measured keyboard overlap via useKeyboardOverlap — a KAV inside an Android
  * Modal misreports its frame and leaves a gap under the sheet.
  */
 export default function BottomSheet({
@@ -45,8 +45,8 @@ export default function BottomSheet({
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
-  // Android: lift the sheet above the keyboard (iOS uses KAV below).
-  const keyboardHeight = useKeyboardHeight();
+  // Android: lift by the measured keyboard overlap (0 if the OS resized).
+  const keyboardOverlap = useKeyboardOverlap();
 
   const sheet = (
     <View
@@ -54,8 +54,8 @@ export default function BottomSheet({
         styles.sheet,
         {
           backgroundColor: colors.card,
-          paddingBottom: (keyboardHeight > 0 ? 16 : Math.max(insets.bottom, 16)) + 8,
-          maxHeight: Math.round((windowHeight - keyboardHeight) * 0.85),
+          paddingBottom: (keyboardOverlap > 0 ? 16 : Math.max(insets.bottom, 16)) + 8,
+          maxHeight: Math.round((windowHeight - keyboardOverlap) * 0.85),
         },
       ]}
     >
@@ -98,7 +98,7 @@ export default function BottomSheet({
             {sheet}
           </KeyboardAvoidingView>
         ) : (
-          <View style={[styles.bottom, { bottom: keyboardHeight }]} pointerEvents="box-none">
+          <View style={[styles.bottom, { bottom: keyboardOverlap }]} pointerEvents="box-none">
             {sheet}
           </View>
         )}

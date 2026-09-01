@@ -1,4 +1,5 @@
 const { Expo } = require('expo-server-sdk');
+const { httpError } = require('../utils/httpError');
 const User = require('../models/User.model');
 const Notification = require('../models/Notification.model');
 const { getIo } = require('../utils/socketStore');
@@ -11,14 +12,14 @@ const registerPushToken = async (userId, token) => {
   
   if (!Expo.isExpoPushToken(token) && !token.startsWith("ExponentPushToken")) {
     console.error('[PUSH][SERVICE] ❌ Invalid Expo push token format:', token);
-    throw new Error('Invalid Expo push token');
+    throw httpError(400, 'Invalid Expo push token');
   }
   
 
   const user = await User.findById(userId);
   if (!user) {
     console.error('[PUSH][SERVICE] ❌ User not found:', userId);
-    throw new Error('User not found');
+    throw httpError(404, 'User not found');
   }
   
 

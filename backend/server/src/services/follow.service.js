@@ -126,6 +126,7 @@ class FollowService {
       };
     } catch (error) {
       logger.error('[Follow] Error in followUser:', error);
+      if (error.status) throw error;
       throw new Error('Failed to follow user');
     }
   }
@@ -196,6 +197,7 @@ class FollowService {
       };
     } catch (error) {
       logger.error('[Unfollow] Error in unfollowUser:', error);
+      if (error.status) throw error;
       throw new Error('Failed to unfollow user');
     }
   }
@@ -259,6 +261,7 @@ class FollowService {
       };
     } catch (error) {
       logger.error('Error accepting follow request:', error);
+      if (error.status) throw error;
       throw new Error('Failed to accept follow request');
     }
   }
@@ -309,6 +312,7 @@ class FollowService {
       };
     } catch (error) {
       logger.error('Error rejecting follow request:', error);
+      if (error.status) throw error;
       throw new Error('Failed to reject follow request');
     }
   }
@@ -360,6 +364,7 @@ class FollowService {
       };
     } catch (error) {
       logger.error('Error getting followers:', error);
+      if (error.status) throw error;
       throw new Error('Failed to get followers');
     }
   }
@@ -411,6 +416,7 @@ class FollowService {
       };
     } catch (error) {
       logger.error('Error getting following:', error);
+      if (error.status) throw error;
       throw new Error('Failed to get following');
     }
   }
@@ -453,6 +459,7 @@ class FollowService {
       };
     } catch (error) {
       logger.error('Error getting pending requests:', error);
+      if (error.status) throw error;
       throw new Error('Failed to get pending requests');
     }
   }
@@ -539,6 +546,7 @@ class FollowService {
       };
     } catch (error) {
       logger.error('Error getting mutual followers:', error);
+      if (error.status) throw error;
       throw new Error('Failed to get mutual followers');
     }
   }

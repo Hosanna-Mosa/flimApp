@@ -80,6 +80,7 @@ class ShareService {
       };
     } catch (error) {
       logger.error('Error sharing post:', error);
+      if (error.status) throw error;
       throw new Error('Failed to share post');
     }
   }
@@ -116,6 +117,7 @@ class ShareService {
       };
     } catch (error) {
       logger.error('Error getting post shares:', error);
+      if (error.status) throw error;
       throw new Error('Failed to get shares');
     }
   }
@@ -158,6 +160,7 @@ class ShareService {
       };
     } catch (error) {
       logger.error('Error getting user shares:', error);
+      if (error.status) throw error;
       throw new Error('Failed to get user shares');
     }
   }
@@ -206,6 +209,7 @@ class ShareService {
       };
     } catch (error) {
       logger.error('Error deleting share:', error);
+      if (error.status) throw error;
       throw new Error('Failed to delete share');
     }
   }
@@ -236,6 +240,7 @@ class ShareService {
       };
     } catch (error) {
       logger.error('Error getting share stats by platform:', error);
+      if (error.status) throw error;
       throw new Error('Failed to get share statistics');
     }
   }

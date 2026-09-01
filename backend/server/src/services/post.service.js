@@ -1,3 +1,4 @@
+const { httpError } = require('../utils/httpError');
 const Post = require('../models/Post.model');
 const User = require('../models/User.model');
 const feedService = require('./feed.service');
@@ -79,7 +80,7 @@ const deletePost = async (postId, userId) => {
   const post = await Post.findOne({ _id: postId, author: userId });
 
   if (!post) {
-    throw new Error('Post not found or unauthorized');
+    throw httpError(403, 'Post not found or unauthorized');
   }
 
   // Delete media from Cloudinary
@@ -188,7 +189,7 @@ const updatePost = async (postId, userId, updates) => {
   const post = await Post.findOne({ _id: postId, author: userId });
 
   if (!post) {
-    throw new Error('Post not found or unauthorized');
+    throw httpError(403, 'Post not found or unauthorized');
   }
 
   // Only allow updating caption, industries, roles, visibility

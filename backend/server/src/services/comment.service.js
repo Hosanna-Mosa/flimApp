@@ -99,6 +99,7 @@ class CommentService {
       };
     } catch (error) {
       logger.error('Error adding comment:', error);
+      if (error.status) throw error;
       throw new Error('Failed to add comment');
     }
   }
@@ -163,6 +164,7 @@ class CommentService {
       };
     } catch (error) {
       logger.error('Error getting post comments:', error);
+      if (error.status) throw error;
       throw new Error('Failed to get comments');
     }
   }
@@ -205,6 +207,7 @@ class CommentService {
       };
     } catch (error) {
       logger.error('Error getting comment replies:', error);
+      if (error.status) throw error;
       throw new Error('Failed to get replies');
     }
   }
@@ -245,6 +248,7 @@ class CommentService {
       };
     } catch (error) {
       logger.error('Error editing comment:', error);
+      if (error.status) throw error;
       throw new Error('Failed to edit comment');
     }
   }
@@ -318,6 +322,7 @@ class CommentService {
       };
     } catch (error) {
       logger.error('Error deleting comment:', error);
+      if (error.status) throw error;
       throw new Error('Failed to delete comment');
     }
   }
@@ -350,6 +355,7 @@ class CommentService {
       };
     } catch (error) {
       logger.error('Error liking comment:', error);
+      if (error.status) throw error;
       throw new Error('Failed to like comment');
     }
   }
@@ -399,6 +405,7 @@ class CommentService {
       };
     } catch (error) {
       logger.error('Error getting user comments:', error);
+      if (error.status) throw error;
       throw new Error('Failed to get user comments');
     }
   }

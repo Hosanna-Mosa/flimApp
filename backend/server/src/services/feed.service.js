@@ -493,6 +493,7 @@ class FeedService {
       };
     } catch (error) {
       logger.error('Error getting trending feed:', error);
+      if (error.status) throw error;
       throw new Error('Failed to get trending feed');
     }
   }
@@ -538,6 +539,7 @@ class FeedService {
       };
     } catch (error) {
       logger.error('Error getting industry feed:', error);
+      if (error.status) throw error;
       throw new Error('Failed to get industry feed');
     }
   }
@@ -635,6 +637,7 @@ class FeedService {
       };
     } catch (error) {
       logger.error('Error getting user posts:', error);
+      if (error.status) throw error;
       throw new Error('Failed to get user posts');
     }
   }
