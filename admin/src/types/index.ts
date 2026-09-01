@@ -195,3 +195,60 @@ export interface ReportStats {
   oldestOpenAgeHours: number | null;
   slaHours: number;
 }
+
+
+// ---------------------------------------------------------------------------
+// Support desk
+// ---------------------------------------------------------------------------
+
+export type SupportStatus = 'pending' | 'resolved' | 'rejected';
+export type ReplyChannel = 'notification' | 'email' | 'both';
+
+export interface SupportReply {
+  _id: string;
+  body: string;
+  adminName: string;
+  channel: ReplyChannel;
+  createdAt: string;
+}
+
+export interface SupportSla {
+  state: 'ok' | 'due_soon' | 'needs_reply' | 'overdue' | 'done';
+  hoursOpen: number | null;
+  awaitingFirstReply: boolean;
+}
+
+export interface SupportTicket {
+  _id: string;
+  userId: {
+    _id: string;
+    name: string;
+    username?: string;
+    email?: string;
+    avatar?: string;
+    status?: string;
+    createdAt?: string;
+  } | null;
+  reason: string;
+  /** Only present on the detail endpoint; the list sends hasAttachment instead. */
+  imageUrl?: string;
+  hasAttachment?: boolean;
+  status: SupportStatus;
+  replies: SupportReply[];
+  adminNotes?: string;
+  resolvedByName?: string;
+  resolvedAt?: string;
+  createdAt: string;
+  updatedAt?: string;
+  sla: SupportSla;
+}
+
+export interface SupportStats {
+  pending: number;
+  resolved: number;
+  rejected: number;
+  awaitingReply: number;
+  oldestOpenAgeHours: number | null;
+  firstReplyHours: number;
+  resolutionDays: number;
+}

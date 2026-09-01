@@ -15,6 +15,8 @@ import AuditLogsPage from "@/pages/AuditLogsPage";
 import AppUpdatesPage from "@/pages/AppUpdatesPage";
 import ReportsPage from "@/pages/ReportsPage";
 import ReportDetailPage from "@/pages/ReportDetailPage";
+import SupportPage from "@/pages/SupportPage";
+import SupportDetailPage from "@/pages/SupportDetailPage";
 import NotFound from "@/pages/NotFound";
 import { ADMIN_ROLES } from "@/types";
 
@@ -55,6 +57,8 @@ const App = () => (
                   These only hide screens - the API is what enforces access. */}
               <Route path="/reports" element={<OperationsOnly><ReportsPage /></OperationsOnly>} />
               <Route path="/reports/:id" element={<OperationsOnly><ReportDetailPage /></OperationsOnly>} />
+              <Route path="/support" element={<OperationsOnly><SupportPage /></OperationsOnly>} />
+              <Route path="/support/:id" element={<OperationsOnly><SupportDetailPage /></OperationsOnly>} />
               <Route path="/requests" element={<ReviewersOnly><VerificationRequestsPage /></ReviewersOnly>} />
               <Route path="/requests/:id" element={<ReviewersOnly><VerificationDetailPage /></ReviewersOnly>} />
               <Route path="/management-hub" element={<OperationsOnly><ExpertBoostHub /></OperationsOnly>} />

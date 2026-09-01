@@ -11,7 +11,8 @@ import {
   ShieldCheck,
   Smartphone,
   Users as UsersIcon,
-  Flag
+  Flag,
+  LifeBuoy
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { ADMIN_ROLES, AdminRole } from '@/types';
@@ -29,6 +30,7 @@ const navigation: {
   roles: AdminRole[];
 }[] = [
   { name: 'Reports', href: '/reports', icon: Flag, roles: [ADMIN_ROLES.OPERATIONS] },
+  { name: 'Support', href: '/support', icon: LifeBuoy, roles: [ADMIN_ROLES.OPERATIONS] },
   { name: 'Verification Requests', href: '/requests', icon: ClipboardList, roles: [ADMIN_ROLES.VERIFICATION, ADMIN_ROLES.OPERATIONS] },
   { name: 'Management Hub', href: '/management-hub', icon: ShieldCheck, roles: [ADMIN_ROLES.OPERATIONS] },
   { name: 'Users / Wallet', href: '/users', icon: UsersIcon, roles: [ADMIN_ROLES.OPERATIONS] },

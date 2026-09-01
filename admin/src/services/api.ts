@@ -9,7 +9,11 @@ import {
   ApiError,
   Report,
   ReportStats,
-  ReportResolution
+  ReportResolution,
+  SupportTicket,
+  SupportStats,
+  SupportStatus,
+  ReplyChannel
 } from '@/types';
 
 // API base URL - configure for production
@@ -275,5 +279,47 @@ export const reportApi = {
 
   escalate: async (id: string, notes?: string): Promise<void> => {
     await api.post(`/admin/reports/${id}/escalate`, { notes });
+  },
+};
+
+
+// Support desk
+export const supportApi = {
+  getTickets: async (
+    page: number = 1,
+    limit: number = 20,
+    filters?: { status?: string; search?: string }
+  ): Promise<PaginatedResponse<SupportTicket>> => {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.search) params.append('search', filters.search);
+
+    const response = await api.get<PaginatedResponse<SupportTicket>>(
+      `/admin/support?${params.toString()}`
+    );
+    return response.data;
+  },
+
+  getStats: async (): Promise<SupportStats> => {
+    const response = await api.get<SupportStats>('/admin/support/stats');
+    return response.data;
+  },
+
+  getTicketById: async (id: string): Promise<SupportTicket> => {
+    const response = await api.get<SupportTicket>(`/admin/support/${id}`);
+    return response.data;
+  },
+
+  reply: async (
+    id: string,
+    body: string,
+    channel: ReplyChannel = 'both'
+  ): Promise<{ emailDelivered: boolean | null }> => {
+    const response = await api.post(`/admin/support/${id}/reply`, { body, channel });
+    return response.data;
+  },
+
+  setStatus: async (id: string, status: SupportStatus, notes?: string): Promise<void> => {
+    await api.put(`/admin/support/${id}/status`, { status, notes });
   },
 };
