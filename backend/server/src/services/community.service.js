@@ -1,3 +1,4 @@
+const { httpError } = require('../utils/httpError');
 const Community = require('../models/Community.model');
 const CommunityMember = require('../models/CommunityMember.model');
 
@@ -177,7 +178,7 @@ const getCommunity = async (id, userId = null) => {
     .lean();
 
   if (!community) {
-    throw new Error('Community not found');
+    throw httpError(404, 'Community not found');
   }
 
   // If user is provided, check their membership status
@@ -210,12 +211,12 @@ const updateCommunity = async (id, userId, updates) => {
   const community = await Community.findById(id);
   
   if (!community) {
-    throw new Error('Community not found');
+    throw httpError(404, 'Community not found');
   }
 
   // Check if user is admin
   if (!community.isAdmin(userId)) {
-    throw new Error('Only admins can update community');
+    throw httpError(403, 'Only admins can update community');
   }
 
   // Allowed updates
@@ -245,12 +246,12 @@ const deleteCommunity = async (id, userId) => {
   const community = await Community.findById(id);
   
   if (!community) {
-    throw new Error('Community not found');
+    throw httpError(404, 'Community not found');
   }
 
   // Only owner can delete
   if (!community.createdBy.equals(userId)) {
-    throw new Error('Only the owner can delete this community');
+    throw httpError(403, 'Only the owner can delete this community');
   }
 
   // Soft delete
@@ -270,7 +271,7 @@ const joinCommunity = async (id, userId) => {
   const community = await Community.findById(id);
   
   if (!community) {
-    throw new Error('Community not found');
+    throw httpError(404, 'Community not found');
   }
 
   // Check if already a member
@@ -337,12 +338,12 @@ const leaveCommunity = async (id, userId) => {
   const community = await Community.findById(id);
   
   if (!community) {
-    throw new Error('Community not found');
+    throw httpError(404, 'Community not found');
   }
 
   // Can't leave if you're the owner
   if (community.createdBy.equals(userId)) {
-    throw new Error('Owner cannot leave community. Transfer ownership or delete the community.');
+    throw httpError(403, 'Owner cannot leave community. Transfer ownership or delete the community.');
   }
 
   // Remove from members
@@ -377,17 +378,17 @@ const approveJoinRequest = async (communityId, userId, adminId) => {
   const community = await Community.findById(communityId);
   
   if (!community) {
-    throw new Error('Community not found');
+    throw httpError(404, 'Community not found');
   }
 
   // Check if requester is admin
   if (!community.isAdmin(adminId)) {
-    throw new Error('Only admins can approve requests');
+    throw httpError(403, 'Only admins can approve requests');
   }
 
   // Check if user has pending request
   if (!community.pendingRequests.some(req => req.equals(userId))) {
-    throw new Error('No pending request found');
+    throw httpError(404, 'No pending request found');
   }
 
   // Remove from pending
@@ -429,12 +430,12 @@ const rejectJoinRequest = async (communityId, userId, adminId) => {
   const community = await Community.findById(communityId);
   
   if (!community) {
-    throw new Error('Community not found');
+    throw httpError(404, 'Community not found');
   }
 
   // Check if requester is admin
   if (!community.isAdmin(adminId)) {
-    throw new Error('Only admins can reject requests');
+    throw httpError(403, 'Only admins can reject requests');
   }
 
   // Remove from pending
@@ -481,7 +482,7 @@ const updateMemberRole = async (communityId, targetUserId, newRole, adminId) => 
   const community = await Community.findById(communityId);
   
   if (!community) {
-    throw new Error('Community not found');
+    throw httpError(404, 'Community not found');
   }
 
   // Check permissions
@@ -491,12 +492,12 @@ const updateMemberRole = async (communityId, targetUserId, newRole, adminId) => 
   });
 
   if (!adminMember || !['owner', 'admin'].includes(adminMember.role)) {
-    throw new Error('Insufficient permissions');
+    throw httpError(403, 'Insufficient permissions');
   }
 
   // Can't change owner role
   if (community.createdBy.equals(targetUserId)) {
-    throw new Error('Cannot change owner role');
+    throw httpError(403, 'Cannot change owner role');
   }
 
   // Update member record
@@ -534,17 +535,17 @@ const removeMember = async (communityId, targetUserId, adminId) => {
   const community = await Community.findById(communityId);
   
   if (!community) {
-    throw new Error('Community not found');
+    throw httpError(404, 'Community not found');
   }
 
   // Check if requester is admin
   if (!community.isAdmin(adminId)) {
-    throw new Error('Only admins can remove members');
+    throw httpError(403, 'Only admins can remove members');
   }
 
   // Can't remove owner
   if (community.createdBy.equals(targetUserId)) {
-    throw new Error('Cannot remove community owner');
+    throw httpError(403, 'Cannot remove community owner');
   }
 
   // Remove from community (same as leave)

@@ -9,6 +9,8 @@ const router = express.Router();
 
 router.get('/me', auth, userController.getMe);
 router.get('/me/saved', auth, savedPostController.getSavedPosts);
+// Permanently deletes the signed-in user and the content they own.
+router.delete('/me', auth, userController.deleteMe);
 
 router.put(
   '/me',

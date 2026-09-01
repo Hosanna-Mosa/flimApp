@@ -1,110 +1,97 @@
-# TestSprite AI Testing Report (MCP) - Backend API Suite
+# TestSprite AI Testing Report (MCP)
 
 ---
 
 ## 1️⃣ Document Metadata
-- **Project Name:** backend
-- **Date:** 2026-07-06
-- **Prepared by:** Antigravity AI QA Engineer & TestSprite
-- **Status:** All Tests Passed (15/15)
+- **Project Name:** backend (FilmyConnect API)
+- **Date:** 2026-09-01
+- **Prepared by:** TestSprite AI Team
+- **Test Type:** BACKEND
+- **Target:** `http://localhost:8777` (local Express server, `filmy_testsprite` database)
+- **Scope:** entire codebase
 
 ---
 
 ## 2️⃣ Requirement Validation Summary
 
-#### Test TC001 Post creation
-- **Test Code:** [TC001_postpostscreateanewpost.py](./TC001_postpostscreateanewpost.py)
-- **Status:** ✅ Passed
-- **Details:** Verified that an authenticated user can create a new image/video post with custom caption, Cloudinary media URL, and industry categories, yielding a `201 Created` response.
+### Requirement: Crowd-funding posts are segregated from the main feed
+A post created with `isDonation: true` must be treated as a crowd-funding request: it is
+excluded from the personalized feed, but it must still appear in the donations list —
+including for the author who raised it.
 
-#### Test TC002 Feed retrieval
-- **Test Code:** [TC002_getpostsfeedgetcurrentusersfeed.py](./TC002_getpostsfeedgetcurrentusersfeed.py)
+#### Test TC001 — Create post with isDonation true
+- **Test Code:** [TC001_postposts_create_post_with_isdonation_true.py](./TC001_postposts_create_post_with_isdonation_true.py)
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/42e7cdcc-6981-53e5-a2e2-57a6f8f2192f/test/75688d7e-12d6-4fae-a311-8c06ef9c6aed
 - **Status:** ✅ Passed
-- **Details:** Checked retrieval of the authenticated user's personalized social feed at `/api/feed`, verifying it successfully returns a list of posts.
-
-#### Test TC003 Post deletion
-- **Test Code:** [TC003_deletepostsiddeleteapost.py](./TC003_deletepostsiddeleteapost.py)
-- **Status:** ✅ Passed
-- **Details:** Validated that an authenticated user can successfully delete a post they own, returning `200 OK` and confirming database removal.
-
-#### Test TC004 User registration
-- **Test Code:** [TC004_postauthregisterregisteranewuser.py](./TC004_postauthregisterregisteranewuser.py)
-- **Status:** ✅ Passed
-- **Details:** Verified registering a new user with name, phone, email, password, roles (array), and industries (array) yields `201 Created` with correct user record structures.
-
-#### Test TC005 Password-based login
-- **Test Code:** [TC005_postauthloginpasswordloginwithphoneandpassword.py](./TC005_postauthloginpasswordloginwithphoneandpassword.py)
-- **Status:** ✅ Passed
-- **Details:** Verified login authentication using phone number and password returns valid JWT access and refresh tokens.
-
-#### Test TC006 Start OTP session
-- **Test Code:** [TC006_postauthloginstartotpauthentication.py](./TC006_postauthloginstartotpauthentication.py)
-- **Status:** ✅ Passed
-- **Details:** Initiated passwordless OTP verification by submitting a phone number to `/auth/login`, verifying that an OTP verification session was successfully created.
-
-#### Test TC007 Verify OTP code
-- **Test Code:** [TC007_postauthverifyotpverifyotpcode.py](./TC007_postauthverifyotpverifyotpcode.py)
-- **Status:** ✅ Passed
-- **Details:** Tested the complete verification flow by sending the correct bypass OTP `123456` to `/auth/verify-otp`, successfully receiving authentication tokens.
-
-#### Test TC008 Current user profile
-- **Test Code:** [TC008_getusersmegetcurrentuserprofile.py](./TC008_getusersmegetcurrentuserprofile.py)
-- **Status:** ✅ Passed
-- **Details:** Verified fetching `/users/me` returns the authenticated user's profile with matching registered phone, email, role, and industries.
-
-#### Test TC009 Update profile
-- **Test Code:** [TC009_putusersmeupdateuserprofile.py](./TC009_putusersmeupdateuserprofile.py)
-- **Status:** ✅ Passed
-- **Details:** Verified updating profile attributes (e.g. name, industries) at `PUT /users/me` updates the document in MongoDB correctly.
-
-#### Test TC010 Create community
-- **Test Code:** [TC010_postapicommunitiescreateacommunity.py](./TC010_postapicommunitiescreateacommunity.py)
-- **Status:** ✅ Passed
-- **Details:** Verified creating a community with category type `general` and industry tags returns `201 Created` with a populated community object.
-
-#### Test TC011 Like a post
-- **Test Code:** [TC011_postpostsidlike.py](./TC011_postpostsidlike.py)
-- **Status:** ✅ Passed
-- **Details:** Tested liking a post at `/api/posts/:id/like`, confirming response indicates success and increments engagement counts.
-
-#### Test TC012 Unlike a post
-- **Test Code:** [TC012_deletepostsidlike.py](./TC012_deletepostsidlike.py)
-- **Status:** ✅ Passed
-- **Details:** Tested unliking a post via `DELETE /api/posts/:id/like`, confirming database likes count decrements correctly.
-
-#### Test TC013 Create comment
-- **Test Code:** [TC013_postpostsidcomments.py](./TC013_postpostsidcomments.py)
-- **Status:** ✅ Passed
-- **Details:** Verified adding comments to a post by ID returns `201 Created` with comment text content nested inside response data.
-
-#### Test TC014 Get comments list
-- **Test Code:** [TC014_getpostsidcomments.py](./TC014_getpostsidcomments.py)
-- **Status:** ✅ Passed
-- **Details:** Verified retrieving comments for a post returns a list of comments under `/api/posts/:id/comments`.
-
-#### Test TC015 Follow user
-- **Test Code:** [TC015_postusersidfollow.py](./TC015_postusersidfollow.py)
-- **Status:** ✅ Passed
-- **Details:** Tested the user social graph connection by issuing a follow request at `/api/users/:id/follow`, yielding status `accepted`.
+- **Analysis / Findings:** The test registers a fresh user, creates a text post with
+  `isDonation: true`, then asserts the post is absent from `GET /api/feed` and present in
+  `GET /posts/donations`. All four assertions held, confirming the feed filter and the
+  donations query agree on the same flag and that an author can see their own request.
+  This validates the crowd-fund segregation fix directly. Teardown exercises
+  `DELETE /posts/{id}` and `DELETE /users/me`, though its failures are swallowed and so
+  carry no assertion weight.
 
 ---
 
 ## 3️⃣ Coverage & Matching Metrics
 
-- **100%** of generated tests passed (15 out of 15)
+- **100.00%** of executed tests passed (1 of 1)
 
-| Requirement Category | Total Tests | ✅ Passed | ❌ Failed |
-|---|---|---|---|
-| User Authentication & OTP | 5 | 5 | 0 |
-| User Profile & Settings | 2 | 2 | 0 |
-| Posts & Feed Management | 3 | 3 | 0 |
-| Communities | 1 | 1 | 0 |
-| Social (Likes, Comments, Follows) | 5 | 5 | 0 |
+| Requirement                                        | Total Tests | ✅ Passed | ❌ Failed |
+|----------------------------------------------------|-------------|-----------|-----------|
+| Crowd-funding posts segregated from the main feed   | 1           | 1         | 0         |
+| **Total**                                           | **1**       | **1**     | **0**     |
+
+### Coverage against the documented API
+
+| Feature (from `code_summary.yaml`) | Endpoints | Covered by TestSprite |
+|------------------------------------|-----------|-----------------------|
+| Authentication                     | 7         | 1 (register only)     |
+| User Profile                       | 6         | 0 asserted            |
+| Posts                              | 5         | 2                     |
+| Feed                               | 4         | 1                     |
+| Engagement                         | 6         | 0                     |
+| Follow Graph                       | 4         | 0                     |
+| Communities                        | 9         | 0                     |
+| Messaging                          | 4         | 0                     |
+| Notifications                      | 4         | 0                     |
+| Media                              | 2         | 0                     |
+| Wallet and Payments                | 3         | 0                     |
+| Moderation                         | 3         | 0                     |
+| **Total**                          | **57**    | **4 (7%)**            |
 
 ---
 
 ## 4️⃣ Key Gaps / Risks
 
-- **Mongoose `_id` vs `id` Attribute Mapping:** In some models, the response wraps the primary key under Mongoose's raw `_id` field instead of a virtualized `id` property. Python scripts have been configured to support direct Mongoose fields for reliability.
-- **Double-Nested Response Formats:** The backend wrapper utility consistently packs endpoint responses under `{ success: true, data: ... }`. When the service itself returns `{ success: true, data: record }`, the final payload ends up structured as `data.data.record`. Test scripts have been updated to cleanly handle this response nesting.
-- **OTP Bypass Mode:** In development and test runs, Twilio SMS delivery is bypassed when using code `123456`. When executing in a staging/production context, appropriate Twilio mocks must be configured.
+1. **Coverage is 7% of the documented surface.** The generated plan contained a single
+   test case against 57 endpoints. This is a plan/tier limit on the TestSprite account,
+   not a reflection of the code. Treat the ✅ above as one validated behaviour, not as a
+   passing grade for the API.
+
+2. **No negative-path or authorization testing was generated.** Nothing exercised 401,
+   403, 404 or 409 handling. That matters here because the largest defect found in this
+   round was precisely in that area: 81 status-less `throw new Error(...)` sites across 12
+   services were being masked as `500 Internal Server Error`, so genuine permission and
+   not-found failures reached clients as blank server errors. TestSprite's plan would not
+   have surfaced it.
+
+3. **Untested critical paths.** Account deletion and its cascade, community and group
+   membership rules, messaging, engagement counter integrity, and media validation all
+   received no coverage.
+
+4. **Service reliability during this run.** Two earlier execution attempts failed on
+   TestSprite infrastructure — `503` from the PRD API, and `503 Tunnel client is not
+   connected` from the tunnel proxy, with a 15-second probe consuming 17 minutes of wall
+   clock. The local server responded `200` on `/health` throughout. The run succeeded on
+   retry with no change to code or configuration.
+
+5. **Complementary local suite.** A hand-written suite at `server/tests/api-smoke.mjs`
+   (`npm test`) runs 41 assertions across authentication, posts, engagement, the follow
+   graph, messaging, notifications, search, communities, wallet and the full
+   account-deletion cascade. All 41 pass. It found four defects this round: the masked-500
+   sweep, `CastError` on malformed ids returning 500, two authorization paths returning
+   500 instead of 403, and user search not matching `username`. Until TestSprite coverage
+   is expanded, that suite is the primary regression gate.
+
+---

@@ -43,7 +43,7 @@ class MediaService {
    */
   static async generateUploadSignature(type, userId) {
     if (!['image', 'video', 'audio', 'script'].includes(type)) {
-      throw new Error('Invalid media type');
+      throw httpError(400, 'Invalid media type');
     }
 
     const timestamp = Math.round(new Date().getTime() / 1000);
@@ -94,26 +94,26 @@ class MediaService {
    */
   static validateMediaMetadata(metadata, type) {
     if (!metadata || !metadata.url) {
-      throw new Error('Media URL is required');
+      throw httpError(400, 'Media URL is required');
     }
 
     // Verify URL is from our Cloudinary account
     const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
     if (!metadata.url.includes(`res.cloudinary.com/${cloudName}`)) {
-      throw new Error('Invalid media URL source');
+      throw httpError(400, 'Invalid media URL source');
     }
 
     // Validate format
     if (metadata.format && this.ALLOWED_FORMATS[type]) {
       const format = metadata.format.toLowerCase();
       if (!this.ALLOWED_FORMATS[type].includes(format)) {
-        throw new Error(`Invalid format for ${type}: ${format}`);
+        throw httpError(400, `Invalid format for ${type}: ${format}`);
       }
     }
 
     // Validate size
     if (metadata.size && metadata.size > this.SIZE_LIMITS[type]) {
-      throw new Error(`File size exceeds limit for ${type}`);
+      throw httpError(400, `File size exceeds limit for ${type}`);
     }
 
     return true;

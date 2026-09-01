@@ -1,4 +1,15 @@
+const { httpError } = require('../utils/httpError');
 const User = require('../models/User.model');
+const Post = require('../models/Post.model');
+const Comment = require('../models/Comment.model');
+const Like = require('../models/Like.model');
+const Share = require('../models/Share.model');
+const Message = require('../models/Message.model');
+const Notification = require('../models/Notification.model');
+const Community = require('../models/Community.model');
+const CommunityMember = require('../models/CommunityMember.model');
+const CommunityPost = require('../models/CommunityPost.model');
+const VerificationRequest = require('../models/VerificationRequest.model');
 const Follow = require('../models/Follow.model');
 const Wallet = require('../models/Wallet.model');
 
@@ -205,6 +216,7 @@ const search = async ({ q, roles, industries }, currentUserId) => {
     // Filters are AND, text search is OR within the filtered results
     const textSearchConditions = [
       { name: { $regex: q, $options: 'i' } },
+      { username: { $regex: q, $options: 'i' } },
       { roles: { $regex: q, $options: 'i' } },
       { industries: { $regex: q, $options: 'i' } },
       { bio: { $regex: q, $options: 'i' } },
@@ -222,7 +234,7 @@ const search = async ({ q, roles, industries }, currentUserId) => {
     }
   }
 
-  const results = await User.find(query).select('name avatar roles industries location bio isVerified isOnline');
+  const results = await User.find(query).select('name username avatar roles industries location bio isVerified isOnline');
 
   // Score and sort results by relevance
   if (results.length > 0) {
@@ -313,7 +325,7 @@ const search = async ({ q, roles, industries }, currentUserId) => {
 
 const boostProfile = async (userId, planId) => {
   const plan = BOOST_PLAN_DETAILS[planId];
-  if (!plan) throw new Error('Invalid boost plan selected');
+  if (!plan) throw httpError(400, 'Invalid boost plan selected');
 
   // 1. Atomic balance deduction to prevent race conditions
   const updatedUser = await User.findOneAndUpdate(
@@ -330,7 +342,7 @@ const boostProfile = async (userId, planId) => {
   if (!updatedUser) {
     // If update failed, check if it was due to balance or missing user
     const checkUser = await User.findById(userId);
-    if (!checkUser) throw new Error('User not found');
+    if (!checkUser) throw httpError(404, 'User not found');
     
     const err = new Error('Insufficient wallet balance. Please add funds to your vault.');
     err.status = 402;
@@ -373,5 +385,108 @@ const boostProfile = async (userId, planId) => {
   return updatedUser;
 };
 
-module.exports = { getMe, updateMe, getById, search, boostProfile };
+
+/**
+ * Permanently deletes a user and the content that belongs to them.
+ *
+ * There is no transaction here (the deployment is a standalone mongod), so the
+ * order matters: counters on OTHER users' documents are corrected first, then
+ * the owned rows are removed, and the user document goes last. If a later step
+ * fails, the account still exists and the operation can be retried safely —
+ * every step is idempotent.
+ */
+const deleteAccount = async (userId) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    const err = new Error('User not found');
+    err.status = 404;
+    throw err;
+  }
+
+  // --- Follow graph: fix the other side's counters before dropping the edges.
+  const [following, followers] = await Promise.all([
+    Follow.find({ follower: userId }).select('following').lean(),
+    Follow.find({ following: userId }).select('follower').lean(),
+  ]);
+
+  if (following.length) {
+    await User.updateMany(
+      { _id: { $in: following.map((f) => f.following) } },
+      { $inc: { 'stats.followersCount': -1 } }
+    );
+  }
+  if (followers.length) {
+    await User.updateMany(
+      { _id: { $in: followers.map((f) => f.follower) } },
+      { $inc: { 'stats.followingCount': -1 } }
+    );
+  }
+  await Follow.deleteMany({ $or: [{ follower: userId }, { following: userId }] });
+
+  // --- Engagement this user left on OTHER people's posts: decrement, then delete.
+  const [likes, comments, shares] = await Promise.all([
+    Like.find({ user: userId }).select('post').lean(),
+    Comment.find({ user: userId }).select('post parentComment').lean(),
+    Share.find({ user: userId }).select('post').lean(),
+  ]);
+
+  for (const like of likes) {
+    await Post.updateOne({ _id: like.post }, { $inc: { 'engagement.likesCount': -1 } });
+  }
+  for (const comment of comments) {
+    await Post.updateOne({ _id: comment.post }, { $inc: { 'engagement.commentsCount': -1 } });
+    if (comment.parentComment) {
+      await Comment.updateOne({ _id: comment.parentComment }, { $inc: { repliesCount: -1 } });
+    }
+  }
+  for (const share of shares) {
+    await Post.updateOne({ _id: share.post }, { $inc: { 'engagement.sharesCount': -1 } });
+  }
+
+  await Promise.all([
+    Like.deleteMany({ user: userId }),
+    Comment.deleteMany({ user: userId }),
+    Share.deleteMany({ user: userId }),
+  ]);
+
+  // --- The user's own posts, plus everything hanging off them.
+  const ownPosts = await Post.find({ author: userId }).select('_id').lean();
+  const ownPostIds = ownPosts.map((p) => p._id);
+  if (ownPostIds.length) {
+    await Promise.all([
+      Like.deleteMany({ post: { $in: ownPostIds } }),
+      Comment.deleteMany({ post: { $in: ownPostIds } }),
+      Share.deleteMany({ post: { $in: ownPostIds } }),
+    ]);
+    await Post.deleteMany({ _id: { $in: ownPostIds } });
+  }
+
+  // --- Community memberships: keep memberCount honest.
+  const memberships = await CommunityMember.find({ user: userId }).select('community').lean();
+  if (memberships.length) {
+    await Community.updateMany(
+      { _id: { $in: memberships.map((m) => m.community) } },
+      { $inc: { memberCount: -1 } }
+    );
+    await CommunityMember.deleteMany({ user: userId });
+  }
+
+  // --- Everything else keyed to this user.
+  await Promise.all([
+    CommunityPost.deleteMany({ author: userId }),
+    Message.deleteMany({ $or: [{ sender: userId }, { recipient: userId }] }),
+    Notification.deleteMany({ $or: [{ user: userId }, { actor: userId }] }),
+    VerificationRequest.deleteMany({ user: userId }),
+    Wallet.deleteMany({ user: userId }),
+  ]);
+
+  // Blocked-user references held by other accounts.
+  await User.updateMany({ blockedUsers: userId }, { $pull: { blockedUsers: userId } });
+
+  await User.deleteOne({ _id: userId });
+
+  return { deleted: true };
+};
+
+module.exports = { getMe, updateMe, getById, search, boostProfile, deleteAccount };
 
