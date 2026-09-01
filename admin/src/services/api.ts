@@ -1,4 +1,5 @@
 import axios, { AxiosError, AxiosInstance } from 'axios';
+import { toast } from 'sonner';
 import { 
   AuthResponse, 
   PaginatedResponse, 
@@ -50,6 +51,16 @@ api.interceptors.response.use(
         window.location.href = '/login';
       }
     }
+
+    // 403 means signed in but not permitted, so the session stays - clearing it
+    // here would sign someone out for opening one page above their role.
+    if (error.response?.status === 403) {
+      toast.error(
+        error.response.data?.message ||
+          "Your admin role doesn't allow this action."
+      );
+    }
+
     return Promise.reject(error);
   }
 );

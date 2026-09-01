@@ -102,6 +102,7 @@ app.use('/admin/verification', adminVerificationRoutes);
 app.use('/admin/users', require('./routes/adminUser.routes'));
 app.use('/admin/stats', require('./routes/adminStats.routes'));
 app.use('/admin/version', require('./routes/adminVersion.routes'));
+app.use('/admin/audit', require('./routes/adminAudit.routes'));
 
 app.use('/verification', verificationRoutes);
 app.use('/support', supportRoutes);

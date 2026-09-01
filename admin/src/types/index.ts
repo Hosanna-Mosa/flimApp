@@ -22,12 +22,21 @@ export interface User {
   createdAt: string;
 }
 
+// Admin roles. Must match backend/server/src/constants/adminRoles.js.
+export const ADMIN_ROLES = {
+  VERIFICATION: 'VERIFICATION_ADMIN',
+  OPERATIONS: 'OPERATIONS_ADMIN',
+  SUPER: 'SUPER_ADMIN',
+} as const;
+
+export type AdminRole = (typeof ADMIN_ROLES)[keyof typeof ADMIN_ROLES];
+
 // Admin user type
 export interface AdminUser {
   id: string;
   email: string;
   name: string;
-  role: 'VERIFICATION_ADMIN';
+  role: AdminRole;
   createdAt: string;
 }
 

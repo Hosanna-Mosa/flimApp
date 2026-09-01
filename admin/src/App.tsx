@@ -14,8 +14,19 @@ import UserDetailPage from "@/pages/UserDetailPage";
 import AuditLogsPage from "@/pages/AuditLogsPage";
 import AppUpdatesPage from "@/pages/AppUpdatesPage";
 import NotFound from "@/pages/NotFound";
+import { ADMIN_ROLES } from "@/types";
 
 const queryClient = new QueryClient();
+
+/** Verification and operations staff. */
+const ReviewersOnly = ({ children }: { children: React.ReactNode }) => (
+  <ProtectedRoute roles={[ADMIN_ROLES.VERIFICATION, ADMIN_ROLES.OPERATIONS]}>{children}</ProtectedRoute>
+);
+
+/** Operations staff only - document reviewers do not see these. */
+const OperationsOnly = ({ children }: { children: React.ReactNode }) => (
+  <ProtectedRoute roles={[ADMIN_ROLES.OPERATIONS]}>{children}</ProtectedRoute>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -38,15 +49,17 @@ const App = () => (
                 </ProtectedRoute>
               }
             >
-              <Route path="/requests" element={<VerificationRequestsPage />} />
-              <Route path="/requests/:id" element={<VerificationDetailPage />} />
-              <Route path="/management-hub" element={<ExpertBoostHub />} />
+              {/* Role gates mirror the server guards in routes/admin*.routes.js.
+                  These only hide screens - the API is what enforces access. */}
+              <Route path="/requests" element={<ReviewersOnly><VerificationRequestsPage /></ReviewersOnly>} />
+              <Route path="/requests/:id" element={<ReviewersOnly><VerificationDetailPage /></ReviewersOnly>} />
+              <Route path="/management-hub" element={<OperationsOnly><ExpertBoostHub /></OperationsOnly>} />
               <Route path="/subscriptions" element={<Navigate to="/management-hub" replace />} />
               <Route path="/boost-subscriptions" element={<Navigate to="/management-hub" replace />} />
-              <Route path="/users" element={<UsersPage />} />
-              <Route path="/users/:id" element={<UserDetailPage />} />
-              <Route path="/logs" element={<AuditLogsPage />} />
-              <Route path="/app-updates" element={<AppUpdatesPage />} />
+              <Route path="/users" element={<OperationsOnly><UsersPage /></OperationsOnly>} />
+              <Route path="/users/:id" element={<OperationsOnly><UserDetailPage /></OperationsOnly>} />
+              <Route path="/logs" element={<ReviewersOnly><AuditLogsPage /></ReviewersOnly>} />
+              <Route path="/app-updates" element={<ReviewersOnly><AppUpdatesPage /></ReviewersOnly>} />
             </Route>
 
             {/* Catch-all */}

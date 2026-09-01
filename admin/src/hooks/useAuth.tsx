@@ -6,13 +6,19 @@ import {
   useCallback,
   ReactNode 
 } from 'react';
-import { AdminUser } from '@/types';
+import { AdminUser, AdminRole, ADMIN_ROLES } from '@/types';
 import { authApi } from '@/services/api';
 
 interface AuthContextType {
   admin: AdminUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  /**
+   * True when the signed-in admin holds one of `roles`. Super admins pass every
+   * check, mirroring requireRole on the server — keep the two in step.
+   */
+  can: (...roles: AdminRole[]) => boolean;
+  isSuper: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -61,12 +67,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAdmin(null);
   }, []);
 
+  const isSuper = admin?.role === ADMIN_ROLES.SUPER;
+
+  const can = useCallback(
+    (...roles: AdminRole[]) => {
+      if (!admin) return false;
+      if (admin.role === ADMIN_ROLES.SUPER) return true;
+      return roles.includes(admin.role);
+    },
+    [admin]
+  );
+
   return (
     <AuthContext.Provider
       value={{
         admin,
         isAuthenticated: !!admin,
         isLoading,
+        can,
+        isSuper,
         login,
         logout,
       }}

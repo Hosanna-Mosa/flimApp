@@ -3,7 +3,8 @@ const VerificationLog = require('../models/VerificationLog.model');
 const Subscription = require('../models/Subscription.model');
 const User = require('../models/User.model');
 const logger = require('../config/logger');
-const { success } = require('../utils/response');
+const { success, fail } = require('../utils/response');
+const { recordAudit, AUDIT_ACTIONS } = require('../utils/auditLog');
 const { sendVerificationApproved, sendVerificationRejected } = require('../services/mail.service');
 
 const getRequests = async (req, res, next) => {
@@ -334,7 +335,24 @@ const deleteSubscription = async (req, res, next) => {
   try {
     const { id } = req.params;
     logger.info(`[AUDIT] Admin ${req.user.name} (${req.user.sub}) deleted subscription record ${id}`);
-    await Subscription.findByIdAndDelete(id);
+
+    const subscription = await Subscription.findByIdAndDelete(id);
+    if (!subscription) return fail(res, 'Subscription not found', 404);
+
+    await recordAudit(req, {
+      action: AUDIT_ACTIONS.SUBSCRIPTION_DELETE,
+      targetType: 'Subscription',
+      targetId: subscription._id,
+      summary: `Deleted ${subscription.planType} subscription record worth ${subscription.amount} ${subscription.currency}`,
+      meta: {
+        user: subscription.user,
+        planType: subscription.planType,
+        amount: subscription.amount,
+        status: subscription.status,
+        razorpayPaymentId: subscription.razorpayPaymentId,
+      },
+    });
+
     return success(res, { message: 'Subscription record deleted' });
   } catch (err) {
     next(err);

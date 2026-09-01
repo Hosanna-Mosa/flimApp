@@ -1,5 +1,6 @@
 const User = require('../models/User.model');
 const { success } = require('../utils/response');
+const { recordAudit, AUDIT_ACTIONS } = require('../utils/auditLog');
 
 const getAllUsers = async (req, res, next) => {
     try {
@@ -69,6 +70,15 @@ const suspendUser = async (req, res, next) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
+        await recordAudit(req, {
+            action: AUDIT_ACTIONS.USER_SUSPEND,
+            targetType: 'User',
+            targetId: user._id,
+            targetLabel: user.name,
+            summary: `Set ${user.name} to ${status}${reason ? ` — ${reason}` : ''}`,
+            meta: { status, reason, duration, suspendedUntil: updateData.suspendedUntil },
+        });
+
         return success(res, user, 200);
     } catch (err) {
         next(err);
@@ -92,6 +102,14 @@ const unsuspendUser = async (req, res, next) => {
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
+
+        await recordAudit(req, {
+            action: AUDIT_ACTIONS.USER_UNSUSPEND,
+            targetType: 'User',
+            targetId: user._id,
+            targetLabel: user.name,
+            summary: `Restored ${user.name} to active`,
+        });
 
         return success(res, user, 200);
     } catch (err) {
@@ -143,6 +161,21 @@ const updateWallet = async (req, res, next) => {
         });
 
         await wallet.save();
+
+        await recordAudit(req, {
+            action: AUDIT_ACTIONS.WALLET_ADJUST,
+            targetType: 'User',
+            targetId: user._id,
+            targetLabel: user.name,
+            summary: `${type === 'credit' ? 'Credited' : 'Debited'} ${amount} ${wallet.currency || 'INR'} ${type === 'credit' ? 'to' : 'from'} ${user.name}`,
+            meta: {
+                type,
+                amount: parseFloat(amount),
+                description,
+                balanceBefore: user.walletBalance - change,
+                balanceAfter: user.walletBalance,
+            },
+        });
 
         return success(res, { balance: user.walletBalance, transactions: wallet.transactions });
     } catch (err) {
