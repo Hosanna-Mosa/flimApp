@@ -239,6 +239,50 @@ export const versionApi = {
 
 
 // Moderation reports
+export interface UserDeletionResult {
+  user: { _id: string; name: string; email: string };
+  removed: Record<string, number>;
+  media: { deleted: number; failed: number };
+  orphanedCommunities: number;
+}
+
+export const userAdminApi = {
+  getPosts: async (id: string, page = 1, limit = 12) => {
+    const response = await api.get(
+      `/admin/users/${id}/posts?page=${page}&limit=${limit}`
+    );
+    return response.data as {
+      data: {
+        _id: string;
+        type: string;
+        caption?: string;
+        mediaUrl?: string;
+        media?: { url?: string; thumbnail?: string };
+        thumbnailUrl?: string;
+        isActive: boolean;
+        visibility?: string;
+        engagement?: { likesCount: number; commentsCount: number; viewsCount: number };
+        createdAt: string;
+      }[];
+      total: number;
+      page: number;
+      totalPages: number;
+    };
+  },
+
+  /** Irreversible. confirmEmail must match the account's own email. */
+  deleteUser: async (
+    id: string,
+    confirmEmail: string,
+    reason?: string
+  ): Promise<UserDeletionResult> => {
+    const response = await api.delete(`/admin/users/${id}`, {
+      data: { confirmEmail, reason },
+    });
+    return response.data as UserDeletionResult;
+  },
+};
+
 export const reportApi = {
   getReports: async (
     page: number = 1,

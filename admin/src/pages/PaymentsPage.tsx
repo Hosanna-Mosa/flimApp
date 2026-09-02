@@ -64,6 +64,8 @@ export default function PaymentsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [status, setStatus] = useState<string>('all');
+  const [source, setSource] = useState<string>('all');
+  const [purpose, setPurpose] = useState<string>('all');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -79,7 +81,7 @@ export default function PaymentsPage() {
         const [s, e, list] = await Promise.all([
           paymentApi.getSummary({ from, to }),
           paymentApi.getExceptions(),
-          paymentApi.getPayments(page, 25, { status, from, to }),
+          paymentApi.getPayments(page, 25, { status, source, purpose, from, to }),
         ]);
         if (cancelled) return;
         setSummary(s);
@@ -97,7 +99,7 @@ export default function PaymentsPage() {
     return () => {
       cancelled = true;
     };
-  }, [page, status, from, to]);
+  }, [page, status, source, purpose, from, to]);
 
   const exceptionTotal = exceptions
     ? exceptions.totals.paidNotDelivered +
@@ -321,21 +323,67 @@ export default function PaymentsPage() {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-1.5">
-          {['all', 'paid', 'started', 'failed', 'cancelled', 'expired'].map((s) => (
+        <div className="space-y-2">
+          {([
+            {
+              label: 'Status',
+              value: status,
+              set: setStatus,
+              options: ['all', 'paid', 'started', 'failed', 'cancelled', 'expired'],
+            },
+            {
+              // 'session' is the newer unified checkout, 'subscription' the
+              // older direct path, 'wallet' a completed top-up.
+              label: 'Source',
+              value: source,
+              set: setSource,
+              options: ['all', 'session', 'subscription', 'wallet'],
+            },
+            {
+              label: 'For',
+              value: purpose,
+              set: setPurpose,
+              options: ['all', 'subscription', 'wallet top-up'],
+            },
+          ] as const).map((row) => (
+            <div key={row.label} className="flex flex-wrap items-center gap-1.5">
+              <span className="w-14 shrink-0 text-xs uppercase tracking-wide text-muted-foreground">
+                {row.label}
+              </span>
+              {row.options.map((opt) => (
+                <Button
+                  key={opt}
+                  variant={row.value === opt ? 'secondary' : 'ghost'}
+                  size="sm"
+                  onClick={() => {
+                    row.set(opt);
+                    setPage(1);
+                  }}
+                  className="capitalize"
+                >
+                  {opt}
+                </Button>
+              ))}
+            </div>
+          ))}
+
+          {(status !== 'all' || source !== 'all' || purpose !== 'all' || from || to) && (
             <Button
-              key={s}
-              variant={status === s ? 'secondary' : 'ghost'}
+              variant="ghost"
               size="sm"
+              className="text-muted-foreground"
               onClick={() => {
-                setStatus(s);
+                setStatus('all');
+                setSource('all');
+                setPurpose('all');
+                setFrom('');
+                setTo('');
                 setPage(1);
               }}
-              className="capitalize"
             >
-              {s}
+              Clear filters
             </Button>
-          ))}
+          )}
         </div>
 
         {entries.length === 0 ? (

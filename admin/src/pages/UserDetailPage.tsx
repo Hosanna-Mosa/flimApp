@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { usersApi } from '@/services/api';
 import { useAuth } from '@/hooks/useAuth';
+import { userAdminApi } from '@/services/api';
+import { DeleteUserDialog } from '@/components/DeleteUserDialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -22,7 +24,8 @@ import {
   Briefcase,
   Plus,
   Minus,
-  History
+  History,
+  Trash2
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
@@ -36,6 +39,14 @@ export default function UserDetailPage() {
   // Adjusting a balance moves real money, so it stays with super admin.
   const { can } = useAuth();
   const canAdjustWallet = can();
+  // Deleting an account is irreversible, so it sits with super admin alongside
+  // the other actions that cannot be taken back.
+  const canDeleteUser = can();
+
+  const [showDelete, setShowDelete] = useState(false);
+  const [posts, setPosts] = useState<Awaited<ReturnType<typeof userAdminApi.getPosts>>['data']>([]);
+  const [postsTotal, setPostsTotal] = useState(0);
+  const [isLoadingPosts, setIsLoadingPosts] = useState(false);
 
   const [walletAmount, setWalletAmount] = useState('');
   const [walletType, setWalletType] = useState<'credit' | 'debit'>('credit');
@@ -56,8 +67,24 @@ export default function UserDetailPage() {
     }
   };
 
+  const fetchPosts = async () => {
+    if (!id) return;
+    setIsLoadingPosts(true);
+    try {
+      const result = await userAdminApi.getPosts(id, 1, 24);
+      setPosts(result.data);
+      setPostsTotal(result.total);
+    } catch {
+      /* the interceptor already surfaced the reason */
+    } finally {
+      setIsLoadingPosts(false);
+    }
+  };
+
   useEffect(() => {
     fetchUser();
+    fetchPosts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const handleWalletAction = async () => {
@@ -174,8 +201,11 @@ export default function UserDetailPage() {
         {/* Right Column: Detailed Management */}
         <div className="lg:col-span-2 space-y-6">
           <Tabs defaultValue="management">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="management">Management Actions</TabsTrigger>
+              <TabsTrigger value="posts">
+                Posts{postsTotal ? ` (${postsTotal})` : ''}
+              </TabsTrigger>
               <TabsTrigger value="details">Full Profile Data</TabsTrigger>
             </TabsList>
 
@@ -275,6 +305,108 @@ export default function UserDetailPage() {
                   </CardContent>
                 </Card>
               </div>
+
+              {/* Danger zone — super admin only, and separated from the
+                  reversible actions above so it cannot be reached by muscle
+                  memory while suspending someone. */}
+              {canDeleteUser && (
+                <Card className="border-destructive/30">
+                  <CardHeader>
+                    <CardTitle className="text-lg text-destructive">Delete account</CardTitle>
+                    <CardDescription>
+                      Erases this account and everything attached to it. Suspension is the
+                      reversible option — use that unless the account genuinely has to go.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button variant="destructive" onClick={() => setShowDelete(true)}>
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete {user.name} permanently
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+
+            <TabsContent value="posts" className="mt-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Posts by {user.name}</CardTitle>
+                  <CardDescription>
+                    Includes posts already hidden by moderation, which the app's own feed will not
+                    show.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {isLoadingPosts ? (
+                    <p className="py-8 text-center text-sm text-muted-foreground">Loading posts…</p>
+                  ) : posts.length === 0 ? (
+                    <p className="py-8 text-center text-sm text-muted-foreground">
+                      This account has not posted anything.
+                    </p>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      {posts.map((post) => {
+                        const thumb = post.media?.thumbnail || post.thumbnailUrl || post.media?.url || post.mediaUrl;
+                        return (
+                          <div
+                            key={post._id}
+                            className={`rounded-lg border border-border overflow-hidden ${
+                              post.isActive ? '' : 'opacity-60'
+                            }`}
+                          >
+                            {thumb && post.type !== 'text' ? (
+                              <img
+                                src={thumb}
+                                alt=""
+                                className="h-32 w-full bg-muted object-cover"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <div className="flex h-32 w-full items-center justify-center bg-muted px-3 text-center text-xs text-muted-foreground">
+                                {post.caption?.slice(0, 90) || `(${post.type})`}
+                              </div>
+                            )}
+
+                            <div className="space-y-1.5 p-3">
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <Badge variant="outline" className="text-xs capitalize">
+                                  {post.type}
+                                </Badge>
+                                {!post.isActive && (
+                                  <Badge variant="destructive" className="text-xs">
+                                    hidden
+                                  </Badge>
+                                )}
+                              </div>
+
+                              {post.caption && post.type !== 'text' && (
+                                <p className="line-clamp-2 text-xs text-muted-foreground">
+                                  {post.caption}
+                                </p>
+                              )}
+
+                              <div className="flex items-center gap-3 text-xs text-muted-foreground tabular-nums">
+                                <span>{post.engagement?.likesCount ?? 0} likes</span>
+                                <span>{post.engagement?.commentsCount ?? 0} comments</span>
+                              </div>
+                              <p className="text-xs text-muted-foreground">
+                                {new Date(post.createdAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {postsTotal > posts.length && (
+                    <p className="mt-4 text-center text-xs text-muted-foreground">
+                      Showing {posts.length} of {postsTotal}.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="details" className="mt-4">
@@ -317,6 +449,15 @@ export default function UserDetailPage() {
           </Tabs>
         </div>
       </div>
+    
+      {canDeleteUser && user && (
+        <DeleteUserDialog
+          open={showDelete}
+          onOpenChange={setShowDelete}
+          user={{ _id: user._id || user.id, name: user.name, email: user.email }}
+          onDeleted={() => navigate('/users')}
+        />
+      )}
     </div>
   );
 }

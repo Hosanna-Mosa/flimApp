@@ -18,6 +18,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { SuspendModal } from '@/components/SuspendModal';
+import { DeleteUserDialog } from '@/components/DeleteUserDialog';
+import { useAuth } from '@/hooks/useAuth';
+import { Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { usersApi } from '@/services/api';
 import { useNavigate } from 'react-router-dom';
@@ -51,6 +54,12 @@ export default function Users() {
 
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [isSuspendModalOpen, setIsSuspendModalOpen] = useState(false);
+
+    // Deletion is irreversible, so it stays with super admin and is simply not
+    // rendered for anyone else rather than failing on click.
+    const { can } = useAuth();
+    const canDeleteUser = can();
+    const [userToDelete, setUserToDelete] = useState<User | null>(null);
     const [actionLoading, setActionLoading] = useState(false);
 
     const fetchUsers = async () => {
@@ -248,6 +257,19 @@ export default function Users() {
                                                 Reactivate
                                             </Button>
                                         )}
+
+                                        {canDeleteUser && (
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="ml-1.5 text-muted-foreground hover:text-destructive"
+                                                onClick={() => setUserToDelete(user)}
+                                                aria-label={`Delete ${user.name}`}
+                                                title="Delete permanently"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        )}
                                     </TableCell>
                                 </TableRow>
                             ))
@@ -282,6 +304,18 @@ export default function Users() {
                 isLoading={actionLoading}
                 title={selectedUser ? `Suspend ${selectedUser.name}` : 'Suspend User'}
             />
+        
+            {canDeleteUser && userToDelete && (
+                <DeleteUserDialog
+                    open={!!userToDelete}
+                    onOpenChange={(open) => !open && setUserToDelete(null)}
+                    user={{ _id: userToDelete._id, name: userToDelete.name, email: userToDelete.email }}
+                    onDeleted={() => {
+                        setUserToDelete(null);
+                        fetchUsers();
+                    }}
+                />
+            )}
         </div>
     );
 }
