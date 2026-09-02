@@ -14,10 +14,12 @@ import {
   AnalyticsEvents,
   AnalyticsGrowth,
   AnalyticsOverview,
+  FirebaseReport,
   FunnelStep,
   RetentionCohort,
 } from '@/types';
 import { Button } from '@/components/ui/button';
+import { FirebasePanel } from '@/components/FirebasePanel';
 import { Card } from '@/components/ui/card';
 import { LoadingState, EmptyState } from '@/components/StateDisplay';
 import { cn } from '@/lib/utils';
@@ -57,6 +59,7 @@ export default function AnalyticsPage() {
   const [funnel, setFunnel] = useState<FunnelStep[]>([]);
   const [cohorts, setCohorts] = useState<RetentionCohort[]>([]);
   const [events, setEvents] = useState<AnalyticsEvents | null>(null);
+  const [firebase, setFirebase] = useState<FirebaseReport | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -67,12 +70,15 @@ export default function AnalyticsPage() {
       setIsLoading(true);
       setError(null);
       try {
-        const [o, g, f, r, e] = await Promise.all([
+        const [o, g, f, r, e, fb] = await Promise.all([
           analyticsApi.getOverview(days),
           analyticsApi.getGrowth(days),
           analyticsApi.getFunnel(),
           analyticsApi.getRetention(),
           analyticsApi.getEvents(days),
+          // Firebase is a third-party round trip and may be unconfigured, so a
+          // failure there must not blank the page built from our own data.
+          analyticsApi.getFirebase(days).catch(() => null),
         ]);
         if (cancelled) return;
         setOverview(o);
@@ -80,6 +86,7 @@ export default function AnalyticsPage() {
         setFunnel(f.steps);
         setCohorts(r.cohorts);
         setEvents(e);
+        setFirebase(fb);
       } catch {
         if (!cancelled) setError('Could not load analytics. Check your connection and try again.');
       } finally {
@@ -323,6 +330,9 @@ export default function AnalyticsPage() {
           )}
         </Card>
       </div>
+
+      {/* Firebase */}
+      <FirebasePanel report={firebase} />
 
       {/* Client events */}
       <Card className="p-5">

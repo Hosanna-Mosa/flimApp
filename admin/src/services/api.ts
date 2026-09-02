@@ -23,7 +23,8 @@ import {
   AnalyticsGrowth,
   FunnelStep,
   RetentionCohort,
-  AnalyticsEvents
+  AnalyticsEvents,
+  FirebaseReport
 } from '@/types';
 
 // API base URL - configure for production
@@ -483,4 +484,7 @@ export const analyticsApi = {
 
   getEvents: async (days = 30): Promise<AnalyticsEvents> =>
     (await api.get<AnalyticsEvents>(`/admin/analytics/events?days=${days}`)).data,
+
+  getFirebase: async (days = 28): Promise<FirebaseReport> =>
+    (await api.get<FirebaseReport>(`/admin/analytics/firebase?days=${days}`)).data,
 };

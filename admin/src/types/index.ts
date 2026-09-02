@@ -401,3 +401,24 @@ export interface AnalyticsEvents {
   top: { name: string; count: number; users: number }[];
   daily: { date: string; count: number }[];
 }
+
+
+export interface FirebaseReport {
+  configured: boolean;
+  reason?: string;
+  days?: number;
+  propertyId?: string;
+  totals?: {
+    activeUsers: number;
+    newUsers: number;
+    sessions: number;
+    screenViews: number;
+    avgEngagementSeconds: number;
+  };
+  daily?: { date: string | null; activeUsers: number; sessions: number }[];
+  screens?: { screen: string; screenPageViews: number; activeUsers: number }[];
+  events?: { event: string; eventCount: number; activeUsers: number }[];
+  platforms?: { platform: string; activeUsers: number }[];
+  countries?: { country: string; activeUsers: number }[];
+  errors?: string[];
+}

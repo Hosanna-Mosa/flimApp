@@ -8,6 +8,7 @@ const Subscription = require('../models/Subscription.model');
 const Wallet = require('../models/Wallet.model');
 const AnalyticsEvent = require('../models/AnalyticsEvent.model');
 const { success } = require('../utils/response');
+const { getFirebaseReport } = require('../services/firebaseAnalytics.service');
 
 /**
  * Product analytics derived from the data the app already writes.
@@ -261,4 +262,20 @@ const getEvents = async (req, res, next) => {
   }
 };
 
-module.exports = { getOverview, getGrowth, getFunnel, getRetention, getEvents };
+/**
+ * GET /admin/analytics/firebase
+ *
+ * Answers 200 with configured:false rather than an error when the credentials
+ * are absent, so the page can explain what is missing instead of showing a
+ * failure for something that has simply not been set up yet.
+ */
+const getFirebase = async (req, res, next) => {
+  try {
+    const days = Math.min(parseInt(req.query.days, 10) || 28, 365);
+    return success(res, await getFirebaseReport(days));
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { getOverview, getGrowth, getFunnel, getRetention, getEvents, getFirebase };

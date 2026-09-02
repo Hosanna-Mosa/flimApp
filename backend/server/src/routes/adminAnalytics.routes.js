@@ -17,5 +17,6 @@ router.get('/growth', OPS, adminAnalyticsController.getGrowth);
 router.get('/funnel', OPS, adminAnalyticsController.getFunnel);
 router.get('/retention', OPS, adminAnalyticsController.getRetention);
 router.get('/events', OPS, adminAnalyticsController.getEvents);
+router.get('/firebase', OPS, adminAnalyticsController.getFirebase);
 
 module.exports = router;
