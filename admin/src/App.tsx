@@ -74,8 +74,8 @@ const App = () => (
               <Route path="/users" element={<OperationsOnly><UsersPage /></OperationsOnly>} />
               <Route path="/users/:id" element={<OperationsOnly><UserDetailPage /></OperationsOnly>} />
               <Route path="/payments" element={<SuperOnly><PaymentsPage /></SuperOnly>} />
-              <Route path="/logs" element={<ReviewersOnly><AuditLogsPage /></ReviewersOnly>} />
-              <Route path="/app-updates" element={<ReviewersOnly><AppUpdatesPage /></ReviewersOnly>} />
+              <Route path="/logs" element={<OperationsOnly><AuditLogsPage /></OperationsOnly>} />
+              <Route path="/app-updates" element={<OperationsOnly><AppUpdatesPage /></OperationsOnly>} />
             </Route>
 
             {/* Catch-all */}

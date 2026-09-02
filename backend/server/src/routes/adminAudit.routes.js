@@ -3,10 +3,13 @@ const router = express.Router();
 const adminAuditController = require('../controllers/adminAudit.controller');
 const adminAuth = require('../middlewares/adminAuth.middleware');
 const requireRole = require('../middlewares/requireRole.middleware');
+const { ADMIN_ROLES } = require('../constants/adminRoles');
 
 router.use(adminAuth);
 
-// The full trail — including the reader's own actions — is super admin only.
-router.get('/', requireRole(), adminAuditController.getAuditLogs);
+// Operations reads the full trail too. Seeing who did what is oversight, not
+// privilege — and a moderator who cannot check their own past decisions ends up
+// repeating them.
+router.get('/', requireRole(ADMIN_ROLES.OPERATIONS), adminAuditController.getAuditLogs);
 
 module.exports = router;

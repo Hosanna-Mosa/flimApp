@@ -17,11 +17,13 @@ router.get(
   adminVersionController.getVersionConfig
 );
 
-// Writing it sets the minimum version and the shutdown kill switch, so it is
-// super admin only, and audited.
+// Operations may set versions, store URLs and the update message. The shutdown
+// kill switch travels on this same body but blacks out every client, so the
+// controller rejects that one field for anyone below super — see
+// adminVersion.controller.updateVersionConfig.
 router.put(
   '/',
-  requireRole(),
+  requireRole(ADMIN_ROLES.OPERATIONS),
   validate(
     Joi.object({
       body: Joi.object({

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { versionApi } from '@/services/api';
+import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,6 +26,10 @@ export default function AppUpdatesPage() {
   const [title, setTitle] = useState('New Version Available');
   const [message, setMessage] = useState('Please update your application to the latest version to access new features.');
   
+  // Publishing versions is operations work; the shutdown switch is not.
+  const { can } = useAuth();
+  const canShutDown = can();
+
   const [isShutdown, setIsShutdown] = useState(false);
   const [shutdownTitle, setShutdownTitle] = useState('Currently App is Shut Down');
   const [shutdownMessage, setShutdownMessage] = useState('We are fixing a big bug, so we want to suddenly shut down the application.');
@@ -240,7 +245,11 @@ export default function AppUpdatesPage() {
           </CardContent>
         </Card>
 
-        {/* Emergency Shutdown Controls */}
+        {/* Emergency Shutdown Controls — super admin only.
+            Operations can publish versions and update copy, but this one field
+            blacks out every client at once, so it is hidden rather than shown
+            and rejected. The controller enforces the same boundary. */}
+        {canShutDown && (
         <Card className="bg-card/50 border-red-500/30 backdrop-blur-sm shadow-lg shadow-red-950/10">
           <CardHeader className="border-b border-red-500/20 pb-4">
             <CardTitle className="text-lg flex items-center gap-2 text-red-500">
@@ -294,6 +303,7 @@ export default function AppUpdatesPage() {
             )}
           </CardContent>
         </Card>
+        )}
 
         {/* Submit */}
         <div className="flex justify-end">

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { usersApi } from '@/services/api';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +33,10 @@ export default function UserDetailPage() {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  // Adjusting a balance moves real money, so it stays with super admin.
+  const { can } = useAuth();
+  const canAdjustWallet = can();
+
   const [walletAmount, setWalletAmount] = useState('');
   const [walletType, setWalletType] = useState<'credit' | 'debit'>('credit');
   const [walletDesc, setWalletDesc] = useState('');
@@ -176,7 +181,11 @@ export default function UserDetailPage() {
 
             <TabsContent value="management" className="space-y-6 mt-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Wallet Management */}
+                {/* Wallet Management — super admin only.
+                    The endpoint already rejects everyone else with a 403, but a
+                    control that is visible and then fails reads as a broken
+                    panel rather than a boundary, so operations never sees it. */}
+                {canAdjustWallet && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-lg">Wallet Adjustment</CardTitle>
@@ -227,6 +236,7 @@ export default function UserDetailPage() {
                     </Button>
                   </CardContent>
                 </Card>
+                )}
 
                 {/* Subscriptions Status */}
                 <Card>

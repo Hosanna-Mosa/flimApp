@@ -1,6 +1,7 @@
 const VersionConfig = require('../models/VersionConfig.model');
+const { ADMIN_ROLES } = require('../constants/adminRoles');
 const { recordAudit, AUDIT_ACTIONS } = require('../utils/auditLog');
-const { success } = require('../utils/response');
+const { success, fail } = require('../utils/response');
 
 const getVersionConfig = async (req, res, next) => {
   try {
@@ -50,11 +51,25 @@ const getVersionConfig = async (req, res, next) => {
 const updateVersionConfig = async (req, res, next) => {
   try {
     const { ios, android, title, message, isShutdown, shutdownTitle, shutdownMessage } = req.body;
-    
+
     let config = await VersionConfig.findOne({});
     if (!config) {
       config = new VersionConfig();
     }
+
+    // Operations may set versions, store URLs and the update copy. The shutdown
+    // switch blacks out every client at once, so it stays with super admin even
+    // though it arrives on the same request as the fields they are allowed to
+    // change. Only an actual change is blocked — resending the current value
+    // while editing something else is not an attempt to use it.
+    if (
+      isShutdown !== undefined &&
+      isShutdown !== config.isShutdown &&
+      req.user.role !== ADMIN_ROLES.SUPER
+    ) {
+      return fail(res, 'Only a super admin can turn the app shutdown on or off', 403);
+    }
+
     
     if (ios) {
       config.ios = {
