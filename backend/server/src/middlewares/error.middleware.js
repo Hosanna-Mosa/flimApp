@@ -1,5 +1,6 @@
 const logger = require('../config/logger');
 const { fail } = require('../utils/response');
+const { recordError } = require('../utils/errorLog');
 
 // Mongoose throws these for malformed input rather than genuine server faults.
 // Without translating them, a bad id in a URL (e.g. /posts/feed) surfaces as a
@@ -23,9 +24,15 @@ const normalize = (err) => {
 // eslint-disable-next-line no-unused-vars
 module.exports = (err, req, res, next) => {
   logger.error(err.message, { stack: err.stack });
-  if (res.headersSent) return;
 
   const { status, message } = normalize(err);
+
+  // Persist genuine faults only. Everything normalize() turned into a 4xx is a
+  // caller mistake — a malformed id, a duplicate email — and recording those
+  // would bury the handful of entries that mean something is actually broken.
+  if (status >= 500) recordError(err, req, status);
+
+  if (res.headersSent) return;
 
   // Never expose 500 internal/database error messages to the client
   return fail(res, status >= 500 ? 'Internal Server Error' : message, status);

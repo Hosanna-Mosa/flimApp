@@ -309,3 +309,36 @@ export interface PaymentExceptions {
     pendingSubscriptions: number;
   };
 }
+
+
+// ---------------------------------------------------------------------------
+// Server errors
+// ---------------------------------------------------------------------------
+
+export interface ErrorLogEntry {
+  _id: string;
+  fingerprint: string;
+  name: string;
+  message: string;
+  /** Only sent by the detail endpoint; the list omits it for size. */
+  stack?: string;
+  method?: string;
+  path?: string;
+  statusCode?: number;
+  count: number;
+  firstSeenAt: string;
+  lastSeenAt: string;
+  lastUserId?: { _id: string; name: string; email?: string; avatar?: string } | null;
+  resolved: boolean;
+  resolvedByName?: string;
+  resolvedAt?: string;
+}
+
+export interface ErrorStats {
+  open: number;
+  resolved: number;
+  last24h: number;
+  last7d: number;
+  totalOccurrences: number;
+  retentionDays: number;
+}

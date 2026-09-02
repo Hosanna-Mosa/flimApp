@@ -16,7 +16,9 @@ import {
   ReplyChannel,
   PaymentEntry,
   PaymentSummary,
-  PaymentExceptions
+  PaymentExceptions,
+  ErrorLogEntry,
+  ErrorStats
 } from '@/types';
 
 // API base URL - configure for production
@@ -380,5 +382,37 @@ export const paymentApi = {
     link.click();
     link.remove();
     window.URL.revokeObjectURL(url);
+  },
+};
+
+
+// Server errors
+export const errorLogApi = {
+  getErrors: async (
+    page: number = 1,
+    limit: number = 25,
+    filters?: { status?: string; search?: string }
+  ): Promise<PaginatedResponse<ErrorLogEntry>> => {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.search) params.append('search', filters.search);
+    const response = await api.get<PaginatedResponse<ErrorLogEntry>>(
+      `/admin/errors?${params.toString()}`
+    );
+    return response.data;
+  },
+
+  getStats: async (): Promise<ErrorStats> => {
+    const response = await api.get<ErrorStats>('/admin/errors/stats');
+    return response.data;
+  },
+
+  getErrorById: async (id: string): Promise<ErrorLogEntry> => {
+    const response = await api.get<ErrorLogEntry>(`/admin/errors/${id}`);
+    return response.data;
+  },
+
+  setResolved: async (id: string, resolved: boolean): Promise<void> => {
+    await api.put(`/admin/errors/${id}/resolve`, { resolved });
   },
 };

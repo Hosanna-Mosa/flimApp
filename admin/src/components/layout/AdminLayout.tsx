@@ -13,7 +13,8 @@ import {
   Users as UsersIcon,
   Flag,
   LifeBuoy,
-  IndianRupee
+  IndianRupee,
+  Bug
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { ADMIN_ROLES, AdminRole } from '@/types';
@@ -37,6 +38,7 @@ const navigation: {
   { name: 'Users / Wallet', href: '/users', icon: UsersIcon, roles: [ADMIN_ROLES.OPERATIONS] },
   // Revenue is super admin only, so no role below super is listed.
   { name: 'Payments', href: '/payments', icon: IndianRupee, roles: [] },
+  { name: 'Errors', href: '/errors', icon: Bug, roles: [ADMIN_ROLES.OPERATIONS] },
   { name: 'Audit Logs', href: '/logs', icon: History, roles: [ADMIN_ROLES.OPERATIONS] },
   { name: 'App Updates', href: '/app-updates', icon: Smartphone, roles: [ADMIN_ROLES.OPERATIONS] },
 ];
