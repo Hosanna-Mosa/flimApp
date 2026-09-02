@@ -14,7 +14,8 @@ import {
   Flag,
   LifeBuoy,
   IndianRupee,
-  Bug
+  Bug,
+  BarChart3
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { ADMIN_ROLES, AdminRole } from '@/types';
@@ -31,6 +32,7 @@ const navigation: {
   icon: typeof ClipboardList;
   roles: AdminRole[];
 }[] = [
+  { name: 'Analytics', href: '/analytics', icon: BarChart3, roles: [ADMIN_ROLES.OPERATIONS] },
   { name: 'Reports', href: '/reports', icon: Flag, roles: [ADMIN_ROLES.OPERATIONS] },
   { name: 'Support', href: '/support', icon: LifeBuoy, roles: [ADMIN_ROLES.OPERATIONS] },
   { name: 'Verification Requests', href: '/requests', icon: ClipboardList, roles: [ADMIN_ROLES.VERIFICATION, ADMIN_ROLES.OPERATIONS] },

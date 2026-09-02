@@ -18,7 +18,12 @@ import {
   PaymentSummary,
   PaymentExceptions,
   ErrorLogEntry,
-  ErrorStats
+  ErrorStats,
+  AnalyticsOverview,
+  AnalyticsGrowth,
+  FunnelStep,
+  RetentionCohort,
+  AnalyticsEvents
 } from '@/types';
 
 // API base URL - configure for production
@@ -459,4 +464,23 @@ export const errorLogApi = {
   setResolved: async (id: string, resolved: boolean): Promise<void> => {
     await api.put(`/admin/errors/${id}/resolve`, { resolved });
   },
+};
+
+
+// Product analytics
+export const analyticsApi = {
+  getOverview: async (days = 30): Promise<AnalyticsOverview> =>
+    (await api.get<AnalyticsOverview>(`/admin/analytics/overview?days=${days}`)).data,
+
+  getGrowth: async (days = 30): Promise<AnalyticsGrowth> =>
+    (await api.get<AnalyticsGrowth>(`/admin/analytics/growth?days=${days}`)).data,
+
+  getFunnel: async (): Promise<{ steps: FunnelStep[] }> =>
+    (await api.get<{ steps: FunnelStep[] }>('/admin/analytics/funnel')).data,
+
+  getRetention: async (): Promise<{ cohorts: RetentionCohort[] }> =>
+    (await api.get<{ cohorts: RetentionCohort[] }>('/admin/analytics/retention')).data,
+
+  getEvents: async (days = 30): Promise<AnalyticsEvents> =>
+    (await api.get<AnalyticsEvents>(`/admin/analytics/events?days=${days}`)).data,
 };

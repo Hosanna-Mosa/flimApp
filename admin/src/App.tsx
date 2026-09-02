@@ -18,6 +18,7 @@ import ReportDetailPage from "@/pages/ReportDetailPage";
 import SupportPage from "@/pages/SupportPage";
 import SupportDetailPage from "@/pages/SupportDetailPage";
 import PaymentsPage from "@/pages/PaymentsPage";
+import AnalyticsPage from "@/pages/AnalyticsPage";
 import ErrorsPage from "@/pages/ErrorsPage";
 import NotFound from "@/pages/NotFound";
 import { ADMIN_ROLES } from "@/types";
@@ -75,6 +76,7 @@ const App = () => (
               <Route path="/users" element={<OperationsOnly><UsersPage /></OperationsOnly>} />
               <Route path="/users/:id" element={<OperationsOnly><UserDetailPage /></OperationsOnly>} />
               <Route path="/payments" element={<SuperOnly><PaymentsPage /></SuperOnly>} />
+              <Route path="/analytics" element={<OperationsOnly><AnalyticsPage /></OperationsOnly>} />
               <Route path="/errors" element={<OperationsOnly><ErrorsPage /></OperationsOnly>} />
               <Route path="/logs" element={<OperationsOnly><AuditLogsPage /></OperationsOnly>} />
               <Route path="/app-updates" element={<OperationsOnly><AppUpdatesPage /></OperationsOnly>} />

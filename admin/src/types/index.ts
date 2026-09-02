@@ -342,3 +342,62 @@ export interface ErrorStats {
   totalOccurrences: number;
   retentionDays: number;
 }
+
+
+// ---------------------------------------------------------------------------
+// Analytics
+// ---------------------------------------------------------------------------
+
+export interface AnalyticsOverview {
+  days: number;
+  users: {
+    total: number;
+    new: number;
+    previousPeriod: number;
+    changePct: number | null;
+    verified: number;
+    creators: number;
+    activationPct: number;
+  };
+  active: { inPeriod: number; everLoggedIn: number; coveragePct: number };
+  content: {
+    totalPosts: number;
+    newPosts: number;
+    likes: number;
+    comments: number;
+    messages: number;
+    follows: number;
+  };
+  monetisation: { paidSubscriptions: number; walletTopUpTotal: number };
+}
+
+export interface AnalyticsGrowth {
+  days: number;
+  signups: { date: string; count: number }[];
+  posts: { date: string; count: number }[];
+  cumulativeUsers: { date: string; total: number }[];
+}
+
+export interface FunnelStep {
+  key: string;
+  label: string;
+  count: number;
+  pctOfTotal: number;
+  pctOfPrevious: number | null;
+}
+
+export interface RetentionCohort {
+  month: string;
+  signedUp: number;
+  everReturned: number;
+  activeLast90: number;
+  activeLast30: number;
+  retention30Pct: number;
+}
+
+export interface AnalyticsEvents {
+  days: number;
+  total: number;
+  top: { name: string; count: number; users: number }[];
+  daily: { date: string; count: number }[];
+}
