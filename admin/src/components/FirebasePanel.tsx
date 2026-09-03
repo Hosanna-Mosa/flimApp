@@ -1,8 +1,9 @@
-import { ExternalLink, Flame, Info } from 'lucide-react';
+import { ExternalLink, Flame, Info, Radio } from 'lucide-react';
 import { FirebaseReport } from '@/types';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 const FIREBASE_PROJECT = 'flimy-app-demo';
 const consoleUrl = (section: string) =>
@@ -100,6 +101,60 @@ export function FirebasePanel({ report }: { report: FirebaseReport | null }) {
           </Button>
         </div>
       </div>
+
+      {report.realtime && (
+        <Card className="p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <span className="relative mt-1 flex h-2.5 w-2.5 shrink-0">
+                {report.realtime.activeUsers > 0 && (
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-70" />
+                )}
+                <span
+                  className={cn(
+                    'relative inline-flex h-2.5 w-2.5 rounded-full',
+                    report.realtime.activeUsers > 0 ? 'bg-emerald-500' : 'bg-muted-foreground/40'
+                  )}
+                />
+              </span>
+              <div>
+                <h3 className="font-semibold">Right now</h3>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  Last 30 minutes, straight from Firebase.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-6">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Active</p>
+                <p className="text-2xl font-semibold tabular-nums">
+                  {report.realtime.activeUsers}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Screen views</p>
+                <p className="text-2xl font-semibold tabular-nums">
+                  {report.realtime.screenViews}
+                </p>
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {report.stillProcessing && (
+        <Card className="border-amber-500/30 p-4">
+          <div className="flex items-start gap-3">
+            <Radio className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+            <p className="text-sm text-muted-foreground">
+              <span className="font-medium text-foreground">People are using the app right now</span>
+              , but the figures below still read zero. Firebase takes several hours — up to a day for
+              a new app — to fold events into the reports these numbers come from. Nothing is broken;
+              the totals will fill in on their own.
+            </p>
+          </div>
+        </Card>
+      )}
 
       {report.errors && report.errors.length > 0 && (
         <Card className="border-destructive/30 p-4">

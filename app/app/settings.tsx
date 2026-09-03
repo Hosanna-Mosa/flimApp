@@ -10,8 +10,6 @@ import DangerZoneSection from '@/components/settings/DangerZoneSection';
 import NotificationSettingsSheet from '@/components/settings/NotificationSettingsSheet';
 import ChangePasswordSheet from '@/components/settings/ChangePasswordSheet';
 import DeleteAccountDialog from '@/components/settings/DeleteAccountDialog';
-// TEMPORARY — remove with CrashTestSection once Crashlytics is verified.
-import CrashTestSection from '@/components/settings/CrashTestSection';
 
 export default function SettingsScreen() {
   const s = useSettings();
@@ -40,7 +38,6 @@ export default function SettingsScreen() {
       />
       <LegalSection />
       <DangerZoneSection onDeleteAccount={() => setShowDelete(true)} />
-      <CrashTestSection />
 
       <NotificationSettingsSheet
         visible={showNotifications}

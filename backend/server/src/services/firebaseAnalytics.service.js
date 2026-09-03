@@ -80,7 +80,41 @@ const getFirebaseReport = async (days = 28) => {
     }
   };
 
-  const [totals, daily, screens, events, platforms, countries] = await Promise.all([
+    /**
+   * Realtime is a different store from the one runReport reads.
+   *
+   * GA4 processes events into its reporting tables over several hours — up to a
+   * day for a property's first data — so a freshly released build shows nothing
+   * in the figures below while quite obviously working. The realtime endpoint
+   * answers from the last 30 minutes immediately, which is the difference
+   * between "this is broken" and "this is still processing".
+   */
+  const runRealtime = async () => {
+    try {
+      const [response] = await client.runRealtimeReport({
+        property: property(),
+        dimensions: [{ name: 'unifiedScreenName' }],
+        metrics: [{ name: 'activeUsers' }, { name: 'screenPageViews' }],
+        limit: 10,
+      });
+      const rows = shape(response, ['screen'], ['activeUsers', 'screenPageViews']);
+      const [totalsResponse] = await client.runRealtimeReport({
+        property: property(),
+        metrics: [{ name: 'activeUsers' }, { name: 'screenPageViews' }],
+      });
+      const t = shape(totalsResponse, [], ['activeUsers', 'screenPageViews'])[0] || {};
+      return {
+        activeUsers: t.activeUsers || 0,
+        screenViews: t.screenPageViews || 0,
+        screens: rows,
+      };
+    } catch (err) {
+      logger.error(`[FirebaseAnalytics] realtime failed: ${err.message}`);
+      return null;
+    }
+  };
+
+  const [totals, daily, screens, events, platforms, countries, realtime] = await Promise.all([
     run('totals', {
       dateRanges,
       metrics: [
@@ -128,6 +162,8 @@ const getFirebaseReport = async (days = 28) => {
       orderBys: [{ metric: { metricName: 'activeUsers' }, desc: true }],
       limit: 10,
     }, ['country'], ['activeUsers']),
+
+    runRealtime(),
   ]);
 
   const t = totals.rows[0] || {};
@@ -153,10 +189,13 @@ const getFirebaseReport = async (days = 28) => {
       avgEngagementSeconds:
         t.sessions > 0 ? Math.round((t.userEngagementDuration || 0) / t.sessions) : 0,
     },
+    realtime,
     screens: screens.rows,
     events: events.rows,
     platforms: platforms.rows,
     countries: countries.rows,
+    /** True when realtime has traffic but the processed tables do not yet. */
+    stillProcessing: (t.activeUsers || 0) === 0 && (realtime?.activeUsers || 0) > 0,
     // Surfaced rather than swallowed: a permissions mistake on the service
     // account looks exactly like "no data" otherwise.
     errors: failures,

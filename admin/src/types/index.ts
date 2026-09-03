@@ -420,5 +420,13 @@ export interface FirebaseReport {
   events?: { event: string; eventCount: number; activeUsers: number }[];
   platforms?: { platform: string; activeUsers: number }[];
   countries?: { country: string; activeUsers: number }[];
+  /** Last 30 minutes, read from GA4's realtime store rather than the processed tables. */
+  realtime?: {
+    activeUsers: number;
+    screenViews: number;
+    screens: { screen: string; activeUsers: number; screenPageViews: number }[];
+  } | null;
+  /** Realtime has traffic but the processed tables do not yet. */
+  stillProcessing?: boolean;
   errors?: string[];
 }
