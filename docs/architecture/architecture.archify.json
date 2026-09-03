@@ -1,0 +1,426 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "FilmyConnect — Runtime Architecture",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/Hosanna-Mosa/flimApp",
+      "revision": "d4cefaa7b7f1427a56c30a4246095612ec300bae"
+    },
+    "views": [
+      {
+        "id": "primary-path",
+        "label": "Primary request path",
+        "focus": [
+          "mobile",
+          "api",
+          "mongo"
+        ],
+        "note": "A device request travels over HTTPS into Express and lands in MongoDB."
+      },
+      {
+        "id": "async-work",
+        "label": "Background work",
+        "focus": [
+          "api",
+          "queue",
+          "worker",
+          "expopush"
+        ],
+        "note": "Bull jobs drain in the same Node process and deliver push notifications."
+      },
+      {
+        "id": "providers",
+        "label": "Third-party providers",
+        "focus": [
+          "twilio",
+          "razorpay",
+          "cloudinary",
+          "firebase"
+        ],
+        "note": "Services the app and API call directly over HTTPS."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "firebase",
+      "type": "cloud",
+      "label": "Firebase",
+      "sublabel": "Analytics + Crashlytics",
+      "tag": "GA4 property",
+      "pos": [
+        60,
+        50
+      ],
+      "size": [
+        180,
+        72
+      ],
+      "sources": [
+        {
+          "path": "backend/server/src/services/firebaseAnalytics.service.js",
+          "label": "GA4 Data API"
+        }
+      ]
+    },
+    {
+      "id": "cloudinary",
+      "type": "cloud",
+      "label": "Cloudinary",
+      "sublabel": "media storage + CDN",
+      "tag": "signed uploads",
+      "pos": [
+        325,
+        50
+      ],
+      "size": [
+        180,
+        72
+      ],
+      "sources": [
+        {
+          "path": "backend/server/src/services/media.service.js",
+          "label": "upload signature"
+        }
+      ]
+    },
+    {
+      "id": "razorpay",
+      "type": "external",
+      "label": "Razorpay",
+      "sublabel": "orders + webhooks",
+      "pos": [
+        590,
+        50
+      ],
+      "size": [
+        180,
+        72
+      ],
+      "sources": [
+        {
+          "path": "backend/server/src/services/payment.service.js"
+        }
+      ]
+    },
+    {
+      "id": "twilio",
+      "type": "security",
+      "label": "Twilio Verify",
+      "sublabel": "phone OTP",
+      "pos": [
+        855,
+        50
+      ],
+      "size": [
+        180,
+        72
+      ],
+      "sources": [
+        {
+          "path": "backend/server/src/config/twilio.js"
+        }
+      ]
+    },
+    {
+      "id": "redis",
+      "type": "database",
+      "label": "Redis",
+      "sublabel": "cache + Bull backend",
+      "tag": "ENABLE_REDIS",
+      "pos": [
+        1120,
+        50
+      ],
+      "size": [
+        180,
+        72
+      ],
+      "sources": [
+        {
+          "path": "backend/server/src/config/redis.js"
+        }
+      ]
+    },
+    {
+      "id": "mobile",
+      "type": "frontend",
+      "label": "FilmyConnect App",
+      "sublabel": "Expo 54 · RN 0.81",
+      "tag": "iOS + Android",
+      "pos": [
+        325,
+        280
+      ],
+      "size": [
+        180,
+        72
+      ],
+      "sources": [
+        {
+          "path": "app/utils/api.ts",
+          "label": "API client"
+        }
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "Express API",
+      "sublabel": "backend/server :4000",
+      "tag": "Helmet · JWT · rate limit",
+      "pos": [
+        590,
+        280
+      ],
+      "size": [
+        180,
+        72
+      ],
+      "sources": [
+        {
+          "path": "backend/server/src/app.js",
+          "label": "routes + middleware"
+        },
+        {
+          "path": "backend/server/src/server.js",
+          "label": "HTTP + Socket.IO"
+        }
+      ]
+    },
+    {
+      "id": "mongo",
+      "type": "database",
+      "label": "MongoDB Atlas",
+      "sublabel": "Mongoose 7 · 23 models",
+      "pos": [
+        855,
+        280
+      ],
+      "size": [
+        180,
+        72
+      ],
+      "sources": [
+        {
+          "path": "backend/server/src/config/db.js"
+        }
+      ]
+    },
+    {
+      "id": "admin",
+      "type": "frontend",
+      "label": "Admin Console",
+      "sublabel": "React 18 · Vite",
+      "pos": [
+        60,
+        510
+      ],
+      "size": [
+        180,
+        72
+      ],
+      "sources": [
+        {
+          "path": "admin/src/services/api.ts",
+          "line": 31,
+          "label": "API base URL"
+        }
+      ]
+    },
+    {
+      "id": "queue",
+      "type": "messagebus",
+      "label": "Bull Queues",
+      "sublabel": "3 Redis-backed queues",
+      "pos": [
+        590,
+        510
+      ],
+      "size": [
+        180,
+        72
+      ],
+      "sources": [
+        {
+          "path": "backend/server/src/services/queue.service.js",
+          "line": 90,
+          "label": "queue names"
+        }
+      ]
+    },
+    {
+      "id": "worker",
+      "type": "backend",
+      "label": "Queue Processors",
+      "sublabel": "in-process workers",
+      "pos": [
+        855,
+        510
+      ],
+      "size": [
+        180,
+        72
+      ],
+      "sources": [
+        {
+          "path": "backend/server/src/workers/processors.js"
+        }
+      ]
+    },
+    {
+      "id": "expopush",
+      "type": "external",
+      "label": "Expo Push",
+      "sublabel": "APNs / FCM delivery",
+      "pos": [
+        1120,
+        510
+      ],
+      "size": [
+        180,
+        72
+      ],
+      "sources": [
+        {
+          "path": "backend/server/src/services/notification.service.js"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Third-party providers (HTTPS)",
+      "wraps": [
+        "cloudinary",
+        "razorpay",
+        "twilio"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-to-api",
+      "from": "mobile",
+      "to": "api",
+      "label": "HTTPS REST + Socket.IO",
+      "variant": "emphasis",
+      "labelDy": -36,
+      "labelDx": -66
+    },
+    {
+      "id": "admin-to-api",
+      "from": "admin",
+      "to": "api",
+      "label": "HTTPS /admin/*"
+    },
+    {
+      "id": "api-to-mongo",
+      "from": "api",
+      "to": "mongo",
+      "label": "Mongoose",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-to-redis",
+      "from": "api",
+      "to": "redis",
+      "label": "read-through cache",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelDx": 80
+    },
+    {
+      "id": "api-to-queue",
+      "from": "api",
+      "to": "queue",
+      "label": "enqueue job",
+      "variant": "dashed",
+      "labelDy": 24
+    },
+    {
+      "id": "queue-to-worker",
+      "from": "queue",
+      "to": "worker",
+      "label": "drain"
+    },
+    {
+      "id": "worker-to-mongo",
+      "from": "worker",
+      "to": "mongo",
+      "label": "persist"
+    },
+    {
+      "id": "worker-to-push",
+      "from": "worker",
+      "to": "expopush",
+      "label": "push tickets"
+    },
+    {
+      "id": "api-to-twilio",
+      "from": "api",
+      "to": "twilio",
+      "label": "verify OTP",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "api-to-razorpay",
+      "from": "api",
+      "to": "razorpay",
+      "label": "create order · webhook",
+      "labelDy": -110
+    },
+    {
+      "id": "api-to-cloudinary",
+      "from": "api",
+      "to": "cloudinary",
+      "label": "signed params"
+    },
+    {
+      "id": "app-to-cloudinary",
+      "from": "mobile",
+      "to": "cloudinary",
+      "label": "direct upload",
+      "variant": "dashed",
+      "labelDy": -70
+    },
+    {
+      "id": "app-to-firebase",
+      "from": "mobile",
+      "to": "firebase",
+      "label": "analytics events",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Clients",
+      "items": [
+        "Expo app: expo-router, TanStack Query, socket.io-client",
+        "React + Vite admin console against api.filmyconnect24.com"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "API service",
+      "items": [
+        "One Express process; Socket.IO shares the same HTTP server",
+        "Bull queues feed · notification · subscription drain in-process"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Boundaries and fallbacks",
+      "items": [
+        "Helmet, express-rate-limit and mongo-sanitize wrap every request",
+        "ENABLE_REDIS=false swaps cache and queues for direct DB + inline jobs"
+      ]
+    }
+  ]
+}
