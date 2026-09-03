@@ -10,23 +10,44 @@ import {
   Zap,
   ShieldCheck,
   Smartphone,
-  Users as UsersIcon
+  Users as UsersIcon,
+  Flag,
+  LifeBuoy,
+  IndianRupee,
+  Bug,
+  BarChart3
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { ADMIN_ROLES, AdminRole } from '@/types';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
-const navigation = [
-  { name: 'Verification Requests', href: '/requests', icon: ClipboardList },
-  { name: 'Management Hub', href: '/management-hub', icon: ShieldCheck },
-  { name: 'Users / Wallet', href: '/users', icon: UsersIcon },
-  { name: 'Audit Logs', href: '/logs', icon: History },
-  { name: 'App Updates', href: '/app-updates', icon: Smartphone },
+// `roles` lists who may see the item, super admin excluded - it sees everything.
+// These must line up with the guards in backend routes/admin*.routes.js, or the
+// sidebar will offer a link that answers 403.
+const navigation: {
+  name: string;
+  href: string;
+  icon: typeof ClipboardList;
+  roles: AdminRole[];
+}[] = [
+  { name: 'Analytics', href: '/analytics', icon: BarChart3, roles: [ADMIN_ROLES.OPERATIONS] },
+  { name: 'Reports', href: '/reports', icon: Flag, roles: [ADMIN_ROLES.OPERATIONS] },
+  { name: 'Support', href: '/support', icon: LifeBuoy, roles: [ADMIN_ROLES.OPERATIONS] },
+  { name: 'Verification Requests', href: '/requests', icon: ClipboardList, roles: [ADMIN_ROLES.VERIFICATION, ADMIN_ROLES.OPERATIONS] },
+  { name: 'Management Hub', href: '/management-hub', icon: ShieldCheck, roles: [ADMIN_ROLES.OPERATIONS] },
+  { name: 'Users / Wallet', href: '/users', icon: UsersIcon, roles: [ADMIN_ROLES.OPERATIONS] },
+  // Revenue is super admin only, so no role below super is listed.
+  { name: 'Payments', href: '/payments', icon: IndianRupee, roles: [] },
+  { name: 'Errors', href: '/errors', icon: Bug, roles: [ADMIN_ROLES.OPERATIONS] },
+  { name: 'Audit Logs', href: '/logs', icon: History, roles: [ADMIN_ROLES.OPERATIONS] },
+  { name: 'App Updates', href: '/app-updates', icon: Smartphone, roles: [ADMIN_ROLES.OPERATIONS] },
 ];
 
 export function AdminLayout() {
-  const { admin, logout } = useAuth();
+  const { admin, logout, can } = useAuth();
+  const visibleNavigation = navigation.filter((item) => can(...item.roles));
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -66,9 +87,9 @@ export function AdminLayout() {
 
           {/* Navigation */}
           <nav className="flex-1 px-4 py-6 space-y-1">
-            {navigation.map((item) => {
+            {visibleNavigation.map((item) => {
               const isActive = location.pathname === item.href ||
-                (item.href === '/requests' && location.pathname.startsWith('/requests'));
+                (item.href !== '/' && location.pathname.startsWith(item.href + '/'));
               return (
                 <NavLink
                   key={item.name}

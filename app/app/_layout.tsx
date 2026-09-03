@@ -23,6 +23,7 @@ import { MessageProvider } from '@/contexts/MessageContext';
 import { MediaProvider } from '@/contexts/MediaContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
+import { useScreenTracking } from '@/hooks/useScreenTracking';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -31,6 +32,8 @@ const queryClient = new QueryClient();
 function RootLayoutNav() {
   const { colors } = useTheme();
   const { isAuthenticated, isLoading } = useAuth();
+
+  useScreenTracking();
 
   // Push-notification taps → deep link. Hot start (app open/backgrounded)
   // navigates immediately once the user is authenticated; cold start parks the

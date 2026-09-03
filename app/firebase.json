@@ -1,0 +1,20 @@
+{
+  "react-native": {
+    "//": "Ad-related collection is switched off deliberately. FilmyConnect runs no ads, so the advertising identifier buys nothing — and collecting it is exactly what obliges the App Tracking Transparency prompt under Apple's rules. Turning it off means the prompt never applies, which matters in an onboarding flow already losing most of its signups. Product analytics, funnels and retention are unaffected; only cross-app ad targeting is given up.",
+
+    "google_analytics_adid_collection_enabled": false,
+    "google_analytics_ssaid_collection_enabled": false,
+    "google_analytics_default_allow_ad_personalization_signals": false,
+    "google_analytics_default_allow_ad_storage": false,
+    "google_analytics_default_allow_ad_user_data": false,
+    "google_analytics_registration_with_ad_network_enabled": false,
+    "analytics_registration_with_ad_network_enabled": false,
+
+    "//2": "Analytics and crash reporting stay on — these are the things actually being paid for.",
+    "analytics_auto_collection_enabled": true,
+    "crashlytics_auto_collection_enabled": true,
+
+    "//3": "Screen names are reported from the expo-router hook in hooks/useScreenTracking, which strips ids out of the path. Firebase's own automatic screen reporting would record the raw native view name instead and disagree with our own numbers.",
+    "google_analytics_automatic_screen_reporting_enabled": false
+  }
+}

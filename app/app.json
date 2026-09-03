@@ -2,7 +2,7 @@
   "expo": {
     "name": "FilmyConnect",
     "slug": "filmy",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/images/app-icon.png",
     "scheme": "myapp",
@@ -22,7 +22,8 @@
         "NSCameraUsageDescription": "FilmyConnect uses your camera to capture photos and videos for your portfolio, profile picture, and content uploads to share with the film industry community.",
         "NSMicrophoneUsageDescription": "FilmyConnect uses your microphone to record audio while capturing videos for your portfolio, video introductions, and content uploads on the platform.",
         "NSLocationWhenInUseUsageDescription": "FilmyConnect uses your location to show relevant film industry events, jobs, and networking opportunities near you. For example, we can suggest film shoots and networking meetups in your city."
-      }
+      },
+      "googleServicesFile": "./GoogleService-Info.plist"
     },
     "android": {
       "package": "app.rork.filmy",
@@ -92,7 +93,17 @@
           "locationWhenInUsePermission": "FilmyConnect uses your location to show relevant film industry events, jobs, and networking opportunities near you."
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      "@react-native-firebase/app",
+      "@react-native-firebase/crashlytics",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
+      ]
     ],
     "extra": {
       "apiUrl": "https://api.filmyconnect24.com",

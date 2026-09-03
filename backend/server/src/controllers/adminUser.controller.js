@@ -1,5 +1,9 @@
 const User = require('../models/User.model');
 const { success } = require('../utils/response');
+const { recordAudit, AUDIT_ACTIONS } = require('../utils/auditLog');
+const { fail } = require('../utils/response');
+const Post = require('../models/Post.model');
+const { deleteUserCompletely } = require('../services/userDeletion.service');
 
 const getAllUsers = async (req, res, next) => {
     try {
@@ -69,6 +73,15 @@ const suspendUser = async (req, res, next) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
+        await recordAudit(req, {
+            action: AUDIT_ACTIONS.USER_SUSPEND,
+            targetType: 'User',
+            targetId: user._id,
+            targetLabel: user.name,
+            summary: `Set ${user.name} to ${status}${reason ? ` — ${reason}` : ''}`,
+            meta: { status, reason, duration, suspendedUntil: updateData.suspendedUntil },
+        });
+
         return success(res, user, 200);
     } catch (err) {
         next(err);
@@ -92,6 +105,14 @@ const unsuspendUser = async (req, res, next) => {
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
+
+        await recordAudit(req, {
+            action: AUDIT_ACTIONS.USER_UNSUSPEND,
+            targetType: 'User',
+            targetId: user._id,
+            targetLabel: user.name,
+            summary: `Restored ${user.name} to active`,
+        });
 
         return success(res, user, 200);
     } catch (err) {
@@ -144,7 +165,105 @@ const updateWallet = async (req, res, next) => {
 
         await wallet.save();
 
+        await recordAudit(req, {
+            action: AUDIT_ACTIONS.WALLET_ADJUST,
+            targetType: 'User',
+            targetId: user._id,
+            targetLabel: user.name,
+            summary: `${type === 'credit' ? 'Credited' : 'Debited'} ${amount} ${wallet.currency || 'INR'} ${type === 'credit' ? 'to' : 'from'} ${user.name}`,
+            meta: {
+                type,
+                amount: parseFloat(amount),
+                description,
+                balanceBefore: user.walletBalance - change,
+                balanceAfter: user.walletBalance,
+            },
+        });
+
         return success(res, { balance: user.walletBalance, transactions: wallet.transactions });
+    } catch (err) {
+        next(err);
+    }
+};
+
+/**
+ * GET /admin/users/:id/posts — what this person has published.
+ *
+ * Includes posts already hidden by moderation, which the app's own feed will
+ * not return; an admin looking at an account needs to see what was taken down
+ * as much as what is live.
+ */
+const getUserPosts = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { page = 1, limit = 12 } = req.query;
+
+        const perPage = Math.min(parseInt(limit, 10) || 12, 50);
+        const skip = ((parseInt(page, 10) || 1) - 1) * perPage;
+
+        const [posts, total] = await Promise.all([
+            Post.find({ author: id })
+                .select('type caption mediaUrl media thumbnailUrl isActive visibility engagement createdAt')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(perPage)
+                .lean(),
+            Post.countDocuments({ author: id }),
+        ]);
+
+        return success(res, {
+            data: posts,
+            total,
+            page: parseInt(page, 10) || 1,
+            limit: perPage,
+            totalPages: Math.max(1, Math.ceil(total / perPage)),
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+/**
+ * DELETE /admin/users/:id — erase the account and everything belonging to it.
+ *
+ * Guarded by a typed confirmation of the account's own email rather than a
+ * boolean flag. There is no undo and no backup restore path here, so the cost
+ * of a mistaken click is total; requiring the caller to reproduce the email
+ * makes that click impossible to make by accident.
+ */
+const deleteUser = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { confirmEmail, reason } = req.body;
+
+        const user = await User.findById(id).select('email name');
+        if (!user) return fail(res, 'User not found', 404);
+
+        if (!confirmEmail || String(confirmEmail).trim().toLowerCase() !== user.email.toLowerCase()) {
+            return fail(res, "Type the account's email address to confirm deletion", 400);
+        }
+
+        const result = await deleteUserCompletely(id);
+        if (!result) return fail(res, 'User not found', 404);
+
+        // Written after the fact and holding the counts, because once this
+        // returns there is nothing left in the database to reconstruct it from.
+        await recordAudit(req, {
+            action: AUDIT_ACTIONS.USER_DELETE,
+            targetType: 'User',
+            targetId: id,
+            targetLabel: result.user.name,
+            summary: `Permanently deleted ${result.user.name} (${result.user.email}) and all their data`,
+            meta: {
+                deletedUser: result.user,
+                removed: result.removed,
+                media: result.media,
+                orphanedCommunities: result.orphanedCommunities,
+                reason: reason || null,
+            },
+        });
+
+        return success(res, result);
     } catch (err) {
         next(err);
     }
@@ -153,6 +272,8 @@ const updateWallet = async (req, res, next) => {
 module.exports = {
     getAllUsers,
     getUserById,
+    getUserPosts,
+    deleteUser,
     updateWallet,
     suspendUser,
     unsuspendUser,

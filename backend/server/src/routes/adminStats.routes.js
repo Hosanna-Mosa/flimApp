@@ -2,11 +2,12 @@ const express = require('express');
 const router = express.Router();
 const adminStatsController = require('../controllers/adminStats.controller');
 const adminAuthMiddleware = require('../middlewares/adminAuth.middleware');
+const requireRole = require('../middlewares/requireRole.middleware');
+const { ADMIN_ROLES } = require('../constants/adminRoles');
 
-// All routes here should be protected and admin only
 router.use(adminAuthMiddleware);
 
-router.get('/boost', adminStatsController.getBoostStats);
-router.get('/wallet', adminStatsController.getWalletStats);
+router.get('/boost', requireRole(ADMIN_ROLES.OPERATIONS), adminStatsController.getBoostStats);
+router.get('/wallet', requireRole(ADMIN_ROLES.OPERATIONS), adminStatsController.getWalletStats);
 
 module.exports = router;

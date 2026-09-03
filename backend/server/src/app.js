@@ -102,9 +102,16 @@ app.use('/admin/verification', adminVerificationRoutes);
 app.use('/admin/users', require('./routes/adminUser.routes'));
 app.use('/admin/stats', require('./routes/adminStats.routes'));
 app.use('/admin/version', require('./routes/adminVersion.routes'));
+app.use('/admin/reports', require('./routes/adminReport.routes'));
+app.use('/admin/support', require('./routes/adminSupport.routes'));
+app.use('/admin/payments', require('./routes/adminPayment.routes'));
+app.use('/admin/analytics', require('./routes/adminAnalytics.routes'));
+app.use('/admin/errors', require('./routes/adminErrorLog.routes'));
+app.use('/admin/audit', require('./routes/adminAudit.routes'));
 
 app.use('/verification', verificationRoutes);
 app.use('/support', supportRoutes);
+app.use('/events', require('./routes/analytics.routes'));
 app.use('/subscriptions', subscriptionRoutes);
 app.use('/wallet', walletRoutes);
 app.use('/payments', paymentRoutes);

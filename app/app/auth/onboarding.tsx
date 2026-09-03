@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import AuthScreen from '@/components/auth/AuthScreen';
@@ -10,8 +10,13 @@ import IndustriesStep from '@/components/onboarding/IndustriesStep';
 import OnboardingFooter from '@/components/onboarding/OnboardingFooter';
 import { useOnboardingSubmit } from '@/hooks/useOnboardingSubmit';
 import { PresetAvatar } from '@/constants/avatars';
+import { track } from '@/utils/analytics';
 
 const DEFAULT_AVATAR = 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
+
+/** Names rather than bare numbers, so the funnel stays readable if the order
+ *  of the steps ever changes. */
+const STEP_NAMES = ['avatar', 'language', 'roles', 'industries'] as const;
 
 export default function OnboardingScreen() {
   const { submit, loading } = useOnboardingSubmit();
@@ -22,6 +27,14 @@ export default function OnboardingScreen() {
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [selectedIndustries, setSelectedIndustries] = useState<string[]>([]);
+
+  // Fires on arrival at each step, not on leaving it — including step 1 on
+  // mount. Measuring completions would count only the people who got through,
+  // which is the opposite of what a drop-off needs: the step someone abandons
+  // is the last one they reached, and it has no completion to record.
+  useEffect(() => {
+    track('onboarding_step', { step, name: STEP_NAMES[step - 1] });
+  }, [step]);
 
   const toggle = (list: string[], id: string) =>
     list.includes(id) ? list.filter((x) => x !== id) : [...list, id];
@@ -66,6 +79,11 @@ export default function OnboardingScreen() {
       if (selectedRoles.length === 0) return;
       setStep(4);
     } else {
+      track('onboarding_complete', {
+        roles: selectedRoles.length,
+        industries: selectedIndustries.length,
+        usedPresetAvatar: !!presetAvatar,
+      });
       submit({ avatar, presetAvatar, selectedLanguage, selectedRoles, selectedIndustries });
     }
   };

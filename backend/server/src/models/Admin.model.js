@@ -1,15 +1,16 @@
 const { Schema, model } = require('mongoose');
 const bcrypt = require('bcryptjs');
+const { ADMIN_ROLES, ALL_ADMIN_ROLES } = require('../constants/adminRoles');
 
 const AdminSchema = new Schema(
   {
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String, required: true },
-    role: { 
-      type: String, 
-      enum: ['VERIFICATION_ADMIN', 'SUPER_ADMIN'], 
-      default: 'VERIFICATION_ADMIN' 
+    role: {
+      type: String,
+      enum: ALL_ADMIN_ROLES,
+      default: ADMIN_ROLES.VERIFICATION
     },
     lastLoginAt: { type: Date },
   },

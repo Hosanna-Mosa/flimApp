@@ -1,0 +1,264 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "One request, end to end — tapping ♥ on a post",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1060,
+      500
+    ],
+    "views": [
+      {
+        "id": "on-device",
+        "label": "On the device",
+        "focus": [
+          "user",
+          "screen",
+          "hook",
+          "client"
+        ],
+        "note": "Screens hold no request logic: they call a hook, which calls the one API client."
+      },
+      {
+        "id": "on-server",
+        "label": "Into the server",
+        "focus": [
+          "client",
+          "api",
+          "auth",
+          "service"
+        ],
+        "note": "Every route passes the same guards, then a thin controller hands off to a service."
+      },
+      {
+        "id": "persistence",
+        "label": "Where state lands",
+        "focus": [
+          "service",
+          "mongo",
+          "redis"
+        ],
+        "note": "MongoDB is written first and synchronously; Redis work is best-effort."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User",
+      "sublabel": "taps the ♥"
+    },
+    {
+      "id": "screen",
+      "type": "frontend",
+      "label": "Screen",
+      "sublabel": "(tabs)/home.tsx"
+    },
+    {
+      "id": "hook",
+      "type": "frontend",
+      "label": "Hook",
+      "sublabel": "usePostActions"
+    },
+    {
+      "id": "client",
+      "type": "frontend",
+      "label": "Client",
+      "sublabel": "utils/api.ts"
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "Route",
+      "sublabel": "like.routes.js"
+    },
+    {
+      "id": "auth",
+      "type": "security",
+      "label": "Guard",
+      "sublabel": "auth.middleware"
+    },
+    {
+      "id": "service",
+      "type": "backend",
+      "label": "Service",
+      "sublabel": "like.service.js"
+    },
+    {
+      "id": "mongo",
+      "type": "database",
+      "label": "MongoDB",
+      "sublabel": "Like·Post·User"
+    },
+    {
+      "id": "redis",
+      "type": "database",
+      "label": "Redis",
+      "sublabel": "cache + Bull"
+    }
+  ],
+  "segments": [
+    {
+      "from": 168,
+      "to": 250,
+      "label": "On the device"
+    },
+    {
+      "from": 258,
+      "to": 415,
+      "label": "On the server"
+    }
+  ],
+  "messages": [
+    {
+      "id": "tap",
+      "from": "user",
+      "to": "screen",
+      "y": 178,
+      "label": "taps ♥",
+      "variant": "default"
+    },
+    {
+      "id": "on-like",
+      "from": "screen",
+      "to": "hook",
+      "y": 206,
+      "label": "onLike(postId)",
+      "variant": "default"
+    },
+    {
+      "id": "call",
+      "from": "hook",
+      "to": "client",
+      "y": 234,
+      "label": "api.likePost()",
+      "variant": "default"
+    },
+    {
+      "id": "http",
+      "from": "client",
+      "to": "api",
+      "y": 262,
+      "label": "POST /api/posts/:id/like",
+      "variant": "emphasis"
+    },
+    {
+      "id": "verify",
+      "from": "api",
+      "to": "auth",
+      "y": 290,
+      "label": "verify Bearer JWT",
+      "variant": "security"
+    },
+    {
+      "id": "handoff",
+      "from": "api",
+      "to": "service",
+      "y": 318,
+      "label": "controller → service",
+      "variant": "default"
+    },
+    {
+      "id": "write",
+      "from": "service",
+      "to": "mongo",
+      "y": 346,
+      "label": "Like.create + $inc counts",
+      "variant": "emphasis"
+    },
+    {
+      "id": "async",
+      "from": "service",
+      "to": "redis",
+      "y": 374,
+      "label": "notify job + cache (optional)",
+      "variant": "dashed"
+    },
+    {
+      "id": "json",
+      "from": "api",
+      "to": "client",
+      "y": 402,
+      "label": "200 { likesCount }",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "screen",
+      "from": 172,
+      "to": 410,
+      "type": "frontend"
+    },
+    {
+      "participant": "hook",
+      "from": 200,
+      "to": 410,
+      "type": "frontend"
+    },
+    {
+      "participant": "client",
+      "from": 228,
+      "to": 408,
+      "type": "frontend"
+    },
+    {
+      "participant": "api",
+      "from": 257,
+      "to": 406,
+      "type": "backend"
+    },
+    {
+      "participant": "auth",
+      "from": 285,
+      "to": 312,
+      "type": "security"
+    },
+    {
+      "participant": "service",
+      "from": 313,
+      "to": 390,
+      "type": "backend"
+    },
+    {
+      "participant": "mongo",
+      "from": 341,
+      "to": 368,
+      "type": "database"
+    },
+    {
+      "participant": "redis",
+      "from": 369,
+      "to": 390,
+      "type": "database"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "The pattern — every feature repeats it",
+      "items": [
+        "Device: screen → hook → utils/api.ts. Screens never call fetch.",
+        "Server: routes → middlewares → controllers → services → models."
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Start reading here",
+      "items": [
+        "app/app/_layout.tsx — providers, routing, notifications",
+        "backend/server/src/app.js — the whole route table in one file"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "What surprises people",
+      "items": [
+        "MongoDB is written first and synchronously — not cache-first.",
+        "The hook applies an optimistic +1, then reconciles with the response."
+      ]
+    }
+  ]
+}

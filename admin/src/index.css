@@ -132,7 +132,11 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 261 72% 22%;
     --sidebar-border: 0 0% 32%;
     --sidebar-ring: 234 89% 73%;
-    --chart-1: 229 93% 81%;
+    /* Was 229 93% 81%, which sits at OKLab L 0.78 — well outside the 0.48-0.67
+       band a mark needs on the dark card, so bars read as a pale wash rather
+       than a solid. Re-stepped to the nearest value that passes both the
+       lightness band and 3:1 contrast. */
+    --chart-1: 234 83% 70%;
     --chart-2: 252 94% 85%;
     --chart-3: 269 97% 85%;
     --chart-4: 234 89% 73%;

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Platform, DeviceEventEmitter } from 'react-native';
 import { User, UserRole, Industry } from '@/types';
 import { api } from '@/utils/api';
+import { identify, setAnalyticsToken } from '@/utils/analytics';
 
 // 🔔 PUSH NOTIFICATIONS
 import * as Notifications from 'expo-notifications';
@@ -234,9 +235,20 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     });
 
     registerPushToken(data.token);
+
+    // Attach the account to analytics and crash reports. Only the id is sent —
+    // enough to tie a crash or a stuck funnel to a support ticket, without
+    // putting name, email or phone into Google's copy of the data.
+    identify(data.user.id || (data.user as { _id?: string })._id);
+    setAnalyticsToken(data.token);
   };
 
   const logout = async () => {
+    // Clear first so events queued after this point are not attributed to the
+    // account that just signed out on a shared device.
+    identify(undefined);
+    setAnalyticsToken(undefined);
+
     await AsyncStorage.clear();
     setAuthState({
       user: null,

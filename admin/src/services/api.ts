@@ -1,11 +1,30 @@
 import axios, { AxiosError, AxiosInstance } from 'axios';
+import { toast } from 'sonner';
 import { 
   AuthResponse, 
   PaginatedResponse, 
   VerificationRequest, 
   VerificationLog,
   Subscription,
-  ApiError 
+  ApiError,
+  Report,
+  ReportStats,
+  ReportResolution,
+  SupportTicket,
+  SupportStats,
+  SupportStatus,
+  ReplyChannel,
+  PaymentEntry,
+  PaymentSummary,
+  PaymentExceptions,
+  ErrorLogEntry,
+  ErrorStats,
+  AnalyticsOverview,
+  AnalyticsGrowth,
+  FunnelStep,
+  RetentionCohort,
+  AnalyticsEvents,
+  FirebaseReport
 } from '@/types';
 
 // API base URL - configure for production
@@ -50,6 +69,16 @@ api.interceptors.response.use(
         window.location.href = '/login';
       }
     }
+
+    // 403 means signed in but not permitted, so the session stays - clearing it
+    // here would sign someone out for opening one page above their role.
+    if (error.response?.status === 403) {
+      toast.error(
+        error.response.data?.message ||
+          "Your admin role doesn't allow this action."
+      );
+    }
+
     return Promise.reject(error);
   }
 );
@@ -212,4 +241,250 @@ export const versionApi = {
     const response = await api.put('/admin/version', data);
     return response.data;
   },
+};
+
+
+// Moderation reports
+export interface UserDeletionResult {
+  user: { _id: string; name: string; email: string };
+  removed: Record<string, number>;
+  media: { deleted: number; failed: number };
+  orphanedCommunities: number;
+}
+
+export const userAdminApi = {
+  getPosts: async (id: string, page = 1, limit = 12) => {
+    const response = await api.get(
+      `/admin/users/${id}/posts?page=${page}&limit=${limit}`
+    );
+    return response.data as {
+      data: {
+        _id: string;
+        type: string;
+        caption?: string;
+        mediaUrl?: string;
+        media?: { url?: string; thumbnail?: string };
+        thumbnailUrl?: string;
+        isActive: boolean;
+        visibility?: string;
+        engagement?: { likesCount: number; commentsCount: number; viewsCount: number };
+        createdAt: string;
+      }[];
+      total: number;
+      page: number;
+      totalPages: number;
+    };
+  },
+
+  /** Irreversible. confirmEmail must match the account's own email. */
+  deleteUser: async (
+    id: string,
+    confirmEmail: string,
+    reason?: string
+  ): Promise<UserDeletionResult> => {
+    const response = await api.delete(`/admin/users/${id}`, {
+      data: { confirmEmail, reason },
+    });
+    return response.data as UserDeletionResult;
+  },
+};
+
+export const reportApi = {
+  getReports: async (
+    page: number = 1,
+    limit: number = 20,
+    filters?: { status?: string; type?: string; sla?: string }
+  ): Promise<PaginatedResponse<Report>> => {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.type && filters.type !== 'all') params.append('type', filters.type);
+    if (filters?.sla && filters.sla !== 'all') params.append('sla', filters.sla);
+
+    const response = await api.get<PaginatedResponse<Report>>(`/admin/reports?${params.toString()}`);
+    return response.data;
+  },
+
+  getStats: async (): Promise<ReportStats> => {
+    const response = await api.get<ReportStats>('/admin/reports/stats');
+    return response.data;
+  },
+
+  getReportById: async (id: string): Promise<Report> => {
+    const response = await api.get<Report>(`/admin/reports/${id}`);
+    return response.data;
+  },
+
+  acknowledge: async (id: string): Promise<void> => {
+    await api.put(`/admin/reports/${id}/acknowledge`);
+  },
+
+  resolve: async (
+    id: string,
+    resolution: ReportResolution,
+    notes?: string,
+    suspensionDays?: number
+  ): Promise<{ outcome: string; duplicatesClosed: number }> => {
+    const response = await api.post(`/admin/reports/${id}/resolve`, {
+      resolution,
+      notes,
+      suspensionDays,
+    });
+    return response.data;
+  },
+
+  escalate: async (id: string, notes?: string): Promise<void> => {
+    await api.post(`/admin/reports/${id}/escalate`, { notes });
+  },
+};
+
+
+// Support desk
+export const supportApi = {
+  getTickets: async (
+    page: number = 1,
+    limit: number = 20,
+    filters?: { status?: string; search?: string }
+  ): Promise<PaginatedResponse<SupportTicket>> => {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.search) params.append('search', filters.search);
+
+    const response = await api.get<PaginatedResponse<SupportTicket>>(
+      `/admin/support?${params.toString()}`
+    );
+    return response.data;
+  },
+
+  getStats: async (): Promise<SupportStats> => {
+    const response = await api.get<SupportStats>('/admin/support/stats');
+    return response.data;
+  },
+
+  getTicketById: async (id: string): Promise<SupportTicket> => {
+    const response = await api.get<SupportTicket>(`/admin/support/${id}`);
+    return response.data;
+  },
+
+  reply: async (
+    id: string,
+    body: string,
+    channel: ReplyChannel = 'both'
+  ): Promise<{ emailDelivered: boolean | null }> => {
+    const response = await api.post(`/admin/support/${id}/reply`, { body, channel });
+    return response.data;
+  },
+
+  setStatus: async (id: string, status: SupportStatus, notes?: string): Promise<void> => {
+    await api.put(`/admin/support/${id}/status`, { status, notes });
+  },
+};
+
+
+// Payments
+export const paymentApi = {
+  getPayments: async (
+    page: number = 1,
+    limit: number = 25,
+    filters?: { status?: string; source?: string; purpose?: string; from?: string; to?: string }
+  ): Promise<PaginatedResponse<PaymentEntry>> => {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    Object.entries(filters || {}).forEach(([k, v]) => {
+      if (v && v !== 'all') params.append(k, v);
+    });
+    const response = await api.get<PaginatedResponse<PaymentEntry>>(
+      `/admin/payments?${params.toString()}`
+    );
+    return response.data;
+  },
+
+  getSummary: async (filters?: { from?: string; to?: string }): Promise<PaymentSummary> => {
+    const params = new URLSearchParams();
+    if (filters?.from) params.append('from', filters.from);
+    if (filters?.to) params.append('to', filters.to);
+    const response = await api.get<PaymentSummary>(`/admin/payments/summary?${params.toString()}`);
+    return response.data;
+  },
+
+  getExceptions: async (): Promise<PaymentExceptions> => {
+    const response = await api.get<PaymentExceptions>('/admin/payments/exceptions');
+    return response.data;
+  },
+
+  /**
+   * Downloads the CSV. The response is a file rather than JSON, so it bypasses
+   * the shared client's unwrapping interceptor and is fetched directly.
+   */
+  exportCsv: async (filters?: { from?: string; to?: string; status?: string }): Promise<void> => {
+    const params = new URLSearchParams();
+    Object.entries(filters || {}).forEach(([k, v]) => {
+      if (v && v !== 'all') params.append(k, v);
+    });
+
+    const response = await api.get(`/admin/payments/export?${params.toString()}`, {
+      responseType: 'blob',
+    });
+
+    const url = window.URL.createObjectURL(new Blob([response.data as BlobPart]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `filmyconnect-payments-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  },
+};
+
+
+// Server errors
+export const errorLogApi = {
+  getErrors: async (
+    page: number = 1,
+    limit: number = 25,
+    filters?: { status?: string; search?: string }
+  ): Promise<PaginatedResponse<ErrorLogEntry>> => {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.search) params.append('search', filters.search);
+    const response = await api.get<PaginatedResponse<ErrorLogEntry>>(
+      `/admin/errors?${params.toString()}`
+    );
+    return response.data;
+  },
+
+  getStats: async (): Promise<ErrorStats> => {
+    const response = await api.get<ErrorStats>('/admin/errors/stats');
+    return response.data;
+  },
+
+  getErrorById: async (id: string): Promise<ErrorLogEntry> => {
+    const response = await api.get<ErrorLogEntry>(`/admin/errors/${id}`);
+    return response.data;
+  },
+
+  setResolved: async (id: string, resolved: boolean): Promise<void> => {
+    await api.put(`/admin/errors/${id}/resolve`, { resolved });
+  },
+};
+
+
+// Product analytics
+export const analyticsApi = {
+  getOverview: async (days = 30): Promise<AnalyticsOverview> =>
+    (await api.get<AnalyticsOverview>(`/admin/analytics/overview?days=${days}`)).data,
+
+  getGrowth: async (days = 30): Promise<AnalyticsGrowth> =>
+    (await api.get<AnalyticsGrowth>(`/admin/analytics/growth?days=${days}`)).data,
+
+  getFunnel: async (): Promise<{ steps: FunnelStep[] }> =>
+    (await api.get<{ steps: FunnelStep[] }>('/admin/analytics/funnel')).data,
+
+  getRetention: async (): Promise<{ cohorts: RetentionCohort[] }> =>
+    (await api.get<{ cohorts: RetentionCohort[] }>('/admin/analytics/retention')).data,
+
+  getEvents: async (days = 30): Promise<AnalyticsEvents> =>
+    (await api.get<AnalyticsEvents>(`/admin/analytics/events?days=${days}`)).data,
+
+  getFirebase: async (days = 28): Promise<FirebaseReport> =>
+    (await api.get<FirebaseReport>(`/admin/analytics/firebase?days=${days}`)).data,
 };
