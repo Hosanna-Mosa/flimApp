@@ -17,6 +17,14 @@ import { Platform } from 'react-native';
  * Firebase project is ever lost or the free tier stops being enough.
  *
  * Nothing here ever throws. A failed analytics call must never reach a screen.
+ *
+ * Ad-related collection is switched off in firebase.json — the advertising
+ * identifier, ad personalisation signals, ad storage and SKAdNetwork. The app
+ * runs no ads, so the identifier buys nothing, and collecting it is what
+ * obliges the App Tracking Transparency prompt. That reasoning lives here
+ * rather than in firebase.json because react-native-firebase parses that file
+ * by interpolating it into a single-quoted Ruby string, so one apostrophe in a
+ * comment fails the iOS build.
  */
 
 const API_BASE = Constants.expoConfig?.extra?.apiUrl;

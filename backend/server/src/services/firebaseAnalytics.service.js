@@ -21,14 +21,85 @@ const logger = require('../config/logger');
 
 let clientPromise = null;
 
-const isConfigured = () =>
-  Boolean(process.env.GA4_PROPERTY_ID && process.env.GOOGLE_APPLICATION_CREDENTIALS);
+const hasCredentials = () =>
+  Boolean(process.env.GA4_CREDENTIALS_JSON || process.env.GOOGLE_APPLICATION_CREDENTIALS);
+
+const isConfigured = () => Boolean(process.env.GA4_PROPERTY_ID && hasCredentials());
+
+/**
+ * Resolve the service account key.
+ *
+ * GA4_CREDENTIALS_JSON holds the key itself and is preferred, because the file
+ * is gitignored and so never reaches a server that deploys by pulling the repo.
+ * Putting the contents in an environment variable is the only way to get it
+ * there without either committing a private key or copying files by hand.
+ *
+ * GOOGLE_APPLICATION_CREDENTIALS still works, but is resolved against the
+ * backend directory rather than the process working directory. A relative path
+ * silently means different files depending on where node was started from —
+ * locally that was backend/, in production it is backend/server/src, and the
+ * same config then works in one place and not the other.
+ */
+const credentialOptions = () => {
+  const inline = process.env.GA4_CREDENTIALS_JSON;
+  if (inline) {
+    let parsed;
+    try {
+      // Accept base64 too: some hosts mangle multi-line values, and a key
+      // contains newlines inside private_key.
+      const raw = inline.trim().startsWith('{')
+        ? inline
+        : Buffer.from(inline, 'base64').toString('utf8');
+      parsed = JSON.parse(raw);
+    } catch (err) {
+      throw new Error(
+        `GA4_CREDENTIALS_JSON is set but could not be parsed as JSON or base64 JSON: ${err.message}`
+      );
+    }
+    return { credentials: parsed, projectId: parsed.project_id };
+  }
+
+  const configured = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  const path = require('path');
+  const fs = require('fs');
+
+  if (path.isAbsolute(configured)) return { keyFilename: configured };
+
+  // A relative path has no single correct meaning here: the repo has been
+  // deployed with .env in backend/ on one machine and in server/src on
+  // another, and node is started from a different directory again. Rather
+  // than pick one and be wrong half the time, try the plausible bases and use
+  // whichever actually holds the file.
+  const srcDir = path.resolve(__dirname, '..');
+  const candidates = [
+    path.resolve(process.cwd(), configured),
+    path.resolve(srcDir, configured),
+    path.resolve(srcDir, '..', '..', configured),
+  ];
+
+  const found = candidates.find((c) => {
+    try {
+      return fs.statSync(c).isFile();
+    } catch {
+      return false;
+    }
+  });
+
+  if (!found) {
+    throw new Error(
+      `GOOGLE_APPLICATION_CREDENTIALS is "${configured}" but no file was found. Looked in: ` +
+        `${[...new Set(candidates)].join(', ')}. Use an absolute path, or set GA4_CREDENTIALS_JSON instead.`
+    );
+  }
+
+  return { keyFilename: found };
+};
 
 const getClient = () => {
   if (!clientPromise) {
     clientPromise = (async () => {
       const { BetaAnalyticsDataClient } = require('@google-analytics/data');
-      return new BetaAnalyticsDataClient();
+      return new BetaAnalyticsDataClient(credentialOptions());
     })();
   }
   return clientPromise;
@@ -63,11 +134,19 @@ const getFirebaseReport = async (days = 28) => {
     return {
       configured: false,
       reason:
-        'Set GA4_PROPERTY_ID and GOOGLE_APPLICATION_CREDENTIALS on the server to read Firebase Analytics.',
+        'Set GA4_PROPERTY_ID, plus either GA4_CREDENTIALS_JSON (the service account key itself) or GOOGLE_APPLICATION_CREDENTIALS (a path to it), on the server.',
     };
   }
 
-  const client = await getClient();
+  let client;
+  try {
+    client = await getClient();
+  } catch (err) {
+    // A bad path or unparseable key would otherwise repeat once per report and
+    // bury the single cause under six identical lines.
+    clientPromise = null;
+    return { configured: true, credentialError: err.message, errors: [err.message], totals: {}, daily: [], screens: [], events: [], platforms: [], countries: [], realtime: null };
+  }
   const dateRanges = [{ startDate: `${days}daysAgo`, endDate: 'today' }];
 
   const run = async (label, request, dimensions, metrics) => {

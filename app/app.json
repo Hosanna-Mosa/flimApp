@@ -2,7 +2,7 @@
   "expo": {
     "name": "FilmyConnect",
     "slug": "filmy",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/images/app-icon.png",
     "scheme": "myapp",
@@ -94,7 +94,14 @@
         }
       ],
       "expo-web-browser",
-      "@react-native-firebase/app",
+      [
+        "@react-native-firebase/app",
+        {
+          "ios": {
+            "disableSPM": true
+          }
+        }
+      ],
       "@react-native-firebase/crashlytics",
       [
         "expo-build-properties",

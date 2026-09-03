@@ -53,3 +53,7 @@ serviceAccount*.json
 testsprite_tests/tmp/config.json
 testsprite_tests/tmp/
 testsprite_tests/
+
+# service account keys
+*adminsdk*.json
+*-firebase-adminsdk-*.json
