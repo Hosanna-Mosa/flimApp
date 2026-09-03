@@ -61,9 +61,38 @@ const credentialOptions = () => {
 
   const configured = process.env.GOOGLE_APPLICATION_CREDENTIALS;
   const path = require('path');
-  // services/ -> src/ -> server/ -> backend/
-  const backendRoot = path.resolve(__dirname, '..', '..', '..');
-  return { keyFilename: path.isAbsolute(configured) ? configured : path.resolve(backendRoot, configured) };
+  const fs = require('fs');
+
+  if (path.isAbsolute(configured)) return { keyFilename: configured };
+
+  // A relative path has no single correct meaning here: the repo has been
+  // deployed with .env in backend/ on one machine and in server/src on
+  // another, and node is started from a different directory again. Rather
+  // than pick one and be wrong half the time, try the plausible bases and use
+  // whichever actually holds the file.
+  const srcDir = path.resolve(__dirname, '..');
+  const candidates = [
+    path.resolve(process.cwd(), configured),
+    path.resolve(srcDir, configured),
+    path.resolve(srcDir, '..', '..', configured),
+  ];
+
+  const found = candidates.find((c) => {
+    try {
+      return fs.statSync(c).isFile();
+    } catch {
+      return false;
+    }
+  });
+
+  if (!found) {
+    throw new Error(
+      `GOOGLE_APPLICATION_CREDENTIALS is "${configured}" but no file was found. Looked in: ` +
+        `${[...new Set(candidates)].join(', ')}. Use an absolute path, or set GA4_CREDENTIALS_JSON instead.`
+    );
+  }
+
+  return { keyFilename: found };
 };
 
 const getClient = () => {
