@@ -7,7 +7,6 @@ import LogoutRow from '@/components/account/LogoutRow';
 import { useAccount } from '@/hooks/useAccount';
 
 const appVersion = Constants.expoConfig?.version ?? '';
-const buildNumber = Constants.nativeBuildVersion ?? '';
 
 export default function AccountScreen() {
   const a = useAccount();
@@ -16,14 +15,11 @@ export default function AccountScreen() {
     <Screen title="Account" padded={false}>
       <AccountMenu />
       <LogoutRow onPress={a.confirmLogout} />
-      {/* Read rather than written in. This said 1.0.0 while the app was on
-          1.0.3 — a hardcoded version is wrong from the first release after it
-          is typed, and it is the number someone reads out when reporting a
-          problem. The build number comes along because two people on 1.0.3 can
-          be running different builds. */}
+      {/* Read rather than written in: this said 1.0.0 while the app was on
+          1.0.3. A hardcoded version is wrong from the first release after it is
+          typed and nothing makes it fail loudly. */}
       <AppText variant="caption" secondary align="center" style={{ paddingBottom: 40 }}>
         Version {appVersion}
-        {buildNumber ? ` (${buildNumber})` : ''}
       </AppText>
     </Screen>
   );
