@@ -11,6 +11,7 @@ import MessageActionSheet, { MessageActionTarget } from '@/components/chat/Messa
 import AttachmentPickerSheet from '@/components/chat/AttachmentPickerSheet';
 import AttachmentPreview from '@/components/chat/AttachmentPreview';
 import MediaViewer from '@/components/chat/MediaViewer';
+import ForwardSheet, { ForwardPayload } from '@/components/chat/ForwardSheet';
 import { DirectMessage, DirectMessageMedia } from '@/components/chat/ChatMessageBubble';
 import { useChatAttachment } from '@/hooks/useChatAttachment';
 
@@ -20,6 +21,7 @@ export default function ChatScreen() {
   const [actionTarget, setActionTarget] = useState<MessageActionTarget | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [viewing, setViewing] = useState<DirectMessageMedia | null>(null);
+  const [forwarding, setForwarding] = useState<ForwardPayload | null>(null);
   const attachment = useChatAttachment();
 
   /**
@@ -84,7 +86,20 @@ export default function ChatScreen() {
         onAttachment={() => setPickerOpen(true)}
       />
 
-      <MediaViewer media={viewing} onClose={() => setViewing(null)} />
+      <MediaViewer
+        media={viewing}
+        onClose={() => setViewing(null)}
+        onForward={(media) => setForwarding({ media })}
+      />
+
+      <ForwardSheet
+        payload={forwarding}
+        onClose={() => setForwarding(null)}
+        onSent={(name) => {
+          if (Platform.OS === 'android') ToastAndroid.show(`Sent to ${name}`, ToastAndroid.SHORT);
+          else Alert.alert('Forwarded', `Sent to ${name}`);
+        }}
+      />
 
       <AttachmentPickerSheet
         visible={pickerOpen}
@@ -100,6 +115,10 @@ export default function ChatScreen() {
         onClose={() => setActionTarget(null)}
         onDelete={c.deleteMessage}
         onCopied={confirmCopied}
+        onForward={(t) => {
+          const source = c.messages.find((m) => m.id === t.id);
+          setForwarding({ content: t.text, media: source?.media });
+        }}
       />
     </ChatScreenShell>
   );

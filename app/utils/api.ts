@@ -202,6 +202,15 @@ export const apiConversation = (userId: string, token?: string) => request(`/mes
 export const apiMarkConversationRead = (userId: string, token?: string) =>
   request(`/messages/${userId}/read`, { method: 'POST', token });
 export const apiDeleteMessage = (id: string, token?: string) => request(`/messages/${id}`, { method: 'DELETE', token });
+/**
+ * Sends to an arbitrary recipient over REST rather than the chat socket, which
+ * only ever targets the conversation currently open. Forwarding is by
+ * definition sending somewhere else.
+ */
+export const apiSendMessage = (
+  payload: { recipientId: string; content?: string; media?: Record<string, unknown> },
+  token?: string
+) => request('/messages', { method: 'POST', body: payload, token });
 
 // Communities
 export const apiCreateCommunity = (payload: any, token?: string) =>
@@ -456,6 +465,10 @@ export const api = {
   conversation: (userId: string, t: string) => unwrap(apiConversation(userId, t)),
   markConversationRead: (userId: string, t: string) => unwrap(apiMarkConversationRead(userId, t)),
   deleteMessage: (id: string, t: string) => unwrap(apiDeleteMessage(id, t)),
+  sendMessage: (
+    payload: { recipientId: string; content?: string; media?: Record<string, unknown> },
+    t: string
+  ) => unwrap(apiSendMessage(payload, t)),
   getUnreadMessageCount: (t: string) => unwrap(apiGetUnreadMessageCount(t)),
 
   // Verification

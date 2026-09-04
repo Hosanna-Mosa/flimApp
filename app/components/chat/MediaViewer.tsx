@@ -7,20 +7,19 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
-  Share,
-  Platform,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { Video, ResizeMode } from 'expo-av';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as MediaLibrary from 'expo-media-library';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { X, Download, Share2, Check } from 'lucide-react-native';
+import { X, Download, Forward, Check } from 'lucide-react-native';
 import { DirectMessageMedia } from './ChatMessageBubble';
 
 interface MediaViewerProps {
   media: DirectMessageMedia | null;
   onClose: () => void;
+  onForward?: (media: DirectMessageMedia) => void;
 }
 
 /**
@@ -31,7 +30,7 @@ interface MediaViewerProps {
  * sit on the colour that flatters it rather than the one the app happens to
  * use.
  */
-export default function MediaViewer({ media, onClose }: MediaViewerProps) {
+export default function MediaViewer({ media, onClose, onForward }: MediaViewerProps) {
   const insets = useSafeAreaInsets();
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -71,16 +70,6 @@ export default function MediaViewer({ media, onClose }: MediaViewerProps) {
     }
   };
 
-  const share = async () => {
-    try {
-      await Share.share(
-        Platform.OS === 'ios' ? { url: media.url } : { message: media.url }
-      );
-    } catch {
-      /* the user dismissing the sheet is not an error */
-    }
-  };
-
   return (
     <Modal visible transparent={false} animationType="fade" onRequestClose={onClose} statusBarTranslucent>
       <View style={styles.root}>
@@ -90,9 +79,20 @@ export default function MediaViewer({ media, onClose }: MediaViewerProps) {
           </TouchableOpacity>
 
           <View style={styles.barActions}>
-            <TouchableOpacity onPress={share} hitSlop={12} style={styles.barButton}>
-              <Share2 size={22} color="#FFFFFF" />
-            </TouchableOpacity>
+            {onForward && (
+              <TouchableOpacity
+                onPress={() => {
+                  // Close first: the forward sheet is another modal, and two
+                  // stacked modals leave iOS showing neither.
+                  onClose();
+                  setTimeout(() => onForward(media), 260);
+                }}
+                hitSlop={12}
+                style={styles.barButton}
+              >
+                <Forward size={22} color="#FFFFFF" />
+              </TouchableOpacity>
+            )}
             <TouchableOpacity onPress={save} hitSlop={12} style={styles.barButton} disabled={saving}>
               {saving ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />
@@ -105,7 +105,16 @@ export default function MediaViewer({ media, onClose }: MediaViewerProps) {
           </View>
         </View>
 
-        <View style={styles.content}>
+        <View
+          style={[
+            styles.content,
+            // Native video controls draw along the bottom edge of the video
+            // itself. With the video filling the screen they land under the
+            // home indicator and the gesture bar, where they cannot be
+            // reliably tapped, so the video is inset by that much.
+            isVideo ? { paddingBottom: insets.bottom + 16 } : null,
+          ]}
+        >
           {isVideo ? (
             <Video
               source={{ uri: media.url }}
