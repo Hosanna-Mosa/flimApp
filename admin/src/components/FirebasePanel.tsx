@@ -1,4 +1,7 @@
-import { ExternalLink, Flame, Info, ShieldAlert, Smartphone } from 'lucide-react';
+import {
+  ExternalLink, Flame, Globe, Info, Layers, MonitorSmartphone,
+  MousePointerClick, ShieldAlert, Smartphone, Timer, Users,
+} from 'lucide-react';
 import { FirebaseReport } from '@/types';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,19 +26,32 @@ const num = (n: number | undefined) => (n ?? 0).toLocaleString('en-IN');
 function Panel({
   title,
   description,
+  icon: Icon,
   children,
   className,
 }: {
   title: string;
   description?: string;
+  icon?: React.ElementType;
   children: React.ReactNode;
   className?: string;
 }) {
   return (
-    <Card className={cn('p-5', className)}>
-      <h3 className="font-semibold">{title}</h3>
-      {description && <p className="mt-0.5 mb-3 text-sm text-muted-foreground">{description}</p>}
-      <div className={description ? '' : 'mt-3'}>{children}</div>
+    <Card className={cn('overflow-hidden p-0', className)}>
+      <div className="flex items-start gap-3 border-b border-border bg-muted/30 px-5 py-3.5">
+        {Icon && (
+          <div className="mt-0.5 rounded-md bg-background p-1.5">
+            <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+          </div>
+        )}
+        <div className="min-w-0">
+          <h3 className="font-semibold leading-tight">{title}</h3>
+          {description && (
+            <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
+          )}
+        </div>
+      </div>
+      <div className="p-4">{children}</div>
     </Card>
   );
 }
@@ -170,14 +186,16 @@ export function FirebasePanel({ report }: { report: FirebaseReport | null }) {
 
       {/* Headline */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="Active users" value={num(t?.activeUsers)} hint={`${num(t?.newUsers)} of them new`} />
-        <Stat label="Sessions" value={num(t?.sessions)} hint={`${num(t?.screenViews)} screen views`} />
+        <Stat icon={Users} label="Active users" value={num(t?.activeUsers)} hint={`${num(t?.newUsers)} of them new`} />
+        <Stat icon={Layers} label="Sessions" value={num(t?.sessions)} hint={`${num(t?.screenViews)} screen views`} />
         <Stat
+          icon={Timer}
           label="Avg session"
           value={duration(eng?.avgSessionSeconds || 0)}
           hint={eng?.screensPerSession ? `${eng.screensPerSession} screens each` : undefined}
         />
         <Stat
+          icon={ShieldAlert}
           label="Crash-free users"
           value={crashFreePct != null ? `${crashFreePct}%` : '—'}
           hint={st?.affectedUsers ? `${st.affectedUsers} affected` : 'nobody affected'}
@@ -202,7 +220,7 @@ export function FirebasePanel({ report }: { report: FirebaseReport | null }) {
       </Panel>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Panel title="What people do" description="Events the app reports.">
+        <Panel icon={MousePointerClick} title="What people do" description="Events the app reports.">
           <BreakdownList
             rows={(report.events || []).map((e) => ({ label: e.event, value: e.eventCount }))}
             unit="times"
@@ -210,7 +228,7 @@ export function FirebasePanel({ report }: { report: FirebaseReport | null }) {
           />
         </Panel>
 
-        <Panel title="Which build they are on" description="How far the latest release has spread.">
+        <Panel icon={Smartphone} title="Which build they are on" description="How far the latest release has spread.">
           <BreakdownList
             rows={(report.appVersions || []).map((v) => ({
               label: v.appVersion || '(unknown)',
@@ -222,7 +240,7 @@ export function FirebasePanel({ report }: { report: FirebaseReport | null }) {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <Panel title="Phones" description="Most common devices.">
+        <Panel icon={MonitorSmartphone} title="Phones" description="Most common devices.">
           <BreakdownList
             rows={(report.devices || []).map((d) => ({ label: d.device, value: d.activeUsers }))}
             unit="users"
@@ -230,7 +248,7 @@ export function FirebasePanel({ report }: { report: FirebaseReport | null }) {
           />
         </Panel>
 
-        <Panel title="Operating system" description="Versions in use.">
+        <Panel icon={MonitorSmartphone} title="Operating system" description="Versions in use.">
           <BreakdownList
             rows={(report.osVersions || []).map((o) => ({ label: o.osVersion, value: o.activeUsers }))}
             unit="users"
@@ -238,16 +256,17 @@ export function FirebasePanel({ report }: { report: FirebaseReport | null }) {
           />
         </Panel>
 
-        <Panel title="Platform" description="iOS against Android.">
+        <Panel icon={MonitorSmartphone} title="Platform" description="iOS against Android.">
           <BreakdownList
             rows={(report.platforms || []).map((p) => ({ label: p.platform, value: p.activeUsers }))}
             unit="users"
+            ofTotal
           />
         </Panel>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <Panel title="Countries" description="Where people are.">
+        <Panel icon={Globe} title="Countries" description="Where people are.">
           <BreakdownList
             rows={(report.countries || []).map((c) => ({ label: c.country, value: c.activeUsers }))}
             unit="users"
@@ -255,7 +274,7 @@ export function FirebasePanel({ report }: { report: FirebaseReport | null }) {
           />
         </Panel>
 
-        <Panel title="Cities" description="Down to the city.">
+        <Panel icon={Globe} title="Cities" description="Down to the city.">
           <BreakdownList
             rows={(report.cities || []).map((c) => ({ label: c.city, value: c.activeUsers }))}
             unit="users"
@@ -263,13 +282,14 @@ export function FirebasePanel({ report }: { report: FirebaseReport | null }) {
           />
         </Panel>
 
-        <Panel title="New against returning" description="Whether people come back.">
+        <Panel icon={Users} title="New against returning" description="Whether people come back.">
           <BreakdownList
             rows={(report.newVsReturning || []).map((n) => ({
               label: n.kind || '(unknown)',
               value: n.activeUsers,
             }))}
             unit="users"
+            ofTotal
           />
         </Panel>
       </div>

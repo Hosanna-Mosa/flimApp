@@ -61,8 +61,23 @@ const platform: 'ios' | 'android' | 'web' =
 // Required so the app still runs in Expo Go and on web, where the native
 // Firebase modules do not exist. A missing SDK disables Firebase reporting
 // rather than crashing on import.
-let firebaseAnalytics: any = null;
-let firebaseCrashlytics: any = null;
+/**
+ * React Native Firebase v22 removed the callable default export. v26 is modular
+ * only: you take an instance from getAnalytics() and pass it to standalone
+ * functions. Calling `.default()` — the old namespaced style — throws
+ * "undefined is not a function", and because every call here is wrapped in a
+ * try/catch that silence was indistinguishable from "not installed". Nothing
+ * this module sent ever reached Firebase; what appeared in GA4 was Firebase's
+ * own automatic collection.
+ */
+type FirebaseModules = {
+  analytics: any;
+  crashlytics: any;
+  a: typeof import('@react-native-firebase/analytics');
+  c: typeof import('@react-native-firebase/crashlytics');
+};
+
+let firebase: FirebaseModules | null = null;
 let firebaseChecked = false;
 
 const loadFirebase = () => {
@@ -70,10 +85,19 @@ const loadFirebase = () => {
   firebaseChecked = true;
   if (platform === 'web') return;
   try {
-    firebaseAnalytics = require('@react-native-firebase/analytics').default();
-    firebaseCrashlytics = require('@react-native-firebase/crashlytics').default();
-  } catch {
-    // Expo Go, or a build without the native modules. Everything below no-ops.
+    const a = require('@react-native-firebase/analytics');
+    const c = require('@react-native-firebase/crashlytics');
+    firebase = {
+      a,
+      c,
+      analytics: a.getAnalytics(),
+      crashlytics: c.getCrashlytics(),
+    };
+  } catch (err) {
+    // Expo Go, or a build without the native modules. Logged rather than
+    // swallowed: a silent failure here is what hid the bug above for a whole
+    // release cycle.
+    console.warn('[analytics] Firebase unavailable, reporting to backend only:', err);
   }
 };
 
@@ -146,12 +170,15 @@ export const track = (name: AnalyticsEventName, props?: Props) => {
   try {
     loadFirebase();
 
-    if (firebaseAnalytics) {
+    // screen_view is reserved by Firebase and rejected by logEvent — it has to
+    // go through logScreenView, which trackScreen already does. Sending it here
+    // as well would double-count every screen.
+    if (firebase && name !== 'screen_view') {
       // Firebase rejects undefined values, so they are stripped rather than sent.
       const clean = props
         ? Object.fromEntries(Object.entries(props).filter(([, v]) => v !== undefined))
         : undefined;
-      void firebaseAnalytics.logEvent(name, clean).catch(() => {});
+      firebase.a.logEvent(firebase.analytics, name, clean);
     }
 
     queue.push({
@@ -173,10 +200,11 @@ export const track = (name: AnalyticsEventName, props?: Props) => {
 export const trackScreen = (screenName: string) => {
   try {
     loadFirebase();
-    if (firebaseAnalytics) {
-      void firebaseAnalytics
-        .logScreenView({ screen_name: screenName, screen_class: screenName })
-        .catch(() => {});
+    if (firebase) {
+      firebase.a.logScreenView(firebase.analytics, {
+        screen_name: screenName,
+        screen_class: screenName,
+      });
     }
     track('screen_view', { screen: screenName });
   } catch {
@@ -194,8 +222,10 @@ export const trackScreen = (screenName: string) => {
 export const identify = (userId?: string) => {
   try {
     loadFirebase();
-    if (firebaseAnalytics) void firebaseAnalytics.setUserId(userId ?? null).catch(() => {});
-    if (firebaseCrashlytics) void firebaseCrashlytics.setUserId(userId ?? '').catch(() => {});
+    if (firebase) {
+      firebase.a.setUserId(firebase.analytics, userId ?? null);
+      firebase.c.setUserId(firebase.crashlytics, userId ?? '');
+    }
   } catch {
     /* ignore */
   }
@@ -205,9 +235,10 @@ export const identify = (userId?: string) => {
 export const reportError = (error: unknown, context?: string) => {
   try {
     loadFirebase();
-    if (!firebaseCrashlytics) return;
-    if (context) firebaseCrashlytics.log(context);
-    firebaseCrashlytics.recordError(
+    if (!firebase) return;
+    if (context) firebase.c.log(firebase.crashlytics, context);
+    firebase.c.recordError(
+      firebase.crashlytics,
       error instanceof Error ? error : new Error(String(error))
     );
   } catch {
