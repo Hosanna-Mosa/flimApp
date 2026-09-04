@@ -194,7 +194,19 @@ export interface CommunityPost {
     thumbnail?: string;
     size?: number;
     format?: string;
+    /** Kept so the file can be removed from Cloudinary. */
+    publicId?: string;
+    width?: number;
+    height?: number;
+    duration?: number;
   }[];
+  /** Snapshot of the post this one answers; see CommunityPost.model. */
+  replyTo?: {
+    postId?: string;
+    senderName?: string;
+    preview?: string;
+    mediaType?: 'image' | 'video';
+  };
   poll?: Poll;
   likes: string[]; // User IDs
   likesCount: number;

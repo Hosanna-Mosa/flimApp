@@ -20,7 +20,7 @@ const mb = (bytes: number) => Math.round(bytes / (1024 * 1024));
  * so_0 pins it to the opening frame; without it Cloudinary picks its own and
  * the same video can show a different poster between requests.
  */
-const posterFrameFor = (videoUrl: string): string | undefined => {
+export const posterFrameFor = (videoUrl: string): string | undefined => {
   if (!videoUrl.includes('/video/upload/')) return undefined;
   return videoUrl
     .replace('/video/upload/', '/video/upload/so_0/')

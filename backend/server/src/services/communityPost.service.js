@@ -46,9 +46,21 @@ const createPost = async (communityId, groupId, postData, userId) => {
     group: groupId,
     author: userId,
     type: postData.type || 'text',
-    content: postData.content,
+    content: postData.content || '',
     media: postData.media || [],
-    poll: postData.poll || null
+    poll: postData.poll || null,
+    // Whitelisted rather than passed through: this arrives from the client,
+    // which uploads to Cloudinary itself and composes the quote.
+    replyTo: postData.replyTo?.postId
+      ? {
+          postId: postData.replyTo.postId,
+          senderName: String(postData.replyTo.senderName || '').slice(0, 80),
+          preview: String(postData.replyTo.preview || '').slice(0, 200),
+          mediaType: ['image', 'video'].includes(postData.replyTo.mediaType)
+            ? postData.replyTo.mediaType
+            : undefined,
+        }
+      : undefined
   });
 
   // Update stats
@@ -220,7 +232,9 @@ const deletePost = async (postId, userId) => {
     throw httpError(403, 'Insufficient permissions to delete this post');
   }
 
-  // Soft delete
+  // Soft delete, so the Cloudinary file is deliberately left in place. Unlike
+  // a direct message, which is removed outright, this post can be restored —
+  // deleting its media would make that restore produce a broken image.
   post.isDeleted = true;
   post.deletedAt = new Date();
   post.deletedBy = userId;

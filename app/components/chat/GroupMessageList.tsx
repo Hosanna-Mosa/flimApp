@@ -9,12 +9,14 @@ interface GroupMessageListProps {
   isMine: (post: CommunityPost) => boolean;
   onVote: (postId: string, optionIndex: number) => void;
   onLongPress: (post: CommunityPost) => void;
+  onPressMedia: (media: any) => void;
   /** Rendered at the TOP of the conversation (inverted list footer). */
   intro?: React.ReactElement;
 }
 
 /** Inverted group-chat list of GroupMessageBubbles. */
-export default function GroupMessageList({ posts, isMine, onVote, onLongPress, intro }: GroupMessageListProps) {
+export default function GroupMessageList({ posts, isMine, onVote, onLongPress,
+  onPressMedia, intro }: GroupMessageListProps) {
   return (
     <FlatList
       style={styles.list}
@@ -26,6 +28,7 @@ export default function GroupMessageList({ posts, isMine, onVote, onLongPress, i
           isMe={isMine(item)}
           onVote={(idx) => onVote(item._id, idx)}
           onLongPress={() => onLongPress(item)}
+          onPressMedia={onPressMedia}
         />
       )}
       inverted
