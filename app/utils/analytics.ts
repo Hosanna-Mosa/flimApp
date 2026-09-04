@@ -80,10 +80,19 @@ type FirebaseModules = {
 let firebase: FirebaseModules | null = null;
 let firebaseChecked = false;
 
+/**
+ * Expo Go ships a fixed set of native modules and Firebase is not among them,
+ * so `NativeRNFBTurboApp is not registered` there is expected rather than a
+ * fault. Warning about it on every reload trains people to ignore the warning,
+ * which is exactly what let the previous breakage go unnoticed — so it is only
+ * reported in a build that is supposed to have Firebase compiled in.
+ */
+const isExpoGo = Constants.executionEnvironment === 'storeClient';
+
 const loadFirebase = () => {
   if (firebaseChecked) return;
   firebaseChecked = true;
-  if (platform === 'web') return;
+  if (platform === 'web' || isExpoGo) return;
   try {
     const a = require('@react-native-firebase/analytics');
     const c = require('@react-native-firebase/crashlytics');
@@ -94,10 +103,14 @@ const loadFirebase = () => {
       crashlytics: c.getCrashlytics(),
     };
   } catch (err) {
-    // Expo Go, or a build without the native modules. Logged rather than
-    // swallowed: a silent failure here is what hid the bug above for a whole
-    // release cycle.
-    console.warn('[analytics] Firebase unavailable, reporting to backend only:', err);
+    // A real build reaching here means the native side did not link. Worth
+    // saying loudly: the last time this failed silently, nothing reported to
+    // Firebase for an entire release and it looked like a display bug.
+    console.warn(
+      '[analytics] Firebase native modules missing in a build that should have them. ' +
+        'Events go to the backend only. Cause:',
+      err
+    );
   }
 };
 
