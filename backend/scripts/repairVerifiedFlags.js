@@ -20,7 +20,22 @@ const User = require('../server/src/models/User.model');
  */
 const run = async () => {
   const apply = process.argv.includes('--apply');
+
+  if (!process.env.MONGODB_URI) {
+    console.error('MONGODB_URI is not set. Pass it inline rather than editing .env:');
+    console.error('  MONGODB_URI="..." node scripts/repairVerifiedFlags.js');
+    process.exit(1);
+  }
+
   await mongoose.connect(process.env.MONGODB_URI);
+
+  // Say which database this is about to touch. The same script is run against
+  // development and production by swapping a connection string, and the two
+  // differ by one word in a URI — worth printing rather than assuming the
+  // person running it checked.
+  const { host, name } = mongoose.connection;
+  console.log(`\n  database: ${name}  @  ${host}`);
+  console.log(`  mode:     ${apply ? 'APPLY — this will write' : 'dry run'}`);
 
   // The field was renamed from isVerified to isBadgeVerified. Existing
   // documents still carry the old key, and mongoose will not see it, so every
