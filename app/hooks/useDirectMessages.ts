@@ -14,7 +14,8 @@ const toDirectMessage = (msg: any, status?: DirectMessage['status']): DirectMess
   return {
     id: msg._id || msg.id || Date.now().toString(),
     senderId: sender,
-    message: msg.content,
+    message: msg.content || '',
+    media: msg.media?.url ? msg.media : undefined,
     timestamp: formatTime(msg.createdAt || Date.now()),
     status: status || msg.status || 'sent',
   };
@@ -157,7 +158,7 @@ export function useDirectMessages(userId: string | undefined, initialName?: stri
   }, [socket, userId, currentUserId]);
 
   // ---- Send (optimistic). Returns false so ChatInputBar keeps the text.
-  const send = (content: string): boolean => {
+  const send = (content: string, media?: DirectMessage['media']): boolean => {
     if (isConversationBlocked) {
       Alert.alert(
         'Messaging unavailable',
@@ -178,7 +179,7 @@ export function useDirectMessages(userId: string | undefined, initialName?: stri
       return false;
     }
 
-    socket.emit('send_message', { to: userId, content });
+    socket.emit('send_message', { to: userId, content, media });
 
     // Replaced by the message_sent event
     setMessages((prev) => [
@@ -187,6 +188,7 @@ export function useDirectMessages(userId: string | undefined, initialName?: stri
         id: `temp-${Date.now()}`,
         senderId: currentUserId,
         message: content,
+        media,
         timestamp: formatTime(Date.now()),
         status: 'sent',
       },

@@ -1,0 +1,135 @@
+import { useState } from 'react';
+import { Alert } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { useAuth } from '@/contexts/AuthContext';
+import { uploadMediaToCloudinary } from '@/utils/media';
+
+/** Mirrors MediaService.SIZE_LIMITS on the server, which rejects anything larger. */
+export const CHAT_LIMITS = {
+  image: 10 * 1024 * 1024,
+  video: 100 * 1024 * 1024,
+};
+
+const mb = (bytes: number) => Math.round(bytes / (1024 * 1024));
+
+export interface PendingAttachment {
+  uri: string;
+  kind: 'image' | 'video';
+  name: string;
+  size?: number;
+  width?: number;
+  height?: number;
+  duration?: number;
+}
+
+export interface UploadedAttachment {
+  url: string;
+  type: 'image' | 'video';
+  thumbnail?: string;
+  publicId?: string;
+  size?: number;
+  width?: number;
+  height?: number;
+  duration?: number;
+}
+
+/**
+ * Picking and uploading a chat attachment.
+ *
+ * Size is checked before the upload starts rather than after. Sending 100MB
+ * over a phone connection and only then being told it was too large wastes the
+ * upload, the data allowance and several minutes of the sender's time.
+ */
+export function useChatAttachment() {
+  const { token } = useAuth();
+  const [pending, setPending] = useState<PendingAttachment | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  const pick = async (kind: 'image' | 'video') => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert(
+        'Permission needed',
+        `Allow access to your ${kind === 'video' ? 'videos' : 'photos'} to attach one.`
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes:
+        kind === 'video'
+          ? ImagePicker.MediaTypeOptions.Videos
+          : ImagePicker.MediaTypeOptions.Images,
+      quality: kind === 'image' ? 0.8 : undefined,
+    });
+
+    if (result.canceled || !result.assets?.length) return;
+    const asset = result.assets[0];
+    const limit = CHAT_LIMITS[kind];
+
+    if (asset.fileSize && asset.fileSize > limit) {
+      Alert.alert(
+        `${kind === 'video' ? 'Video' : 'Photo'} is too large`,
+        `This one is ${mb(asset.fileSize)} MB and the limit is ${mb(limit)} MB. ` +
+          `Pick a ${kind === 'video' ? 'shorter clip' : 'smaller photo'}, or compress it first.`
+      );
+      return;
+    }
+
+    setPending({
+      uri: asset.uri,
+      kind,
+      name: asset.fileName || (kind === 'video' ? 'video.mp4' : 'photo.jpg'),
+      size: asset.fileSize ?? undefined,
+      width: asset.width,
+      height: asset.height,
+      duration: asset.duration ?? undefined,
+    });
+  };
+
+  const clear = () => {
+    setPending(null);
+    setProgress(0);
+  };
+
+  /** Uploads the pending file and returns what the message should carry. */
+  const upload = async (): Promise<UploadedAttachment | null> => {
+    if (!pending || !token) return null;
+
+    setUploading(true);
+    setProgress(0);
+    try {
+      const result = await uploadMediaToCloudinary(
+        { uri: pending.uri, name: pending.name, size: pending.size },
+        pending.kind,
+        token,
+        setProgress
+      );
+
+      return {
+        url: result.url,
+        type: pending.kind,
+        // Cloudinary derives a poster frame for video. Without it a video
+        // message is a black rectangle until someone opens it.
+        thumbnail: result.thumbnail_url || undefined,
+        publicId: result.publicId,
+        size: result.bytes || pending.size,
+        width: result.width || pending.width,
+        height: result.height || pending.height,
+        duration: result.duration || pending.duration,
+      };
+    } catch (err) {
+      console.error('[chat] Attachment upload failed:', err);
+      Alert.alert(
+        'Could not send',
+        'The attachment did not upload. Check your connection and try again.'
+      );
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return { pending, uploading, progress, pick, clear, upload };
+}

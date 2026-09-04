@@ -23,13 +23,24 @@ const ensureMessagingAllowed = async (userId, peerId) => {
   }
 };
 
-const createMessage = async ({ senderId, recipientId, content }) => {
+const createMessage = async ({ senderId, recipientId, content, media }) => {
   await ensureMessagingAllowed(senderId, recipientId);
+
+  const text = content || '';
+  if (!text.trim() && !media?.url) {
+    const err = new Error('A message needs text, an attachment, or both');
+    err.status = 400;
+    throw err;
+  }
 
   const message = await Message.create({
     sender: senderId,
     recipient: recipientId,
-    content: encryptMessage(content),
+    // Only encrypt when there is something to encrypt: encrypting the empty
+    // string of a photo-only message produces a ciphertext that decrypts back
+    // to '' and makes every caption-less message look corrupted in the logs.
+    content: text ? encryptMessage(text) : '',
+    media: media?.url ? media : undefined,
     isRead: false
   });
 
@@ -73,8 +84,28 @@ const getConversation = async (userId, peerId) => {
   return messages;
 };
 
-const deleteMessage = async (messageId, userId) =>
-  Message.findOneAndDelete({ _id: messageId, sender: userId });
+const deleteMessage = async (messageId, userId) => {
+  const message = await Message.findOneAndDelete({ _id: messageId, sender: userId });
+
+  // Remove the file too. Cloudinary charges for stored bytes whether or not
+  // anything still points at them, so a deleted message that leaves its media
+  // behind is a bill with no way to find what it is for.
+  if (message?.media?.publicId) {
+    try {
+      const MediaService = require('./media.service');
+      await MediaService.deleteMedia(
+        message.media.publicId,
+        message.media.type === 'video' ? 'video' : 'image'
+      );
+    } catch (err) {
+      // The message is already gone; failing the request now would tell the
+      // user their delete failed when it did not.
+      console.error('[Messages] Deleted message but could not remove its media:', err.message);
+    }
+  }
+
+  return message;
+};
 
 const getConversations = async (userId, searchQuery = '') => {
   const userObjectId = new mongoose.Types.ObjectId(userId);

@@ -1,13 +1,27 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { Image } from 'expo-image';
+import { Play } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import MessageStatusTicks, { MessageStatus } from './MessageStatusTicks';
 import LinkifiedText from './LinkifiedText';
+
+export interface DirectMessageMedia {
+  url: string;
+  type: 'image' | 'video';
+  thumbnail?: string;
+  width?: number;
+  height?: number;
+  duration?: number;
+}
 
 export interface DirectMessage {
   id: string;
   senderId: string;
   message: string;
+  media?: DirectMessageMedia;
+  /** Set on the optimistic copy while its attachment uploads. */
+  uploading?: boolean;
   /** Already formatted for display ("12:44 PM"). */
   timestamp: string;
   status: MessageStatus;
@@ -21,6 +35,7 @@ interface ChatMessageBubbleProps {
   isLastInGroup: boolean;
   /** Fired for any message — the menu decides which actions apply. */
   onLongPress?: (message: DirectMessage, isMine: boolean) => void;
+  onPressMedia?: (media: DirectMessageMedia) => void;
 }
 
 const ROUND_CORNER = 18;
@@ -37,6 +52,7 @@ export default function ChatMessageBubble({
   isFirstInGroup,
   isLastInGroup,
   onLongPress,
+  onPressMedia,
 }: ChatMessageBubbleProps) {
   const { colors } = useTheme();
 
@@ -63,13 +79,54 @@ export default function ChatMessageBubble({
           { marginBottom: isLastInGroup ? 12 : 6 },
         ]}
       >
-        <View style={[styles.bubble, bubbleShape, { backgroundColor: isMe ? colors.primary : colors.surface }]}>
+        <View
+          style={[
+            styles.bubble,
+            bubbleShape,
+            { backgroundColor: isMe ? colors.primary : colors.surface },
+            // Media sits flush to the bubble edge; padding would frame it.
+            message.media ? styles.bubbleWithMedia : null,
+          ]}
+        >
+          {message.media && (
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={() => onPressMedia?.(message.media as DirectMessageMedia)}
+              disabled={message.uploading}
+            >
+              <View>
+                <Image
+                  source={{ uri: message.media.thumbnail || message.media.url }}
+                  style={[styles.media, message.uploading && styles.mediaUploading]}
+                  contentFit="cover"
+                  transition={150}
+                />
+                {message.media.type === 'video' && !message.uploading && (
+                  <View style={styles.playBadge}>
+                    <Play size={22} color="#FFFFFF" fill="#FFFFFF" />
+                  </View>
+                )}
+                {message.uploading && (
+                  <View style={styles.uploadOverlay}>
+                    <ActivityIndicator color="#FFFFFF" />
+                  </View>
+                )}
+              </View>
+            </TouchableOpacity>
+          )}
+
+          {!!message.message && (
           <LinkifiedText
-            style={[styles.text, { color: isMe ? colors.onPrimary : colors.text }]}
+            style={[
+              styles.text,
+              message.media ? styles.textUnderMedia : null,
+              { color: isMe ? colors.onPrimary : colors.text },
+            ]}
             linkStyle={{ color: isMe ? colors.linkOnPrimary : colors.linkOnBubble }}
           >
             {message.message}
           </LinkifiedText>
+          )}
         </View>
         <View style={[styles.metaRow, isMe ? styles.metaRowMe : styles.metaRowThem]}>
           <Text style={[styles.timestamp, { color: colors.textSecondary }]}>{message.timestamp}</Text>
@@ -93,10 +150,50 @@ const styles = StyleSheet.create({
   bubble: {
     paddingHorizontal: 14,
     paddingVertical: 10,
+    overflow: 'hidden',
+  },
+  bubbleWithMedia: {
+    padding: 4,
+  },
+  media: {
+    width: 220,
+    height: 220,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0,0,0,0.06)',
+  },
+  mediaUploading: {
+    opacity: 0.5,
+  },
+  playBadge: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    marginTop: -22,
+    marginLeft: -22,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.55)',
+  },
+  uploadOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   text: {
     fontSize: 16,
     lineHeight: 20,
+  },
+  /**
+   * Only applied alongside media. The bubble drops to 4px padding so the image
+   * sits flush, which would otherwise leave the caption touching the edge.
+   */
+  textUnderMedia: {
+    paddingHorizontal: 10,
+    paddingBottom: 6,
+    paddingTop: 8,
   },
   metaRow: {
     flexDirection: 'row',

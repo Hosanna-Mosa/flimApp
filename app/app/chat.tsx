@@ -8,12 +8,34 @@ import ChatMessageList from '@/components/chat/ChatMessageList';
 import BlockedConversationBanner from '@/components/chat/BlockedConversationBanner';
 import ChatInputBar from '@/components/chat/ChatInputBar';
 import MessageActionSheet, { MessageActionTarget } from '@/components/chat/MessageActionSheet';
+import AttachmentPickerSheet from '@/components/chat/AttachmentPickerSheet';
+import AttachmentPreview from '@/components/chat/AttachmentPreview';
 import { DirectMessage } from '@/components/chat/ChatMessageBubble';
+import { useChatAttachment } from '@/hooks/useChatAttachment';
 
 export default function ChatScreen() {
   const { userId, name } = useLocalSearchParams<{ userId: string; name: string }>();
   const c = useDirectMessages(userId, name);
   const [actionTarget, setActionTarget] = useState<MessageActionTarget | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const attachment = useChatAttachment();
+
+  /**
+   * Upload first, then send. The message only exists once its media does —
+   * sending immediately would put a bubble in the list pointing at a URL that
+   * does not resolve yet, and there is no way to repair it if the upload then
+   * fails.
+   */
+  const handleSend = async (text: string) => {
+    if (!attachment.pending) return c.send(text);
+
+    const uploaded = await attachment.upload();
+    if (!uploaded) return false;
+
+    const ok = c.send(text, uploaded);
+    if (ok) attachment.clear();
+    return ok;
+  };
 
   const confirmCopied = () => {
     if (Platform.OS === 'android') ToastAndroid.show('Copied', ToastAndroid.SHORT);
@@ -42,7 +64,30 @@ export default function ChatScreen() {
       {c.isConversationBlocked && (
         <BlockedConversationBanner isBlockedByMe={c.isBlockedByMe} onUnblock={c.unblock} />
       )}
-      <ChatInputBar onSend={c.send} disabled={c.isConversationBlocked} />
+      {attachment.pending && (
+        <AttachmentPreview
+          attachment={attachment.pending}
+          uploading={attachment.uploading}
+          progress={attachment.progress}
+          onRemove={attachment.clear}
+        />
+      )}
+
+      <ChatInputBar
+        onSend={handleSend}
+        disabled={c.isConversationBlocked}
+        loading={attachment.uploading}
+        onAttachment={() => setPickerOpen(true)}
+      />
+
+      <AttachmentPickerSheet
+        visible={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onPick={(kind) => {
+          setPickerOpen(false);
+          setTimeout(() => attachment.pick(kind), 220);
+        }}
+      />
 
       <MessageActionSheet
         target={actionTarget}

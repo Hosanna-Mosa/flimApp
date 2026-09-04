@@ -30,10 +30,16 @@ const registerChatHandlers = (io) => {
     }
 
     socket.on('send_message', async (data) => {
-      const { to, content } = data;
+      const { to, content, media } = data;
 
       try {
-        if (!to || !content) {
+        // A photo needs no caption, so either half is enough — but returning
+        // silently on neither, as this did for missing content, leaves the
+        // sender watching a message that never arrives and no error to explain
+        // it. The client is told instead.
+        if (!to) return;
+        if (!content?.trim() && !media?.url) {
+          socket.emit('message_error', { message: 'Send some text or an attachment' });
           return;
         }
 
@@ -43,6 +49,20 @@ const registerChatHandlers = (io) => {
           senderId: socket.userId,
           recipientId: recipientId,
           content,
+          // Whitelisted rather than passed through: this arrives from the
+          // client, which uploads to Cloudinary itself.
+          media: media?.url
+            ? {
+                url: media.url,
+                type: media.type === 'video' ? 'video' : 'image',
+                thumbnail: media.thumbnail,
+                publicId: media.publicId,
+                size: media.size,
+                width: media.width,
+                height: media.height,
+                duration: media.duration,
+              }
+            : undefined,
         });
         
         // Populate sender and recipient before emitting (same as REST API)
