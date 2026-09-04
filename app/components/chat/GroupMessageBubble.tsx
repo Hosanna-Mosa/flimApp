@@ -173,7 +173,7 @@ export default function GroupMessageBubble({ message, isMe, onVote, onLongPress 
           {message.content ? (
             <LinkifiedText
               style={[styles.messageText, { color: textColor }]}
-              linkStyle={isMe ? undefined : { color: colors.link }}
+              linkStyle={{ color: isMe ? colors.linkOnPrimary : colors.linkOnBubble }}
             >
               {message.content}
             </LinkifiedText>

@@ -19,8 +19,8 @@ interface ChatMessageBubbleProps {
   /** Group consecutive messages from the same sender (Instagram-style). */
   isFirstInGroup: boolean;
   isLastInGroup: boolean;
-  /** Only fired for the viewer's own messages. */
-  onLongPress?: (messageId: string) => void;
+  /** Fired for any message — the menu decides which actions apply. */
+  onLongPress?: (message: DirectMessage, isMine: boolean) => void;
 }
 
 const ROUND_CORNER = 18;
@@ -55,7 +55,7 @@ export default function ChatMessageBubble({
       };
 
   return (
-    <TouchableOpacity onLongPress={() => isMe && onLongPress?.(message.id)} activeOpacity={0.8}>
+    <TouchableOpacity onLongPress={() => onLongPress?.(message, isMe)} activeOpacity={0.8}>
       <View
         style={[
           styles.wrapper,
@@ -66,9 +66,7 @@ export default function ChatMessageBubble({
         <View style={[styles.bubble, bubbleShape, { backgroundColor: isMe ? colors.primary : colors.surface }]}>
           <LinkifiedText
             style={[styles.text, { color: isMe ? colors.onPrimary : colors.text }]}
-            // On the sender's own bubble the text already sits on the accent
-            // colour, so a link takes the same ink and relies on the underline.
-            linkStyle={isMe ? undefined : { color: colors.link }}
+            linkStyle={{ color: isMe ? colors.linkOnPrimary : colors.linkOnBubble }}
           >
             {message.message}
           </LinkifiedText>

@@ -18,6 +18,18 @@ const colors = {
     error: '#DC2626',
     success: '#16A34A',
     warning: '#D97706',
+    /**
+     * Link colours inside chat bubbles, which sit on their own backgrounds.
+     *
+     * The general `link` blue is unreadable in a bubble: 1.51:1 on the gold of
+     * an own message and 2.65:1 on a received one. These were picked by
+     * measuring contrast against each bubble colour rather than by eye.
+     *
+     * linkOnBubble    on the recipient's surface — theme dependent
+     * linkOnPrimary   on the sender's gold, which is the same in both themes
+     */
+    linkOnBubble: '#0B3D6B',
+    linkOnPrimary: '#0B3D6B',
     link: '#0095F6',
     overlay: 'rgba(0, 0, 0, 0.5)',
     tab: '#FFFFFF',
@@ -40,6 +52,9 @@ const colors = {
     error: '#EF4444',
     success: '#22C55E',
     warning: '#F59E0B',
+    /** Light enough to read on the dark surface; see the note in the light theme. */
+    linkOnBubble: '#4FC3F7',
+    linkOnPrimary: '#0B3D6B',
     link: '#0095F6',
     overlay: 'rgba(0, 0, 0, 0.7)',
     tab: '#000000',
