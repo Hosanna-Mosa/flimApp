@@ -20,28 +20,6 @@ const getVersionConfig = async (req, res, next) => {
         }
       });
     }
-    await recordAudit(req, {
-      action: AUDIT_ACTIONS.VERSION_CONFIG_UPDATE,
-      targetType: 'VersionConfig',
-      targetId: config._id,
-      summary: `Updated release config — iOS ${config.ios.minimumVersion}+, Android ${config.android.minimumVersion}+`,
-      meta: { ios: config.ios, android: config.android, title, message },
-    });
-
-    // The kill switch blacks out every client, so it gets its own entry rather
-    // than being buried in a config diff.
-    if (isShutdown !== undefined && isShutdown !== shutdownBefore) {
-      await recordAudit(req, {
-        action: AUDIT_ACTIONS.APP_SHUTDOWN_TOGGLE,
-        targetType: 'VersionConfig',
-        targetId: config._id,
-        summary: isShutdown
-          ? 'Enabled app shutdown — all clients blocked'
-          : 'Disabled app shutdown — clients restored',
-        meta: { isShutdown, shutdownTitle: config.shutdownTitle, shutdownMessage: config.shutdownMessage },
-      });
-    }
-
     return success(res, config, 200);
   } catch (err) {
     return next(err);
@@ -110,6 +88,28 @@ const updateVersionConfig = async (req, res, next) => {
       } catch (socketErr) {
         console.error('Failed to broadcast app_shutdown socket event:', socketErr);
       }
+    }
+
+    await recordAudit(req, {
+      action: AUDIT_ACTIONS.VERSION_CONFIG_UPDATE,
+      targetType: 'VersionConfig',
+      targetId: config._id,
+      summary: `Updated release config — iOS ${config.ios.minimumVersion}+, Android ${config.android.minimumVersion}+`,
+      meta: { ios: config.ios, android: config.android, title, message },
+    });
+
+    // The kill switch blacks out every client, so it gets its own entry rather
+    // than being buried in a config diff.
+    if (isShutdown !== undefined && isShutdown !== shutdownBefore) {
+      await recordAudit(req, {
+        action: AUDIT_ACTIONS.APP_SHUTDOWN_TOGGLE,
+        targetType: 'VersionConfig',
+        targetId: config._id,
+        summary: isShutdown
+          ? 'Enabled app shutdown — all clients blocked'
+          : 'Disabled app shutdown — clients restored',
+        meta: { isShutdown, shutdownTitle: config.shutdownTitle, shutdownMessage: config.shutdownMessage },
+      });
     }
 
     return success(res, config, 200);
