@@ -64,7 +64,7 @@ export default function LoginPage() {
           <div className="mx-auto mb-4 h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center">
             <BadgeCheck className="h-8 w-8 text-primary" />
           </div>
-          <CardTitle className="text-2xl font-bold">Flimy Verification Admin</CardTitle>
+          <CardTitle className="text-2xl font-bold">FilmyConnect Admin</CardTitle>
           <CardDescription>
             Sign in to manage verification requests
           </CardDescription>

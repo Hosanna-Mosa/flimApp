@@ -1,8 +1,8 @@
-import { ExternalLink, Flame, Info, Radio } from 'lucide-react';
+import { ExternalLink, Flame, Info, ShieldAlert, Smartphone } from 'lucide-react';
 import { FirebaseReport } from '@/types';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { BreakdownList, Stat } from '@/components/BreakdownList';
 import { cn } from '@/lib/utils';
 
 const FIREBASE_PROJECT = 'flimy-app-demo';
@@ -12,14 +12,41 @@ const consoleUrl = (section: string) =>
 const duration = (seconds: number) => {
   if (!seconds) return '—';
   if (seconds < 60) return `${seconds}s`;
-  return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return s ? `${m}m ${s}s` : `${m}m`;
 };
 
+const num = (n: number | undefined) => (n ?? 0).toLocaleString('en-IN');
+
+/** A titled block. Every Firebase section uses one so the page reads as a set. */
+function Panel({
+  title,
+  description,
+  children,
+  className,
+}: {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <Card className={cn('p-5', className)}>
+      <h3 className="font-semibold">{title}</h3>
+      {description && <p className="mt-0.5 mb-3 text-sm text-muted-foreground">{description}</p>}
+      <div className={description ? '' : 'mt-3'}>{children}</div>
+    </Card>
+  );
+}
+
 /**
- * Firebase Analytics, read through the GA4 Data API.
+ * Everything Firebase reports about the app, laid out so the whole picture is
+ * visible without opening the Firebase console.
  *
- * Crashlytics is a link rather than a table on purpose: Google publishes no
- * read API for it, so any crash figures shown here would have to be invented.
+ * Crash stack traces are the one thing that stays in the console — Crashlytics
+ * publishes no read API — but the headline crash rate comes through GA4 and is
+ * shown here, so app health is answerable from this page.
  */
 export function FirebasePanel({ report }: { report: FirebaseReport | null }) {
   if (!report) return null;
@@ -35,47 +62,18 @@ export function FirebasePanel({ report }: { report: FirebaseReport | null }) {
             <div>
               <h2 className="font-semibold">Firebase</h2>
               <p className="mt-0.5 text-sm text-muted-foreground">
-                Not connected yet. Everything above works without it — this section adds what only
-                the app itself can see: sessions, time spent, device and country.
+                Not connected. Everything above works without it — this section adds what only the
+                app itself can see: sessions, screens, devices and crash rate.
               </p>
             </div>
-
-            <div className="rounded-md bg-muted/50 p-3 text-sm">
-              <p className="font-medium">To connect it</p>
-              <ol className="mt-2 list-decimal space-y-1 pl-4 text-muted-foreground">
-                <li>
-                  In Google Analytics, open Admin → Property Settings and copy the numeric{' '}
-                  <strong>Property ID</strong> (not the G- id).
-                </li>
-                <li>
-                  Create a service account key and give it <strong>Viewer</strong> on that property.
-                </li>
-                <li>
-                  Set <code className="text-xs">GA4_PROPERTY_ID</code> and{' '}
-                  <code className="text-xs">GOOGLE_APPLICATION_CREDENTIALS</code> on the server, then
-                  restart it.
-                </li>
-              </ol>
+            <div className="rounded-md bg-muted/50 p-3 text-sm text-muted-foreground">
+              {report.reason}
             </div>
-
-            <p className="flex items-start gap-2 text-xs text-muted-foreground">
-              <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-              Numbers only start once a build containing the Firebase SDK is released and people
-              update. Until then this stays empty even when connected.
-            </p>
-
-            <div className="flex flex-wrap gap-2">
-              <Button variant="outline" size="sm" asChild>
-                <a href={consoleUrl('analytics')} target="_blank" rel="noreferrer">
-                  Open Firebase Analytics <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
-                </a>
-              </Button>
-              <Button variant="outline" size="sm" asChild>
-                <a href={consoleUrl('crashlytics')} target="_blank" rel="noreferrer">
-                  Open Crashlytics <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
-                </a>
-              </Button>
-            </div>
+            <Button variant="outline" size="sm" asChild>
+              <a href={consoleUrl('analytics')} target="_blank" rel="noreferrer">
+                Open Firebase console <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+              </a>
+            </Button>
           </div>
         </div>
       </Card>
@@ -83,30 +81,47 @@ export function FirebasePanel({ report }: { report: FirebaseReport | null }) {
   }
 
   const t = report.totals;
+  const st = report.stability;
+  const eng = report.engagement;
+  const crashFreePct = st?.crashFreeRate != null ? Math.round(st.crashFreeRate * 1000) / 10 : null;
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="font-semibold">From Firebase</h2>
+          <h2 className="text-lg font-semibold">From the app itself</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            Last {report.days} days, as reported by the app itself.
+            Reported by Firebase over the last {report.days} days. This is behaviour the server
+            cannot see — which screens people open, how long they stay, what they are running it on.
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" asChild>
-            <a href={consoleUrl('analytics')} target="_blank" rel="noreferrer">
-              Firebase console <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
-            </a>
-          </Button>
-        </div>
+        <Button variant="outline" size="sm" asChild>
+          <a href={consoleUrl('analytics')} target="_blank" rel="noreferrer">
+            Firebase console <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+          </a>
+        </Button>
       </div>
 
+      {report.errors && report.errors.length > 0 && (
+        <Card className="border-destructive/30 p-4">
+          <p className="text-sm font-medium text-destructive">Some reports could not be read</p>
+          <ul className="mt-1 list-disc pl-5 text-xs text-muted-foreground">
+            {report.errors.slice(0, 3).map((e) => (
+              <li key={e}>{e}</li>
+            ))}
+          </ul>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Usually the service account is missing Viewer access on the property.
+          </p>
+        </Card>
+      )}
+
+      {/* Live */}
       {report.realtime && (
         <Card className="p-5">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="flex items-start gap-3">
-              <span className="relative mt-1 flex h-2.5 w-2.5 shrink-0">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="relative flex h-2.5 w-2.5 shrink-0">
                 {report.realtime.activeUsers > 0 && (
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-70" />
                 )}
@@ -119,14 +134,12 @@ export function FirebasePanel({ report }: { report: FirebaseReport | null }) {
               </span>
               <div>
                 <h3 className="font-semibold">Right now</h3>
-                <p className="mt-0.5 text-sm text-muted-foreground">
-                  Last 30 minutes, straight from Firebase.
-                </p>
+                <p className="text-sm text-muted-foreground">In the last 30 minutes</p>
               </div>
             </div>
-            <div className="flex gap-6">
+            <div className="flex gap-8">
               <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Active</p>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">People</p>
                 <p className="text-2xl font-semibold tabular-nums">
                   {report.realtime.activeUsers}
                 </p>
@@ -145,140 +158,164 @@ export function FirebasePanel({ report }: { report: FirebaseReport | null }) {
       {report.stillProcessing && (
         <Card className="border-amber-500/30 p-4">
           <div className="flex items-start gap-3">
-            <Radio className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+            <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
             <p className="text-sm text-muted-foreground">
               <span className="font-medium text-foreground">People are using the app right now</span>
-              , but the figures below still read zero. Firebase takes several hours — up to a day for
-              a new app — to fold events into the reports these numbers come from. Nothing is broken;
-              the totals will fill in on their own.
+              , but the figures below still read zero. Firebase takes several hours to fold events
+              into these reports. Nothing is broken.
             </p>
           </div>
         </Card>
       )}
 
-      {report.errors && report.errors.length > 0 && (
-        <Card className="border-destructive/30 p-4">
-          <p className="text-sm font-medium text-destructive">
-            Some reports could not be read
-          </p>
-          <ul className="mt-1 list-disc pl-5 text-xs text-muted-foreground">
-            {report.errors.map((e) => (
-              <li key={e}>{e}</li>
-            ))}
-          </ul>
-          <p className="mt-2 text-xs text-muted-foreground">
-            Usually the service account is missing Viewer access on the property.
-          </p>
-        </Card>
-      )}
-
-      {t && (
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-          {[
-            { label: 'Active users', value: t.activeUsers },
-            { label: 'New users', value: t.newUsers },
-            { label: 'Sessions', value: t.sessions },
-            { label: 'Screen views', value: t.screenViews },
-            { label: 'Avg session', value: duration(t.avgEngagementSeconds) },
-          ].map((s) => (
-            <Card key={s.label} className="p-4">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">{s.label}</p>
-              <p className="mt-1 text-2xl font-semibold tabular-nums">{s.value}</p>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="p-5">
-          <h3 className="mb-3 font-semibold">Most opened screens</h3>
-          {!report.screens?.length ? (
-            <p className="text-sm text-muted-foreground">Nothing reported yet.</p>
-          ) : (
-            <div className="space-y-2">
-              {report.screens.slice(0, 10).map((s) => (
-                <div key={s.screen} className="flex items-center justify-between gap-3 text-sm">
-                  <code className="truncate text-xs">{s.screen}</code>
-                  <span className="flex shrink-0 items-baseline gap-3">
-                    <span className="text-xs text-muted-foreground tabular-nums">
-                      {s.activeUsers} users
-                    </span>
-                    <span className="font-medium tabular-nums">{s.screenPageViews}</span>
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
-
-        <Card className="p-5">
-          <h3 className="mb-3 font-semibold">Events</h3>
-          {!report.events?.length ? (
-            <p className="text-sm text-muted-foreground">Nothing reported yet.</p>
-          ) : (
-            <div className="space-y-2">
-              {report.events.slice(0, 10).map((e) => (
-                <div key={e.event} className="flex items-center justify-between gap-3 text-sm">
-                  <code className="truncate text-xs">{e.event}</code>
-                  <span className="flex shrink-0 items-baseline gap-3">
-                    <span className="text-xs text-muted-foreground tabular-nums">
-                      {e.activeUsers} users
-                    </span>
-                    <span className="font-medium tabular-nums">{e.eventCount}</span>
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
+      {/* Headline */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Stat label="Active users" value={num(t?.activeUsers)} hint={`${num(t?.newUsers)} of them new`} />
+        <Stat label="Sessions" value={num(t?.sessions)} hint={`${num(t?.screenViews)} screen views`} />
+        <Stat
+          label="Avg session"
+          value={duration(eng?.avgSessionSeconds || 0)}
+          hint={eng?.screensPerSession ? `${eng.screensPerSession} screens each` : undefined}
+        />
+        <Stat
+          label="Crash-free users"
+          value={crashFreePct != null ? `${crashFreePct}%` : '—'}
+          hint={st?.affectedUsers ? `${st.affectedUsers} affected` : 'nobody affected'}
+          tone={crashFreePct != null && crashFreePct < 99 ? 'bad' : crashFreePct != null ? 'good' : undefined}
+        />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="p-5">
-          <h3 className="mb-3 font-semibold">Devices</h3>
-          {!report.platforms?.length ? (
-            <p className="text-sm text-muted-foreground">Nothing reported yet.</p>
-          ) : (
-            <div className="space-y-2">
-              {report.platforms.map((p) => (
-                <div key={p.platform} className="flex items-center justify-between text-sm">
-                  <span>{p.platform}</span>
-                  <span className="font-medium tabular-nums">{p.activeUsers}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
+      {/* Screens — asked for explicitly, so it gets the full width */}
+      <Panel
+        title="Which screens people open"
+        description="Every screen in the app, ranked by how often it was opened."
+      >
+        <BreakdownList
+          rows={(report.screens || []).map((s) => ({
+            label: s.screen || '(unnamed)',
+            value: s.screenPageViews,
+          }))}
+          unit="views"
+          max={15}
+          emptyText="No screen views recorded yet. These arrive once people use a build with tracking in it."
+        />
+      </Panel>
 
-        <Card className="p-5">
-          <h3 className="mb-3 font-semibold">Where they are</h3>
-          {!report.countries?.length ? (
-            <p className="text-sm text-muted-foreground">Nothing reported yet.</p>
-          ) : (
-            <div className="space-y-2">
-              {report.countries.map((c) => (
-                <div key={c.country} className="flex items-center justify-between text-sm">
-                  <span>{c.country}</span>
-                  <span className="font-medium tabular-nums">{c.activeUsers}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Panel title="What people do" description="Events the app reports.">
+          <BreakdownList
+            rows={(report.events || []).map((e) => ({ label: e.event, value: e.eventCount }))}
+            unit="times"
+            max={12}
+          />
+        </Panel>
+
+        <Panel title="Which build they are on" description="How far the latest release has spread.">
+          <BreakdownList
+            rows={(report.appVersions || []).map((v) => ({
+              label: v.appVersion || '(unknown)',
+              value: v.activeUsers,
+            }))}
+            unit="users"
+          />
+        </Panel>
       </div>
 
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Panel title="Phones" description="Most common devices.">
+          <BreakdownList
+            rows={(report.devices || []).map((d) => ({ label: d.device, value: d.activeUsers }))}
+            unit="users"
+            max={6}
+          />
+        </Panel>
+
+        <Panel title="Operating system" description="Versions in use.">
+          <BreakdownList
+            rows={(report.osVersions || []).map((o) => ({ label: o.osVersion, value: o.activeUsers }))}
+            unit="users"
+            max={6}
+          />
+        </Panel>
+
+        <Panel title="Platform" description="iOS against Android.">
+          <BreakdownList
+            rows={(report.platforms || []).map((p) => ({ label: p.platform, value: p.activeUsers }))}
+            unit="users"
+          />
+        </Panel>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Panel title="Countries" description="Where people are.">
+          <BreakdownList
+            rows={(report.countries || []).map((c) => ({ label: c.country, value: c.activeUsers }))}
+            unit="users"
+            max={6}
+          />
+        </Panel>
+
+        <Panel title="Cities" description="Down to the city.">
+          <BreakdownList
+            rows={(report.cities || []).map((c) => ({ label: c.city, value: c.activeUsers }))}
+            unit="users"
+            max={6}
+          />
+        </Panel>
+
+        <Panel title="New against returning" description="Whether people come back.">
+          <BreakdownList
+            rows={(report.newVsReturning || []).map((n) => ({
+              label: n.kind || '(unknown)',
+              value: n.activeUsers,
+            }))}
+            unit="users"
+          />
+        </Panel>
+      </div>
+
+      {/* Crashes */}
       <Card className="p-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h3 className="font-semibold">Crashes</h3>
-            <p className="mt-0.5 max-w-xl text-sm text-muted-foreground">
-              Crashlytics has no API to read from, so crash reports cannot be shown here — this link
-              is the only way to see them. Server-side faults are a different thing and do appear in
-              the panel, under Errors.
-            </p>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div
+              className={cn(
+                'rounded-md p-2',
+                crashFreePct != null && crashFreePct < 99 ? 'bg-destructive/10' : 'bg-muted'
+              )}
+            >
+              <ShieldAlert
+                className={cn(
+                  'h-4 w-4',
+                  crashFreePct != null && crashFreePct < 99
+                    ? 'text-destructive'
+                    : 'text-muted-foreground'
+                )}
+              />
+            </div>
+            <div>
+              <h3 className="font-semibold">App stability</h3>
+              <p className="mt-0.5 max-w-xl text-sm text-muted-foreground">
+                {crashFreePct != null ? (
+                  <>
+                    <span className="font-medium text-foreground">{crashFreePct}%</span> of people
+                    used the app without it crashing
+                    {st?.affectedUsers ? `, and ${st.affectedUsers} hit a crash` : ''}. The
+                    individual crashes and their stack traces live in Crashlytics — Firebase
+                    publishes no way to read those from here.
+                  </>
+                ) : (
+                  <>
+                    No crash data yet. Server-side faults are a different thing and do appear in this
+                    panel, under Errors.
+                  </>
+                )}
+              </p>
+            </div>
           </div>
           <Button variant="outline" size="sm" asChild>
             <a href={consoleUrl('crashlytics')} target="_blank" rel="noreferrer">
+              <Smartphone className="mr-1.5 h-3.5 w-3.5" />
               Open Crashlytics <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
             </a>
           </Button>

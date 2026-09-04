@@ -73,9 +73,9 @@ export function AdminLayout() {
           <div className="flex h-16 items-center justify-between border-b border-border px-6">
             <div className="flex items-center gap-2 mb-8 px-2">
               <div className="h-8 w-8 rounded-lg overflow-hidden border border-border bg-white p-0.5">
-                <img src="/icon_new.jpeg" alt="Flimy Logo" className="h-full w-full object-contain" />
+                <img src="/icon_new.jpeg" alt="FilmyConnect Logo" className="h-full w-full object-contain" />
               </div>
-              <span className="font-bold text-xl text-foreground tracking-tight">Flimy Verify</span>
+              <span className="font-bold text-xl text-foreground tracking-tight">FilmyConnect Admin</span>
             </div>
             <button
               className="lg:hidden text-muted-foreground hover:text-foreground"
@@ -150,7 +150,7 @@ export function AdminLayout() {
           </button>
           <div className="flex items-center gap-2">
             <BadgeCheck className="h-6 w-6 text-primary" />
-            <span className="font-semibold text-foreground">Flimy Verify</span>
+            <span className="font-semibold text-foreground">FilmyConnect Admin</span>
           </div>
         </header>
 
