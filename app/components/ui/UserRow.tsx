@@ -9,7 +9,7 @@ export interface UserRowUser {
   id: string;
   name: string;
   avatar?: string | null;
-  isVerified?: boolean;
+  isBadgeVerified?: boolean;
 }
 
 interface UserRowProps {
@@ -75,7 +75,7 @@ export default function UserRow({
               {user.name}
               {nameSuffix}
             </Text>
-            <VerifiedBadge visible={user.isVerified} size={14} style={styles.badge} />
+            <VerifiedBadge visible={user.isBadgeVerified} size={14} style={styles.badge} />
           </View>
           {meta !== undefined && (
             typeof meta === 'string' ? (

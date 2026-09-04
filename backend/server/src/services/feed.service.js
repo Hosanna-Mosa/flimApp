@@ -28,7 +28,7 @@ class FeedService {
         if (cachedFeed && cachedFeed.length > 0) {
           // Fetch full post data
           const posts = await Post.find({ _id: { $in: cachedFeed } })
-            .populate('author', 'name avatar isVerified roles')
+            .populate('author', 'name avatar isBadgeVerified roles')
             .lean();
 
           // Maintain cache order
@@ -205,7 +205,7 @@ class FeedService {
           visibility: 'public',
           createdAt: { $gte: cutoffDate },
         })
-          .populate('author', 'name avatar isVerified roles')
+          .populate('author', 'name avatar isBadgeVerified roles')
           .sort({ score: -1, createdAt: -1 }) // Sort by score then recency
           .limit(100)
           .lean();
@@ -227,7 +227,7 @@ class FeedService {
         visibility: { $in: ['public', 'followers'] },
         createdAt: { $gte: cutoffDate },
       })
-        .populate('author', 'name avatar isVerified roles')
+        .populate('author', 'name avatar isBadgeVerified roles')
         .sort({ createdAt: -1 })
         .limit(100)
         .lean();
@@ -276,7 +276,7 @@ class FeedService {
           { author: { $in: followingIds } } // Show posts from people I follow (including private/followers-only)
         ]
       })
-        .populate('author', 'name avatar isVerified roles accountType')
+        .populate('author', 'name avatar isBadgeVerified roles accountType')
         .sort({ 'engagement.likesCount': -1, 'engagement.commentsCount': -1 })
         .limit(100)
         .lean();
@@ -364,7 +364,7 @@ class FeedService {
       logger.info(`[Feed] Following ${followingIds.length} users, Private accounts: ${privateUserIds.length}`);
 
       const posts = await Post.find(queryConditions)
-        .populate('author', 'name avatar isVerified roles accountType isBoosted')
+        .populate('author', 'name avatar isBadgeVerified roles accountType isBoosted')
         .sort({ createdAt: -1 }) // Get most recent first, then we'll score them
         .limit(500) // Get more posts to score and filter
         .lean();
@@ -429,7 +429,7 @@ class FeedService {
 
     // Boosted author boost (Major priority)
     const boostedBoost = post.author?.isBoosted ? 1000 : 0;
-    const verifiedBoost = post.author?.isVerified ? 1.2 : 1.0;
+    const verifiedBoost = post.author?.isBadgeVerified ? 1.2 : 1.0;
 
     // Weighted combination
     const scoreBase = (
@@ -469,7 +469,7 @@ class FeedService {
         createdAt: { $gte: cutoffDate },
         author: { $nin: [...excludedIds, userId] }, // Exclude self and blocked users
       })
-        .populate('author', 'name avatar isVerified roles')
+        .populate('author', 'name avatar isBadgeVerified roles')
         .sort({ score: -1, 'engagement.likesCount': -1 })
         .skip(skip)
         .limit(limit)
@@ -515,7 +515,7 @@ class FeedService {
         isActive: true,
         visibility: 'public',
       })
-        .populate('author', 'name avatar isVerified roles')
+        .populate('author', 'name avatar isBadgeVerified roles')
         .sort({ score: -1, createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -613,7 +613,7 @@ class FeedService {
         isActive: true,
         ...visibilityFilter,
       })
-        .populate('author', 'name avatar isVerified roles')
+        .populate('author', 'name avatar isBadgeVerified roles')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)

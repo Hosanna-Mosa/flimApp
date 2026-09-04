@@ -18,7 +18,7 @@ export function mapApiPostToPost(p: any, overrides: Partial<Post> = {}): Post {
       id: authorId,
       name: p.author?.name || 'Unknown User',
       avatar: p.author?.avatar || '',
-      isVerified: p.author?.isVerified || false,
+      isBadgeVerified: p.author?.isBadgeVerified || false,
       roles: p.author?.roles || [],
       isFollowing: p.author?.isFollowing || false,
     },

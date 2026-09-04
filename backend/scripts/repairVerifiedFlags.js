@@ -5,7 +5,7 @@ const User = require('../server/src/models/User.model');
 /**
  * Reset badges that were never earned.
  *
- * The OTP endpoint used to set isVerified on signup, and set it again on every
+ * The OTP endpoint used to set isBadgeVerified on signup, and set it again on every
  * subsequent login, because it read the field as "phone confirmed" rather than
  * "profile verified". That is fixed in otp.controller, but the accounts it
  * already marked stay marked — removing the cause does not undo the effect.
@@ -22,13 +22,37 @@ const run = async () => {
   const apply = process.argv.includes('--apply');
   await mongoose.connect(process.env.MONGODB_URI);
 
-  const wronglyVerified = { isVerified: true, verificationStatus: { $ne: 'active' } };
+  // The field was renamed from isVerified to isBadgeVerified. Existing
+  // documents still carry the old key, and mongoose will not see it, so every
+  // account would silently read as unverified until the key is moved. Done
+  // through the driver rather than the model because mongoose strips fields
+  // the schema no longer declares.
+  const raw = mongoose.connection.db.collection('users');
+
+  const stale = await raw.countDocuments({ isVerified: { $exists: true } });
+  if (stale > 0) {
+    console.log(`\n  ${stale} document(s) still use the old isVerified key.`);
+    if (apply) {
+      const renamed = await raw.updateMany(
+        { isVerified: { $exists: true } },
+        { $rename: { isVerified: 'isBadgeVerified' } }
+      );
+      console.log(`  renamed on ${renamed.modifiedCount} document(s).`);
+    }
+  }
+
+  const wronglyVerified = { isBadgeVerified: true, verificationStatus: { $ne: 'active' } };
+
+  // Counted through the driver against either key. A dry run that queries only
+  // the new field reports zero while the rename is still pending, which is the
+  // opposite of what a dry run is for.
+  const heldBadge = { $or: [{ isVerified: true }, { isBadgeVerified: true }] };
 
   const [total, verified, legitimate, affected] = await Promise.all([
-    User.countDocuments(),
-    User.countDocuments({ isVerified: true }),
-    User.countDocuments({ isVerified: true, verificationStatus: 'active' }),
-    User.countDocuments(wronglyVerified),
+    raw.countDocuments(),
+    raw.countDocuments(heldBadge),
+    raw.countDocuments({ ...heldBadge, verificationStatus: 'active' }),
+    raw.countDocuments({ ...heldBadge, verificationStatus: { $ne: 'active' } }),
   ]);
 
   console.log('');
@@ -39,11 +63,12 @@ const run = async () => {
   console.log('');
 
   if (affected > 0) {
-    const sample = await User.find(wronglyVerified)
-      .select('name phone verificationStatus createdAt')
+    const sample = await raw
+      .find({ ...heldBadge, verificationStatus: { $ne: 'active' } })
+      .project({ name: 1, verificationStatus: 1, createdAt: 1 })
       .sort({ createdAt: -1 })
       .limit(5)
-      .lean();
+      .toArray();
     console.log('  most recent of those:');
     for (const u of sample) {
       console.log(
@@ -64,12 +89,22 @@ const run = async () => {
   // unverified account would let anything that reads the date re-grant a badge
   // this script just removed.
   const result = await User.updateMany(wronglyVerified, {
-    $set: { isVerified: false },
+    $set: { isBadgeVerified: false },
     $unset: { verifiedUntil: '' },
   });
 
+  // Nothing recorded who had confirmed a phone before isPhoneVerified existed,
+  // and it cannot be inferred after the fact. Existing accounts start false and
+  // set it on their next OTP sign-in rather than being credited with a
+  // confirmation that was never stored.
+  const phoneDefaults = await User.updateMany(
+    { isPhoneVerified: { $exists: false } },
+    { $set: { isPhoneVerified: false } }
+  );
+  console.log(`  isPhoneVerified initialised on ${phoneDefaults.modifiedCount} account(s).`);
+
   console.log(`  reset ${result.modifiedCount} account(s).`);
-  console.log(`  still verified: ${await User.countDocuments({ isVerified: true })}`);
+  console.log(`  still verified: ${await User.countDocuments({ isBadgeVerified: true })}`);
   console.log('');
 
   await mongoose.disconnect();

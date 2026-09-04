@@ -79,10 +79,10 @@ exports.verifyPayment = async (req, res) => {
 
     const sigBuf = Buffer.from(String(razorpay_signature));
     const expBuf = Buffer.from(expectedSignature);
-    const isVerified =
+    const isBadgeVerified =
       sigBuf.length === expBuf.length && crypto.timingSafeEqual(sigBuf, expBuf);
 
-    if (isVerified) {
+    if (isBadgeVerified) {
       // Payment is verified
       const user = await User.findById(req.user.id);
       if (!user) {

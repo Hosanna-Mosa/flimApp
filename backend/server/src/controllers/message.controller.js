@@ -80,8 +80,8 @@ const sendMessage = async (req, res, next) => {
     });
 
     // Populate sender and recipient for response
-    await message.populate('sender', 'name avatar isVerified');
-    await message.populate('recipient', 'name avatar isVerified');
+    await message.populate('sender', 'name avatar isBadgeVerified');
+    await message.populate('recipient', 'name avatar isBadgeVerified');
 
     // Emit socket event for real-time updates
     const io = req.app.get('io');

@@ -22,7 +22,7 @@ export default function SearchResultRow({ user, onPress }: SearchResultRowProps)
         id,
         name: user.name,
         avatar: user.avatar,
-        isVerified: user.isVerified,
+        isBadgeVerified: user.isBadgeVerified,
       }}
       style={styles.card}
       onPress={onPress}

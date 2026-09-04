@@ -18,7 +18,7 @@ export interface ProfileHeaderUser {
   roles?: string[];
   location?: string;
   experience?: number;
-  isVerified?: boolean;
+  isBadgeVerified?: boolean;
 }
 
 interface ProfileHeaderInfoProps {
@@ -69,7 +69,7 @@ export default function ProfileHeaderInfo({
         <Text style={[styles.name, { color: colors.text }]}>
           {user.name || (placeholders ? 'Your Name' : '')}
         </Text>
-        <VerifiedBadge visible={user.isVerified} size={24} />
+        <VerifiedBadge visible={user.isBadgeVerified} size={24} />
         {showBoost && <Zap size={22} color="#000" fill="#FFD700" style={styles.boostIcon} />}
       </View>
       <BoostBadge visible={showBoost} />

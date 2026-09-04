@@ -48,7 +48,7 @@ export default function CommunityCard({ community, onPress, onJoin, joining }: C
           <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
             {community.name}
           </Text>
-          {community.isVerified && (
+          {community.isBadgeVerified && (
             <ShieldCheck size={14} color={colors.primary} style={styles.verified} />
           )}
         </View>

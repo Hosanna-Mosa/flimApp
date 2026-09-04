@@ -217,7 +217,7 @@ const activateSubscription = async (session) => {
   await subscription.save();
 
   await User.findByIdAndUpdate(session.user, {
-    isVerified: true,
+    isBadgeVerified: true,
     verifiedUntil: endDate,
     verificationStatus: 'active',
   });

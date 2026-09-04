@@ -51,7 +51,7 @@ class CommentService {
       });
 
       // Populate user data
-      await comment.populate('user', 'name avatar isVerified roles');
+      await comment.populate('user', 'name avatar isBadgeVerified roles');
 
       // Update cache - increment comment count
       await cacheService.incrementPostStat(postId, 'commentsCount', 1);
@@ -126,7 +126,7 @@ class CommentService {
         parentComment: null,
         isActive: true,
       })
-        .populate('user', 'name avatar isVerified roles')
+        .populate('user', 'name avatar isBadgeVerified roles')
         .sort(sortOptions)
         .skip(skip)
         .limit(limit)
@@ -184,7 +184,7 @@ class CommentService {
         parentComment: commentId,
         isActive: true,
       })
-        .populate('user', 'name avatar isVerified roles')
+        .populate('user', 'name avatar isBadgeVerified roles')
         .sort({ createdAt: 1 }) // Oldest first for replies
         .skip(skip)
         .limit(limit)
@@ -237,7 +237,7 @@ class CommentService {
       comment.isEdited = true;
       await comment.save();
 
-      await comment.populate('user', 'name avatar isVerified roles');
+      await comment.populate('user', 'name avatar isBadgeVerified roles');
 
       logger.info(`Comment ${commentId} edited by user ${userId}`);
 
@@ -380,7 +380,7 @@ class CommentService {
           path: 'post',
           populate: {
             path: 'author',
-            select: 'name avatar isVerified',
+            select: 'name avatar isBadgeVerified',
           },
         })
         .sort({ createdAt: -1 })

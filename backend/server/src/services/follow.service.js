@@ -344,7 +344,7 @@ class FollowService {
       }
 
       const follows = await Follow.find(matchCriteria)
-        .populate('follower', 'name avatar isVerified roles bio stats')
+        .populate('follower', 'name avatar isBadgeVerified roles bio stats')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -396,7 +396,7 @@ class FollowService {
       }
 
       const follows = await Follow.find(matchCriteria)
-        .populate('following', 'name avatar isVerified roles bio stats')
+        .populate('following', 'name avatar isBadgeVerified roles bio stats')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -436,7 +436,7 @@ class FollowService {
         following: userId,
         status: 'pending',
       })
-        .populate('follower', 'name avatar isVerified roles bio')
+        .populate('follower', 'name avatar isBadgeVerified roles bio')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)

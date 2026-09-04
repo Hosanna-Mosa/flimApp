@@ -69,7 +69,7 @@ const getSavedPosts = async (req, res, next) => {
         },
         populate: {
           path: 'author',
-          select: 'name avatar isVerified roles'
+          select: 'name avatar isBadgeVerified roles'
         }
       });
 

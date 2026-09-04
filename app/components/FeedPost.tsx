@@ -55,7 +55,7 @@ export default function FeedPost({
                 <Text style={[styles.userName, { color: colors.text }]} numberOfLines={1}>
                   {post.user.name}
                 </Text>
-                <VerifiedBadge visible={post.user.isVerified} size={14} />
+                <VerifiedBadge visible={post.user.isBadgeVerified} size={14} />
                 {post.user.isBoosted && Platform.OS !== 'ios' && (
                   <View style={[styles.boostedBadge, { backgroundColor: colors.primary }]}>
                     <Zap size={10} color={colors.onPrimary} fill={colors.onPrimary} />

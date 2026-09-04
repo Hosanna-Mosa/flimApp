@@ -4,7 +4,7 @@ import { BadgeCheck } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 
 interface VerifiedBadgeProps {
-  /** Pass the user's isVerified flag; renders nothing when falsy. */
+  /** Pass the user's isBadgeVerified flag; renders nothing when falsy. */
   visible?: boolean;
   size?: number;
   style?: StyleProp<ViewStyle>;

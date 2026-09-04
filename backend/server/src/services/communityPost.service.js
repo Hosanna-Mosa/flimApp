@@ -60,7 +60,7 @@ const createPost = async (communityId, groupId, postData, userId) => {
   await member.save();
 
   // Populate author
-  await post.populate('author', 'name avatar isVerified roles');
+  await post.populate('author', 'name avatar isBadgeVerified roles');
 
   // Emit socket events
   const io = getIo();
@@ -92,7 +92,7 @@ const getCommunityFeed = async (communityId, userId, page = 0, limit = 20) => {
     group: { $in: member.groups },
     isDeleted: false
   })
-    .populate('author', 'name avatar isVerified roles industries')
+    .populate('author', 'name avatar isBadgeVerified roles industries')
     .sort({ isPinned: -1, createdAt: -1 })
     .skip(page * limit)
     .limit(limit)
@@ -143,7 +143,7 @@ const getGroupPosts = async (communityId, groupId, userId, page = 0, limit = 20)
     group: groupId,
     isDeleted: false
   })
-    .populate('author', 'name avatar isVerified roles industries')
+    .populate('author', 'name avatar isBadgeVerified roles industries')
     .sort({ isPinned: -1, createdAt: -1 })
     .skip(page * limit)
     .limit(limit)

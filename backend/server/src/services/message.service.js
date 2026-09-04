@@ -59,8 +59,8 @@ const getConversation = async (userId, peerId) => {
       { sender: peerObjectId, recipient: userObjectId },
     ],
   })
-    .populate('sender', 'name avatar isVerified')
-    .populate('recipient', 'name avatar isVerified')
+    .populate('sender', 'name avatar isBadgeVerified')
+    .populate('recipient', 'name avatar isBadgeVerified')
     .sort({ createdAt: 1 });
   
 
@@ -138,7 +138,7 @@ const getConversations = async (userId, searchQuery = '') => {
     },
     {
       $project: {
-        peer: { name: 1, avatar: 1, _id: 1, isVerified: 1 },
+        peer: { name: 1, avatar: 1, _id: 1, isBadgeVerified: 1 },
         lastMessage: { content: 1, createdAt: 1, sender: 1, recipient: 1 },
         unreadCount: { $ifNull: [{ $arrayElemAt: ['$unreadInfo.count', 0] }, 0] },
       },

@@ -132,7 +132,7 @@ export default function VerificationDetailPage() {
                 <h3 className="text-lg font-semibold text-foreground">
                   {request.user.name}
                 </h3>
-                {request.user.isVerified && (
+                {request.user.isBadgeVerified && (
                   <BadgeCheck className="h-5 w-5 text-primary" />
                 )}
               </div>

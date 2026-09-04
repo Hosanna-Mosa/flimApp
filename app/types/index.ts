@@ -56,7 +56,7 @@ export interface User {
   isOnline: boolean;
   isPrivate?: boolean; // Legacy field, use accountType instead
   accountType?: 'public' | 'private' | 'business';
-  isVerified?: boolean;
+  isBadgeVerified?: boolean;
   verificationStatus?: 'none' | 'pending_docs' | 'approved_docs' | 'pending_payment' | 'active' | 'rejected';
   verifiedUntil?: string;
   isFollowing?: boolean;
@@ -135,7 +135,7 @@ export interface Community {
   industry?: Industry;
   role?: string;
   privacy: CommunityPrivary;
-  isVerified: boolean;
+  isBadgeVerified: boolean;
   createdBy: User | string;
   admins: (User | string)[];
   moderators: (User | string)[];
@@ -240,7 +240,7 @@ export interface PostAuthor {
   _id: string;
   name: string;
   avatar?: string;
-  isVerified?: boolean;
+  isBadgeVerified?: boolean;
   roles?: string[];
 }
 
@@ -260,7 +260,7 @@ export interface CommentUser {
   _id: string;
   name: string;
   avatar: string;
-  isVerified: boolean;
+  isBadgeVerified: boolean;
 }
 
 export interface Comment {
@@ -306,7 +306,7 @@ export interface UserProfile {
   industries?: string[];
   location?: string;
   experience?: number;
-  isVerified: boolean;
+  isBadgeVerified: boolean;
   isPrivate?: boolean;
   accountType?: 'public' | 'private' | 'business';
   portfolio?: { title: string; type: string; url: string }[];

@@ -18,7 +18,7 @@ export interface User {
   roles: string[];
   industries: Industry[];
   bio: string | null;
-  isVerified: boolean;
+  isBadgeVerified: boolean;
   createdAt: string;
 }
 
@@ -79,7 +79,7 @@ export interface Subscription {
     email: string;
     avatar: string | null;
     verificationStatus: string;
-    isVerified: boolean;
+    isBadgeVerified: boolean;
   };
   planType: '1_MONTH' | '3_MONTHS' | '6_MONTHS' | '9_MONTHS';
   amount: number;

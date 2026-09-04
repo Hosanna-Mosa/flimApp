@@ -46,8 +46,8 @@ const registerChatHandlers = (io) => {
         });
         
         // Populate sender and recipient before emitting (same as REST API)
-        await message.populate('sender', 'name avatar isVerified');
-        await message.populate('recipient', 'name avatar isVerified');
+        await message.populate('sender', 'name avatar isBadgeVerified');
+        await message.populate('recipient', 'name avatar isBadgeVerified');
         
 
         const roomClients = io.sockets.adapter.rooms.get(recipientId);

@@ -14,7 +14,7 @@ const mockRequestsData = [
       roles: ['actor'], // Mapping CREATOR to actor for user model compatibility
       industries: ['bollywood'],
       bio: 'Digital content creator and lifestyle influencer',
-      isVerified: false,
+      isBadgeVerified: false,
     },
     requestData: {
       verificationType: 'CREATOR',
@@ -35,7 +35,7 @@ const mockRequestsData = [
       roles: ['producer'], // Mapping BRAND to producer
       industries: ['bollywood'],
       bio: 'Leading tech accessories brand',
-      isVerified: false,
+      isBadgeVerified: false,
     },
     requestData: {
       verificationType: 'BRAND',
@@ -56,7 +56,7 @@ const mockRequestsData = [
       roles: ['writer'], // Mapping JOURNALIST context to writer
       industries: ['bollywood'],
       bio: 'Senior journalist at Daily News',
-      isVerified: true,
+      isBadgeVerified: true,
     },
     requestData: {
       verificationType: 'JOURNALIST',
@@ -79,7 +79,7 @@ const mockRequestsData = [
       roles: ['actor'],
       industries: ['bollywood'],
       bio: 'Aspiring influencer',
-      isVerified: false,
+      isBadgeVerified: false,
     },
     requestData: {
       verificationType: 'PUBLIC_FIGURE',
