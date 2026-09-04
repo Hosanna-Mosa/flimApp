@@ -10,7 +10,8 @@ import ChatInputBar from '@/components/chat/ChatInputBar';
 import MessageActionSheet, { MessageActionTarget } from '@/components/chat/MessageActionSheet';
 import AttachmentPickerSheet from '@/components/chat/AttachmentPickerSheet';
 import AttachmentPreview from '@/components/chat/AttachmentPreview';
-import { DirectMessage } from '@/components/chat/ChatMessageBubble';
+import MediaViewer from '@/components/chat/MediaViewer';
+import { DirectMessage, DirectMessageMedia } from '@/components/chat/ChatMessageBubble';
 import { useChatAttachment } from '@/hooks/useChatAttachment';
 
 export default function ChatScreen() {
@@ -18,6 +19,7 @@ export default function ChatScreen() {
   const c = useDirectMessages(userId, name);
   const [actionTarget, setActionTarget] = useState<MessageActionTarget | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [viewing, setViewing] = useState<DirectMessageMedia | null>(null);
   const attachment = useChatAttachment();
 
   /**
@@ -60,6 +62,7 @@ export default function ChatScreen() {
         onMessageLongPress={(message: DirectMessage, isMine: boolean) =>
           setActionTarget({ id: message.id, text: message.message, isMine })
         }
+        onPressMedia={setViewing}
       />
       {c.isConversationBlocked && (
         <BlockedConversationBanner isBlockedByMe={c.isBlockedByMe} onUnblock={c.unblock} />
@@ -77,8 +80,11 @@ export default function ChatScreen() {
         onSend={handleSend}
         disabled={c.isConversationBlocked}
         loading={attachment.uploading}
+        hasAttachment={!!attachment.pending}
         onAttachment={() => setPickerOpen(true)}
       />
+
+      <MediaViewer media={viewing} onClose={() => setViewing(null)} />
 
       <AttachmentPickerSheet
         visible={pickerOpen}

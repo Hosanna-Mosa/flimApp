@@ -12,6 +12,21 @@ export const CHAT_LIMITS = {
 
 const mb = (bytes: number) => Math.round(bytes / (1024 * 1024));
 
+/**
+ * A still from the first frame of a Cloudinary video.
+ *
+ * Cloudinary renders one on demand when the extension is an image format, so
+ * .../video/upload/v1/clip.mp4 becomes .../video/upload/so_0/v1/clip.jpg.
+ * so_0 pins it to the opening frame; without it Cloudinary picks its own and
+ * the same video can show a different poster between requests.
+ */
+const posterFrameFor = (videoUrl: string): string | undefined => {
+  if (!videoUrl.includes('/video/upload/')) return undefined;
+  return videoUrl
+    .replace('/video/upload/', '/video/upload/so_0/')
+    .replace(/\.[a-z0-9]+$/i, '.jpg');
+};
+
 export interface PendingAttachment {
   uri: string;
   kind: 'image' | 'video';
@@ -57,10 +72,9 @@ export function useChatAttachment() {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes:
-        kind === 'video'
-          ? ImagePicker.MediaTypeOptions.Videos
-          : ImagePicker.MediaTypeOptions.Images,
+      // The array form, not MediaTypeOptions — that enum is deprecated in
+      // expo-image-picker 17 and choosing Video still opened the photo picker.
+      mediaTypes: kind === 'video' ? ['videos'] : ['images'],
       quality: kind === 'image' ? 0.8 : undefined,
     });
 
@@ -110,9 +124,13 @@ export function useChatAttachment() {
       return {
         url: result.url,
         type: pending.kind,
-        // Cloudinary derives a poster frame for video. Without it a video
-        // message is a black rectangle until someone opens it.
-        thumbnail: result.thumbnail_url || undefined,
+        // Cloudinary's upload response has no thumbnail_url field — asking for
+        // one always yielded undefined, and the bubble then fell back to the
+        // .mp4, which an image view cannot render. A poster frame is derived
+        // from the video URL instead: swapping the extension makes Cloudinary
+        // return the first frame as a still.
+        thumbnail:
+          pending.kind === 'video' ? posterFrameFor(result.url) : undefined,
         publicId: result.publicId,
         size: result.bytes || pending.size,
         width: result.width || pending.width,
