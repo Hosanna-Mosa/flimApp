@@ -12,7 +12,7 @@ import AttachmentPickerSheet from '@/components/chat/AttachmentPickerSheet';
 import AttachmentPreview from '@/components/chat/AttachmentPreview';
 import MediaViewer from '@/components/chat/MediaViewer';
 import ForwardSheet, { ForwardPayload } from '@/components/chat/ForwardSheet';
-import { DirectMessage, DirectMessageMedia } from '@/components/chat/ChatMessageBubble';
+import { DirectMessage, DirectMessageMedia, DirectMessageReply } from '@/components/chat/ChatMessageBubble';
 import { useChatAttachment } from '@/hooks/useChatAttachment';
 
 export default function ChatScreen() {
@@ -22,6 +22,7 @@ export default function ChatScreen() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [viewing, setViewing] = useState<DirectMessageMedia | null>(null);
   const [forwarding, setForwarding] = useState<ForwardPayload | null>(null);
+  const [replyTo, setReplyTo] = useState<DirectMessageReply | null>(null);
   const attachment = useChatAttachment();
 
   /**
@@ -31,13 +32,22 @@ export default function ChatScreen() {
    * fails.
    */
   const handleSend = async (text: string) => {
-    if (!attachment.pending) return c.send(text);
+    const quoted = replyTo ?? undefined;
+
+    if (!attachment.pending) {
+      const sent = c.send(text, undefined, quoted);
+      if (sent) setReplyTo(null);
+      return sent;
+    }
 
     const uploaded = await attachment.upload();
     if (!uploaded) return false;
 
-    const ok = c.send(text, uploaded);
-    if (ok) attachment.clear();
+    const ok = c.send(text, uploaded, quoted);
+    if (ok) {
+      attachment.clear();
+      setReplyTo(null);
+    }
     return ok;
   };
 
@@ -84,6 +94,8 @@ export default function ChatScreen() {
         loading={attachment.uploading}
         hasAttachment={!!attachment.pending}
         onAttachment={() => setPickerOpen(true)}
+        replyingTo={replyTo?.senderName}
+        onCancelReply={() => setReplyTo(null)}
       />
 
       <MediaViewer
@@ -115,6 +127,17 @@ export default function ChatScreen() {
         onClose={() => setActionTarget(null)}
         onDelete={c.deleteMessage}
         onCopied={confirmCopied}
+        onReply={(t) => {
+          const source = c.messages.find((m) => m.id === t.id);
+          setReplyTo({
+            messageId: t.id,
+            senderName: t.isMine ? 'You' : c.userName,
+            // The quote is a snapshot, so a photo with no caption still needs
+            // something readable in it.
+            preview: t.text || undefined,
+            mediaType: source?.media?.type,
+          });
+        }}
         onForward={(t) => {
           const source = c.messages.find((m) => m.id === t.id);
           setForwarding({ content: t.text, media: source?.media });

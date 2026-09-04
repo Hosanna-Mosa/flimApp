@@ -30,7 +30,7 @@ const registerChatHandlers = (io) => {
     }
 
     socket.on('send_message', async (data) => {
-      const { to, content, media } = data;
+      const { to, content, media, replyTo } = data;
 
       try {
         // A photo needs no caption, so either half is enough — but returning
@@ -61,6 +61,17 @@ const registerChatHandlers = (io) => {
                 width: media.width,
                 height: media.height,
                 duration: media.duration,
+              }
+            : undefined,
+          // Whitelisted like media: the quote snapshot arrives from the client.
+          replyTo: replyTo?.messageId
+            ? {
+                messageId: replyTo.messageId,
+                senderName: String(replyTo.senderName || '').slice(0, 80),
+                preview: String(replyTo.preview || '').slice(0, 200),
+                mediaType: ['image', 'video'].includes(replyTo.mediaType)
+                  ? replyTo.mediaType
+                  : undefined,
               }
             : undefined,
         });

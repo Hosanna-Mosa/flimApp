@@ -15,11 +15,19 @@ export interface DirectMessageMedia {
   duration?: number;
 }
 
+export interface DirectMessageReply {
+  messageId?: string;
+  senderName?: string;
+  preview?: string;
+  mediaType?: 'image' | 'video';
+}
+
 export interface DirectMessage {
   id: string;
   senderId: string;
   message: string;
   media?: DirectMessageMedia;
+  replyTo?: DirectMessageReply;
   /** Set on the optimistic copy while its attachment uploads. */
   uploading?: boolean;
   /** Already formatted for display ("12:44 PM"). */
@@ -56,6 +64,17 @@ export default function ChatMessageBubble({
 }: ChatMessageBubbleProps) {
   const { colors } = useTheme();
 
+  /**
+   * Portrait photos are allowed to be tall, but only so far — an 9:16 phone
+   * shot would otherwise fill the entire conversation and push everything else
+   * off screen. Landscape is left alone.
+   */
+  const rawAspect =
+    message.media?.width && message.media?.height
+      ? message.media.width / message.media.height
+      : 1;
+  const aspect = Math.max(rawAspect, 0.72);
+
   const bubbleShape = isMe
     ? {
         borderTopLeftRadius: ROUND_CORNER,
@@ -84,10 +103,42 @@ export default function ChatMessageBubble({
             styles.bubble,
             bubbleShape,
             { backgroundColor: isMe ? colors.primary : colors.surface },
-            // Media sits flush to the bubble edge; padding would frame it.
-            message.media ? styles.bubbleWithMedia : null,
+            // A bare photo fills the bubble edge to edge. Any padding here
+            // reads as a coloured frame around the image rather than as a
+            // bubble, and the theme gold makes that especially loud.
+            message.media
+              ? message.message || message.replyTo?.senderName
+                ? styles.bubbleWithCaption
+                : styles.bubbleMediaOnly
+              : null,
           ]}
         >
+          {message.replyTo?.senderName && (
+            <View
+              style={[
+                styles.quote,
+                {
+                  backgroundColor: isMe ? 'rgba(0,0,0,0.12)' : 'rgba(0,0,0,0.05)',
+                  borderLeftColor: isMe ? colors.onPrimary : colors.primary,
+                },
+              ]}
+            >
+              <Text
+                style={[styles.quoteName, { color: isMe ? colors.onPrimary : colors.primary }]}
+                numberOfLines={1}
+              >
+                {message.replyTo.senderName}
+              </Text>
+              <Text
+                style={[styles.quoteText, { color: isMe ? colors.onPrimary : colors.textSecondary }]}
+                numberOfLines={2}
+              >
+                {message.replyTo.preview ||
+                  (message.replyTo.mediaType === 'video' ? 'Video' : 'Photo')}
+              </Text>
+            </View>
+          )}
+
           {message.media && (
             <TouchableOpacity
               activeOpacity={0.9}
@@ -97,7 +148,14 @@ export default function ChatMessageBubble({
               <View>
                 <Image
                   source={{ uri: message.media.thumbnail || message.media.url }}
-                  style={[styles.media, message.uploading && styles.mediaUploading]}
+                  style={[
+                    styles.media,
+                    // Keep the sender's framing. A fixed square crops tall
+                    // photos through the middle, which is where faces are.
+                    { aspectRatio: aspect },
+                    message.message ? styles.mediaWithCaption : null,
+                    message.uploading && styles.mediaUploading,
+                  ]}
                   contentFit="cover"
                   transition={150}
                 />
@@ -152,14 +210,29 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     overflow: 'hidden',
   },
-  bubbleWithMedia: {
-    padding: 4,
+  bubbleMediaOnly: {
+    padding: 0,
   },
+  bubbleWithCaption: {
+    padding: 3,
+  },
+  quote: {
+    borderLeftWidth: 3,
+    borderRadius: 8,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    marginBottom: 6,
+    marginHorizontal: 2,
+  },
+  quoteName: { fontSize: 13, fontWeight: '700', marginBottom: 1 },
+  quoteText: { fontSize: 13, lineHeight: 17, opacity: 0.85 },
   media: {
-    width: 220,
-    height: 220,
-    borderRadius: 14,
+    width: 250,
     backgroundColor: 'rgba(0,0,0,0.06)',
+  },
+  /** Rounded only when a caption follows, so the two read as one card. */
+  mediaWithCaption: {
+    borderRadius: 15,
   },
   mediaUploading: {
     opacity: 0.5,

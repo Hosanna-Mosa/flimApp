@@ -23,7 +23,7 @@ const ensureMessagingAllowed = async (userId, peerId) => {
   }
 };
 
-const createMessage = async ({ senderId, recipientId, content, media }) => {
+const createMessage = async ({ senderId, recipientId, content, media, replyTo }) => {
   await ensureMessagingAllowed(senderId, recipientId);
 
   const text = content || '';
@@ -41,6 +41,7 @@ const createMessage = async ({ senderId, recipientId, content, media }) => {
     // to '' and makes every caption-less message look corrupted in the logs.
     content: text ? encryptMessage(text) : '',
     media: media?.url ? media : undefined,
+    replyTo: replyTo?.messageId ? replyTo : undefined,
     isRead: false
   });
 

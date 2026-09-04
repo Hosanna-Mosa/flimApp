@@ -64,7 +64,7 @@ const markAsRead = async (req, res, next) => {
 
 const sendMessage = async (req, res, next) => {
   try {
-    const { recipientId, content, media } = req.body;
+    const { recipientId, content, media, replyTo } = req.body;
 
     if (!recipientId) {
       return res.status(400).json({
@@ -106,6 +106,14 @@ const sendMessage = async (req, res, next) => {
             width: media.width,
             height: media.height,
             duration: media.duration,
+          }
+        : undefined,
+      replyTo: replyTo?.messageId
+        ? {
+            messageId: replyTo.messageId,
+            senderName: String(replyTo.senderName || '').slice(0, 80),
+            preview: String(replyTo.preview || '').slice(0, 200),
+            mediaType: ['image', 'video'].includes(replyTo.mediaType) ? replyTo.mediaType : undefined,
           }
         : undefined,
     });
