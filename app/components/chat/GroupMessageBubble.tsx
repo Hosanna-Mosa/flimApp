@@ -7,6 +7,7 @@ import * as MediaLibrary from 'expo-media-library';
 import { useTheme } from '@/contexts/ThemeContext';
 import { formatTime } from '@/utils/date';
 import Avatar from '@/components/ui/Avatar';
+import LinkifiedText from './LinkifiedText';
 
 export interface GroupChatMessage {
   _id: string;
@@ -169,7 +170,14 @@ export default function GroupMessageBubble({ message, isMe, onVote, onLongPress 
             </View>
           )}
 
-          {message.content ? <Text style={[styles.messageText, { color: textColor }]}>{message.content}</Text> : null}
+          {message.content ? (
+            <LinkifiedText
+              style={[styles.messageText, { color: textColor }]}
+              linkStyle={isMe ? undefined : { color: colors.link }}
+            >
+              {message.content}
+            </LinkifiedText>
+          ) : null}
 
           {message.type === 'poll' && (
             <View style={styles.pollContainer}>

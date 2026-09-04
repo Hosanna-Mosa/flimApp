@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import MessageStatusTicks, { MessageStatus } from './MessageStatusTicks';
+import LinkifiedText from './LinkifiedText';
 
 export interface DirectMessage {
   id: string;
@@ -63,7 +64,14 @@ export default function ChatMessageBubble({
         ]}
       >
         <View style={[styles.bubble, bubbleShape, { backgroundColor: isMe ? colors.primary : colors.surface }]}>
-          <Text style={[styles.text, { color: isMe ? colors.onPrimary : colors.text }]}>{message.message}</Text>
+          <LinkifiedText
+            style={[styles.text, { color: isMe ? colors.onPrimary : colors.text }]}
+            // On the sender's own bubble the text already sits on the accent
+            // colour, so a link takes the same ink and relies on the underline.
+            linkStyle={isMe ? undefined : { color: colors.link }}
+          >
+            {message.message}
+          </LinkifiedText>
         </View>
         <View style={[styles.metaRow, isMe ? styles.metaRowMe : styles.metaRowThem]}>
           <Text style={[styles.timestamp, { color: colors.textSecondary }]}>{message.timestamp}</Text>
