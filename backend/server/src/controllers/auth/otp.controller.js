@@ -129,14 +129,15 @@ const verifyOtp = async (req, res, next) => {
         password: finalPassword,
         roles: ['actor'], // Default role, user can update later
         industries: ['bollywood'], // Default industry
-        isVerified: true, // Phone verified
+        // isVerified is deliberately not set here. It is the profile badge —
+        // granted only by adminVerification.approve once documents have been
+        // reviewed and the subscription paid — not a record of the OTP.
+        // Confirming a phone number is what this endpoint just did, and that
+        // is not the same claim as a verified badge.
       });
     } else {
-      // Existing user - ensure isVerified matches reality if we just did OTP
-      if (!user.isVerified) {
-        user.isVerified = true;
-        await user.save();
-      }
+      // An existing user's badge is untouched by signing in. Re-granting it
+      // here silently undid every admin revocation on the user's next login.
     }
 
     // Update login info
