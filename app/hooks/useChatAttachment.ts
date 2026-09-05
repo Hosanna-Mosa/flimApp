@@ -30,6 +30,8 @@ export const posterFrameFor = (videoUrl: string): string | undefined => {
 export interface PendingAttachment {
   uri: string;
   kind: 'image' | 'video';
+  /** The crop tool should open for this one before it is sent. */
+  wantsCrop?: boolean;
   name: string;
   size?: number;
   width?: number;
@@ -82,12 +84,12 @@ export function useChatAttachment() {
       // expo-image-picker 17 and choosing Video still opened the photo picker.
       mediaTypes: kind === 'video' ? ['videos'] : ['images'],
       quality: kind === 'image' ? 0.8 : undefined,
-      allowsEditing: edit,
-      // aspect is deliberately never passed. On Android the native contract
-      // sets fixAspectRatio only when it is present, and a fixed ratio is what
-      // reduces the crop frame to corner handles — leaving it out keeps the
-      // frame free, so its edges can be dragged too. iOS crops square either
-      // way and ignores the option entirely.
+      // The system cropper is deliberately not used for photos. It is a
+      // draggable rectangle over a fixed picture, and on iOS that rectangle is
+      // locked to a square — ImageCropper replaces it with a fixed frame the
+      // picture moves behind, which is the interaction people know. Video
+      // still uses the system trimmer, which has no equivalent problem.
+      allowsEditing: kind === 'video' ? edit : false,
     });
 
     if (result.canceled || !result.assets?.length) return;
@@ -105,6 +107,8 @@ export function useChatAttachment() {
 
     setPending({
       uri: asset.uri,
+      /** Set when the picker was opened via the crop option. */
+      wantsCrop: kind === 'image' && edit,
       kind,
       name: asset.fileName || (kind === 'video' ? 'video.mp4' : 'photo.jpg'),
       size: asset.fileSize ?? undefined,
@@ -118,6 +122,12 @@ export function useChatAttachment() {
     setPending(null);
     setProgress(0);
   };
+
+  /** Swaps in the cropped file, keeping everything else about the pick. */
+  const applyCrop = (uri: string, width: number, height: number) =>
+    setPending((prev) =>
+      prev ? { ...prev, uri, width, height, wantsCrop: false, size: undefined } : prev
+    );
 
   /** Uploads the pending file and returns what the message should carry. */
   const upload = async (): Promise<UploadedAttachment | null> => {
@@ -161,5 +171,5 @@ export function useChatAttachment() {
     }
   };
 
-  return { pending, uploading, progress, pick, clear, upload };
+  return { pending, uploading, progress, pick, clear, upload, applyCrop };
 }

@@ -10,6 +10,7 @@ import ChatInputBar from '@/components/chat/ChatInputBar';
 import MessageActionSheet, { MessageActionTarget } from '@/components/chat/MessageActionSheet';
 import AttachmentPickerSheet from '@/components/chat/AttachmentPickerSheet';
 import AttachmentPreview from '@/components/chat/AttachmentPreview';
+import ImageCropper from '@/components/chat/ImageCropper';
 import MediaViewer from '@/components/chat/MediaViewer';
 import ForwardSheet, { ForwardPayload } from '@/components/chat/ForwardSheet';
 import { DirectMessage, DirectMessageMedia, DirectMessageReply } from '@/components/chat/ChatMessageBubble';
@@ -111,6 +112,24 @@ export default function ChatScreen() {
           if (Platform.OS === 'android') ToastAndroid.show(`Sent to ${name}`, ToastAndroid.SHORT);
           else Alert.alert('Forwarded', `Sent to ${name}`);
         }}
+      />
+
+      {/* Opens straight after picking when the crop option was chosen.
+          Cancelling keeps the picture as taken rather than throwing away the
+          pick, since wanting the whole photo is a normal outcome of looking
+          at it in the crop tool. */}
+      <ImageCropper
+        uri={attachment.pending?.wantsCrop ? attachment.pending.uri : null}
+        width={attachment.pending?.width}
+        height={attachment.pending?.height}
+        onCancel={() =>
+          attachment.applyCrop(
+            attachment.pending!.uri,
+            attachment.pending?.width ?? 0,
+            attachment.pending?.height ?? 0
+          )
+        }
+        onDone={({ uri, width, height }) => attachment.applyCrop(uri, width, height)}
       />
 
       <AttachmentPickerSheet
