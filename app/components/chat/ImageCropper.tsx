@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Modal,
   View,
@@ -32,7 +32,19 @@ interface ImageCropperProps {
   onDone: (result: { uri: string; width: number; height: number }) => void;
 }
 
-const MAX_SCALE = 5;
+const MAX_ZOOM = 5;
+
+/**
+ * Ratios offered under the frame. `null` is the picture's own, and it is the
+ * default so opening the tool crops nothing — the frame matches the photo and
+ * the whole thing is visible.
+ */
+const RATIOS: { label: string; value: number | null }[] = [
+  { label: 'Original', value: null },
+  { label: '1:1', value: 1 },
+  { label: '4:5', value: 4 / 5 },
+  { label: '16:9', value: 16 / 9 },
+];
 
 /**
  * A crop tool in the style people already know from Instagram: the frame stays
@@ -57,18 +69,34 @@ export default function ImageCropper({
   const insets = useSafeAreaInsets();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const [busy, setBusy] = useState(false);
+  const [ratio, setRatio] = useState<number | null>(null);
 
-  // The frame is square, which is what the picker used to force anyway — the
-  // difference is that the picture can now be positioned inside it.
-  const frame = Math.min(screenWidth - 32, screenHeight - insets.top - insets.bottom - 220);
+  const source = useMemo(() => ({ w: width || 1, h: height || 1 }), [width, height]);
 
-  const natural = useMemo(() => {
-    const w = width || 1;
-    const h = height || 1;
-    // Scale so the whole picture sits inside the frame at rest.
-    const fit = Math.min(frame / w, frame / h);
-    return { w, h, displayW: w * fit, displayH: h * fit };
-  }, [width, height, frame]);
+  /** The frame, sized to the chosen ratio within the space available. */
+  const frame = useMemo(() => {
+    const maxW = screenWidth - 32;
+    const maxH = screenHeight - insets.top - insets.bottom - 260;
+    const target = ratio ?? source.w / source.h;
+
+    let w = maxW;
+    let h = w / target;
+    if (h > maxH) {
+      h = maxH;
+      w = h * target;
+    }
+    return { w, h };
+  }, [ratio, source, screenWidth, screenHeight, insets]);
+
+  /**
+   * The size at which the picture exactly covers the frame — the floor for
+   * zooming out. Fitting inside instead would leave blank bars whenever the two
+   * ratios differ, and those bars would end up in the exported file.
+   */
+  const base = useMemo(() => {
+    const cover = Math.max(frame.w / source.w, frame.h / source.h);
+    return { w: source.w * cover, h: source.h * cover };
+  }, [frame, source]);
 
   const scale = useRef(new Animated.Value(1)).current;
   const translateX = useRef(new Animated.Value(0)).current;
@@ -78,6 +106,16 @@ export default function ImageCropper({
   const committed = useRef({ scale: 1, x: 0, y: 0 });
   const pinchRef = useRef(null);
   const panRef = useRef(null);
+
+  // Changing the ratio re-frames the picture, so the old position no longer
+  // means anything and is reset rather than carried into a frame it was never
+  // chosen for.
+  useEffect(() => {
+    committed.current = { scale: 1, x: 0, y: 0 };
+    scale.setValue(1);
+    translateX.setValue(0);
+    translateY.setValue(0);
+  }, [ratio, scale, translateX, translateY]);
 
   if (!uri) return null;
 
@@ -89,9 +127,9 @@ export default function ImageCropper({
    * blank strips inside the frame, and the crop then contains nothing.
    */
   const settle = () => {
-    const s = clamp(committed.current.scale, 1, MAX_SCALE);
-    const spanX = Math.max((natural.displayW * s - frame) / 2, 0);
-    const spanY = Math.max((natural.displayH * s - frame) / 2, 0);
+    const s = clamp(committed.current.scale, 1, MAX_ZOOM);
+    const spanX = Math.max((base.w * s - frame.w) / 2, 0);
+    const spanY = Math.max((base.h * s - frame.h) / 2, 0);
 
     committed.current.scale = s;
     committed.current.x = clamp(committed.current.x, -spanX, spanX);
@@ -137,24 +175,24 @@ export default function ImageCropper({
 
     // Untouched: hand back the original rather than a re-encode of the same
     // pixels, which would cost quality and size for no change.
-    if (s <= 1.001 && Math.abs(x) < 1 && Math.abs(y) < 1) {
-      onDone({ uri, width: natural.w, height: natural.h });
+    if (ratio === null && s <= 1.001 && Math.abs(x) < 1 && Math.abs(y) < 1) {
+      onDone({ uri, width: source.w, height: source.h });
       return;
     }
 
     setBusy(true);
     try {
-      // Map the frame back onto the source. One display pixel covers
-      // (natural width / displayed width) source pixels at rest, divided again
-      // by the zoom.
-      const perPixel = natural.w / (natural.displayW * s);
-      const cropSize = frame * perPixel;
+      // One display pixel covers this many source pixels at the current zoom.
+      const perPixel = source.w / (base.w * s);
 
-      const centreX = natural.w / 2 - x * perPixel;
-      const centreY = natural.h / 2 - y * perPixel;
+      const cropW = Math.min(frame.w * perPixel, source.w);
+      const cropH = Math.min(frame.h * perPixel, source.h);
 
-      const originX = clamp(centreX - cropSize / 2, 0, Math.max(natural.w - cropSize, 0));
-      const originY = clamp(centreY - cropSize / 2, 0, Math.max(natural.h - cropSize, 0));
+      const centreX = source.w / 2 - x * perPixel;
+      const centreY = source.h / 2 - y * perPixel;
+
+      const originX = clamp(centreX - cropW / 2, 0, Math.max(source.w - cropW, 0));
+      const originY = clamp(centreY - cropH / 2, 0, Math.max(source.h - cropH, 0));
 
       const result = await ImageManipulator.manipulateAsync(
         uri,
@@ -163,8 +201,8 @@ export default function ImageCropper({
             crop: {
               originX: Math.round(originX),
               originY: Math.round(originY),
-              width: Math.round(Math.min(cropSize, natural.w)),
-              height: Math.round(Math.min(cropSize, natural.h)),
+              width: Math.round(cropW),
+              height: Math.round(cropH),
             },
           },
         ],
@@ -175,7 +213,7 @@ export default function ImageCropper({
     } catch (err) {
       console.error('[cropper] Crop failed:', err);
       Alert.alert('Could not crop', 'Sending the original picture instead.');
-      onDone({ uri, width: natural.w, height: natural.h });
+      onDone({ uri, width: source.w, height: source.h });
     } finally {
       setBusy(false);
     }
@@ -195,7 +233,7 @@ export default function ImageCropper({
         </View>
 
         <View style={styles.stage}>
-          <View style={[styles.frame, { width: frame, height: frame }]}>
+          <View style={[styles.frame, { width: frame.w, height: frame.h }]}>
             <PinchGestureHandler
               ref={pinchRef}
               simultaneousHandlers={panRef}
@@ -212,8 +250,8 @@ export default function ImageCropper({
                   <Animated.View style={styles.centre}>
                     <Animated.View
                       style={{
-                        width: natural.displayW,
-                        height: natural.displayH,
+                        width: base.w,
+                        height: base.h,
                         transform: [{ translateX }, { translateY }, { scale }],
                       }}
                     >
@@ -225,9 +263,22 @@ export default function ImageCropper({
             </PinchGestureHandler>
           </View>
 
-          <Text style={styles.hint}>
-            Drag to move, pinch to zoom. What fills the square is what is sent.
-          </Text>
+        </View>
+
+        <View style={[styles.ratios, { paddingBottom: insets.bottom + 18 }]}>
+          {RATIOS.map((r) => {
+            const active = r.value === ratio;
+            return (
+              <TouchableOpacity
+                key={r.label}
+                onPress={() => setRatio(r.value)}
+                style={[styles.ratio, active && styles.ratioActive]}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.ratioText, active && styles.ratioTextActive]}>{r.label}</Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </GestureHandlerRootView>
     </Modal>
@@ -245,13 +296,24 @@ const styles = StyleSheet.create({
   },
   barButton: { padding: 10, minWidth: 44 },
   barTitle: { color: '#FFFFFF', fontSize: 16, fontWeight: '600' },
-  stage: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 22 },
+  stage: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   frame: { overflow: 'hidden', backgroundColor: '#111111' },
   centre: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  hint: {
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 13,
-    textAlign: 'center',
-    paddingHorizontal: 40,
+  ratios: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 10,
+    paddingTop: 16,
+    paddingHorizontal: 16,
   },
+  ratio: {
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: 20,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  ratioActive: { backgroundColor: '#FFFFFF', borderColor: '#FFFFFF' },
+  ratioText: { color: 'rgba(255,255,255,0.85)', fontSize: 14, fontWeight: '500' },
+  ratioTextActive: { color: '#000000', fontWeight: '700' },
 });
