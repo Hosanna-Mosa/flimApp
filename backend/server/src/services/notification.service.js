@@ -93,10 +93,16 @@ const sendPushNotifications = async (userId, title, body, data = {}) => {
             console.error(`[PUSH][SEND] ❌ Ticket ${idx} error:`, ticket.message);
             console.error('[PUSH][SEND] Error details:', JSON.stringify(ticket.details));
             
-            // AUTOMATIC CLEANUP: Remove token if invalid
-            if (ticket.details && (ticket.details.error === 'DeviceNotRegistered' || ticket.details.error === 'InvalidCredentials')) {
+            // AUTOMATIC CLEANUP: only remove a token when the device is really gone.
+            // InvalidCredentials is deliberately NOT treated as a dead device: it
+            // means OUR sending key is wrong (e.g. the APNs key registered with EAS
+            // belongs to a different Apple team than the one signing the app), so
+            // acting on it would wipe every healthy token on the platform.
+            if (ticket.details && ticket.details.error === 'DeviceNotRegistered') {
               console.warn(`[PUSH][CLEANUP] ⚠️ Flagging invalid token for removal: ${token} (Reason: ${ticket.details.error})`);
               invalidTokens.push(token);
+            } else if (ticket.details && ticket.details.error === 'InvalidCredentials') {
+              console.error('[PUSH][CONFIG] ❌ Expo rejected our push credentials. Check that the APNs key in EAS matches the Apple team that signs the app. Tokens left intact.');
             }
           } else if (ticket.status === 'ok') {
           }
