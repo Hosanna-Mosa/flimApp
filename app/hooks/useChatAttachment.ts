@@ -83,10 +83,11 @@ export function useChatAttachment() {
       mediaTypes: kind === 'video' ? ['videos'] : ['images'],
       quality: kind === 'image' ? 0.8 : undefined,
       allowsEditing: edit,
-      // Android honours a free rectangle; iOS ignores this and crops square
-      // regardless. Passing it anyway means Android users are not forced into
-      // a square just because iOS is.
-      ...(edit && kind === 'image' ? { aspect: undefined } : {}),
+      // aspect is deliberately never passed. On Android the native contract
+      // sets fixAspectRatio only when it is present, and a fixed ratio is what
+      // reduces the crop frame to corner handles — leaving it out keeps the
+      // frame free, so its edges can be dragged too. iOS crops square either
+      // way and ignores the option entirely.
     });
 
     if (result.canceled || !result.assets?.length) return;
