@@ -70,13 +70,22 @@ export default function ImageCropper({
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const [busy, setBusy] = useState(false);
   const [ratio, setRatio] = useState<number | null>(null);
+  /**
+   * The space actually left for the frame, measured rather than guessed.
+   * A fixed allowance for the bar and the ratio row was wrong on Android,
+   * where the status and navigation bars differ from iOS, and the frame ended
+   * up smaller than it needed to be with the slack showing as a gap above it.
+   */
+  const [stage, setStage] = useState({ w: 0, h: 0 });
 
   const source = useMemo(() => ({ w: width || 1, h: height || 1 }), [width, height]);
 
   /** The frame, sized to the chosen ratio within the space available. */
   const frame = useMemo(() => {
-    const maxW = screenWidth - 32;
-    const maxH = screenHeight - insets.top - insets.bottom - 260;
+    // Fall back to the window only for the first render, before onLayout has
+    // reported; it is replaced as soon as the real figure arrives.
+    const maxW = (stage.w || screenWidth) - 24;
+    const maxH = (stage.h || screenHeight * 0.6) - 24;
     const target = ratio ?? source.w / source.h;
 
     let w = maxW;
@@ -86,7 +95,7 @@ export default function ImageCropper({
       w = h * target;
     }
     return { w, h };
-  }, [ratio, source, screenWidth, screenHeight, insets]);
+  }, [ratio, source, stage, screenWidth, screenHeight]);
 
   /**
    * The size at which the picture exactly covers the frame — the floor for
@@ -232,7 +241,12 @@ export default function ImageCropper({
           </TouchableOpacity>
         </View>
 
-        <View style={styles.stage}>
+        <View
+          style={styles.stage}
+          onLayout={(e) =>
+            setStage({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })
+          }
+        >
           <View style={[styles.frame, { width: frame.w, height: frame.h }]}>
             <PinchGestureHandler
               ref={pinchRef}
