@@ -270,7 +270,7 @@ const getGroupMembers = async (communityId, groupId, page = 0, limit = 50) => {
   const community = await Community.findById(communityId)
     .populate({
       path: 'groups.$*.members',
-      select: 'name avatar isVerified bio'
+      select: 'name avatar isBadgeVerified bio'
     })
     .lean();
   
@@ -290,7 +290,7 @@ const getGroupMembers = async (communityId, groupId, page = 0, limit = 50) => {
     community: communityId,
     user: { $in: memberIds }
   })
-    .populate('user', 'name avatar isVerified bio roles industries')
+    .populate('user', 'name avatar isBadgeVerified bio roles industries')
     .lean();
 
   return {

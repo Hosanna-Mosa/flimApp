@@ -1,12 +1,35 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { Image } from 'expo-image';
+import { Play } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import MessageStatusTicks, { MessageStatus } from './MessageStatusTicks';
+import LinkifiedText from './LinkifiedText';
+
+export interface DirectMessageMedia {
+  url: string;
+  type: 'image' | 'video';
+  thumbnail?: string;
+  width?: number;
+  height?: number;
+  duration?: number;
+}
+
+export interface DirectMessageReply {
+  messageId?: string;
+  senderName?: string;
+  preview?: string;
+  mediaType?: 'image' | 'video';
+}
 
 export interface DirectMessage {
   id: string;
   senderId: string;
   message: string;
+  media?: DirectMessageMedia;
+  replyTo?: DirectMessageReply;
+  /** Set on the optimistic copy while its attachment uploads. */
+  uploading?: boolean;
   /** Already formatted for display ("12:44 PM"). */
   timestamp: string;
   status: MessageStatus;
@@ -18,8 +41,9 @@ interface ChatMessageBubbleProps {
   /** Group consecutive messages from the same sender (Instagram-style). */
   isFirstInGroup: boolean;
   isLastInGroup: boolean;
-  /** Only fired for the viewer's own messages. */
-  onLongPress?: (messageId: string) => void;
+  /** Fired for any message — the menu decides which actions apply. */
+  onLongPress?: (message: DirectMessage, isMine: boolean) => void;
+  onPressMedia?: (media: DirectMessageMedia) => void;
 }
 
 const ROUND_CORNER = 18;
@@ -36,8 +60,20 @@ export default function ChatMessageBubble({
   isFirstInGroup,
   isLastInGroup,
   onLongPress,
+  onPressMedia,
 }: ChatMessageBubbleProps) {
   const { colors } = useTheme();
+
+  /**
+   * Portrait photos are allowed to be tall, but only so far — an 9:16 phone
+   * shot would otherwise fill the entire conversation and push everything else
+   * off screen. Landscape is left alone.
+   */
+  const rawAspect =
+    message.media?.width && message.media?.height
+      ? message.media.width / message.media.height
+      : 1;
+  const aspect = Math.max(rawAspect, 0.72);
 
   const bubbleShape = isMe
     ? {
@@ -54,7 +90,7 @@ export default function ChatMessageBubble({
       };
 
   return (
-    <TouchableOpacity onLongPress={() => isMe && onLongPress?.(message.id)} activeOpacity={0.8}>
+    <TouchableOpacity onLongPress={() => onLongPress?.(message, isMe)} activeOpacity={0.8}>
       <View
         style={[
           styles.wrapper,
@@ -62,8 +98,93 @@ export default function ChatMessageBubble({
           { marginBottom: isLastInGroup ? 12 : 6 },
         ]}
       >
-        <View style={[styles.bubble, bubbleShape, { backgroundColor: isMe ? colors.primary : colors.surface }]}>
-          <Text style={[styles.text, { color: isMe ? colors.onPrimary : colors.text }]}>{message.message}</Text>
+        <View
+          style={[
+            styles.bubble,
+            bubbleShape,
+            { backgroundColor: isMe ? colors.primary : colors.surface },
+            // A bare photo fills the bubble edge to edge. Any padding here
+            // reads as a coloured frame around the image rather than as a
+            // bubble, and the theme gold makes that especially loud.
+            message.media
+              ? message.message || message.replyTo?.senderName
+                ? styles.bubbleWithCaption
+                : styles.bubbleMediaOnly
+              : null,
+          ]}
+        >
+          {message.replyTo?.senderName && (
+            <View
+              style={[
+                styles.quote,
+                {
+                  backgroundColor: isMe ? 'rgba(0,0,0,0.12)' : 'rgba(0,0,0,0.05)',
+                  borderLeftColor: isMe ? colors.onPrimary : colors.primary,
+                },
+              ]}
+            >
+              <Text
+                style={[styles.quoteName, { color: isMe ? colors.onPrimary : colors.primary }]}
+                numberOfLines={1}
+              >
+                {message.replyTo.senderName}
+              </Text>
+              <Text
+                style={[styles.quoteText, { color: isMe ? colors.onPrimary : colors.textSecondary }]}
+                numberOfLines={2}
+              >
+                {message.replyTo.preview ||
+                  (message.replyTo.mediaType === 'video' ? 'Video' : 'Photo')}
+              </Text>
+            </View>
+          )}
+
+          {message.media && (
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={() => onPressMedia?.(message.media as DirectMessageMedia)}
+              disabled={message.uploading}
+            >
+              <View>
+                <Image
+                  source={{ uri: message.media.thumbnail || message.media.url }}
+                  style={[
+                    styles.media,
+                    // Keep the sender's framing. A fixed square crops tall
+                    // photos through the middle, which is where faces are.
+                    { aspectRatio: aspect },
+                    message.message ? styles.mediaWithCaption : null,
+                    message.uploading && styles.mediaUploading,
+                  ]}
+                  contentFit="cover"
+                  transition={150}
+                />
+                {message.media.type === 'video' && !message.uploading && (
+                  <View style={styles.playBadge}>
+                    <Play size={22} color="#FFFFFF" fill="#FFFFFF" />
+                  </View>
+                )}
+                {message.uploading && (
+                  <View style={styles.uploadOverlay}>
+                    <ActivityIndicator color="#FFFFFF" />
+                  </View>
+                )}
+              </View>
+            </TouchableOpacity>
+          )}
+
+          {!!message.message && (
+          <LinkifiedText
+            style={[
+              styles.text,
+              message.media ? styles.textUnderMedia : null,
+              { color: isMe ? colors.onPrimary : colors.text },
+            ]}
+            linkStyle={{ color: isMe ? colors.linkOnPrimary : colors.linkOnBubble }}
+          >
+            {message.message}
+          </LinkifiedText>
+          )}
         </View>
         <View style={[styles.metaRow, isMe ? styles.metaRowMe : styles.metaRowThem]}>
           <Text style={[styles.timestamp, { color: colors.textSecondary }]}>{message.timestamp}</Text>
@@ -87,10 +208,65 @@ const styles = StyleSheet.create({
   bubble: {
     paddingHorizontal: 14,
     paddingVertical: 10,
+    overflow: 'hidden',
+  },
+  bubbleMediaOnly: {
+    padding: 0,
+  },
+  bubbleWithCaption: {
+    padding: 3,
+  },
+  quote: {
+    borderLeftWidth: 3,
+    borderRadius: 8,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    marginBottom: 6,
+    marginHorizontal: 2,
+  },
+  quoteName: { fontSize: 13, fontWeight: '700', marginBottom: 1 },
+  quoteText: { fontSize: 13, lineHeight: 17, opacity: 0.85 },
+  media: {
+    width: 250,
+    backgroundColor: 'rgba(0,0,0,0.06)',
+  },
+  /** Rounded only when a caption follows, so the two read as one card. */
+  mediaWithCaption: {
+    borderRadius: 15,
+  },
+  mediaUploading: {
+    opacity: 0.5,
+  },
+  playBadge: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    marginTop: -22,
+    marginLeft: -22,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.55)',
+  },
+  uploadOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   text: {
     fontSize: 16,
     lineHeight: 20,
+  },
+  /**
+   * Only applied alongside media. The bubble drops to 4px padding so the image
+   * sits flush, which would otherwise leave the caption touching the edge.
+   */
+  textUnderMedia: {
+    paddingHorizontal: 10,
+    paddingBottom: 6,
+    paddingTop: 8,
   },
   metaRow: {
     flexDirection: 'row',

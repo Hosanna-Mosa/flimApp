@@ -24,8 +24,20 @@ const UserSchema = new Schema(
     ],
 
     // Social Features
-    isVerified: { type: Boolean, default: false },
+    /**
+     * The profile badge. Granted only by adminVerification.approve, once
+     * documents pass review and the subscription is paid.
+     *
+     * Named for the badge specifically because the old name, isBadgeVerified, read
+     * as a general "this user is verified" and was set by the OTP endpoint on
+     * every signup and every login. Every badge in the database turned out to
+     * have been granted that way rather than earned.
+     */
+    isBadgeVerified: { type: Boolean, default: false },
     verifiedUntil: { type: Date },
+
+    /** Whether this phone number has been confirmed by OTP. Unrelated to the badge. */
+    isPhoneVerified: { type: Boolean, default: false },
     verificationStatus: {
       type: String,
       enum: ['none', 'pending_docs', 'approved_docs', 'pending_payment', 'active', 'rejected'],
@@ -109,7 +121,8 @@ UserSchema.virtual('publicProfile').get(function () {
     roles: this.roles,
     industries: this.industries,
     language: this.language,
-    isVerified: this.isVerified,
+    isBadgeVerified: this.isBadgeVerified,
+    isPhoneVerified: this.isPhoneVerified,
     accountType: this.accountType,
     stats: this.stats
   };

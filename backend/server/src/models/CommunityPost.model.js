@@ -26,14 +26,36 @@ const CommunityPostSchema = new Schema(
       enum: ['text', 'image', 'video', 'poll', 'announcement'], 
       default: 'text' 
     },
-    content: { type: String, required: true, maxlength: 5000 },
+    /**
+     * Not required. A photo needs no caption, and requiring one forced the
+     * client to send the literal word "Image", which then rendered as the
+     * caption under every picture in the group.
+     */
+    content: { type: String, default: '', maxlength: 5000 },
     media: [{
       url: { type: String, required: true },
       type: { type: String, enum: ['image', 'video', 'document'] },
       thumbnail: { type: String },
       size: { type: Number },
-      format: { type: String }
+      format: { type: String },
+      /** Needed to remove the file from Cloudinary when the post is deleted. */
+      publicId: { type: String },
+      width: { type: Number },
+      height: { type: Number },
+      duration: { type: Number }
     }],
+
+    /**
+     * The message this one answers. A snapshot rather than a lookup, for the
+     * same reason as direct messages: the original can be deleted, and a quote
+     * that silently empties leaves a reply to nothing.
+     */
+    replyTo: {
+      postId: { type: Types.ObjectId, ref: 'CommunityPost' },
+      senderName: { type: String },
+      preview: { type: String, maxlength: 200 },
+      mediaType: { type: String, enum: ['image', 'video'] }
+    },
     
     // Poll (if type=poll)
     poll: {

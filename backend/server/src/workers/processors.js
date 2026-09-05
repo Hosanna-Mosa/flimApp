@@ -61,7 +61,7 @@ queues.subscription.process('check-expiry', async (job) => {
         { _id: { $in: userIdsWithExpiredSubs } },
         { 
           $set: { 
-            isVerified: false, 
+            isBadgeVerified: false, 
             verificationStatus: 'none' 
           } 
         }

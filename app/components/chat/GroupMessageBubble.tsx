@@ -7,14 +7,29 @@ import * as MediaLibrary from 'expo-media-library';
 import { useTheme } from '@/contexts/ThemeContext';
 import { formatTime } from '@/utils/date';
 import Avatar from '@/components/ui/Avatar';
+import LinkifiedText from './LinkifiedText';
 
 export interface GroupChatMessage {
   _id: string;
   type?: string;
   content?: string;
-  media?: { url: string; thumbnail?: string; size?: number; width?: number; height?: number }[];
+  media?: {
+    url: string;
+    type?: 'image' | 'video' | 'document';
+    thumbnail?: string;
+    size?: number;
+    width?: number;
+    height?: number;
+    duration?: number;
+  }[];
   author?: { _id?: string; name?: string; avatar?: string };
   poll?: { options: { text: string; votes: string[] }[]; userVotedOption?: number };
+  replyTo?: {
+    postId?: string;
+    senderName?: string;
+    preview?: string;
+    mediaType?: 'image' | 'video';
+  };
   createdAt?: string;
 }
 
@@ -23,6 +38,7 @@ interface GroupMessageBubbleProps {
   isMe: boolean;
   onVote?: (optionIndex: number) => void;
   onLongPress?: (message: GroupChatMessage) => void;
+  onPressMedia?: (media: NonNullable<GroupChatMessage['media']>[number]) => void;
 }
 
 const formatBytes = (bytes: number = 0) => {
@@ -42,7 +58,7 @@ const ON_BUBBLE = '#FFFFFF';
  * fullscreen viewer), or poll with tappable options. Announcements render as
  * a centred system line.
  */
-export default function GroupMessageBubble({ message, isMe, onVote, onLongPress }: GroupMessageBubbleProps) {
+export default function GroupMessageBubble({ message, isMe, onVote, onLongPress, onPressMedia }: GroupMessageBubbleProps) {
   const { colors } = useTheme();
   const [downloaded, setDownloaded] = useState(false);
   const [downloading, setDownloading] = useState(false);
@@ -104,6 +120,12 @@ export default function GroupMessageBubble({ message, isMe, onVote, onLongPress 
   };
 
   const handleImagePress = () => {
+    // The shared viewer owns saving now, so there is no reason to make someone
+    // download a picture before they are allowed to look at it.
+    if (media) {
+      onPressMedia?.(media);
+      return;
+    }
     if (downloaded || isMe) {
       setModalVisible(true);
     }
@@ -135,7 +157,33 @@ export default function GroupMessageBubble({ message, isMe, onVote, onLongPress 
         >
           {!isMe && <Text style={[styles.authorName, { color: colors.primary }]}>{message.author?.name}</Text>}
 
-          {message.type === 'image' && media && (
+          {message.replyTo?.senderName && (
+            <View
+              style={[
+                styles.quote,
+                {
+                  backgroundColor: isMe ? 'rgba(0,0,0,0.12)' : 'rgba(0,0,0,0.05)',
+                  borderLeftColor: isMe ? ON_BUBBLE : colors.primary,
+                },
+              ]}
+            >
+              <Text
+                style={[styles.quoteName, { color: isMe ? ON_BUBBLE : colors.primary }]}
+                numberOfLines={1}
+              >
+                {message.replyTo.senderName}
+              </Text>
+              <Text
+                style={[styles.quoteText, { color: isMe ? ON_BUBBLE : colors.textSecondary }]}
+                numberOfLines={2}
+              >
+                {message.replyTo.preview ||
+                  (message.replyTo.mediaType === 'video' ? 'Video' : 'Photo')}
+              </Text>
+            </View>
+          )}
+
+          {(message.type === 'image' || message.type === 'video') && media && (
             <View style={styles.mediaWrapper}>
               {!downloaded && !isMe ? (
                 <View style={styles.downloadContainer}>
@@ -169,7 +217,14 @@ export default function GroupMessageBubble({ message, isMe, onVote, onLongPress 
             </View>
           )}
 
-          {message.content ? <Text style={[styles.messageText, { color: textColor }]}>{message.content}</Text> : null}
+          {message.content ? (
+            <LinkifiedText
+              style={[styles.messageText, { color: textColor }]}
+              linkStyle={{ color: isMe ? colors.linkOnPrimary : colors.linkOnBubble }}
+            >
+              {message.content}
+            </LinkifiedText>
+          ) : null}
 
           {message.type === 'poll' && (
             <View style={styles.pollContainer}>
@@ -214,6 +269,15 @@ export default function GroupMessageBubble({ message, isMe, onVote, onLongPress 
 }
 
 const styles = StyleSheet.create({
+  quote: {
+    borderLeftWidth: 3,
+    borderRadius: 8,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    marginBottom: 6,
+  },
+  quoteName: { fontSize: 13, fontWeight: '700', marginBottom: 1 },
+  quoteText: { fontSize: 13, lineHeight: 17, opacity: 0.85 },
   systemMessage: {
     alignItems: 'center',
     marginVertical: 12,

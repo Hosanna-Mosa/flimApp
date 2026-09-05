@@ -72,7 +72,7 @@ const getOverview = async (req, res, next) => {
       Comment.countDocuments({ createdAt: { $gte: from } }),
       Message.countDocuments({ createdAt: { $gte: from } }),
       Follow.countDocuments({ createdAt: { $gte: from } }),
-      User.countDocuments({ isVerified: true }),
+      User.countDocuments({ isBadgeVerified: true }),
       User.countDocuments({ lastLoginAt: { $gte: from } }),
       User.countDocuments({ lastLoginAt: { $exists: true, $ne: null } }),
       Post.distinct('author'),
@@ -161,7 +161,7 @@ const getFunnel = async (req, res, next) => {
       User.countDocuments(),
       User.countDocuments({ $or: [{ bio: { $nin: [null, ''] } }, { avatar: { $nin: [null, ''] } }] }),
       Post.distinct('author'),
-      User.countDocuments({ isVerified: true }),
+      User.countDocuments({ isBadgeVerified: true }),
       Subscription.distinct('user', { status: { $in: ['ACTIVE', 'EXPIRED'] } }),
     ]);
 

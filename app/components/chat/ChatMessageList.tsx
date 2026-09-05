@@ -1,12 +1,13 @@
 import React, { forwardRef } from 'react';
 import { FlatList, StyleSheet } from 'react-native';
-import ChatMessageBubble, { DirectMessage } from './ChatMessageBubble';
+import ChatMessageBubble, { DirectMessage, DirectMessageMedia } from './ChatMessageBubble';
 
 interface ChatMessageListProps {
   messages: DirectMessage[];
   /** The other participant; any message not from them is the viewer's. */
   peerId?: string;
-  onDeleteMessage: (messageId: string) => void;
+  onMessageLongPress: (message: DirectMessage, isMine: boolean) => void;
+  onPressMedia: (media: DirectMessageMedia) => void;
 }
 
 /**
@@ -14,7 +15,7 @@ interface ChatMessageListProps {
  * owning hook can scrollToEnd after sending/receiving.
  */
 const ChatMessageList = forwardRef<FlatList<DirectMessage>, ChatMessageListProps>(function ChatMessageList(
-  { messages, peerId, onDeleteMessage },
+  { messages, peerId, onMessageLongPress, onPressMedia },
   ref
 ) {
   const scrollToEnd = (animated: boolean) => {
@@ -41,7 +42,8 @@ const ChatMessageList = forwardRef<FlatList<DirectMessage>, ChatMessageListProps
             isMe={isMe}
             isFirstInGroup={!prev || String(prev.senderId) !== String(item.senderId)}
             isLastInGroup={!next || String(next.senderId) !== String(item.senderId)}
-            onLongPress={onDeleteMessage}
+            onLongPress={onMessageLongPress}
+            onPressMedia={onPressMedia}
           />
         );
       }}

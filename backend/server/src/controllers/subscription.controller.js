@@ -132,7 +132,7 @@ const verifyPayment = async (req, res, next) => {
 
     // Update user status
     await User.findByIdAndUpdate(userId, {
-      isVerified: true,
+      isBadgeVerified: true,
       verifiedUntil: endDate,
       verificationStatus: 'active'
     });

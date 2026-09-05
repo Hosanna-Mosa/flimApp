@@ -34,7 +34,7 @@ export default function ConversationList({ chats, loading, onPressChat }: Conver
               id: chat.user.id,
               name: chat.user.name,
               avatar: chat.user.avatar,
-              isVerified: chat.user.isVerified,
+              isBadgeVerified: chat.user.isBadgeVerified,
             }}
             meta={chat.lastMessageTime}
             subtitle={chat.lastMessage}

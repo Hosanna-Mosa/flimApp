@@ -64,24 +64,63 @@ const markAsRead = async (req, res, next) => {
 
 const sendMessage = async (req, res, next) => {
   try {
-    const { recipientId, content } = req.body;
-    
-    if (!recipientId || !content) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'recipientId and content are required' 
+    const { recipientId, content, media, replyTo } = req.body;
+
+    if (!recipientId) {
+      return res.status(400).json({
+        success: false,
+        message: 'recipientId is required'
+      });
+    }
+
+    // Either half is enough on its own — a photo needs no caption — but a
+    // message with neither is not a message. createMessage enforces the same
+    // rule so a socket path cannot bypass it.
+    if (!content?.trim() && !media?.url) {
+      return res.status(400).json({
+        success: false,
+        message: 'Send some text or an attachment'
+      });
+    }
+
+    if (media?.url && !['image', 'video'].includes(media.type)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Attachments must be an image or a video'
       });
     }
 
     const message = await messageService.createMessage({
       senderId: req.user.id,
       recipientId,
-      content: content.trim()
+      content: (content || '').trim(),
+      // Whitelisted rather than passed through: the client is the one talking
+      // to Cloudinary, so the body is user input and could carry anything.
+      media: media?.url
+        ? {
+            url: media.url,
+            type: media.type,
+            thumbnail: media.thumbnail,
+            publicId: media.publicId,
+            size: media.size,
+            width: media.width,
+            height: media.height,
+            duration: media.duration,
+          }
+        : undefined,
+      replyTo: replyTo?.messageId
+        ? {
+            messageId: replyTo.messageId,
+            senderName: String(replyTo.senderName || '').slice(0, 80),
+            preview: String(replyTo.preview || '').slice(0, 200),
+            mediaType: ['image', 'video'].includes(replyTo.mediaType) ? replyTo.mediaType : undefined,
+          }
+        : undefined,
     });
 
     // Populate sender and recipient for response
-    await message.populate('sender', 'name avatar isVerified');
-    await message.populate('recipient', 'name avatar isVerified');
+    await message.populate('sender', 'name avatar isBadgeVerified');
+    await message.populate('recipient', 'name avatar isBadgeVerified');
 
     // Emit socket event for real-time updates
     const io = req.app.get('io');

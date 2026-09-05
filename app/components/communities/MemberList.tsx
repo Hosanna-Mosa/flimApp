@@ -45,7 +45,7 @@ export default function MemberList({
             id: item.user._id as string,
             name: item.user.name,
             avatar: item.user.avatar,
-            isVerified: item.user.isVerified,
+            isBadgeVerified: item.user.isBadgeVerified,
           }}
           nameSuffix={roleSuffix(item.role)}
           subtitle={item.user.bio || 'No bio'}

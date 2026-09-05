@@ -24,6 +24,12 @@ interface ChatInputBarProps {
   loading?: boolean;
   /** When provided, shows the attachment (+) button. */
   onAttachment?: () => void;
+  /**
+   * Set when a file is staged for sending. Without it the composer refuses to
+   * send an empty caption, so attaching a photo and pressing send does
+   * nothing — which reads as the send being broken rather than as a rule.
+   */
+  hasAttachment?: boolean;
   /** Shows a "Replying to <name>" banner above the input with a Cancel action. */
   replyingTo?: string;
   onCancelReply?: () => void;
@@ -44,6 +50,7 @@ const ChatInputBar = forwardRef<ChatInputBarHandle, ChatInputBarProps>(function 
     onSend,
     placeholder = 'Type a message...',
     disabled,
+    hasAttachment,
     loading,
     onAttachment,
     replyingTo,
@@ -64,7 +71,8 @@ const ChatInputBar = forwardRef<ChatInputBarHandle, ChatInputBarProps>(function 
 
   const handleSendPress = async () => {
     const content = text.trim();
-    if (!content) return;
+    // A caption is optional once something is attached; the message is the file.
+    if (!content && !hasAttachment) return;
     const result = await onSend(content);
     if (result !== false) setText('');
   };

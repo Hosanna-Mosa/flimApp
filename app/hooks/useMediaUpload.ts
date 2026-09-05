@@ -49,6 +49,12 @@ export function useMediaUpload({ isDonation = false, initialType = null }: UseMe
   const [roles, setRoles] = useState('');
   const [industries, setIndustries] = useState('');
   const [uploading, setUploading] = useState(false);
+  /** Picked but not yet accepted, while the crop tool is open. */
+  const [cropTarget, setCropTarget] = useState<{
+    file: MediaFile;
+    width?: number;
+    height?: number;
+  } | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
 
   const selectType = (type: ContentType | null) => {
@@ -57,6 +63,14 @@ export function useMediaUpload({ isDonation = false, initialType = null }: UseMe
   };
 
   const removeMedia = () => setMediaFile(null);
+
+  /** The crop tool finished, or was cancelled with the picture as taken. */
+  const finishCrop = (uri: string) => {
+    setCropTarget((target) => {
+      if (target) setMediaFile({ ...target.file, uri, size: undefined });
+      return null;
+    });
+  };
 
   const resetForm = () => {
     setSelectedType(initialType);
@@ -78,24 +92,34 @@ export function useMediaUpload({ isDonation = false, initialType = null }: UseMe
         }
 
         const result = await ImagePicker.launchImageLibraryAsync({
-          mediaTypes:
-            selectedType === 'video'
-              ? ImagePicker.MediaTypeOptions.Videos
-              : ImagePicker.MediaTypeOptions.Images,
-          allowsEditing: true,
+          // The array form, not MediaTypeOptions — that enum is deprecated in
+          // expo-image-picker 17 and no longer selects the video source.
+          mediaTypes: selectedType === 'video' ? ['videos'] : ['images'],
+          // Photos go to the app's own crop tool. The system one was being
+          // given aspect [4,5], and a fixed ratio is exactly what reduces the
+          // Android frame to corner-only handles and locks iOS to a square —
+          // so every posted photo was forced to 4:5 with no say in it. Video
+          // still uses the system trimmer, which has no such problem.
+          allowsEditing: selectedType === 'video',
           quality: 0.8,
-          aspect: !isDonation && selectedType === 'image' ? [4, 5] : undefined, // Social media aspect ratio
           videoMaxDuration: isDonation ? 60 : undefined,
         });
 
         if (!result.canceled && result.assets[0]) {
           const asset = result.assets[0];
-          setMediaFile({
+          const file = {
             uri: asset.uri,
             name: asset.fileName || `upload.${selectedType === 'video' ? 'mp4' : 'jpg'}`,
             type: asset.mimeType || (selectedType === 'video' ? 'video/mp4' : 'image/jpeg'),
             size: asset.fileSize,
-          });
+          };
+
+          if (selectedType === 'image') {
+            setCropTarget({ file, width: asset.width, height: asset.height });
+            return;
+          }
+
+          setMediaFile(file);
         }
       } else if (selectedType === 'audio' || selectedType === 'script') {
         const type = selectedType === 'audio' ? 'audio/*' : '*/*';
@@ -241,6 +265,8 @@ export function useMediaUpload({ isDonation = false, initialType = null }: UseMe
   };
 
   return {
+    cropTarget,
+    finishCrop,
     selectedType,
     selectType,
     mediaFile,

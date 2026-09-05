@@ -87,7 +87,7 @@ const listCommunities = async (filters = {}, page = 0, limit = 20, userId = null
   }
 
   const communities = await Community.find(query)
-    .populate('createdBy', 'name avatar isVerified')
+    .populate('createdBy', 'name avatar isBadgeVerified')
     .sort({ 'stats.memberCount': -1, createdAt: -1 })
     .skip(page * limit)
     .limit(limit)
@@ -136,7 +136,7 @@ const getUserCommunities = async (userId, page = 0, limit = 20) => {
       match: { isActive: true },
       populate: {
         path: 'createdBy',
-        select: 'name avatar isVerified'
+        select: 'name avatar isBadgeVerified'
       }
     })
     .sort({ lastActiveAt: -1 })
@@ -172,9 +172,9 @@ const getUserCommunities = async (userId, page = 0, limit = 20) => {
  */
 const getCommunity = async (id, userId = null) => {
   const community = await Community.findById(id)
-    .populate('createdBy', 'name avatar isVerified bio')
-    .populate('admins', 'name avatar isVerified')
-    .populate('moderators', 'name avatar isVerified')
+    .populate('createdBy', 'name avatar isBadgeVerified bio')
+    .populate('admins', 'name avatar isBadgeVerified')
+    .populate('moderators', 'name avatar isBadgeVerified')
     .lean();
 
   if (!community) {
@@ -196,7 +196,7 @@ const getCommunity = async (id, userId = null) => {
     if (membership && ['owner', 'admin'].includes(membership.role)) {
       await Community.populate(community, {
         path: 'pendingRequests',
-        select: 'name avatar isVerified bio'
+        select: 'name avatar isBadgeVerified bio'
       });
     }
   }
@@ -456,7 +456,7 @@ const rejectJoinRequest = async (communityId, userId, adminId) => {
  */
 const getCommunityMembers = async (communityId, page = 0, limit = 50) => {
   const members = await CommunityMember.find({ community: communityId })
-    .populate('user', 'name avatar isVerified bio roles industries')
+    .populate('user', 'name avatar isBadgeVerified bio roles industries')
     .sort({ role: 1, joinedAt: -1 })
     .skip(page * limit)
     .limit(limit)

@@ -15,7 +15,7 @@ const seedUsers = [
     industries: ['bollywood'],
     experience: 15,
     location: 'Mumbai',
-    isVerified: true,
+    isBadgeVerified: true,
     accountType: 'public',
     stats: {
       followersCount: 1245,
@@ -42,7 +42,7 @@ const seedUsers = [
     industries: ['bollywood', 'punjabi'],
     experience: 8,
     location: 'Delhi',
-    isVerified: false,
+    isBadgeVerified: false,
     accountType: 'public',
     stats: {
       followersCount: 876,
@@ -69,7 +69,7 @@ const seedUsers = [
     industries: ['tollywood', 'kollywood'],
     experience: 5,
     location: 'Hyderabad',
-    isVerified: false,
+    isBadgeVerified: false,
     accountType: 'public',
     stats: {
       followersCount: 2134,
@@ -96,7 +96,7 @@ const seedUsers = [
     industries: ['mollywood', 'kollywood'],
     experience: 12,
     location: 'Chennai',
-    isVerified: false,
+    isBadgeVerified: false,
     accountType: 'public',
     stats: {
       followersCount: 1567,
@@ -123,7 +123,7 @@ const seedUsers = [
     industries: ['bollywood', 'tollywood'],
     experience: 14,
     location: 'Mumbai',
-    isVerified: true,
+    isBadgeVerified: true,
     accountType: 'business',
     stats: {
       followersCount: 3421,
@@ -150,7 +150,7 @@ const seedUsers = [
     industries: ['bollywood', 'fashion'],
     experience: 6,
     location: 'Mumbai',
-    isVerified: false,
+    isBadgeVerified: false,
     accountType: 'private',
     stats: {
       followersCount: 543,

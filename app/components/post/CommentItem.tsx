@@ -69,7 +69,7 @@ export default function CommentItem(props: CommentItemProps) {
                 <Text style={[styles.userName, { color: colors.text }]}>
                   {comment.user?.name || 'Unknown User'}
                 </Text>
-                <VerifiedBadge visible={comment.user?.isVerified} size={12} />
+                <VerifiedBadge visible={comment.user?.isBadgeVerified} size={12} />
               </View>
             </TouchableOpacity>
             <Text style={[styles.text, { color: colors.text }]}>{comment.content}</Text>

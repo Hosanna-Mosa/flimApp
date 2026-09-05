@@ -193,7 +193,11 @@ const getFirebaseReport = async (days = 28) => {
     }
   };
 
-  const [totals, daily, screens, events, platforms, countries, realtime] = await Promise.all([
+  const [
+    totals, daily, screens, events, platforms, countries,
+    cities, devices, osVersions, appVersions, newVsReturning, languages,
+    stability, engagement, realtime,
+  ] = await Promise.all([
     run('totals', {
       dateRanges,
       metrics: [
@@ -242,11 +246,76 @@ const getFirebaseReport = async (days = 28) => {
       limit: 10,
     }, ['country'], ['activeUsers']),
 
+    run('cities', {
+      dateRanges,
+      dimensions: [{ name: 'city' }],
+      metrics: [{ name: 'activeUsers' }],
+      orderBys: [{ metric: { metricName: 'activeUsers' }, desc: true }],
+      limit: 10,
+    }, ['city'], ['activeUsers']),
+
+    run('devices', {
+      dateRanges,
+      dimensions: [{ name: 'deviceModel' }],
+      metrics: [{ name: 'activeUsers' }],
+      orderBys: [{ metric: { metricName: 'activeUsers' }, desc: true }],
+      limit: 10,
+    }, ['device'], ['activeUsers']),
+
+    run('osVersions', {
+      dateRanges,
+      dimensions: [{ name: 'operatingSystemVersion' }],
+      metrics: [{ name: 'activeUsers' }],
+      orderBys: [{ metric: { metricName: 'activeUsers' }, desc: true }],
+      limit: 10,
+    }, ['osVersion'], ['activeUsers']),
+
+    // Which builds people are actually on. The most direct answer to "has the
+    // release reached anyone yet", which no other report gives.
+    run('appVersions', {
+      dateRanges,
+      dimensions: [{ name: 'appVersion' }],
+      metrics: [{ name: 'activeUsers' }],
+      orderBys: [{ metric: { metricName: 'activeUsers' }, desc: true }],
+      limit: 10,
+    }, ['appVersion'], ['activeUsers']),
+
+    run('newVsReturning', {
+      dateRanges,
+      dimensions: [{ name: 'newVsReturning' }],
+      metrics: [{ name: 'activeUsers' }],
+    }, ['kind'], ['activeUsers']),
+
+    run('languages', {
+      dateRanges,
+      dimensions: [{ name: 'language' }],
+      metrics: [{ name: 'activeUsers' }],
+      orderBys: [{ metric: { metricName: 'activeUsers' }, desc: true }],
+      limit: 8,
+    }, ['language'], ['activeUsers']),
+
+    // Crashlytics has no read API, but GA4 carries the headline crash metrics,
+    // so app health can be shown here even though individual stack traces
+    // stay in the Firebase console.
+    run('stability', {
+      dateRanges,
+      metrics: [{ name: 'crashFreeUsersRate' }, { name: 'crashAffectedUsers' }],
+    }, [], ['crashFreeUsersRate', 'crashAffectedUsers']),
+
+    run('engagement', {
+      dateRanges,
+      metrics: [
+        { name: 'averageSessionDuration' },
+        { name: 'screenPageViewsPerSession' },
+        { name: 'engagementRate' },
+      ],
+    }, [], ['averageSessionDuration', 'screenPageViewsPerSession', 'engagementRate']),
+
     runRealtime(),
   ]);
 
   const t = totals.rows[0] || {};
-  const failures = [totals, daily, screens, events, platforms, countries]
+  const failures = [totals, daily, screens, events, platforms, countries, cities, devices, osVersions, appVersions, newVsReturning, languages, stability, engagement]
     .filter((r) => !r.ok)
     .map((r) => r.error);
 
@@ -271,6 +340,21 @@ const getFirebaseReport = async (days = 28) => {
     realtime,
     screens: screens.rows,
     events: events.rows,
+    cities: cities.rows,
+    devices: devices.rows,
+    osVersions: osVersions.rows,
+    appVersions: appVersions.rows,
+    newVsReturning: newVsReturning.rows,
+    languages: languages.rows,
+    stability: {
+      crashFreeRate: stability.rows[0]?.crashFreeUsersRate ?? null,
+      affectedUsers: stability.rows[0]?.crashAffectedUsers ?? 0,
+    },
+    engagement: {
+      avgSessionSeconds: Math.round(engagement.rows[0]?.averageSessionDuration || 0),
+      screensPerSession: Math.round((engagement.rows[0]?.screenPageViewsPerSession || 0) * 10) / 10,
+      engagementRate: Math.round((engagement.rows[0]?.engagementRate || 0) * 1000) / 10,
+    },
     platforms: platforms.rows,
     countries: countries.rows,
     /** True when realtime has traffic but the processed tables do not yet. */

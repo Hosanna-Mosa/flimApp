@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { ToastAndroid, Platform, Alert } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useDirectMessages } from '@/hooks/useDirectMessages';
 import ChatScreenShell from '@/components/chat/ChatScreenShell';
@@ -6,10 +7,55 @@ import ChatHeader from '@/components/chat/ChatHeader';
 import ChatMessageList from '@/components/chat/ChatMessageList';
 import BlockedConversationBanner from '@/components/chat/BlockedConversationBanner';
 import ChatInputBar from '@/components/chat/ChatInputBar';
+import MessageActionSheet, { MessageActionTarget } from '@/components/chat/MessageActionSheet';
+import AttachmentPickerSheet from '@/components/chat/AttachmentPickerSheet';
+import AttachmentPreview from '@/components/chat/AttachmentPreview';
+import ImageCropper from '@/components/chat/ImageCropper';
+import MediaViewer from '@/components/chat/MediaViewer';
+import ForwardSheet, { ForwardPayload } from '@/components/chat/ForwardSheet';
+import { DirectMessage, DirectMessageMedia, DirectMessageReply } from '@/components/chat/ChatMessageBubble';
+import { useChatAttachment } from '@/hooks/useChatAttachment';
 
 export default function ChatScreen() {
   const { userId, name } = useLocalSearchParams<{ userId: string; name: string }>();
   const c = useDirectMessages(userId, name);
+  const [actionTarget, setActionTarget] = useState<MessageActionTarget | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [viewing, setViewing] = useState<DirectMessageMedia | null>(null);
+  const [forwarding, setForwarding] = useState<ForwardPayload | null>(null);
+  const [replyTo, setReplyTo] = useState<DirectMessageReply | null>(null);
+  const attachment = useChatAttachment();
+
+  /**
+   * Upload first, then send. The message only exists once its media does —
+   * sending immediately would put a bubble in the list pointing at a URL that
+   * does not resolve yet, and there is no way to repair it if the upload then
+   * fails.
+   */
+  const handleSend = async (text: string) => {
+    const quoted = replyTo ?? undefined;
+
+    if (!attachment.pending) {
+      const sent = c.send(text, undefined, quoted);
+      if (sent) setReplyTo(null);
+      return sent;
+    }
+
+    const uploaded = await attachment.upload();
+    if (!uploaded) return false;
+
+    const ok = c.send(text, uploaded, quoted);
+    if (ok) {
+      attachment.clear();
+      setReplyTo(null);
+    }
+    return ok;
+  };
+
+  const confirmCopied = () => {
+    if (Platform.OS === 'android') ToastAndroid.show('Copied', ToastAndroid.SHORT);
+    else Alert.alert('Copied');
+  };
 
   return (
     // No KeyboardAvoidingView here: ChatInputBar lifts itself on Android.
@@ -22,11 +68,100 @@ export default function ChatScreen() {
         />
       }
     >
-      <ChatMessageList ref={c.listRef} messages={c.messages} peerId={userId} onDeleteMessage={c.deleteMessage} />
+      <ChatMessageList
+        ref={c.listRef}
+        messages={c.messages}
+        peerId={userId}
+        onMessageLongPress={(message: DirectMessage, isMine: boolean) =>
+          setActionTarget({ id: message.id, text: message.message, isMine })
+        }
+        onPressMedia={setViewing}
+      />
       {c.isConversationBlocked && (
         <BlockedConversationBanner isBlockedByMe={c.isBlockedByMe} onUnblock={c.unblock} />
       )}
-      <ChatInputBar onSend={c.send} disabled={c.isConversationBlocked} />
+      {attachment.pending && (
+        <AttachmentPreview
+          attachment={attachment.pending}
+          uploading={attachment.uploading}
+          progress={attachment.progress}
+          onRemove={attachment.clear}
+        />
+      )}
+
+      <ChatInputBar
+        onSend={handleSend}
+        disabled={c.isConversationBlocked}
+        loading={attachment.uploading}
+        hasAttachment={!!attachment.pending}
+        onAttachment={() => setPickerOpen(true)}
+        replyingTo={replyTo?.senderName}
+        onCancelReply={() => setReplyTo(null)}
+      />
+
+      <MediaViewer
+        media={viewing}
+        onClose={() => setViewing(null)}
+        onForward={(media) => setForwarding({ media })}
+      />
+
+      <ForwardSheet
+        payload={forwarding}
+        onClose={() => setForwarding(null)}
+        onSent={(name) => {
+          if (Platform.OS === 'android') ToastAndroid.show(`Sent to ${name}`, ToastAndroid.SHORT);
+          else Alert.alert('Forwarded', `Sent to ${name}`);
+        }}
+      />
+
+      {/* Opens straight after picking when the crop option was chosen.
+          Cancelling keeps the picture as taken rather than throwing away the
+          pick, since wanting the whole photo is a normal outcome of looking
+          at it in the crop tool. */}
+      <ImageCropper
+        uri={attachment.pending?.wantsCrop ? attachment.pending.uri : null}
+        width={attachment.pending?.width}
+        height={attachment.pending?.height}
+        onCancel={() =>
+          attachment.applyCrop(
+            attachment.pending!.uri,
+            attachment.pending?.width ?? 0,
+            attachment.pending?.height ?? 0
+          )
+        }
+        onDone={({ uri, width, height }) => attachment.applyCrop(uri, width, height)}
+      />
+
+      <AttachmentPickerSheet
+        visible={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onPick={(kind, edit) => {
+          setPickerOpen(false);
+          setTimeout(() => attachment.pick(kind, edit), 220);
+        }}
+      />
+
+      <MessageActionSheet
+        target={actionTarget}
+        onClose={() => setActionTarget(null)}
+        onDelete={c.deleteMessage}
+        onCopied={confirmCopied}
+        onReply={(t) => {
+          const source = c.messages.find((m) => m.id === t.id);
+          setReplyTo({
+            messageId: t.id,
+            senderName: t.isMine ? 'You' : c.userName,
+            // The quote is a snapshot, so a photo with no caption still needs
+            // something readable in it.
+            preview: t.text || undefined,
+            mediaType: source?.media?.type,
+          });
+        }}
+        onForward={(t) => {
+          const source = c.messages.find((m) => m.id === t.id);
+          setForwarding({ content: t.text, media: source?.media });
+        }}
+      />
     </ChatScreenShell>
   );
 }

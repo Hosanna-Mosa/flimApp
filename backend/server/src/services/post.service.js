@@ -126,7 +126,7 @@ const getDonations = async (page = 0, limit = 20, viewerId = null) => {
     .sort({ createdAt: -1 })
     .skip(page * limit)
     .limit(limit)
-    .populate('author', 'name avatar isVerified roles')
+    .populate('author', 'name avatar isBadgeVerified roles')
     .lean();
 };
 
@@ -138,7 +138,7 @@ const getDonations = async (page = 0, limit = 20, viewerId = null) => {
  */
 const getPostById = async (postId, userId = null) => {
   const post = await Post.findById(postId)
-    .populate('author', 'name avatar isVerified roles bio stats')
+    .populate('author', 'name avatar isBadgeVerified roles bio stats')
     .lean();
 
   if (!post) {

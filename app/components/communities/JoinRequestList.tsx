@@ -36,7 +36,7 @@ export default function JoinRequestList({
             id: item._id,
             name: item.name,
             avatar: item.avatar,
-            isVerified: item.isVerified,
+            isBadgeVerified: item.isBadgeVerified,
           }}
           subtitle={item.bio || undefined}
           style={styles.item}

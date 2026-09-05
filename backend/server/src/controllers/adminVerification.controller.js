@@ -39,7 +39,7 @@ const getRequests = async (req, res, next) => {
 
     const total = await VerificationRequest.countDocuments(query);
     const requests = await VerificationRequest.find(query)
-      .populate('user', 'name email phone avatar isVerified roles industries')
+      .populate('user', 'name email phone avatar isBadgeVerified roles industries')
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(Number(limit));
@@ -54,7 +54,7 @@ const getRequests = async (req, res, next) => {
         email: req.user?.email,
         phone: req.user?.phone,
         avatar: req.user?.avatar,
-        isVerified: req.user?.isVerified,
+        isBadgeVerified: req.user?.isBadgeVerified,
         roles: req.user?.roles,
         industries: req.user?.industries,
       },
@@ -88,7 +88,7 @@ const getRequests = async (req, res, next) => {
 const getRequestById = async (req, res, next) => {
   try {
     const request = await VerificationRequest.findById(req.params.id)
-      .populate('user', 'name email phone avatar isVerified roles industries bio createdAt');
+      .populate('user', 'name email phone avatar isBadgeVerified roles industries bio createdAt');
       
     if (!request) {
       const err = new Error('Request not found');
@@ -109,7 +109,7 @@ const getRequestById = async (req, res, next) => {
         roles: request.user?.roles,
         industries: request.user?.industries,
         bio: request.user?.bio,
-        isVerified: request.user?.isVerified,
+        isBadgeVerified: request.user?.isBadgeVerified,
         createdAt: request.user?.createdAt,
       },
       verificationType: request.verificationType,
@@ -158,7 +158,7 @@ const approve = async (req, res, next) => {
     
     if (user) {
       user.verificationStatus = 'approved_docs';
-      // user.isVerified remains false until payment
+      // user.isBadgeVerified remains false until payment
       await user.save();
     } else {
       console.error(`[Admin Verification] User not found: ${userId}`);
@@ -212,7 +212,7 @@ const reject = async (req, res, next) => {
     
     if (user) {
       user.verificationStatus = 'rejected';
-      user.isVerified = false;
+      user.isBadgeVerified = false;
       await user.save();
     } else {
       console.error(`[Admin Verification] User not found: ${userId}`);
@@ -293,7 +293,7 @@ const getSubscriptions = async (req, res, next) => {
 
     const total = await Subscription.countDocuments(query);
     const subscriptions = await Subscription.find(query)
-      .populate('user', 'name email avatar verificationStatus isVerified')
+      .populate('user', 'name email avatar verificationStatus isBadgeVerified')
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(Number(limit));
@@ -307,7 +307,7 @@ const getSubscriptions = async (req, res, next) => {
         email: sub.user?.email,
         avatar: sub.user?.avatar,
         verificationStatus: sub.user?.verificationStatus,
-        isVerified: sub.user?.isVerified
+        isBadgeVerified: sub.user?.isBadgeVerified
       },
       planType: sub.planType,
       amount: sub.amount,

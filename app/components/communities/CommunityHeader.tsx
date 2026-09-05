@@ -34,7 +34,7 @@ export default function CommunityHeader({ community, onJoin }: CommunityHeaderPr
         <View style={styles.titleColumn}>
           <View style={styles.titleRow}>
             <Text style={[styles.name, { color: colors.text }]}>{community.name}</Text>
-            {community.isVerified && (
+            {community.isBadgeVerified && (
               <ShieldCheck size={16} color={colors.primary} style={styles.verified} />
             )}
           </View>

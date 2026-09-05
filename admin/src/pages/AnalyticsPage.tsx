@@ -121,8 +121,8 @@ export default function AnalyticsPage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Analytics</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Worked out from what the app already records, so these numbers cover your whole history —
-            not just since tracking was switched on.
+            Two sources, shown separately: what your own database knows, and what the app itself
+            reports to Firebase.
           </p>
         </div>
         <div className="flex gap-1.5">
@@ -178,6 +178,14 @@ export default function AnalyticsPage() {
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Verified</p>
           <p className="mt-1 text-2xl font-semibold tabular-nums">{overview.users.verified}</p>
         </Card>
+      </div>
+
+      <div className="border-t border-border pt-6">
+        <h2 className="text-lg font-semibold">From your own records</h2>
+        <p className="mt-0.5 text-sm text-muted-foreground">
+          Worked out from what the app already stores, so these cover the whole history — not just
+          since tracking was switched on.
+        </p>
       </div>
 
       {/* Signups */}
@@ -332,35 +340,10 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Firebase */}
-      <FirebasePanel report={firebase} />
+      <div className="border-t border-border pt-6">
+        <FirebasePanel report={firebase} />
+      </div>
 
-      {/* Client events */}
-      <Card className="p-5">
-        <h2 className="font-semibold">In-app events</h2>
-        <p className="mb-4 mt-0.5 text-sm text-muted-foreground">
-          Behaviour the server cannot infer — screens opened, flows abandoned. Reported by the app.
-        </p>
-        {!events || events.total === 0 ? (
-          <p className="rounded-md bg-muted/50 p-3 text-sm text-muted-foreground">
-            No events yet. These start arriving once a build with event tracking is released —
-            everything above works without it.
-          </p>
-        ) : (
-          <div className="space-y-2">
-            {events.top.map((e) => (
-              <div key={e.name} className="flex items-center justify-between gap-3 text-sm">
-                <code className="text-xs">{e.name}</code>
-                <span className="flex items-baseline gap-3">
-                  <span className="text-xs text-muted-foreground tabular-nums">
-                    {e.users} users
-                  </span>
-                  <span className="font-medium tabular-nums">{e.count}</span>
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
     </div>
   );
 }

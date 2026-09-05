@@ -97,7 +97,7 @@ class ShareService {
       const skip = page * limit;
 
       const shares = await Share.find({ post: postId })
-        .populate('user', 'name avatar isVerified roles')
+        .populate('user', 'name avatar isBadgeVerified roles')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -138,7 +138,7 @@ class ShareService {
           path: 'post',
           populate: {
             path: 'author',
-            select: 'name avatar isVerified roles',
+            select: 'name avatar isBadgeVerified roles',
           },
         })
         .sort({ createdAt: -1 })

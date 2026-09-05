@@ -11,7 +11,7 @@ export interface ConversationItem {
     name: string;
     avatar: string;
     isOnline: boolean;
-    isVerified: boolean;
+    isBadgeVerified: boolean;
   };
   lastMessage: string;
   lastMessageTime: string;
@@ -56,7 +56,7 @@ export function useConversations() {
               name: item.peer.name,
               avatar: item.peer.avatar,
               isOnline: false,
-              isVerified: item.peer.isVerified,
+              isBadgeVerified: item.peer.isBadgeVerified,
             },
             lastMessage: item.lastMessage.content,
             lastMessageTime: formatDateTime(item.lastMessage.createdAt),

@@ -22,7 +22,7 @@ const BOOST_PLAN_DETAILS = {
 const getMe = async (userId) => User.findById(userId).select('-password -refreshTokens');
 
 // Fields a user is permitted to change on their own profile.
-// Anything outside this list (walletBalance, isVerified, status, boostedUntil,
+// Anything outside this list (walletBalance, isBadgeVerified, status, boostedUntil,
 // verifiedUntil, refreshTokens, ...) is dropped before it reaches the database.
 const SELF_EDITABLE_FIELDS = [
   'name',
@@ -155,7 +155,7 @@ const getById = async (id, viewerId = null) => {
         name: user.name,
         avatar: user.avatar,
         accountType: user.accountType,
-        isVerified: user.isVerified,
+        isBadgeVerified: user.isBadgeVerified,
         // Always show stats (like Instagram, Twitter, etc.)
         stats: user.stats || {
           followersCount: 0,
@@ -234,7 +234,7 @@ const search = async ({ q, roles, industries }, currentUserId) => {
     }
   }
 
-  const results = await User.find(query).select('name username avatar roles industries location bio isVerified isOnline');
+  const results = await User.find(query).select('name username avatar roles industries location bio isBadgeVerified isOnline');
 
   // Score and sort results by relevance
   if (results.length > 0) {

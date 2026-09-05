@@ -134,7 +134,7 @@ export default function UserDetailPage() {
                 <h2 className="text-xl font-bold">{user.name}</h2>
                 <p className="text-muted-foreground font-mono text-xs">ID: {user._id}</p>
                 <div className="flex items-center justify-center gap-2 mt-3">
-                  {user.isVerified && (
+                  {user.isBadgeVerified && (
                     <Badge className="bg-blue-500 hover:bg-blue-600 border-none gap-1">
                       <ShieldCheck className="h-3 w-3" /> Expert
                     </Badge>
@@ -279,10 +279,10 @@ export default function UserDetailPage() {
                         <ShieldCheck className="h-5 w-5 text-blue-500" />
                         <div>
                           <p className="text-sm font-semibold">Expert Badge</p>
-                          <p className="text-xs text-muted-foreground">{user.isVerified ? 'Currently Active' : 'Not Verified'}</p>
+                          <p className="text-xs text-muted-foreground">{user.isBadgeVerified ? 'Currently Active' : 'Not Verified'}</p>
                         </div>
                       </div>
-                      <Badge variant={user.isVerified ? 'default' : 'outline'}>{user.isVerified ? 'YES' : 'NO'}</Badge>
+                      <Badge variant={user.isBadgeVerified ? 'default' : 'outline'}>{user.isBadgeVerified ? 'YES' : 'NO'}</Badge>
                     </div>
 
                     <div className={cn(

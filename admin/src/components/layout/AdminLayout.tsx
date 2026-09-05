@@ -71,11 +71,22 @@ export function AdminLayout() {
         <div className="flex h-full flex-col">
           {/* Logo */}
           <div className="flex h-16 items-center justify-between border-b border-border px-6">
-            <div className="flex items-center gap-2 mb-8 px-2">
-              <div className="h-8 w-8 rounded-lg overflow-hidden border border-border bg-white p-0.5">
-                <img src="/icon_new.jpeg" alt="Flimy Logo" className="h-full w-full object-contain" />
+            {/* mb-8 used to sit here, inside a fixed h-16 row that centres its
+                children — it pushed the logo up and out of the header. The old
+                name was short enough to hide it. Stacked instead of one line so
+                the full product name fits the sidebar at any width. */}
+            <div className="flex min-w-0 items-center gap-2.5">
+              <div className="h-8 w-8 shrink-0 overflow-hidden rounded-lg border border-border bg-white p-0.5">
+                <img src="/icon_new.jpeg" alt="FilmyConnect logo" className="h-full w-full object-contain" />
               </div>
-              <span className="font-bold text-xl text-foreground tracking-tight">Flimy Verify</span>
+              <div className="min-w-0 leading-tight">
+                <div className="truncate font-bold tracking-tight text-foreground">
+                  FilmyConnect
+                </div>
+                <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Admin
+                </div>
+              </div>
             </div>
             <button
               className="lg:hidden text-muted-foreground hover:text-foreground"
@@ -150,7 +161,7 @@ export function AdminLayout() {
           </button>
           <div className="flex items-center gap-2">
             <BadgeCheck className="h-6 w-6 text-primary" />
-            <span className="font-semibold text-foreground">Flimy Verify</span>
+            <span className="font-semibold text-foreground">FilmyConnect Admin</span>
           </div>
         </header>
 

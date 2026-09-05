@@ -18,7 +18,7 @@ export interface User {
   roles: string[];
   industries: Industry[];
   bio: string | null;
-  isVerified: boolean;
+  isBadgeVerified: boolean;
   createdAt: string;
 }
 
@@ -79,7 +79,7 @@ export interface Subscription {
     email: string;
     avatar: string | null;
     verificationStatus: string;
-    isVerified: boolean;
+    isBadgeVerified: boolean;
   };
   planType: '1_MONTH' | '3_MONTHS' | '6_MONTHS' | '9_MONTHS';
   amount: number;
@@ -426,6 +426,18 @@ export interface FirebaseReport {
     screenViews: number;
     screens: { screen: string; activeUsers: number; screenPageViews: number }[];
   } | null;
+  cities?: { city: string; activeUsers: number }[];
+  devices?: { device: string; activeUsers: number }[];
+  osVersions?: { osVersion: string; activeUsers: number }[];
+  appVersions?: { appVersion: string; activeUsers: number }[];
+  newVsReturning?: { kind: string; activeUsers: number }[];
+  languages?: { language: string; activeUsers: number }[];
+  stability?: { crashFreeRate: number | null; affectedUsers: number };
+  engagement?: {
+    avgSessionSeconds: number;
+    screensPerSession: number;
+    engagementRate: number;
+  };
   /** Realtime has traffic but the processed tables do not yet. */
   stillProcessing?: boolean;
   errors?: string[];

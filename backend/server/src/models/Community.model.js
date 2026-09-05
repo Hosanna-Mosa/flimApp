@@ -37,7 +37,7 @@ const CommunitySchema = new Schema(
       enum: ['public', 'private', 'invite-only'], 
       default: 'public' 
     },
-    isVerified: { type: Boolean, default: false },
+    isBadgeVerified: { type: Boolean, default: false },
     
     // Management
     createdBy: { type: Types.ObjectId, ref: 'User', required: true },

@@ -24,7 +24,7 @@ export default function PostAuthorHeader({ author, onPressAuthor, onPressMore }:
       <TouchableOpacity style={styles.userInfo} onPress={() => onPressAuthor(author._id)}>
         <View style={styles.nameRow}>
           <Text style={[styles.userName, { color: colors.text }]}>{author.name || 'Unknown User'}</Text>
-          <VerifiedBadge visible={author.isVerified} size={16} />
+          <VerifiedBadge visible={author.isBadgeVerified} size={16} />
         </View>
         <Text style={[styles.role, { color: colors.textSecondary }]}>
           {author.roles?.slice(0, 2).join(' • ')}

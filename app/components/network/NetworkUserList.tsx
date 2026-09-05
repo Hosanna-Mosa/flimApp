@@ -55,7 +55,7 @@ export default function NetworkUserList({
             id: item._id || item.id,
             name: item.name,
             avatar: item.avatar,
-            isVerified: item.isVerified,
+            isBadgeVerified: item.isBadgeVerified,
           }}
           avatarSize={50}
           subtitle={

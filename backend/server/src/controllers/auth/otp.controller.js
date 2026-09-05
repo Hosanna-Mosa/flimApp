@@ -129,13 +129,17 @@ const verifyOtp = async (req, res, next) => {
         password: finalPassword,
         roles: ['actor'], // Default role, user can update later
         industries: ['bollywood'], // Default industry
-        isVerified: true, // Phone verified
+        // The OTP just proved this phone number. That is what gets recorded —
+        // isBadgeVerified stays false, since the badge is granted only by
+        // adminVerification.approve after documents pass and the subscription
+        // is paid. Conflating the two is what gave every signup a free badge.
+        isPhoneVerified: true,
       });
     } else {
-      // Existing user - ensure isVerified matches reality if we just did OTP
-      if (!user.isVerified) {
-        user.isVerified = true;
-        await user.save();
+      // Signing in confirms the phone again; it says nothing about the badge,
+      // which is left exactly as the admin left it.
+      if (!user.isPhoneVerified) {
+        user.isPhoneVerified = true;
       }
     }
 

@@ -10,6 +10,7 @@ import CaptionField from '@/components/media/CaptionField';
 import UploadProgressBar from '@/components/media/UploadProgressBar';
 import { useMediaUpload } from '@/hooks/useMediaUpload';
 import { UPLOAD_OPTIONS, capitalizeType } from '@/constants/uploadOptions';
+import ImageCropper from '@/components/chat/ImageCropper';
 
 export default function UploadScreen() {
   const u = useMediaUpload();
@@ -79,6 +80,15 @@ export default function UploadScreen() {
           {u.uploading && <UploadProgressBar progress={u.uploadProgress} />}
         </View>
       )}
+
+      <ImageCropper
+        uri={u.cropTarget?.file.uri ?? null}
+        width={u.cropTarget?.width}
+        height={u.cropTarget?.height}
+        onCancel={() => u.finishCrop(u.cropTarget!.file.uri)}
+        onDone={({ uri }) => u.finishCrop(uri)}
+      />
+
     </Screen>
   );
 }

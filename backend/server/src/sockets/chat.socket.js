@@ -30,10 +30,16 @@ const registerChatHandlers = (io) => {
     }
 
     socket.on('send_message', async (data) => {
-      const { to, content } = data;
+      const { to, content, media, replyTo } = data;
 
       try {
-        if (!to || !content) {
+        // A photo needs no caption, so either half is enough — but returning
+        // silently on neither, as this did for missing content, leaves the
+        // sender watching a message that never arrives and no error to explain
+        // it. The client is told instead.
+        if (!to) return;
+        if (!content?.trim() && !media?.url) {
+          socket.emit('message_error', { message: 'Send some text or an attachment' });
           return;
         }
 
@@ -43,11 +49,36 @@ const registerChatHandlers = (io) => {
           senderId: socket.userId,
           recipientId: recipientId,
           content,
+          // Whitelisted rather than passed through: this arrives from the
+          // client, which uploads to Cloudinary itself.
+          media: media?.url
+            ? {
+                url: media.url,
+                type: media.type === 'video' ? 'video' : 'image',
+                thumbnail: media.thumbnail,
+                publicId: media.publicId,
+                size: media.size,
+                width: media.width,
+                height: media.height,
+                duration: media.duration,
+              }
+            : undefined,
+          // Whitelisted like media: the quote snapshot arrives from the client.
+          replyTo: replyTo?.messageId
+            ? {
+                messageId: replyTo.messageId,
+                senderName: String(replyTo.senderName || '').slice(0, 80),
+                preview: String(replyTo.preview || '').slice(0, 200),
+                mediaType: ['image', 'video'].includes(replyTo.mediaType)
+                  ? replyTo.mediaType
+                  : undefined,
+              }
+            : undefined,
         });
         
         // Populate sender and recipient before emitting (same as REST API)
-        await message.populate('sender', 'name avatar isVerified');
-        await message.populate('recipient', 'name avatar isVerified');
+        await message.populate('sender', 'name avatar isBadgeVerified');
+        await message.populate('recipient', 'name avatar isBadgeVerified');
         
 
         const roomClients = io.sockets.adapter.rooms.get(recipientId);
