@@ -10,6 +10,7 @@ import CaptionField from '@/components/media/CaptionField';
 import SubmitFooter from '@/components/media/SubmitFooter';
 import { useMediaUpload } from '@/hooks/useMediaUpload';
 import { DONATION_UPLOAD_OPTIONS, capitalizeType } from '@/constants/uploadOptions';
+import ImageCropper from '@/components/chat/ImageCropper';
 
 export default function CreateDonationScreen() {
   const router = useRouter();
@@ -58,6 +59,15 @@ export default function CreateDonationScreen() {
           editable={!u.uploading}
         />
       </View>
+
+      <ImageCropper
+        uri={u.cropTarget?.file.uri ?? null}
+        width={u.cropTarget?.width}
+        height={u.cropTarget?.height}
+        onCancel={() => u.finishCrop(u.cropTarget!.file.uri)}
+        onDone={({ uri }) => u.finishCrop(uri)}
+      />
+
     </Screen>
   );
 }
