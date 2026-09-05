@@ -61,7 +61,13 @@ export function useChatAttachment() {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
 
-  const pick = async (kind: 'image' | 'video') => {
+  /**
+   * @param edit Opens the system crop tool for a photo, or the trim tool for a
+   *   video. Off by default and offered as a separate choice rather than always
+   *   on, because iOS forces a square crop — `aspect` is Android-only — so
+   *   enabling it for everyone would quietly square every portrait photo.
+   */
+  const pick = async (kind: 'image' | 'video', edit = false) => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
       Alert.alert(
@@ -76,6 +82,11 @@ export function useChatAttachment() {
       // expo-image-picker 17 and choosing Video still opened the photo picker.
       mediaTypes: kind === 'video' ? ['videos'] : ['images'],
       quality: kind === 'image' ? 0.8 : undefined,
+      allowsEditing: edit,
+      // Android honours a free rectangle; iOS ignores this and crops square
+      // regardless. Passing it anyway means Android users are not forced into
+      // a square just because iOS is.
+      ...(edit && kind === 'image' ? { aspect: undefined } : {}),
     });
 
     if (result.canceled || !result.assets?.length) return;

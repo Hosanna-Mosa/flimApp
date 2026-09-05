@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { ImageIcon, Video } from 'lucide-react-native';
+import { Crop, ImageIcon, Scissors, Video } from 'lucide-react-native';
 import BottomSheet from '@/components/ui/BottomSheet';
 import { useTheme } from '@/contexts/ThemeContext';
 import { CHAT_LIMITS } from '@/hooks/useChatAttachment';
@@ -8,7 +8,7 @@ import { CHAT_LIMITS } from '@/hooks/useChatAttachment';
 interface AttachmentPickerSheetProps {
   visible: boolean;
   onClose: () => void;
-  onPick: (kind: 'image' | 'video') => void;
+  onPick: (kind: 'image' | 'video', edit: boolean) => void;
 }
 
 const mb = (bytes: number) => Math.round(bytes / (1024 * 1024));
@@ -22,18 +22,46 @@ export default function AttachmentPickerSheet({
   const { colors } = useTheme();
 
   const options = [
-    { kind: 'image' as const, label: 'Photo', icon: ImageIcon, limit: CHAT_LIMITS.image },
-    { kind: 'video' as const, label: 'Video', icon: Video, limit: CHAT_LIMITS.video },
+    {
+      kind: 'image' as const,
+      edit: false,
+      label: 'Photo',
+      hint: `Full frame, up to ${mb(CHAT_LIMITS.image)} MB`,
+      icon: ImageIcon,
+    },
+    {
+      kind: 'image' as const,
+      edit: true,
+      label: 'Photo, cropped',
+      // Said plainly: iOS gives no choice about the shape, and finding that
+      // out only after the crop tool opens is worse than being told.
+      hint: 'Choose the part you want — square on iPhone',
+      icon: Crop,
+    },
+    {
+      kind: 'video' as const,
+      edit: false,
+      label: 'Video',
+      hint: `Whole clip, up to ${mb(CHAT_LIMITS.video)} MB`,
+      icon: Video,
+    },
+    {
+      kind: 'video' as const,
+      edit: true,
+      label: 'Video, trimmed',
+      hint: 'Pick the part to send',
+      icon: Scissors,
+    },
   ];
 
   return (
     <BottomSheet visible={visible} onClose={onClose} title="Attach" scroll={false}>
       <View style={styles.rows}>
-        {options.map(({ kind, label, icon: Icon, limit }) => (
+        {options.map(({ kind, edit, label, hint, icon: Icon }) => (
           <TouchableOpacity
-            key={kind}
+            key={`${kind}-${edit}`}
             style={[styles.row, { borderColor: colors.border }]}
-            onPress={() => onPick(kind)}
+            onPress={() => onPick(kind, edit)}
             activeOpacity={0.6}
           >
             <View style={[styles.iconWrap, { backgroundColor: colors.surface }]}>
@@ -41,9 +69,7 @@ export default function AttachmentPickerSheet({
             </View>
             <View style={styles.labels}>
               <Text style={[styles.label, { color: colors.text }]}>{label}</Text>
-              <Text style={[styles.hint, { color: colors.textSecondary }]}>
-                Up to {mb(limit)} MB
-              </Text>
+              <Text style={[styles.hint, { color: colors.textSecondary }]}>{hint}</Text>
             </View>
           </TouchableOpacity>
         ))}

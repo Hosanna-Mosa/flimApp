@@ -155,7 +155,7 @@ export function useGroupChat(communityId: string | undefined, groupId: string | 
    * version had no limit at all: a 500MB video would upload for minutes and
    * then be rejected by Cloudinary.
    */
-  const pickMedia = async (kind: 'image' | 'video', replyTo?: GroupReply) => {
+  const pickMedia = async (kind: 'image' | 'video', edit = false, replyTo?: GroupReply) => {
     try {
       const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
@@ -169,6 +169,9 @@ export function useGroupChat(communityId: string | undefined, groupId: string | 
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: kind === 'video' ? ['videos'] : ['images'],
         quality: kind === 'image' ? 0.8 : undefined,
+        // Opt-in, matching direct chat: iOS crops square with no way to widen
+        // it, so this cannot be on for everyone without squaring every photo.
+        allowsEditing: edit,
       });
 
       if (result.canceled || !result.assets?.[0] || !token) return;
@@ -235,7 +238,9 @@ export function useGroupChat(communityId: string | undefined, groupId: string | 
   const openAttachmentMenu = () => {
     Alert.alert('Add to group', undefined, [
       { text: 'Photo', onPress: () => pickMedia('image') },
+      { text: 'Photo, cropped', onPress: () => pickMedia('image', true) },
       { text: 'Video', onPress: () => pickMedia('video') },
+      { text: 'Video, trimmed', onPress: () => pickMedia('video', true) },
       {
         text: 'Create Poll',
         onPress: () =>

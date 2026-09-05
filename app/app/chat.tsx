@@ -116,9 +116,9 @@ export default function ChatScreen() {
       <AttachmentPickerSheet
         visible={pickerOpen}
         onClose={() => setPickerOpen(false)}
-        onPick={(kind) => {
+        onPick={(kind, edit) => {
           setPickerOpen(false);
-          setTimeout(() => attachment.pick(kind), 220);
+          setTimeout(() => attachment.pick(kind, edit), 220);
         }}
       />
 
