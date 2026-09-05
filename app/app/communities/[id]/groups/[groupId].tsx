@@ -13,6 +13,7 @@ import ChatInputBar from '@/components/chat/ChatInputBar';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import MessageActionSheet, { MessageActionTarget } from '@/components/chat/MessageActionSheet';
 import MediaViewer from '@/components/chat/MediaViewer';
+import ImageCropper from '@/components/chat/ImageCropper';
 import ForwardSheet, { ForwardPayload } from '@/components/chat/ForwardSheet';
 import { GroupReply } from '@/hooks/useGroupChat';
 import { DirectMessageMedia } from '@/components/chat/ChatMessageBubble';
@@ -131,6 +132,20 @@ export default function GroupChatScreen() {
               : undefined,
           });
         }}
+      />
+
+      {/* Same crop tool as direct chat, so the two do not diverge again. */}
+      <ImageCropper
+        uri={g.cropTarget?.uri ?? null}
+        width={g.cropTarget?.width}
+        height={g.cropTarget?.height}
+        onCancel={() => {
+          // Cancelling keeps the picture as taken rather than discarding the
+          // pick, matching direct chat.
+          const t = g.cropTarget;
+          if (t) g.finishCrop(t.uri, t.width ?? 0, t.height ?? 0);
+        }}
+        onDone={({ uri, width, height }) => g.finishCrop(uri, width, height)}
       />
 
       <MediaViewer

@@ -155,49 +155,31 @@ export function useGroupChat(communityId: string | undefined, groupId: string | 
    * version had no limit at all: a 500MB video would upload for minutes and
    * then be rejected by Cloudinary.
    */
-  const pickMedia = async (kind: 'image' | 'video', edit = false, replyTo?: GroupReply) => {
+  /**
+   * Chosen but not yet sent, while the crop tool is open. Group posting used to
+   * upload the moment a file was picked, which left nowhere for a crop step to
+   * happen.
+   */
+  const [cropTarget, setCropTarget] = useState<{
+    uri: string;
+    width?: number;
+    height?: number;
+    name: string;
+    size?: number;
+    replyTo?: GroupReply;
+  } | null>(null);
+
+  const uploadAndPost = async (
+    kind: 'image' | 'video',
+    asset: { uri: string; name: string; size?: number; width?: number; height?: number; duration?: number },
+    replyTo?: GroupReply
+  ) => {
     try {
-      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!permission.granted) {
-        Alert.alert(
-          'Permission needed',
-          `Allow access to your ${kind === 'video' ? 'videos' : 'photos'} to attach one.`
-        );
-        return;
-      }
-
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: kind === 'video' ? ['videos'] : ['images'],
-        quality: kind === 'image' ? 0.8 : undefined,
-        // Opt-in, matching direct chat: iOS crops square with no way to widen
-        // it, so this cannot be on for everyone without squaring every photo.
-        allowsEditing: edit,
-      });
-
-      if (result.canceled || !result.assets?.[0] || !token) return;
-      const asset = result.assets[0];
-      const limit = CHAT_LIMITS[kind];
-
-      if (asset.fileSize && asset.fileSize > limit) {
-        Alert.alert(
-          `${kind === 'video' ? 'Video' : 'Photo'} is too large`,
-          `This one is ${Math.round(asset.fileSize / (1024 * 1024))} MB and the limit is ` +
-            `${Math.round(limit / (1024 * 1024))} MB. Pick a ` +
-            `${kind === 'video' ? 'shorter clip' : 'smaller photo'}, or compress it first.`
-        );
-        return;
-      }
-
       setSending(true);
       const uploadResult = await uploadMediaToCloudinary(
-        {
-          uri: asset.uri,
-          name: asset.fileName || (kind === 'video' ? 'video.mp4' : 'image.jpg'),
-          type: asset.mimeType,
-          size: asset.fileSize ?? undefined,
-        },
+        { uri: asset.uri, name: asset.name, size: asset.size },
         kind,
-        token
+        token!
       );
 
       const postResult = (await api.createCommunityPost(
@@ -215,14 +197,14 @@ export function useGroupChat(communityId: string | undefined, groupId: string | 
               type: kind,
               thumbnail: kind === 'video' ? posterFrameFor(uploadResult.url) : undefined,
               publicId: uploadResult.publicId,
-              size: uploadResult.bytes || asset.fileSize,
+              size: uploadResult.bytes || asset.size,
               width: uploadResult.width || asset.width,
               height: uploadResult.height || asset.height,
-              duration: uploadResult.duration || asset.duration || undefined,
+              duration: uploadResult.duration || asset.duration,
             },
           ],
         },
-        token
+        token!
       )) as CommunityPost;
       addPost(postResult);
     } catch (error: any) {
@@ -230,6 +212,88 @@ export function useGroupChat(communityId: string | undefined, groupId: string | 
     } finally {
       setSending(false);
     }
+  };
+
+  /**
+   * Size is checked before the upload starts, matching direct chat. The old
+   * version had no limit at all: a 500MB video would upload for minutes and
+   * then be rejected by Cloudinary.
+   */
+  const pickMedia = async (kind: 'image' | 'video', edit = false, replyTo?: GroupReply) => {
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert(
+          'Permission needed',
+          `Allow access to your ${kind === 'video' ? 'videos' : 'photos'} to attach one.`
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: kind === 'video' ? ['videos'] : ['images'],
+        quality: kind === 'image' ? 0.8 : undefined,
+        // Photos go through the app's own crop tool, which keeps the picture's
+        // ratio and offers others. The system one is a square-locked rectangle
+        // on iOS. Video still uses the system trimmer, which is fine.
+        allowsEditing: kind === 'video' ? edit : false,
+      });
+
+      if (result.canceled || !result.assets?.[0] || !token) return;
+      const asset = result.assets[0];
+      const limit = CHAT_LIMITS[kind];
+
+      if (asset.fileSize && asset.fileSize > limit) {
+        Alert.alert(
+          `${kind === 'video' ? 'Video' : 'Photo'} is too large`,
+          `This one is ${Math.round(asset.fileSize / (1024 * 1024))} MB and the limit is ` +
+            `${Math.round(limit / (1024 * 1024))} MB. Pick a ` +
+            `${kind === 'video' ? 'shorter clip' : 'smaller photo'}, or compress it first.`
+        );
+        return;
+      }
+
+      const name = asset.fileName || (kind === 'video' ? 'video.mp4' : 'image.jpg');
+
+      if (kind === 'image' && edit) {
+        setCropTarget({
+          uri: asset.uri,
+          width: asset.width,
+          height: asset.height,
+          name,
+          size: asset.fileSize ?? undefined,
+          replyTo,
+        });
+        return;
+      }
+
+      await uploadAndPost(
+        kind,
+        {
+          uri: asset.uri,
+          name,
+          size: asset.fileSize ?? undefined,
+          width: asset.width,
+          height: asset.height,
+          duration: asset.duration ?? undefined,
+        },
+        replyTo
+      );
+    } catch (error: any) {
+      Alert.alert('Error', error?.message || `Failed to pick ${kind}`);
+    }
+  };
+
+  /** Called when the crop tool finishes, or is cancelled with the original. */
+  const finishCrop = async (uri: string, width: number, height: number) => {
+    const target = cropTarget;
+    setCropTarget(null);
+    if (!target) return;
+    await uploadAndPost(
+      'image',
+      { uri, name: target.name, size: target.size, width, height },
+      target.replyTo
+    );
   };
 
   // The (+) button: photo or poll. Polls are composed on the community's
@@ -344,6 +408,9 @@ export function useGroupChat(communityId: string | undefined, groupId: string | 
     send,
     openAttachmentMenu,
     pickMedia,
+    cropTarget,
+    finishCrop,
+    cancelCrop: () => setCropTarget(null),
     vote,
     join,
     deleteMessage,
