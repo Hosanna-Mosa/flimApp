@@ -194,7 +194,10 @@ const replyToTicket = async (req, res, next) => {
           .replace(/'/g, '&#39;');
 
       try {
-        await sendEmail({
+        // sendEmail reports failure by returning null rather than throwing, so
+        // the catch below never fired: emailDelivered came back true even when
+        // the send had failed — both to the admin and in the audit record.
+        const info = await sendEmail({
           to: ticket.userId.email,
           subject: 'Re: your FilmyConnect support request',
           text: `${text}\n\n— FilmyConnect Support\n\nYour original request:\n${ticket.reason}`,
@@ -207,7 +210,10 @@ const replyToTicket = async (req, res, next) => {
   <p style="color:#888; font-size:12px;"><strong>Your original request:</strong><br/>${escapeHtml(ticket.reason)}</p>
 </div>`,
         });
-        emailDelivered = true;
+        emailDelivered = info !== null;
+        if (!info) {
+          console.error('[Support] Reply saved but email failed to send');
+        }
       } catch (mailErr) {
         console.error('[Support] Reply saved but email failed:', mailErr.message);
         emailDelivered = false;

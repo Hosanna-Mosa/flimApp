@@ -3,6 +3,14 @@ const User = require('../../models/User.model');
 const { generateAccessToken, generateRefreshToken } = require('../../utils/token');
 const { success, fail } = require('../../utils/response');
 const bcrypt = require('bcryptjs');
+const { withTimeout, TimeoutError } = require('../../utils/withTimeout');
+
+// Twilio Verify can stall for 30s+ on particular numbers and carriers, which
+// outlived the app's own 15s abort and reached the user as a bare timeout.
+const TWILIO_TIMEOUT_MS = 10000;
+
+const SMS_UNREACHABLE_MESSAGE =
+  'Could not reach the SMS service. Please try again in a moment.';
 
 /**
  * Send OTP via Twilio Verify
@@ -24,13 +32,22 @@ const sendOtp = async (req, res, next) => {
       phone = `+${phone}`;
     }
 
-    const verification = await client.verify.v2
-      .services(VERIFY_SERVICE_SID)
-      .verifications.create({ to: phone, channel: 'sms' });
+    const verification = await withTimeout(
+      client.verify.v2
+        .services(VERIFY_SERVICE_SID)
+        .verifications.create({ to: phone, channel: 'sms' }),
+      TWILIO_TIMEOUT_MS,
+      'Twilio Verify send'
+    );
 
 
     return success(res, { message: 'OTP sent' });
   } catch (error) {
+    if (error instanceof TimeoutError) {
+      console.error(`[Twilio Timeout] Send OTP exceeded ${TWILIO_TIMEOUT_MS}ms`);
+      return fail(res, SMS_UNREACHABLE_MESSAGE, 504);
+    }
+
     console.error('[Twilio Error] Send OTP:', error);
 
     // Twilio's 401 "Authenticate" error means credentials in .env are likely invalid/expired.
@@ -79,10 +96,19 @@ const verifyOtp = async (req, res, next) => {
 
     let verificationCheck;
     try {
-      verificationCheck = await client.verify.v2
-        .services(VERIFY_SERVICE_SID)
-        .verificationChecks.create({ to: phone, code: otp });
+      verificationCheck = await withTimeout(
+        client.verify.v2
+          .services(VERIFY_SERVICE_SID)
+          .verificationChecks.create({ to: phone, code: otp }),
+        TWILIO_TIMEOUT_MS,
+        'Twilio Verify check'
+      );
     } catch (vError) {
+      if (vError instanceof TimeoutError) {
+        console.error(`[Twilio Timeout] Verify OTP exceeded ${TWILIO_TIMEOUT_MS}ms`);
+        return fail(res, SMS_UNREACHABLE_MESSAGE, 504);
+      }
+
       // Developer bypass for verification: same explicit opt-in as sendOtp.
       const bypassEnabled =
         process.env.ALLOW_OTP_BYPASS === 'true' && process.env.NODE_ENV !== 'production';

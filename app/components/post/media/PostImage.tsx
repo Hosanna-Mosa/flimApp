@@ -1,7 +1,10 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Image } from 'expo-image';
+import { Dimensions, StyleSheet } from 'react-native';
+import RemoteImage from '@/components/ui/RemoteImage';
 import type { PostMediaVariant } from './PostVideoPlayer';
+
+/** Feed and detail cards are both full-bleed, so this is the widest it renders. */
+const SCREEN_WIDTH = Dimensions.get('window').width;
 
 interface PostImageProps {
   url: string;
@@ -13,9 +16,12 @@ interface PostImageProps {
 export default function PostImage({ url, aspectRatio, variant = 'feed' }: PostImageProps) {
   const minHeight = variant === 'detail' ? 300 : 200;
   return (
-    <View style={[styles.container, { aspectRatio, minHeight }]}>
-      <Image source={{ uri: url }} style={[styles.media, { minHeight }]} contentFit="cover" transition={200} />
-    </View>
+    <RemoteImage
+      uri={url}
+      requestWidth={SCREEN_WIDTH}
+      contentFit="cover"
+      style={[styles.container, { aspectRatio, minHeight }]}
+    />
   );
 }
 
@@ -23,11 +29,5 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     backgroundColor: '#000',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  media: {
-    width: '100%',
-    height: '100%',
   },
 });

@@ -1,21 +1,38 @@
 const nodemailer = require('nodemailer');
+const { withTimeout, TimeoutError } = require('../utils/withTimeout');
 
+// Nodemailer's defaults assume nobody is waiting: 2 minutes to open the
+// connection, 30s for the SMTP greeting, 10 minutes of socket inactivity. On a
+// request a user is staring at — password reset — a stalled Gmail relay
+// therefore ran far past the app's own 15s abort, so the screen showed a
+// timeout instead of an error. Bound every phase.
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
+  connectionTimeout: 5000,
+  greetingTimeout: 5000,
+  socketTimeout: 8000,
 });
 
-const sendEmail = async ({ to, subject, text, html, attachments }) => {
+// Those phases are sequential, so they can still add up past what the app will
+// wait. This is the ceiling on the whole send.
+const SEND_TIMEOUT_MS = 10000;
+
+// For sends nobody is blocked on. Detached callers can afford to wait longer,
+// and need to — nodemailer fetches attachments from their URL as part of send.
+const DETACHED_SEND_TIMEOUT_MS = 30000;
+
+const sendEmail = async ({ to, subject, text, html, attachments, timeoutMs = SEND_TIMEOUT_MS }) => {
   try {
     // If not in production and no real SMTP configured, just log to console
     if (process.env.NODE_ENV !== 'production' && (!process.env.SMTP_USER || process.env.SMTP_USER === 'mock_user')) {
       return { messageId: 'mock-id' };
     }
 
-    const info = await transporter.sendMail({
+    const info = await withTimeout(transporter.sendMail({
       // Must match (or be an alias of) the authenticated SMTP_USER, otherwise
       // the From-domain has no SPF/DKIM/DMARC alignment with Gmail's relay
       // and the mail gets accepted (250 OK) but silently buried in the
@@ -26,13 +43,18 @@ const sendEmail = async ({ to, subject, text, html, attachments }) => {
       text,
       html,
       attachments,
-    });
+    }), timeoutMs, 'SMTP send');
 
 
     return info;
   } catch (error) {
-    console.error('Error sending email:', error);
-    // Don't throw error to avoid breaking the main flow, but log it
+    if (error instanceof TimeoutError) {
+      console.error(`[Mail Timeout] ${error.message} (to: ${to})`);
+    } else {
+      console.error('Error sending email:', error);
+    }
+    // Don't throw error to avoid breaking the main flow, but log it.
+    // Callers that need to know (forgotPassword) branch on this null.
     return null;
   }
 };
@@ -78,5 +100,6 @@ const sendVerificationRejected = async (user, notes) => {
 module.exports = {
   sendEmail,
   sendVerificationApproved,
-  sendVerificationRejected
+  sendVerificationRejected,
+  DETACHED_SEND_TIMEOUT_MS
 };

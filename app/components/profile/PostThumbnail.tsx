@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
-import { Image } from 'expo-image';
 import { Type, Image as ImageIcon } from 'lucide-react-native';
+import RemoteImage from '@/components/ui/RemoteImage';
 import { useTheme } from '@/contexts/ThemeContext';
 import { UserPost } from '@/types';
 
@@ -36,12 +36,15 @@ export default function PostThumbnail({ post, onPress }: PostThumbnailProps) {
           </Text>
         </View>
       ) : !hasError ? (
-        <Image
-          source={{ uri: post.media?.thumbnail || post.thumbnailUrl || post.media?.url || post.mediaUrl }}
-          style={styles.image}
+        <RemoteImage
+          uri={post.media?.thumbnail || post.thumbnailUrl || post.media?.url || post.mediaUrl}
+          // Square tile, so crop to it rather than fetching the whole photo.
+          requestWidth={POST_TILE_SIZE}
+          requestHeight={POST_TILE_SIZE}
+          crop="fill"
           contentFit="cover"
+          style={styles.image}
           onError={() => setHasError(true)}
-          transition={200}
         />
       ) : (
         <View style={[styles.placeholder, { backgroundColor: colors.surface }]}>

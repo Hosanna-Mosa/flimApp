@@ -102,6 +102,20 @@ const request = async <T>(
 
     return json;
   } catch (error: any) {
+    // The 15s timeouts above reject with DOMException('Aborted'), and screens
+    // render error.message straight to the user — so "Aborted" was showing up
+    // as the error text with no status to explain it. Say what actually
+    // happened instead: the request ran out of time.
+    if (error?.name === 'AbortError' || error?.message === 'Aborted') {
+      console.error(`[API TIMEOUT] ⏱️ ${path} did not respond within 15s`);
+      const timeoutError = new Error(
+        'Network is slow right now. Please check your connection and try again.'
+      );
+      (timeoutError as any).logged = true;
+      (timeoutError as any).isTimeout = true;
+      throw timeoutError;
+    }
+
     if (!error.logged) {
       console.error(`[API FATAL] 💥 Error calling ${path}:`, error.message);
     }
