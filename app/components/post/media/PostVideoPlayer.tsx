@@ -1,9 +1,13 @@
-import React from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { Video, ResizeMode } from 'expo-av';
 import { Play, Volume2, VolumeX } from 'lucide-react-native';
 import { useMedia } from '@/contexts/MediaContext';
 import { useVideoPlayer } from '@/hooks/useVideoPlayer';
+import { Skeleton } from '@/components/skeletons/Skeleton';
+import { cloudinaryImage } from '@/utils/cloudinary';
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
 
 export type PostMediaVariant = 'feed' | 'detail';
 
@@ -30,6 +34,10 @@ export default function PostVideoPlayer({
   const { isMuted, toggleMute } = useMedia();
   const { videoRef, isPlaying, didJustFinish, setStatus, toggle } = useVideoPlayer(isActive);
   const isDetail = variant === 'detail';
+  // Until the first frame or the poster is up there is nothing to show but the
+  // black ground, which reads as a broken card rather than a loading one.
+  const [isReady, setIsReady] = useState(false);
+  const poster = cloudinaryImage(thumbnailUrl, { width: SCREEN_WIDTH });
 
   return (
     <View style={[styles.container, { aspectRatio }]}>
@@ -41,11 +49,20 @@ export default function PostVideoPlayer({
         resizeMode={ResizeMode.CONTAIN}
         isLooping
         isMuted={isMuted}
-        posterSource={thumbnailUrl ? { uri: thumbnailUrl } : undefined}
-        usePoster={!!thumbnailUrl}
+        posterSource={poster ? { uri: poster } : undefined}
+        usePoster={!!poster}
         onPlaybackStatusUpdate={setStatus}
-        onError={(e) => console.error('Video Playback Error:', e)}
+        onLoad={() => setIsReady(true)}
+        onReadyForDisplay={() => setIsReady(true)}
+        onError={(e) => {
+          console.error('Video Playback Error:', e);
+          // Clear it here too, or a video that never loads shimmers forever.
+          setIsReady(true);
+        }}
       />
+      {!isReady && (
+        <Skeleton width="100%" height="100%" borderRadius={0} style={StyleSheet.absoluteFillObject} />
+      )}
       <TouchableOpacity style={[styles.muteButton, isDetail && styles.muteButtonDetail]} onPress={toggleMute}>
         {isMuted ? (
           <VolumeX size={isDetail ? 20 : 18} color="#fff" />

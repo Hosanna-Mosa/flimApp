@@ -1,6 +1,6 @@
 import React from 'react';
-import { StyleProp, ImageStyle } from 'react-native';
-import { Image } from 'expo-image';
+import { StyleProp, ViewStyle, ImageStyle } from 'react-native';
+import RemoteImage from '@/components/ui/RemoteImage';
 import { getAvatarUrl } from '@/utils/avatar';
 
 interface AvatarProps {
@@ -21,10 +21,16 @@ interface AvatarProps {
  */
 export default function Avatar({ uri, size, style }: AvatarProps) {
   return (
-    <Image
-      source={{ uri: getAvatarUrl(uri) }}
-      style={[{ width: size, height: size, borderRadius: size / 2 }, style]}
+    <RemoteImage
+      uri={getAvatarUrl(uri)}
+      // Avatars are small and always square, so crop to the exact circle rather
+      // than shipping a wide photo the view will only ever show the middle of.
+      requestWidth={size}
+      requestHeight={size}
+      crop="fill"
       contentFit="cover"
+      borderRadius={size / 2}
+      style={[{ width: size, height: size, borderRadius: size / 2 }, style as StyleProp<ViewStyle>]}
     />
   );
 }

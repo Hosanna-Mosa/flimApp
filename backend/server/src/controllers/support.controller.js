@@ -1,5 +1,5 @@
 const Support = require('../models/Support.model');
-const { sendEmail } = require('../services/mail.service');
+const { sendEmail, DETACHED_SEND_TIMEOUT_MS } = require('../services/mail.service');
 const { success } = require('../utils/response');
 
 const createSupportRequest = async (req, res, next) => {
@@ -112,13 +112,24 @@ ${attachmentPath ? `Image Attached. Download here: ${attachmentPath}` : 'No imag
 
         html += `</div>`;
 
-        await sendEmail({
+        // The request is already saved above; this email only notifies the
+        // admin, and the user is not waiting on it. Detach it so their response
+        // is not held behind Gmail, and give it the longer detached budget
+        // since nodemailer fetches any attachment from its URL during send.
+        void sendEmail({
             to: adminEmail,
             subject,
             text,
             html,
-            attachments
-        });
+            attachments,
+            timeoutMs: DETACHED_SEND_TIMEOUT_MS
+        })
+            .then((info) => {
+                if (!info) console.error('[Support] Request saved, admin notification email failed');
+            })
+            .catch((mailErr) => {
+                console.error('[Support] Admin notification email threw:', mailErr.message);
+            });
 
         return res.status(201).json({
             success: true,
