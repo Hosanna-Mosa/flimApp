@@ -95,6 +95,19 @@
       ],
       "expo-web-browser",
       [
+        "expo-share-intent",
+        {
+          "androidIntentFilters": ["text/*", "image/*", "video/*"],
+          "androidMultiIntentFilters": ["image/*", "video/*"],
+          "iosActivationRules": {
+            "NSExtensionActivationSupportsText": true,
+            "NSExtensionActivationSupportsWebURLWithMaxCount": 1,
+            "NSExtensionActivationSupportsImageWithMaxCount": 10,
+            "NSExtensionActivationSupportsMovieWithMaxCount": 10
+          }
+        }
+      ],
+      [
         "@react-native-firebase/app",
         {
           "ios": {

@@ -23,7 +23,9 @@ import { MessageProvider } from '@/contexts/MessageContext';
 import { MediaProvider } from '@/contexts/MediaContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
+import { ShareIntentProvider } from 'expo-share-intent';
 import { useScreenTracking } from '@/hooks/useScreenTracking';
+import { useIncomingShare } from '@/hooks/useIncomingShare';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -34,6 +36,8 @@ function RootLayoutNav() {
   const { isAuthenticated, isLoading } = useAuth();
 
   useScreenTracking();
+  // Content shared into the app from another app's share sheet.
+  useIncomingShare();
 
   // Push-notification taps → deep link. Hot start (app open/backgrounded)
   // navigates immediately once the user is authenticated; cold start parks the
@@ -86,6 +90,7 @@ function RootLayoutNav() {
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="messages" options={{ title: 'Messages' }} />
       <Stack.Screen name="chat" options={{ title: 'Chat' }} />
+      <Stack.Screen name="share" options={{ title: 'Share to' }} />
       <Stack.Screen name="edit-profile" options={{ title: 'Edit Profile' }} />
       <Stack.Screen name="settings" options={{ title: 'Settings' }} />
       <Stack.Screen name="trending" options={{ title: 'Trending' }} />
@@ -211,7 +216,13 @@ export default function RootLayout() {
                 <MediaProvider>
                   <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#000000' }}>
                     <StatusBar style="light" backgroundColor="#000000" />
-                    <RootLayoutNav />
+                    {/* resetOnBackground is off: a share arriving as the app
+                        launches passes through inactive states, and clearing on
+                        those throws the intent away before anything has read
+                        it. useIncomingShare clears it once it has a copy. */}
+                    <ShareIntentProvider options={{ resetOnBackground: false }}>
+                      <RootLayoutNav />
+                    </ShareIntentProvider>
                     
                     {updateInfo && (
                       <Modal

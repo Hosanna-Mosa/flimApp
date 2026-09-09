@@ -35,6 +35,8 @@ export function useGroupChat(communityId: string | undefined, groupId: string | 
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  /** Percent of the current media upload, for the composer's preview strip. */
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   // ---- Identity + permissions
   const isMine = useCallback(
@@ -172,14 +174,18 @@ export function useGroupChat(communityId: string | undefined, groupId: string | 
   const uploadAndPost = async (
     kind: 'image' | 'video',
     asset: { uri: string; name: string; size?: number; width?: number; height?: number; duration?: number },
-    replyTo?: GroupReply
-  ) => {
+    replyTo?: GroupReply,
+    /** Text sent with the file. Empty for a pick from the (+) menu, which has no composer. */
+    caption: string = ''
+  ): Promise<boolean> => {
     try {
       setSending(true);
+      setUploadProgress(0);
       const uploadResult = await uploadMediaToCloudinary(
         { uri: asset.uri, name: asset.name, size: asset.size },
         kind,
-        token!
+        token!,
+        setUploadProgress
       );
 
       const postResult = (await api.createCommunityPost(
@@ -188,7 +194,7 @@ export function useGroupChat(communityId: string | undefined, groupId: string | 
           groupId: groupId!,
           // No longer the literal word "Image", which used to render as the
           // caption under every picture in the group.
-          content: '',
+          content: caption,
           type: kind,
           replyTo,
           media: [
@@ -207,10 +213,13 @@ export function useGroupChat(communityId: string | undefined, groupId: string | 
         token!
       )) as CommunityPost;
       addPost(postResult);
+      return true;
     } catch (error: any) {
       Alert.alert('Error', error?.message || `Failed to upload ${kind}`);
+      return false;
     } finally {
       setSending(false);
+      setUploadProgress(0);
     }
   };
 
@@ -399,6 +408,7 @@ export function useGroupChat(communityId: string | undefined, groupId: string | 
     posts,
     loading,
     sending,
+    uploadProgress,
     role,
     isMine,
     isAdminOrOwner,
@@ -408,6 +418,8 @@ export function useGroupChat(communityId: string | undefined, groupId: string | 
     send,
     openAttachmentMenu,
     pickMedia,
+    /** Upload a file this hook did not pick (content from the share sheet) and post it. */
+    uploadAndPost,
     cropTarget,
     finishCrop,
     cancelCrop: () => setCropTarget(null),

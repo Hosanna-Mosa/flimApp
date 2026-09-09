@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Platform, ToastAndroid, Alert } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { MoreVertical } from 'lucide-react-native';
@@ -10,32 +10,90 @@ import GroupIntroCard from '@/components/chat/GroupIntroCard';
 import GroupJoinPrompt from '@/components/chat/GroupJoinPrompt';
 import GroupReadOnlyFooter from '@/components/chat/GroupReadOnlyFooter';
 import ChatInputBar from '@/components/chat/ChatInputBar';
+import AttachmentPreview from '@/components/chat/AttachmentPreview';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import MessageActionSheet, { MessageActionTarget } from '@/components/chat/MessageActionSheet';
 import MediaViewer from '@/components/chat/MediaViewer';
 import ImageCropper from '@/components/chat/ImageCropper';
 import ForwardSheet, { ForwardPayload } from '@/components/chat/ForwardSheet';
 import { GroupReply } from '@/hooks/useGroupChat';
+import { withinChatLimits } from '@/hooks/useChatAttachment';
 import { DirectMessageMedia } from '@/components/chat/ChatMessageBubble';
+import { SharedFile, readStagedShare } from '@/utils/shareIntent';
 
 export default function GroupChatScreen() {
-  const { id, groupId } = useLocalSearchParams<{ id: string; groupId: string }>();
+  const { id, groupId, shareToken } = useLocalSearchParams<{
+    id: string;
+    groupId: string;
+    shareToken?: string;
+  }>();
   const g = useGroupChat(id, groupId);
 
   const [actionTarget, setActionTarget] = useState<MessageActionTarget | null>(null);
   const [viewing, setViewing] = useState<DirectMessageMedia | null>(null);
   const [forwarding, setForwarding] = useState<ForwardPayload | null>(null);
   const [replyTo, setReplyTo] = useState<GroupReply | null>(null);
+  const [sharedFiles, setSharedFiles] = useState<SharedFile[]>([]);
+  const [sharedText, setSharedText] = useState<string | undefined>();
+  const [uploadIndex, setUploadIndex] = useState(0);
 
   const toast = (text: string) => {
     if (Platform.OS === 'android') ToastAndroid.show(text, ToastAndroid.SHORT);
     else Alert.alert(text);
   };
 
+  /**
+   * Content arriving from the OS share sheet, chosen for this group on the
+   * "Share to" screen. Staged into the composer and sent only on Send, the
+   * same as a photo picked from the (+) menu.
+   */
+  const stagedToken = useRef<string | null>(null);
+  useEffect(() => {
+    if (!shareToken || stagedToken.current === shareToken) return;
+    const share = readStagedShare(shareToken);
+    if (!share) return;
+
+    stagedToken.current = shareToken;
+    if (share.files.length > 0) setSharedFiles(withinChatLimits(share.files));
+    if (share.text) setSharedText(share.text);
+  }, [shareToken]);
+
   const handleSend = async (text: string) => {
-    const result = await g.send(text, replyTo ?? undefined);
+    if (sharedFiles.length === 0) {
+      const result = await g.send(text, replyTo ?? undefined);
+      setReplyTo(null);
+      return result;
+    }
+
+    // One post per file, with the caption and the quote on the first only —
+    // repeating them under every photo would read as the same message over
+    // and over.
+    for (let i = 0; i < sharedFiles.length; i++) {
+      const file = sharedFiles[i];
+      setUploadIndex(i);
+      const posted = await g.uploadAndPost(
+        file.kind,
+        {
+          uri: file.uri,
+          name: file.name,
+          size: file.size,
+          width: file.width,
+          height: file.height,
+          duration: file.duration,
+        },
+        i === 0 ? replyTo ?? undefined : undefined,
+        i === 0 ? text : ''
+      );
+      if (!posted) {
+        setUploadIndex(0);
+        return false;
+      }
+    }
+
+    setSharedFiles([]);
+    setUploadIndex(0);
     setReplyTo(null);
-    return result;
+    return true;
   };
 
   if (g.loading) {
@@ -85,6 +143,16 @@ export default function GroupChatScreen() {
           />
         }
       />
+      {sharedFiles.length > 0 && g.canSend && !g.showJoin && (
+        <AttachmentPreview
+          attachment={sharedFiles[uploadIndex] ?? sharedFiles[0]}
+          uploading={g.sending}
+          progress={g.uploadProgress}
+          remaining={sharedFiles.length - 1}
+          uploadIndex={uploadIndex}
+          onRemove={() => setSharedFiles([])}
+        />
+      )}
       {g.showJoin ? (
         <GroupJoinPrompt onJoin={g.join} loading={g.sending} />
       ) : g.canSend ? (
@@ -92,9 +160,11 @@ export default function GroupChatScreen() {
           onSend={handleSend}
           placeholder="Message..."
           loading={g.sending}
+          hasAttachment={sharedFiles.length > 0}
           onAttachment={g.openAttachmentMenu}
           replyingTo={replyTo?.senderName}
           onCancelReply={() => setReplyTo(null)}
+          initialText={sharedText}
         />
       ) : (
         <GroupReadOnlyFooter groupFound={!!g.group} />
