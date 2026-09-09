@@ -9,6 +9,10 @@ interface AttachmentPreviewProps {
   attachment: PendingAttachment;
   uploading: boolean;
   progress: number;
+  /** Files queued behind this one (a multi-file share). */
+  remaining?: number;
+  /** Which file of the batch is uploading, 0-based. */
+  uploadIndex?: number;
   onRemove: () => void;
 }
 
@@ -25,9 +29,22 @@ export default function AttachmentPreview({
   attachment,
   uploading,
   progress,
+  remaining = 0,
+  uploadIndex = 0,
   onRemove,
 }: AttachmentPreviewProps) {
   const { colors } = useTheme();
+
+  const total = remaining + 1;
+  // With several files the percentage alone is misleading: it restarts at 0
+  // for each one, so it reads as an upload that keeps starting over.
+  const status = uploading
+    ? total > 1
+      ? `Uploading ${uploadIndex + 1} of ${total} · ${progress}%`
+      : `Uploading ${progress}%`
+    : [mb(attachment.size), remaining > 0 ? `+${remaining} more` : '']
+        .filter(Boolean)
+        .join(' · ');
 
   return (
     <View style={[styles.wrap, { backgroundColor: colors.surface, borderColor: colors.border }]}>
@@ -44,9 +61,7 @@ export default function AttachmentPreview({
         <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
           {attachment.name}
         </Text>
-        <Text style={[styles.sub, { color: colors.textSecondary }]}>
-          {uploading ? `Uploading ${progress}%` : mb(attachment.size)}
-        </Text>
+        <Text style={[styles.sub, { color: colors.textSecondary }]}>{status}</Text>
         {uploading && (
           <View style={[styles.track, { backgroundColor: colors.border }]}>
             <View

@@ -1,4 +1,4 @@
-import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -34,6 +34,12 @@ interface ChatInputBarProps {
   replyingTo?: string;
   onCancelReply?: () => void;
   maxLength?: number;
+  /**
+   * Pre-fills the composer — text or a link arriving from the OS share sheet.
+   * Applied whenever the value changes, so a share landing after the screen is
+   * already open still reaches the input.
+   */
+  initialText?: string;
 }
 
 export interface ChatInputBarHandle {
@@ -56,6 +62,7 @@ const ChatInputBar = forwardRef<ChatInputBarHandle, ChatInputBarProps>(function 
     replyingTo,
     onCancelReply,
     maxLength,
+    initialText,
   },
   ref
 ) {
@@ -64,8 +71,17 @@ const ChatInputBar = forwardRef<ChatInputBarHandle, ChatInputBarProps>(function 
   // Android: lift by however much the keyboard actually covers (0 when the
   // OS already resized the window). iOS screens use KeyboardAvoidingView.
   const keyboardOverlap = useKeyboardOverlap();
-  const [text, setText] = useState('');
+  const [text, setText] = useState(initialText ?? '');
   const inputRef = useRef<TextInput>(null);
+
+  // Tracks what has already been written in, so typing is never overwritten by
+  // a re-render — only by a genuinely new value.
+  const seededText = useRef(initialText);
+  useEffect(() => {
+    if (initialText === undefined || initialText === seededText.current) return;
+    seededText.current = initialText;
+    setText(initialText);
+  }, [initialText]);
 
   useImperativeHandle(ref, () => ({ focus: () => inputRef.current?.focus() }), []);
 

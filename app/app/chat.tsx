@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ToastAndroid, Platform, Alert } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useDirectMessages } from '@/hooks/useDirectMessages';
@@ -15,16 +15,40 @@ import MediaViewer from '@/components/chat/MediaViewer';
 import ForwardSheet, { ForwardPayload } from '@/components/chat/ForwardSheet';
 import { DirectMessage, DirectMessageMedia, DirectMessageReply } from '@/components/chat/ChatMessageBubble';
 import { useChatAttachment } from '@/hooks/useChatAttachment';
+import { readStagedShare } from '@/utils/shareIntent';
 
 export default function ChatScreen() {
-  const { userId, name } = useLocalSearchParams<{ userId: string; name: string }>();
+  const { userId, name, shareToken } = useLocalSearchParams<{
+    userId: string;
+    name: string;
+    shareToken?: string;
+  }>();
   const c = useDirectMessages(userId, name);
   const [actionTarget, setActionTarget] = useState<MessageActionTarget | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [viewing, setViewing] = useState<DirectMessageMedia | null>(null);
   const [forwarding, setForwarding] = useState<ForwardPayload | null>(null);
   const [replyTo, setReplyTo] = useState<DirectMessageReply | null>(null);
+  const [sharedText, setSharedText] = useState<string | undefined>();
   const attachment = useChatAttachment();
+
+  /**
+   * Content arriving from the OS share sheet, chosen for this chat on the
+   * "Share to" screen. It is only staged — into the same composer and the same
+   * attachment strip a normal message uses — and waits for Send like anything
+   * else the user typed.
+   */
+  const stagedToken = useRef<string | null>(null);
+  useEffect(() => {
+    if (!shareToken || stagedToken.current === shareToken) return;
+    const share = readStagedShare(shareToken);
+    if (!share) return;
+
+    stagedToken.current = shareToken;
+    if (share.files.length > 0) attachment.stageExternal(share.files);
+    if (share.text) setSharedText(share.text);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- attachment is recreated each render; the token guard is what makes this run once
+  }, [shareToken]);
 
   /**
    * Upload first, then send. The message only exists once its media does —
@@ -41,15 +65,20 @@ export default function ChatScreen() {
       return sent;
     }
 
-    const uploaded = await attachment.upload();
+    // One message per file when several were shared at once. The caption and
+    // the quote belong to the first: repeating them under every photo would
+    // read as the same message sent over and over.
+    const uploaded = await attachment.uploadAll();
     if (!uploaded) return false;
 
-    const ok = c.send(text, uploaded, quoted);
-    if (ok) {
-      attachment.clear();
-      setReplyTo(null);
+    for (let i = 0; i < uploaded.length; i++) {
+      const sent = c.send(i === 0 ? text : '', uploaded[i], i === 0 ? quoted : undefined);
+      if (!sent) return false;
     }
-    return ok;
+
+    attachment.clear();
+    setReplyTo(null);
+    return true;
   };
 
   const confirmCopied = () => {
@@ -85,6 +114,8 @@ export default function ChatScreen() {
           attachment={attachment.pending}
           uploading={attachment.uploading}
           progress={attachment.progress}
+          remaining={attachment.remaining}
+          uploadIndex={attachment.uploadIndex}
           onRemove={attachment.clear}
         />
       )}
@@ -97,6 +128,7 @@ export default function ChatScreen() {
         onAttachment={() => setPickerOpen(true)}
         replyingTo={replyTo?.senderName}
         onCancelReply={() => setReplyTo(null)}
+        initialText={sharedText}
       />
 
       <MediaViewer
