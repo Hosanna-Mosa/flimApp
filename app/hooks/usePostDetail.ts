@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useConfirm } from '@/hooks/useConfirm';
 import { ChatInputBarHandle } from '@/components/chat/ChatInputBar';
 import { Comment, PostDetail } from '@/types';
+import { buildPostShareUrl } from '@/utils/deepLinks';
 
 /**
  * All post-detail logic: loading the post + comments (and refreshing on
@@ -230,7 +231,7 @@ export function usePostDetail(id: string) {
   // ---- Share
   const handleShare = async () => {
     try {
-      const shareUrl = `https://filmy.app/post/${id}`;
+      const shareUrl = buildPostShareUrl(String(id));
       const message = post?.caption ? `${post.caption}\n\n${shareUrl}` : shareUrl;
       await Share.share({ message, url: shareUrl });
     } catch {

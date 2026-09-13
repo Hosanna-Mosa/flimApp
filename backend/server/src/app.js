@@ -28,6 +28,7 @@ const walletRoutes = require('./routes/wallet.routes');
 const paymentRoutes = require('./routes/payment.routes');
 const paymentController = require('./controllers/payment.controller');
 const moderationRoutes = require('./routes/moderation.routes');
+const deeplinkRoutes = require('./routes/deeplink.routes');
 
 const mongoSanitize = require('express-mongo-sanitize');
 
@@ -82,6 +83,12 @@ app.use(apiLogger);
 app.use(require('./middlewares/requestLogger.middleware'));
 
 app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
+
+// Universal Link / App Link surface: the two association files the phone
+// fetches, and the browser pages a shared link falls back to. Mounted at the
+// root because Apple and Google require those exact paths, and ahead of the
+// API routes so /post/:id resolves to a page rather than the JSON 404.
+app.use('/', deeplinkRoutes);
 
 app.use('/auth', authV1Routes);
 app.use('/auth', authRoutes);

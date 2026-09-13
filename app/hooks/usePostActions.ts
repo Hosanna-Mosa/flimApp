@@ -5,6 +5,7 @@ import * as Haptics from 'expo-haptics';
 import { api } from '@/utils/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { Post } from '@/types';
+import { buildPostShareUrl } from '@/utils/deepLinks';
 
 /**
  * Like / save / share / comment handlers for any list of posts, with
@@ -72,7 +73,7 @@ export function usePostActions(posts: Post[], setPosts: Dispatch<SetStateAction<
     async (postId: string) => {
       const post = posts.find((p) => p.id === postId);
       if (!post) return;
-      const shareUrl = `https://filmy.app/post/${postId}`;
+      const shareUrl = buildPostShareUrl(postId);
       try {
         await Share.share({ message: post.caption ? `${post.caption}\n\n${shareUrl}` : shareUrl, url: shareUrl });
       } catch {
