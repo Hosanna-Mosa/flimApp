@@ -7,8 +7,13 @@ import FeedList from '@/components/home/FeedList';
 import { useFeed } from '@/hooks/useFeed';
 import { useFollow } from '@/hooks/useFollow';
 import { usePostActions } from '@/hooks/usePostActions';
+import { usePendingRoute } from '@/hooks/usePendingRoute';
 
 export default function HomeScreen() {
+  // A notification tapped, or a shared link opened, before there was a stack
+  // to put the screen on.
+  usePendingRoute();
+
   const follow = useFollow();
   const feed = useFeed({ follow });
   const { handleLike, handleComment, handleShare, handleSave } = usePostActions(feed.posts, feed.setPosts);
