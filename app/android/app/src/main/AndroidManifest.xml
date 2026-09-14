@@ -40,6 +40,20 @@
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="myapp"/>
+        <data android:scheme="filmyconnect"/>
+      </intent-filter>
+      <!-- Shared post and profile links. autoVerify makes Android fetch
+           https://filmyconnect24.com/.well-known/assetlinks.json at install
+           time; when the app's signing certificate is listed there, these
+           links open the app directly instead of a browser. Kept in step with
+           android.intentFilters in app.json, which is what `expo prebuild`
+           would regenerate this file from. -->
+      <intent-filter android:autoVerify="true">
+        <action android:name="android.intent.action.VIEW"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+        <category android:name="android.intent.category.BROWSABLE"/>
+        <data android:scheme="https" android:host="filmyconnect24.com" android:pathPrefix="/post/"/>
+        <data android:scheme="https" android:host="filmyconnect24.com" android:pathPrefix="/user/"/>
       </intent-filter>
       <intent-filter>
         <action android:name="android.intent.action.SEND"/>

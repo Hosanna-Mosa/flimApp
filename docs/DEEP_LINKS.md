@@ -99,9 +99,22 @@ https://digitalassetlinks.googleapis.com/v1/statements:list?source.web.site=http
 
 ### 4. Rebuild the app
 
-`associatedDomains` and `intentFilters` in `app.json` are **native** config.
-They are compiled into the iOS entitlements and `AndroidManifest.xml`, so an
-OTA update will not deliver them — a new build is required:
+**This project commits its `android/` and `ios/` folders**, so `app.json` is
+*not* what gets built — EAS compiles those native projects as they are. The
+deep-link settings therefore live in three files, and editing `app.json` alone
+changes nothing:
+
+| File | Setting |
+|---|---|
+| `app/android/app/src/main/AndroidManifest.xml` | `<intent-filter android:autoVerify="true">` for `/post/` and `/user/` |
+| `app/ios/FilmyConnect/FilmyConnect.entitlements` | `com.apple.developer.associated-domains` |
+| `app/ios/FilmyConnect/Info.plist` | `filmyconnect` in `CFBundleURLSchemes` |
+
+`app.json` carries the same settings so that a future `expo prebuild` produces
+the same result — keep the two in step, but the native files are what ship.
+
+These are **native** config, so an OTA update will not deliver them — a new
+build is required:
 
 ```sh
 eas build --profile production --platform all
