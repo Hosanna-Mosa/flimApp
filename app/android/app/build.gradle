@@ -4,6 +4,38 @@ apply plugin: "com.facebook.react"
 
 def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
 
+// Play upload-key credentials. android/keystore.properties holds the keystore
+// path (MYAPP_UPLOAD_STORE_FILE, relative to android/) plus the store password,
+// key alias and key password. Both it and the .jks are gitignored, so a fresh
+// clone has to copy them in before it can cut a release.
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.withInputStream { keystoreProperties.load(it) }
+}
+def uploadStorePath = keystoreProperties['MYAPP_UPLOAD_STORE_FILE']
+def uploadKeystoreFile = uploadStorePath ? rootProject.file(uploadStorePath) : null
+def hasUploadKeystore = uploadKeystoreFile != null && uploadKeystoreFile.exists()
+
+// Falling back to the debug key on a release build just moves the failure to
+// upload time, where Play rejects the bundle as "signed with the wrong key".
+// Fail here instead, naming the file that is missing.
+gradle.taskGraph.whenReady { graph ->
+    def buildingRelease = graph.allTasks.any {
+        it.project == project && (it.name == 'bundleRelease' || it.name == 'assembleRelease')
+    }
+    if (buildingRelease && !hasUploadKeystore) {
+        def msg = ['Release signing is not configured.']
+        if (keystorePropertiesFile.exists()) {
+            msg << "  keystore.properties sets MYAPP_UPLOAD_STORE_FILE=${uploadStorePath}"
+            msg << "  which resolves to ${uploadKeystoreFile} -- that file does not exist."
+        } else {
+            msg << "  Missing ${keystorePropertiesFile}"
+        }
+        throw new GradleException(msg.join(System.lineSeparator()))
+    }
+}
+
 /**
  * This is the configuration block to customize your React Native Android app.
  * By default you don't need to apply any configuration, just uncomment the lines you need.
@@ -92,8 +124,8 @@ android {
         applicationId 'app.rork.filmy'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0.5"
+        versionCode 20
+        versionName "1.0.21"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }
@@ -104,15 +136,21 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        release {
+            if (hasUploadKeystore) {
+                storeFile uploadKeystoreFile
+                storePassword keystoreProperties['MYAPP_UPLOAD_STORE_PASSWORD']
+                keyAlias keystoreProperties['MYAPP_UPLOAD_KEY_ALIAS']
+                keyPassword keystoreProperties['MYAPP_UPLOAD_KEY_PASSWORD']
+            }
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            signingConfig hasUploadKeystore ? signingConfigs.release : signingConfigs.debug
             def enableShrinkResources = findProperty('android.enableShrinkResourcesInReleaseBuilds') ?: 'false'
             shrinkResources enableShrinkResources.toBoolean()
             minifyEnabled enableMinifyInReleaseBuilds

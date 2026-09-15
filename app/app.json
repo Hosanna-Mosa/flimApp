@@ -2,7 +2,7 @@
   "expo": {
     "name": "FilmyConnect",
     "slug": "filmy",
-    "version": "1.0.5",
+    "version": "1.0.21",
     "orientation": "portrait",
     "icon": "./assets/images/app-icon.png",
     "scheme": [
@@ -33,6 +33,7 @@
     },
     "android": {
       "package": "app.rork.filmy",
+      "versionCode": 20,
       "googleServicesFile": "./google-services.json",
       "intentFilters": [
         {
